@@ -1,0 +1,255 @@
+2017-10-06 14:58:59,587 [INFO]                       bundle_provider.py:100 -                                                             _create_local_bundle	Creating local bundle directory: some_path\some_bundle
+2017-10-06 14:58:59,587 [INFO]                       bundle_provider.py: 93 -                                                             _update_local_bundle	Remote ahead. Updating local bundle.
+2017-10-06 14:58:59,603 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:58:59,619 [INFO]                             utilities.py: 23 -                                                                      extract_zip	Extraction took: 0.0016820286744123718s
+2017-10-06 14:59:02,654 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Users\MMARCI~1\AppData\Local\Temp\tmp7qwcmf2r took:  0.00035695785373368594s
+2017-10-06 14:59:02,722 [INFO]                       graph_util_impl.py:222 -                                                   convert_variables_to_constants	Froze 0 variables.
+2017-10-06 14:59:02,838 [DEBUG]                          test_scoring.py: 68 -                                           test_that_initializes_with_proper_data	test starts
+2017-10-06 14:59:02,838 [DEBUG]                          test_scoring.py: 72 -                                      test_that_throws_on_inconsistent_input_size	test starts
+2017-10-06 14:59:02,838 [ERROR]                               scoring.py: 28 -                                                                         __init__	inconsistent masks size: (1, 10), (0, 10)
+2017-10-06 14:59:02,838 [DEBUG]                          test_scoring.py: 85 -                                                    test_confusion_matrix_creates	test starts
+2017-10-06 14:59:02,838 [DEBUG]                          test_scoring.py:107 -                                                             test_false_negatives	test starts
+2017-10-06 14:59:02,838 [DEBUG]                          test_scoring.py:101 -                                                             test_false_positives	test starts
+2017-10-06 14:59:02,854 [DEBUG]                          test_scoring.py: 95 -                                                              test_true_negatives	test starts
+2017-10-06 14:59:02,854 [DEBUG]                          test_scoring.py: 89 -                                                              test_true_positives	test starts
+2017-10-06 14:59:02,869 [ERROR]                               scoring.py:122 -                                                                          __new__	subset size must be non-negative (was -1)
+2017-10-06 14:59:02,870 [ERROR]                               scoring.py:118 -                                                                          __new__	subset (100 elements) > superset (-1 elements)
+2017-10-06 14:59:02,870 [ERROR]                               scoring.py:118 -                                                                          __new__	subset (100 elements) > superset (10 elements)
+2017-10-06 14:59:02,871 [DEBUG]                          test_scoring.py: 11 -                                                        test_that_accepts_numeric	test starts
+2017-10-06 14:59:02,871 [DEBUG]                          test_scoring.py: 29 -                                             test_that_avoids_zero_division_error	test starts
+2017-10-06 14:59:02,871 [DEBUG]                          test_scoring.py: 33 -                                                         test_that_returns_floats	test starts
+2017-10-06 14:59:02,892 [DEBUG]                          test_scoring.py: 25 -                                                       test_that_substitutes_zero	test starts
+2017-10-06 14:59:02,892 [DEBUG]                          test_scoring.py: 15 -                                                 test_that_throws_for_non_numeric	test starts
+2017-10-06 14:59:02,892 [DEBUG]                          test_scoring.py: 20 -                                             test_that_throws_for_non_numeric_eps	test starts
+2017-10-06 14:59:02,892 [DEBUG]                          test_scoring.py: 37 -                                             test_that_throws_on_non_positive_eps	test starts
+2017-10-06 14:59:02,892 [DEBUG]                          test_scoring.py:180 -                                                                    test_accuracy	test starts
+2017-10-06 14:59:02,892 [DEBUG]                          test_scoring.py:186 -                                                                   test_f_measure	test starts
+2017-10-06 14:59:02,907 [DEBUG]                          test_scoring.py:174 -                                                         test_false_negative_rate	test starts
+2017-10-06 14:59:02,907 [DEBUG]                          test_scoring.py:168 -                                                         test_false_positive_rate	test starts
+2017-10-06 14:59:02,907 [DEBUG]                          test_scoring.py:193 -                                                                       test_kappa	test starts
+2017-10-06 14:59:02,907 [DEBUG]                          test_scoring.py:150 -                                                   test_negative_predictive_value	test starts
+2017-10-06 14:59:02,907 [DEBUG]                          test_scoring.py:144 -                                                   test_positive_predictive_value	test starts
+2017-10-06 14:59:02,907 [DEBUG]                          test_scoring.py:162 -                                                          test_true_negative_rate	test starts
+2017-10-06 14:59:02,907 [DEBUG]                          test_scoring.py:156 -                                                          test_true_positive_rate	test starts
+2017-10-06 14:59:02,923 [DEBUG]       test_training_set_approximation.py:115 -                  test_that_approximation_returns_expected_labels_sorted_by_score	test starts
+2017-10-06 14:59:02,923 [DEBUG]       test_training_set_approximation.py:104 -                                    test_that_approximation_returns_expected_mask	test starts
+2017-10-06 14:59:02,923 [DEBUG]       test_training_set_approximation.py:109 -                                   test_that_approximation_returns_expected_score	test starts
+2017-10-06 14:59:02,923 [DEBUG]       test_training_set_approximation.py: 99 -                                      test_that_approximation_returns_proper_type	test starts
+2017-10-06 14:59:02,938 [DEBUG]       test_training_set_approximation.py: 91 -                                                     test_that_runs_approximation	test starts
+2017-10-06 14:59:02,938 [DEBUG]       test_training_set_approximation.py: 95 -                                            test_that_works_for_no_label_selected	test starts
+2017-10-06 14:59:02,938 [DEBUG]       test_training_set_approximation.py: 80 -                                                            test_that_initializes	test starts
+2017-10-06 14:59:02,938 [DEBUG]       test_training_set_approximation.py:115 -                  test_that_approximation_returns_expected_labels_sorted_by_score	test starts
+2017-10-06 14:59:02,954 [DEBUG]       test_training_set_approximation.py:104 -                                    test_that_approximation_returns_expected_mask	test starts
+2017-10-06 14:59:02,954 [DEBUG]       test_training_set_approximation.py:109 -                                   test_that_approximation_returns_expected_score	test starts
+2017-10-06 14:59:02,954 [DEBUG]       test_training_set_approximation.py: 99 -                                      test_that_approximation_returns_proper_type	test starts
+2017-10-06 14:59:02,954 [DEBUG]       test_training_set_approximation.py: 91 -                                                     test_that_runs_approximation	test starts
+2017-10-06 14:59:02,954 [DEBUG]       test_training_set_approximation.py: 95 -                                            test_that_works_for_no_label_selected	test starts
+2017-10-06 14:59:03,592 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.0005351363110266405s
+2017-10-06 14:59:03,592 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,624 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00043538041250901216s
+2017-10-06 14:59:03,624 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,639 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00042005646424225773s
+2017-10-06 14:59:03,639 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,655 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.0005606762248042685s
+2017-10-06 14:59:03,655 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,676 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00045190623907043204s
+2017-10-06 14:59:03,676 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,693 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00045250717821776476s
+2017-10-06 14:59:03,693 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,708 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.000588319425597561s
+2017-10-06 14:59:03,708 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,724 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00046723018733718646s
+2017-10-06 14:59:03,724 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,739 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.0008157748930024411s
+2017-10-06 14:59:03,739 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,755 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.0004570142218263129s
+2017-10-06 14:59:03,755 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,839 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.0005985353911093227s
+2017-10-06 14:59:03,839 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,839 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00045551187395620474s
+2017-10-06 14:59:03,839 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,855 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.000457915630547312s
+2017-10-06 14:59:03,855 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,876 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00044469496929799845s
+2017-10-06 14:59:03,876 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,892 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.0005225165889246597s
+2017-10-06 14:59:03,892 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,908 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.000560976694378823s
+2017-10-06 14:59:03,908 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,908 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.0004374836995255649s
+2017-10-06 14:59:03,908 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,939 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00044319262142877847s
+2017-10-06 14:59:03,939 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,955 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00043628182123001125s
+2017-10-06 14:59:03,955 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,976 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00044259168228144574s
+2017-10-06 14:59:03,977 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,977 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00046092032628575197s
+2017-10-06 14:59:03,977 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:03,992 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.0004486010737574375s
+2017-10-06 14:59:03,992 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:04,008 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00046092032628575197s
+2017-10-06 14:59:04,008 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:04,024 [INFO]                               hashing.py: 26 -                                                        get_checksum_for_file_md5	hashing C:\Econib\bundles\slico\slico.zip took:  0.00041645082935648503s
+2017-10-06 14:59:04,024 [INFO]                       bundle_provider.py: 91 -                                                             _update_local_bundle	Local bundle is up to date with the remote.
+2017-10-06 14:59:04,139 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features name
+2017-10-06 14:59:04,139 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features name
+2017-10-06 14:59:04,139 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features name
+2017-10-06 14:59:04,139 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features name
+2017-10-06 14:59:04,139 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features name
+2017-10-06 14:59:04,139 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features name
+2017-10-06 14:59:04,177 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features blah
+2017-10-06 14:59:04,177 [INFO]                             operation.py: 81 -                                                                         __call__	Build texton classes model
+2017-10-06 14:59:04,177 [INFO]                             operation.py: 82 -                                                                         __call__	Collect images
+2017-10-06 14:59:04,192 [INFO]                             operation.py: 89 -                                                                         __call__	Build model
+2017-10-06 14:59:04,192 [INFO]                             operation.py: 92 -                                                                         __call__	Dump model
+2017-10-06 14:59:04,192 [INFO]                             operation.py: 96 -                                                                         __call__	Push feature sets
+2017-10-06 14:59:04,224 [INFO]                             operation.py: 81 -                                                                         __call__	Build texton classes model
+2017-10-06 14:59:04,224 [INFO]                             operation.py: 82 -                                                                         __call__	Collect images
+2017-10-06 14:59:04,255 [INFO]                             operation.py: 89 -                                                                         __call__	Build model
+2017-10-06 14:59:04,255 [INFO]                             operation.py: 92 -                                                                         __call__	Dump model
+2017-10-06 14:59:04,255 [INFO]                             operation.py: 96 -                                                                         __call__	Push feature sets
+2017-10-06 14:59:04,401 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features blah
+2017-10-06 14:59:04,403 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features blah
+2017-10-06 14:59:04,411 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features blah
+2017-10-06 14:59:04,413 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features blah
+2017-10-06 14:59:04,416 [DEBUG]                                stream.py: 92 -                                                                   consume_labels	Saving labels blah
+2017-10-06 14:59:04,417 [DEBUG]                                stream.py: 92 -                                                                   consume_labels	Saving labels blah
+2017-10-06 14:59:04,463 [DEBUG]                                stream.py:100 -                                                                 consume_features	Saving features blah
+2017-10-06 14:59:04,463 [DEBUG]                                stream.py: 92 -                                                                   consume_labels	Saving labels blah
+2017-10-06 14:59:04,494 [DEBUG]                  test_extractor_utils.py: 24 -                                        test_that_does_not_throw_with_valid_input	test starts
+2017-10-06 14:59:04,494 [DEBUG]                  test_extractor_utils.py: 33 -                                                 test_that_produces_column_vector	test starts
+2017-10-06 14:59:04,494 [DEBUG]                  test_extractor_utils.py: 28 -                                          test_that_produces_entry_for_each_label	test starts
+2017-10-06 14:59:04,510 [DEBUG]                test_feature_extractor.py: 37 -                                               test_returns_valid_features_number	test starts
+2017-10-06 14:59:04,510 [DEBUG]                test_feature_extractor.py: 31 -                                           test_returns_valid_observations_number	test starts
+2017-10-06 14:59:04,510 [DEBUG]                test_feature_extractor.py: 22 -                                                            test_that_initializes	test starts
+2017-10-06 14:59:04,510 [DEBUG]                test_feature_extractor.py: 26 -                                                              test_that_is_itself	test starts
+2017-10-06 14:59:04,510 [DEBUG]                test_feature_extractor.py: 17 -                                                test_that_throws_on_invalid_shape	test starts
+2017-10-06 14:59:04,510 [ERROR]                    features_extractor.py: 19 -                                                                          __new__	FeatureSet must be 2D, was: 1
+2017-10-06 14:59:04,525 [DEBUG]        test_fractal_feature_extractor.py:197 -                                                            test_that_initializes	test starts
+2017-10-06 14:59:04,541 [DEBUG]        test_fractal_feature_extractor.py:201 -                                                       test_that_produces_fractal	test starts
+2017-10-06 14:59:04,694 [DEBUG]        test_fractal_feature_extractor.py:206 -                                      test_that_produces_fractal_of_the_same_size	test starts
+2017-10-06 14:59:04,694 [DEBUG]        test_fractal_feature_extractor.py:178 -                                                 test_that_creates_for_valid_data	test starts
+2017-10-06 14:59:04,694 [DEBUG]        test_fractal_feature_extractor.py:184 -                                                              test_that_is_itself	test starts
+2017-10-06 14:59:04,694 [DEBUG]        test_fractal_feature_extractor.py:121 -                                           test_that_extracts_counts_over_regions	test starts
+2017-10-06 14:59:04,710 [DEBUG]        test_fractal_feature_extractor.py:117 -                                                            test_that_initializes	test starts
+2017-10-06 14:59:04,710 [DEBUG]        test_fractal_feature_extractor.py:171 -                                           test_that_calculates_fractal_dimension	test starts
+2017-10-06 14:59:04,763 [DEBUG]        test_fractal_feature_extractor.py:167 -                                                            test_that_initializes	test starts
+2017-10-06 14:59:04,763 [DEBUG]        test_fractal_feature_extractor.py: 68 -                                                 test_that_calls_fractalizer_once	test starts
+2017-10-06 14:59:04,763 [DEBUG]        test_fractal_feature_extractor.py: 94 -                                          test_that_extracted_features_are_passed	test starts
+2017-10-06 14:59:04,763 [DEBUG]        test_fractal_feature_extractor.py: 79 -                                      test_that_extracts_feature_for_each_fractal	test starts
+2017-10-06 14:59:04,778 [DEBUG]        test_fractal_feature_extractor.py: 20 -                                                            test_that_initializes	test starts
+2017-10-06 14:59:04,778 [DEBUG]        test_fractal_feature_extractor.py:146 -                                            test_that_extracts_means_over_regions	test starts
+2017-10-06 14:59:04,778 [DEBUG]        test_fractal_feature_extractor.py:142 -                                                            test_that_initializes	test starts
+2017-10-06 14:59:04,778 [DEBUG]        test_fractal_feature_extractor.py:246 -                                                 test_that_extracts_channels_once	test starts
+2017-10-06 14:59:04,794 [DEBUG]        test_fractal_feature_extractor.py:258 -                                               test_that_fractalizes_each_channel	test starts
+2017-10-06 14:59:04,794 [DEBUG]        test_fractal_feature_extractor.py:281 -                                       test_that_returns_fractal_for_each_channel	test starts
+2017-10-06 14:59:04,794 [DEBUG]        test_fractal_feature_extractor.py:268 -                                                       test_that_returns_fractals	test starts
+2017-10-06 14:59:04,794 [DEBUG]        test_fractal_feature_extractor.py:213 -                                                           test_that_initizalizes	test starts
+2017-10-06 14:59:04,810 [DEBUG]      test_multiple_features_extractor.py: 54 -                         test_that_calls_applicator_many_times_for_many_functions	test starts
+2017-10-06 14:59:04,810 [DEBUG]      test_multiple_features_extractor.py: 42 -                                          test_that_does_not_throw_for_valid_data	test starts
+2017-10-06 14:59:04,810 [DEBUG]      test_multiple_features_extractor.py: 46 -                                          test_that_produces_entry_for_each_label	test starts
+2017-10-06 14:59:04,826 [DEBUG]              test_statistic_extractor.py: 59 -                                                  test_that_calls_applicator_once	test starts
+2017-10-06 14:59:04,826 [DEBUG]              test_statistic_extractor.py: 43 -                                          test_that_does_not_throw_for_valid_data	test starts
+2017-10-06 14:59:04,826 [DEBUG]              test_statistic_extractor.py: 47 -                                                   test_that_gives_single_feature	test starts
+2017-10-06 14:59:04,826 [DEBUG]              test_statistic_extractor.py: 52 -                                          test_that_produces_entry_for_each_label	test starts
+2017-10-06 14:59:04,826 [DEBUG]              test_statistic_extractor.py: 22 -                                                       test_that_accepts_callable	test starts
+2017-10-06 14:59:04,842 [DEBUG]              test_statistic_extractor.py: 26 -                                   test_that_accepts_transformation_and_statistic	test starts
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:266 -                                              build_texton_model_with_recognition	Build texton model with recognition in one step
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:267 -                                              build_texton_model_with_recognition	Extract unordered texton features
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:270 -                                              build_texton_model_with_recognition	Build model of texton features
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:272 -                                              build_texton_model_with_recognition	Recognize unordered features
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:266 -                                              build_texton_model_with_recognition	Build texton model with recognition in one step
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:267 -                                              build_texton_model_with_recognition	Extract unordered texton features
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:270 -                                              build_texton_model_with_recognition	Build model of texton features
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:272 -                                              build_texton_model_with_recognition	Recognize unordered features
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:266 -                                              build_texton_model_with_recognition	Build texton model with recognition in one step
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:267 -                                              build_texton_model_with_recognition	Extract unordered texton features
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:270 -                                              build_texton_model_with_recognition	Build model of texton features
+2017-10-06 14:59:04,847 [INFO]            wavelet_features_extractor.py:272 -                                              build_texton_model_with_recognition	Recognize unordered features
+2017-10-06 14:59:04,863 [INFO]            wavelet_features_extractor.py:266 -                                              build_texton_model_with_recognition	Build texton model with recognition in one step
+2017-10-06 14:59:04,863 [INFO]            wavelet_features_extractor.py:267 -                                              build_texton_model_with_recognition	Extract unordered texton features
+2017-10-06 14:59:04,863 [INFO]            wavelet_features_extractor.py:270 -                                              build_texton_model_with_recognition	Build model of texton features
+2017-10-06 14:59:04,863 [INFO]            wavelet_features_extractor.py:272 -                                              build_texton_model_with_recognition	Recognize unordered features
+2017-10-06 14:59:05,063 [DEBUG]                            test_types.py:149 -                                 test_that_creates_for_not_normalized_valid_image	test starts
+2017-10-06 14:59:05,063 [DEBUG]                            test_types.py:145 -                                                 test_that_creates_for_valid_data	test starts
+2017-10-06 14:59:05,063 [DEBUG]                            test_types.py:140 -                                                              test_that_is_itself	test starts
+2017-10-06 14:59:05,063 [DEBUG]                            test_types.py:153 -                                             test_that_throws_on_not_binary_image	test starts
+2017-10-06 14:59:05,063 [ERROR]                                 types.py: 90 -                                                                          __new__	BinaryChannel consist of at most 2 values, used: 3
+2017-10-06 14:59:05,079 [DEBUG]                            test_types.py:103 -                                             test_that_initializes_for_valid_data	test starts
+2017-10-06 14:59:05,079 [DEBUG]                            test_types.py:107 -                                                              test_that_is_itself	test starts
+2017-10-06 14:59:05,094 [ERROR]                                 types.py: 73 -                                                                          __new__	Provided max value is smaller than the max value in the image
+2017-10-06 14:59:05,094 [DEBUG]                            test_types.py: 68 -                                                 test_initializes_for_valid_input	test starts
+2017-10-06 14:59:05,094 [DEBUG]                            test_types.py: 72 -                                                              test_that_is_itself	test starts
+2017-10-06 14:59:05,094 [DEBUG]                            test_types.py: 58 -                                                 test_throws_for_negative_entries	test starts
+2017-10-06 14:59:05,094 [ERROR]                                 types.py: 49 -                                                                          __new__	Numpy16BitImage must be non-negative
+2017-10-06 14:59:05,110 [DEBUG]                            test_types.py: 63 -                                                  test_throws_for_too_big_entries	test starts
+2017-10-06 14:59:05,110 [ERROR]                                 types.py: 54 -                                                                          __new__	Numpy16BitImage has maximum at 65535
+2017-10-06 14:59:05,110 [DEBUG]                            test_types.py: 47 -                                                 test_initializes_for_valid_input	test starts
+2017-10-06 14:59:05,110 [DEBUG]                            test_types.py: 51 -                                                              test_that_is_itself	test starts
+2017-10-06 14:59:05,110 [DEBUG]                            test_types.py: 37 -                                                 test_throws_for_negative_entries	test starts
+2017-10-06 14:59:05,110 [ERROR]                                 types.py: 32 -                                                                          __new__	Numpy8BitImage must be non-negative
+2017-10-06 14:59:05,126 [DEBUG]                            test_types.py: 42 -                                                  test_throws_for_too_big_entries	test starts
+2017-10-06 14:59:05,126 [ERROR]                                 types.py: 37 -                                                                          __new__	Numpy8BitImage has maximum at 255
+2017-10-06 14:59:05,126 [DEBUG]                            test_types.py: 27 -                                                 test_initializes_for_valid_input	test starts
+2017-10-06 14:59:05,126 [DEBUG]                            test_types.py: 31 -                                                              test_that_is_itself	test starts
+2017-10-06 14:59:05,126 [DEBUG]                            test_types.py: 22 -                                                    test_throws_for_not_2d_matrix	test starts
+2017-10-06 14:59:05,126 [ERROR]                                 types.py: 20 -                                                                          __new__	NumpyImage must be 2D, was: 1
+2017-10-06 14:59:05,163 [DEBUG]                             test_base.py:101 -                                               test_that_produces_binary_channels	test starts
+2017-10-06 14:59:05,163 [DEBUG]                             test_base.py: 94 -                                        test_that_produces_channel_for_each_label	test starts
+2017-10-06 14:59:05,163 [DEBUG]                             test_base.py:110 -                             test_that_produces_channels_consistent_with_labeling	test starts
+2017-10-06 14:59:05,179 [DEBUG]                             test_base.py: 87 -                                                   test_that_uses_decomposer_once	test starts
+2017-10-06 14:59:05,179 [DEBUG]                             test_base.py: 65 -                                                            test_that_initializes	test starts
+2017-10-06 14:59:05,179 [DEBUG]                             test_base.py: 48 -                                                    test_that_labels_are_integers	test starts
+2017-10-06 14:59:05,179 [DEBUG]                             test_base.py: 56 -                                                test_that_labels_cover_all_pixels	test starts
+2017-10-06 14:59:05,195 [DEBUG]                             test_base.py: 41 -                                               test_that_returns_decomposed_image	test starts
+2017-10-06 14:59:05,195 [DEBUG]                             test_base.py: 33 -                                                   test_that_thresholds_only_once	test starts
+2017-10-06 14:59:05,195 [DEBUG]                      test_double_otsu.py:250 -                                      test_that_content_of_weight_arrays_is_valid	test starts
+2017-10-06 14:59:05,195 [DEBUG]                      test_double_otsu.py:243 -                                         test_that_lengths_of_weight_arrays_match	test starts
+2017-10-06 14:59:05,195 [DEBUG]                      test_double_otsu.py:226 -                                         test_that_throws_on_excessive_thresholds	test starts
+2017-10-06 14:59:05,210 [DEBUG]                      test_double_otsu.py:219 -                                          test_that_throws_on_negative_thresholds	test starts
+2017-10-06 14:59:05,210 [DEBUG]                      test_double_otsu.py:233 -                           test_that_throws_on_threshold1_greater_than_threshold2	test starts
+2017-10-06 14:59:05,210 [DEBUG]                      test_double_otsu.py:238 -                         test_that_throws_on_threshold_grater_than_number_of_bins	test starts
+2017-10-06 14:59:05,210 [DEBUG]                      test_double_otsu.py:287 -                                                        test_that_means_are_valid	test starts
+2017-10-06 14:59:05,210 [DEBUG]                      test_double_otsu.py:269 -                                      test_that_throws_for_incomplete_percentages	test starts
+2017-10-06 14:59:05,226 [DEBUG]                      test_double_otsu.py:278 -                                    test_that_throws_for_inconsistent_percentages	test starts
+2017-10-06 14:59:05,226 [DEBUG]                      test_double_otsu.py:260 -                         test_that_throws_if_weights_and_positions_differ_in_size	test starts
+2017-10-06 14:59:05,226 [DEBUG]                      test_double_otsu.py: 74 -                                       test_that_creates_specified_number_of_bins	test starts
+2017-10-06 14:59:05,226 [DEBUG]                      test_double_otsu.py: 79 -                                      test_that_distribution_is_adjusted_for_data	test starts
+2017-10-06 14:59:05,243 [DEBUG]                      test_double_otsu.py: 29 -                                          test_that_returns_reasonable_thresholds	test starts
+2017-10-06 14:59:05,245 [DEBUG]                      test_double_otsu.py: 51 -                               test_that_returns_reasonable_thresholds_for_bigger	test starts
+2017-10-06 14:59:05,246 [DEBUG]                      test_double_otsu.py: 40 -                         test_that_returns_reasonable_thresholds_for_scaled_image	test starts
+2017-10-06 14:59:07,011 [DEBUG]                      test_double_otsu.py: 25 -                                                                   test_that_runs	test starts
+2017-10-06 14:59:07,026 [DEBUG]                      test_double_otsu.py:186 -                                                    test_that_indices_are_present	test starts
+2017-10-06 14:59:07,026 [DEBUG]                      test_double_otsu.py:175 -                                             test_that_matrices_have_proper_shape	test starts
+2017-10-06 14:59:07,026 [DEBUG]                      test_double_otsu.py:160 -                                     test_that_throws_on_excessive_number_of_bins	test starts
+2017-10-06 14:59:07,026 [DEBUG]                      test_double_otsu.py:153 -                                          test_that_throws_on_negative_thresholds	test starts
+2017-10-06 14:59:07,042 [DEBUG]                      test_double_otsu.py:165 -                           test_that_throws_on_threshold1_greater_than_threshold2	test starts
+2017-10-06 14:59:07,043 [DEBUG]                      test_double_otsu.py:170 -                         test_that_throws_on_threshold_grater_than_number_of_bins	test starts
+2017-10-06 14:59:07,048 [DEBUG]                      test_double_otsu.py:339 -                                          test_that_returns_reasonable_thresholds	test starts
+2017-10-06 14:59:07,048 [DEBUG]                      test_double_otsu.py:361 -                               test_that_returns_reasonable_thresholds_for_bigger	test starts
+2017-10-06 14:59:07,048 [DEBUG]                      test_double_otsu.py:350 -                         test_that_returns_reasonable_thresholds_for_scaled_image	test starts
+2017-10-06 14:59:07,063 [DEBUG]                      test_double_otsu.py:335 -                                                                   test_that_runs	test starts
+2017-10-06 14:59:07,063 [DEBUG]                      test_double_otsu.py:135 -                     test_that_percentages_are_taken_between_primitive_thresholds	test starts
+2017-10-06 14:59:07,063 [DEBUG]                      test_double_otsu.py:140 -                          test_that_percentages_are_taken_between_some_thresholds	test starts
+2017-10-06 14:59:07,063 [DEBUG]                      test_double_otsu.py:118 -                                         test_that_throws_on_excessive_thresholds	test starts
+2017-10-06 14:59:07,079 [DEBUG]                      test_double_otsu.py:111 -                                          test_that_throws_on_negative_thresholds	test starts
+2017-10-06 14:59:07,079 [DEBUG]                      test_double_otsu.py:125 -                           test_that_throws_on_threshold1_greater_than_threshold2	test starts
+2017-10-06 14:59:07,079 [DEBUG]                      test_double_otsu.py:130 -                         test_that_throws_on_threshold_grater_than_number_of_bins	test starts
+2017-10-06 14:59:07,079 [DEBUG]                      test_double_otsu.py:318 -                                             test_that_throws_for_excessive_means	test starts
+2017-10-06 14:59:07,079 [DEBUG]                      test_double_otsu.py:303 -                                       test_that_throws_for_excessive_percentages	test starts
+2017-10-06 14:59:07,095 [DEBUG]                      test_double_otsu.py:313 -                                              test_that_throws_for_negative_means	test starts
+2017-10-06 14:59:07,095 [DEBUG]                      test_double_otsu.py:308 -                                        test_that_throws_for_negative_percentages	test starts
+2017-10-06 14:59:07,095 [DEBUG]                      test_double_otsu.py:298 -                              test_that_throws_for_percentages_not_summing_to_one	test starts
+2017-10-06 14:59:07,126 [DEBUG]                        test_laplacian.py: 34 -                                       test_laplacian_calls_opencv_implementation	test starts
+2017-10-06 14:59:07,126 [DEBUG]                        test_laplacian.py: 25 -                                                  test_laplacian_normalizes_image	test starts
+2017-10-06 14:59:07,126 [DEBUG]                        test_laplacian.py: 19 -                                               test_laplacian_throws_on_non_image	test starts
+2017-10-06 14:59:07,164 [ERROR]                               wavelet.py: 91 -                                                                         __init__	angles must be nonempty
+2017-10-06 14:59:07,164 [ERROR]                               wavelet.py: 87 -                                                                         __init__	sizes must be nonempty
+2017-10-06 14:59:07,164 [ERROR]                               wavelet.py: 99 -                                                                         __init__	standard deviations must be nonempty
+2017-10-06 14:59:07,164 [ERROR]                               wavelet.py: 95 -                                                                         __init__	wavelengths must be nonempty
+2017-10-06 14:59:07,195 [ERROR]                               wavelet.py: 18 -                                                                          __new__	Kernel size must be positive, was 0
+2017-10-06 14:59:07,195 [ERROR]                               wavelet.py: 50 -                                                                          __new__	KernelStandardDeviation must be non-negative, was -1
+2017-10-06 14:59:07,211 [ERROR]                               wavelet.py: 29 -                                                                          __new__	RotationAngle must be in range [0; 360], was 360
+2017-10-06 14:59:07,211 [ERROR]                               wavelet.py: 29 -                                                                          __new__	RotationAngle must be in range [0; 360], was -1
+2017-10-06 14:59:07,227 [ERROR]                               wavelet.py: 39 -                                                                          __new__	SineWaveLength must be positive, was 0
