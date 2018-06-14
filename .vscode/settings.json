@@ -1,0 +1,10 @@
+{
+  "editor.tabSize": 4,
+  "editor.detectIndentation": false,
+  "python.linting.pylintEnabled": true,
+  "python.linting.enabled": true,
+  "files.exclude": {
+      "**/.git": true,
+      "**/__pycache__": true
+  }
+}
