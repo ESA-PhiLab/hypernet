@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 
 try:
-    PATH = 'C:\\Users\\mmarcinkiewicz\\Desktop\\Hyperspectral_Images\\'
+    PATH = ''
     os.listdir(PATH)
 except:
     try:
