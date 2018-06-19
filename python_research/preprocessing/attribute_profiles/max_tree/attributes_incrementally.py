@@ -49,19 +49,24 @@ class StandardDeviation(IncrementalAttribute):
                     str(type(other))))
 
     def _combine_mean(self, other):
-        return ((self.n_samples * self.mean) + (other.n_samples *
-                                                other.mean)) / \
-               (self.n_samples + other.n_samples)
+        return (
+            ((self.n_samples * self.mean) + (other.n_samples * other.mean)) /
+            (self.n_samples + other.n_samples)
+        )
 
     def _combine_variance(self, other):
         combined_mean = self._combine_mean(other)
-        combined_variance = 1. / (self.n_samples + other.n_samples - 1.0) * \
-                            ((self.n_samples - 1) * self.variance +
-                             self.n_samples *pow(self.mean,2) +
-                             (other.n_samples - 1) * other.variance +
-                             other.n_samples * pow(other.mean, 2) -
-                             (self.n_samples + other.n_samples) *
-                             pow(combined_mean, 2))
+        combined_variance = (
+            1. / (self.n_samples + other.n_samples - 1.0) *
+            (
+                (self.n_samples - 1) * self.variance +
+                self.n_samples * pow(self.mean, 2) +
+                (other.n_samples - 1) * other.variance +
+                other.n_samples * pow(other.mean, 2) -
+                (self.n_samples + other.n_samples) * pow(combined_mean, 2)
+            )
+        )
+
         return combined_variance
 
     def get(self):
@@ -72,7 +77,6 @@ class StandardDeviation(IncrementalAttribute):
 
 
 class LengthOfDiagonal(IncrementalAttribute):
-
     def __init__(self, far_left, far_right, far_up, far_down):
         self.far_left = far_left
         self.far_right = far_right
@@ -80,14 +84,10 @@ class LengthOfDiagonal(IncrementalAttribute):
         self.far_down = far_down
 
     def __add__(self, other):
-        far_left = other.far_left if other.far_left < self.far_left else \
-            self.far_left
-        far_right = other.far_right if other.far_right > self.far_right else \
-            self.far_right
-        far_up = other.far_up if other.far_up < self.far_up else \
-            self.far_up
-        far_down = other.far_down if other.far_down > self.far_down else \
-            self.far_down
+        far_left = other.far_left if other.far_left < self.far_left else self.far_left
+        far_right = other.far_right if other.far_right > self.far_right else self.far_right
+        far_up = other.far_up if other.far_up < self.far_up else self.far_up
+        far_down = other.far_down if other.far_down > self.far_down else self.far_down
 
         return LengthOfDiagonal(far_left, far_right, far_up, far_down)
 
@@ -98,7 +98,6 @@ class LengthOfDiagonal(IncrementalAttribute):
 
 
 class FirstHuMoment(IncrementalAttribute):
-
     def __init__(self, pixel=None, moments=None):
         if moments is None and pixel is not None:
             gray_level = float(pixel.gray_level)
@@ -119,12 +118,15 @@ class FirstHuMoment(IncrementalAttribute):
             self.y_mass_center = moments.y_mass_center
 
     def _combine_mass_centers(self, other):
-        x_mass_center_combined = (self.x_mass_center * self.moment00 +
-                                  other.x_mass_center * other.moment00) / (
-                                  self.moment00 + other.moment00)
-        y_mass_center_combined = (self.y_mass_center * self.moment00 +
-                                  other.y_mass_center * other.moment00) / (
-                                  self.moment00 + other.moment00)
+        x_mass_center_combined = (
+            (self.x_mass_center * self.moment00 + other.x_mass_center * other.moment00) /
+            (self.moment00 + other.moment00)
+        )
+        y_mass_center_combined = (
+            (self.y_mass_center * self.moment00 + other.y_mass_center * other.moment00) /
+            (self.moment00 + other.moment00)
+        )
+
         return x_mass_center_combined, y_mass_center_combined
 
     def __add__(self, other):
@@ -134,9 +136,11 @@ class FirstHuMoment(IncrementalAttribute):
         moment01 = self.moment01 + other.moment01
         moment20 = self.moment20 + other.moment20
         moment02 = self.moment02 + other.moment02
-        return FirstHuMoment(moments=Moments(moment00, moment10, moment01,
-                                             moment20, moment02,
-                                             x_mass_center, y_mass_center))
+        return FirstHuMoment(
+            moments=Moments(
+                moment00, moment10, moment01, moment20, moment02, x_mass_center, y_mass_center
+            )
+        )
 
     def _calculate_central_moments(self):
         central_moment20 = self.moment20 - self.x_mass_center * self.moment10

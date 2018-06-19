@@ -1,7 +1,9 @@
 {
   "editor.tabSize": 4,
   "editor.detectIndentation": false,
-  "python.linting.pylintEnabled": true,
+  "python.linting.pylintEnabled": false,
+  "python.linting.pep8Enabled": true,
+  "python.linting.pep8Path": "pycodestyle",
   "python.linting.enabled": true,
   "files.exclude": {
       "**/.git": true,

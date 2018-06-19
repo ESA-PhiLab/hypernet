@@ -12,7 +12,7 @@ from experiments.EUROMICRO2018.builders.tf_builder import TensorFlowModel
 from experiments.EUROMICRO2018.builders.tf_models import uff_hu_tf
 from experiments.EUROMICRO2018.builders.keras_builder import uff_hu
 
-'''Local run: 
+'''Local run:
 -d pavia -s 0 -e 1 -b 100 -v 1 -l -c -o <output_path>
 '''
 
@@ -83,10 +83,10 @@ def main():
     if config['convert']:
         # model = uff_hu(input_shape, num_classes=n_classes)
         convert_model(model, config)
-        #TODO implement automatic quantization
+        # TODO implement automatic quantization
 
 
-    # # path = 'C:\\Ecores\\Hyperspectral\\quantized_model.pb'
+    # path = 'C:\\Ecores\\Hyperspectral\\quantized_model.pb'
     # prediction = model.load_from_pb(os.path.join(config['output_dir'], "quantized_model.pb"), X_test)
     # # prediction = model.load_from_pb(path, X_test)
     # print('Test Accuracy quantized:', accuracy_score(np.argmax(y_test, axis=1), np.argmax(prediction, axis=1)))

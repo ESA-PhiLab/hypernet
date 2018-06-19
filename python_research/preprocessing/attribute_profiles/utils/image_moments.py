@@ -21,8 +21,7 @@ def central_moments(array, x_mass_center, y_mass_center):
     for pixel in array:
         moment20 += float(pixel.gray_level) * pow(pixel.x - x_mass_center, 2)
         moment02 += float(pixel.gray_level) * pow(pixel.y - y_mass_center, 2)
-        moment11 += float(pixel.gray_level) * (pixel.x - x_mass_center) * \
-                    (pixel.y - y_mass_center)
+        moment11 += float(pixel.gray_level) * (pixel.x - x_mass_center) * (pixel.y - y_mass_center)
     return moment20, moment02, moment11
 
 
