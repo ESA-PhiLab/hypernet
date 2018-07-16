@@ -1,17 +1,7 @@
 import numpy as np
 from copy import copy
 from sklearn.decomposition import PCA
-from ..utils.data_types import StdDevIncrementally, Pixel
-
-
-def construct_std_dev_matrix(image):
-    image_width = image.shape[1]
-    std_dev_matrix = np.zeros(image.shape, dtype=StdDevIncrementally)
-    for index, pixel_value in enumerate(image.flatten()):
-        x = index % image_width
-        y = int(index / image_width)
-        std_dev_matrix[y, x] = StdDevIncrementally(value=pixel_value)
-    return std_dev_matrix
+from typing import List, Tuple
 
 
 def radix_sort(array, base=10):
@@ -39,15 +29,6 @@ def radix_sort(array, base=10):
     return array
 
 
-def push_root(root: Pixel, array):
-    for index, s_pixel in enumerate(array):
-        if root.gray_level < root.gray_level:
-            array.insert(index, root)
-            return array
-    array.append(root)
-    return array
-
-
 def calculate_pca(x, n_components):
     original_shape = x.shape
     x = x.reshape((original_shape[0] * original_shape[1], original_shape[2]))
@@ -68,38 +49,3 @@ def invert_array(x):
     max_ = np.amax(x)
     x = max_ - x
     return x
-
-
-def thickening_area(x, tree, areas):
-    area_thinned = np.zeros((x.shape[0], x.shape[1], len(areas)))
-    for index, area in enumerate(areas):
-        img_a = tree.filter('area', area)
-        area_thinned[:, :, index] = copy(img_a)
-    return area_thinned
-
-
-def thickening_std(x, tree, stds):
-    std_thinned = np.zeros((x.shape[0], x.shape[1], len(stds)))
-    for index, std in enumerate(stds):
-        img = tree.filter('stdev', std)
-        std_thinned[:, :, index] = copy(img)
-    return std_thinned
-
-
-def thinning_std(x, tree, stds):
-    std_thinned = np.zeros((x.shape[0], x.shape[1], len(stds)))
-    for index, std in enumerate(stds):
-        img = tree.filter('stdev', std)
-        img = invert_array(img)
-        std_thinned[:, :, index] = copy(img)
-        index += 1
-    return std_thinned
-
-
-def thinning_area(x, tree, areas):
-    area_thinned = np.zeros((x.shape[0], x.shape[1], len(areas)))
-    for index, area in enumerate(areas):
-        img_a = tree.filter('area', area)
-        img_a = invert_array(img_a)
-        area_thinned[:, :, index] = copy(img_a)
-    return area_thinned
