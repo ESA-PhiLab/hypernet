@@ -6,11 +6,11 @@ from .utils.aux_functions import invert_array
 
 def attribute_thickening(tree, attribute: str, thresholds: List,
                         shape_2d: Tuple):
-    thinned = np.zeros(shape_2d + (len(thresholds), ))
+    thickened = np.zeros(shape_2d + (len(thresholds), ))
     for index, threshold in enumerate(thresholds):
         filtered = tree.filter(attribute, threshold)
-        thinned[:, :, index] = copy(filtered)
-    return thinned
+        thickened[:, :, index] = copy(filtered)
+    return thickened
 
 
 def attribute_thinning(tree, attribute: str, thresholds: List,

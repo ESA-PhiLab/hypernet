@@ -5,7 +5,7 @@ from python_research.preprocessing.attribute_profiles.utils.data_types import Pi
 from python_research.preprocessing.attribute_profiles\
     .max_tree.attribute_matrix_construction import matrix_construction_builder
 from python_research.preprocessing.attribute_profiles.utils.aux_functions \
-    import radix_sort
+    import radix_sort, invert_array
 
 IMAGE_DIMS = 2
 IMPLEMENTED_ATTRIBUTES = ['area', 'stddev', 'diagonal', 'moment']

@@ -1,6 +1,5 @@
 from math import sqrt
-from ..utils.image_moments import spatial_moments, mass_center, central_moments, \
-    normalize_central_moments
+from ..utils.data_types import Moments
 
 
 class IncrementalAttribute:
@@ -56,15 +55,13 @@ class StandardDeviation(IncrementalAttribute):
 
     def _combine_variance(self, other):
         combined_mean = self._combine_mean(other)
-        combined_variance = 1. / (self.n_samples + other.n_samples - 1.0) * ((
-                                                                                     self.n_samples - 1) * self.variance + self.n_samples *
-                                                                             pow(
-                                                                                 self.mean,
-                                                                                 2) + (
-                                                                                         other.n_samples - 1) * other.variance +
-                                                                             other.n_samples * pow(
-                    other.mean, 2) - (self.n_samples +
-                                      other.n_samples) * pow(combined_mean, 2))
+        combined_variance = 1. / (self.n_samples + other.n_samples - 1.0) * \
+                            ((self.n_samples - 1) * self.variance +
+                             self.n_samples *pow(self.mean,2) +
+                             (other.n_samples - 1) * other.variance +
+                             other.n_samples * pow(other.mean, 2) -
+                             (self.n_samples + other.n_samples) *
+                             pow(combined_mean, 2))
         return combined_variance
 
     def get(self):
@@ -102,22 +99,55 @@ class LengthOfDiagonal(IncrementalAttribute):
 
 class FirstHuMoment(IncrementalAttribute):
 
-    def __init__(self, pixel):
-        if type(pixel) != list:
-            self.pixels = [pixel]
+    def __init__(self, pixel=None, moments=None):
+        if moments is None and pixel is not None:
+            gray_level = float(pixel.gray_level)
+            self.x_mass_center = float(pixel.x)
+            self.y_mass_center = float(pixel.y)
+            self.moment00 = gray_level
+            self.moment10 = self.x_mass_center * gray_level
+            self.moment01 = self.y_mass_center * gray_level
+            self.moment20 = pow(self.x_mass_center, 2) * gray_level
+            self.moment02 = pow(self.y_mass_center, 2) * gray_level
         else:
-            self.pixels = pixel
+            self.moment00 = moments.moment00
+            self.moment10 = moments.moment10
+            self.moment01 = moments.moment01
+            self.moment20 = moments.moment20
+            self.moment02 = moments.moment02
+            self.x_mass_center = moments.x_mass_center
+            self.y_mass_center = moments.y_mass_center
+
+    def _combine_mass_centers(self, other):
+        x_mass_center_combined = (self.x_mass_center * self.moment00 +
+                                  other.x_mass_center * other.moment00) / (
+                                  self.moment00 + other.moment00)
+        y_mass_center_combined = (self.y_mass_center * self.moment00 +
+                                  other.y_mass_center * other.moment00) / (
+                                  self.moment00 + other.moment00)
+        return x_mass_center_combined, y_mass_center_combined
 
     def __add__(self, other):
-        pixels = self.pixels + other.pixels
-        return FirstHuMoment(pixels)
+        x_mass_center, y_mass_center = self._combine_mass_centers(other)
+        moment00 = self.moment00 + other.moment00
+        moment10 = self.moment10 + other.moment10
+        moment01 = self.moment01 + other.moment01
+        moment20 = self.moment20 + other.moment20
+        moment02 = self.moment02 + other.moment02
+        return FirstHuMoment(moments=Moments(moment00, moment10, moment01,
+                                             moment20, moment02,
+                                             x_mass_center, y_mass_center))
+
+    def _calculate_central_moments(self):
+        central_moment20 = self.moment20 - self.x_mass_center * self.moment10
+        central_moment02 = self.moment02 - self.y_mass_center * self.moment01
+        denominator = pow(self.moment00, 2)
+        if denominator == 0:
+            return 0, 0
+        central_moment20 = central_moment20 / denominator
+        central_moment02 = central_moment02 / denominator
+        return central_moment20, central_moment02
 
     def get(self):
-        x_mass_center, y_mass_center = mass_center(self.pixels)
-        moment00 = spatial_moments(self.pixels, 0, 0)
-        moment20, moment02, moment11 = central_moments(self.pixels,
-                                                       x_mass_center,
-                                                       y_mass_center)
-        norm_moment20, norm_moment02, norm_moment11 = \
-            normalize_central_moments(moment20, moment02, moment11, moment00)
-        return pow(norm_moment20 - norm_moment02, 2) + 4 * pow(norm_moment11, 2)
+        central_moment20, central_moment02 = self._calculate_central_moments()
+        return central_moment20 + central_moment02
