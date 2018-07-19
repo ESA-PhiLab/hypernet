@@ -1,4 +1,6 @@
+keras
 pyqt5
 pyqtgraph
 numpy
 pypubsub
+sklearn
