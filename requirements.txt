@@ -1,6 +1,8 @@
-keras
 pyqt5
 pyqtgraph
 numpy
 pypubsub
+tensorflow
+keras
 sklearn
+matplotlib

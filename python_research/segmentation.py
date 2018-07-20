@@ -6,6 +6,7 @@ import random
 from typing import List, Sequence
 import numpy as np
 
+
 class Point:
     '''
     Represents a point in 2D space
@@ -24,6 +25,7 @@ class Point:
     def __str__(self):
         return "({}, {})".format(self.x, self.y)
 
+
 class Rect:
     '''
     Represents a rectangle
@@ -35,19 +37,20 @@ class Rect:
         self.max = Point(max_x, max_y)
 
     @staticmethod
-    def from_points(p1: Point, p2: Point):
+    def from_points(point1: Point, point2: Point):
         '''
         Creates a rectangle from two points
-        :param p1: (Point) Point at first corner
-        :param p2: (Point) Point at second corner
+        :param point1: (Point) Point at first corner
+        :param point2: (Point) Point at second corner
         '''
-        return Rect(p1.x, p1.y, p2.x, p2.y)
+        return Rect(point1.x, point1.y, point2.x, point2.y)
 
     width = property(lambda self: self.max.x - self.min.x)
     height = property(lambda self: self.max.y - self.min.y)
 
     def __str__(self):
         return "({}, {}, {}, {})".format(self.min.x, self.min.y, self.max.x, self.max.y)
+
 
 class BoundTree:
     '''
@@ -154,6 +157,7 @@ class BoundTree:
         self.sub_trees.append(BoundTree(sub_bounds1))
         self.sub_trees.append(BoundTree(sub_bounds2))
 
+
 def get_bounding_rect(rects: List[Rect]) -> Rect:
     '''
     Calculates a bounding rectangle for other rectangles
@@ -171,6 +175,7 @@ def get_bounding_rect(rects: List[Rect]) -> Rect:
         max_y = max_y if rect.max.y < max_y else rect.max.y
 
     return Rect(min_x, min_y, max_x, max_y)
+
 
 def randomize_positions(rects: List[Rect], bounds: Rect) -> Sequence[Rect]:
     '''
@@ -190,6 +195,7 @@ def randomize_positions(rects: List[Rect], bounds: Rect) -> Sequence[Rect]:
         x = area.min.x + random.randint(0, area.width - rect.width)
         y = area.min.y + random.randint(0, area.height - rect.height)
         yield Rect(x, y, x + rect.width, y + rect.height)
+
 
 def extract_rect(dataset: np.ndarray, rect: Rect) -> np.ndarray:
     '''

@@ -5,8 +5,8 @@ import pyqtgraph as pg
 import numpy as np
 import random
 from pubsub import pub
+from colors import distinct_colors
 
-colors = np.random.randint(0, 255, (9, 3))
 
 class FilePicker(QtGui.QWidget):
     def __init__(self, parent):
@@ -46,7 +46,16 @@ class FilePicker(QtGui.QWidget):
         self.filePathEdit.setText(selectedFiles[0])
         print(selectedFiles)
 
+
+class PointSelectedEvent:
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
+
+
 class ImageWidget(QtGui.QWidget):
+    pointSelected = QtCore.pyqtSignal(PointSelectedEvent)
+
     def __init__(self, parent, fullColor):
         super(ImageWidget, self).__init__(parent)
 
@@ -54,19 +63,57 @@ class ImageWidget(QtGui.QWidget):
 
         if fullColor:
             data = np.random.randint(0, 255, (200, 200, 3))
-            data = np.random.normal(size=(200, 200)) #.randint(0, 255, (200, 200, 3))
+            data = np.random.normal(size=(200, 200))
         else:
-            dataIndicies = np.random.choice(colors.shape[0], (200, 200))
-            data = colors[dataIndicies, :]
+            dataIndicies = np.random.choice(distinct_colors.shape[0], (200, 200))
+            data = distinct_colors[dataIndicies, :]
 
+        self.image = data
         self.imageView.ui.roiBtn.hide()
         self.imageView.ui.menuBtn.hide()
-        self.imageView.setImage(data)
-        self.imageView.view.setLimits(xMin=-10, xMax=data.shape[0] + 10, yMin=-10, yMax=data.shape[1] + 10)
+        self.imageView.setImage(self.image)
+        self.imageView.view.setLimits(
+            xMin=-10,
+            xMax=self.image.shape[0] + 10,
+            yMin=-10,
+            yMax=self.image.shape[1] + 10
+        )
+
+        self.blink = 0
+        self.pen = QtGui.QPen(QtGui.QColor(0xff, 0x00, 0x00))
+        self.pen.setWidthF(0.25)
+        self.roi = pg.CircleROI([30.5, 40.5], [2, 2], movable=False, pen=self.pen)
+        self.imageView.addItem(self.roi)
+        self.roi.removeHandle(0)
 
         verticalLayout = QtGui.QVBoxLayout()
         verticalLayout.addWidget(self.imageView)
         self.setLayout(verticalLayout)
+
+        self.imageView.scene.sigMouseClicked.connect(self.onClick)
+
+    def onBlink(self):
+        self.blink = self.blink + 25
+        if self.blink >= 2 * 256:
+            self.blink = 0
+
+        if self.blink < 256:
+            self.pen.setColor(QtGui.QColor(self.blink, self.blink, self.blink))
+        else:
+            self.pen.setColor(QtGui.QColor(512 - self.blink, 512 - self.blink, 512 - self.blink))
+        self.roi.setPen(self.pen)
+        self.imageView.view.update()
+
+    def onPointSelected(self, event):
+        self.roi.setPos(event.x - 0.5, event.y - 0.5)
+
+    def onClick(self, event):
+        if event.buttons() != QtCore.Qt.LeftButton:
+            return
+        items = self.imageView.view.mapSceneToView(event.scenePos())
+        self.pointSelected.emit(PointSelectedEvent(int(items.x()), int(items.y())))
+        self.imageView.view.update()
+
 
 class DataToolbox(QtGui.QWidget):
     def __init__(self, parent):
@@ -107,10 +154,15 @@ class DataToolbox(QtGui.QWidget):
         self.blueComboBox.addItem('573 nm')
         self.gridLayout.addWidget(self.blueComboBox, 4, 1, 1, 2)
 
-        spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        spacerItem = QtGui.QSpacerItem(
+            20,
+            40,
+            QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding
+        )
         self.gridLayout.addItem(spacerItem, 5, 0, 1, 3)
 
         self.setLayout(self.gridLayout)
+
 
 class LearningToolbox(QtGui.QWidget):
     def __init__(self, parent):
@@ -126,21 +178,72 @@ class LearningToolbox(QtGui.QWidget):
 
         self.gridLayout.addWidget(self.legendLabel, 1, 0, 1, 1)
 
+        scrollArea = QtGui.QScrollArea(self)
+        self.frame = QtGui.QFrame(self)
+
         self.verticalLayout = QtGui.QVBoxLayout()
+        self.verticalLayout.setContentsMargins(0, 0, 0, 0)
 
-        self.addLayer('Asphalt', colors[0])
-        self.addLayer('Meadows', colors[1])
-        self.addLayer('Gravel', colors[2])
-        self.addLayer('Trees', colors[3])
-        self.addLayer('Painted metal sheets', colors[4])
-        self.addLayer('Bare Soil', colors[5])
-        self.addLayer('Bitumen', colors[6])
-        self.addLayer('Self-Blocking Bricks', colors[7])
-        self.addLayer('Shadows', colors[8])
+        scrollArea.setWidget(self.frame)
+        scrollArea.setWidgetResizable(True)
+        self.frame.setLayout(self.verticalLayout)
 
-        self.gridLayout.addLayout(self.verticalLayout, 2, 0, 1, 1)
+        self.gridLayout.addWidget(scrollArea, 2, 0, 1, 1)
 
-        spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.addLayer('Asphalt', distinct_colors[0])
+        self.addLayer('Meadows', distinct_colors[1])
+        self.addLayer('Gravel', distinct_colors[2])
+        self.addLayer('Trees', distinct_colors[3])
+        self.addLayer('Painted metal sheets', distinct_colors[4])
+        self.addLayer('Bare Soil', distinct_colors[5])
+        self.addLayer('Bitumen', distinct_colors[6])
+        self.addLayer('Self-Blocking Bricks', distinct_colors[7])
+        self.addLayer('Shadows', distinct_colors[8])
+
+        self.addLayer('Asphalt', distinct_colors[0])
+        self.addLayer('Meadows', distinct_colors[1])
+        self.addLayer('Gravel', distinct_colors[2])
+        self.addLayer('Trees', distinct_colors[3])
+        self.addLayer('Painted metal sheets', distinct_colors[4])
+        self.addLayer('Bare Soil', distinct_colors[5])
+        self.addLayer('Bitumen', distinct_colors[6])
+        self.addLayer('Self-Blocking Bricks', distinct_colors[7])
+        self.addLayer('Shadows', distinct_colors[8])
+        self.addLayer('Asphalt', distinct_colors[0])
+        self.addLayer('Meadows', distinct_colors[1])
+        self.addLayer('Gravel', distinct_colors[2])
+        self.addLayer('Trees', distinct_colors[3])
+        self.addLayer('Painted metal sheets', distinct_colors[4])
+        self.addLayer('Bare Soil', distinct_colors[5])
+        self.addLayer('Bitumen', distinct_colors[6])
+        self.addLayer('Self-Blocking Bricks', distinct_colors[7])
+        self.addLayer('Shadows', distinct_colors[8])
+        self.addLayer('Asphalt', distinct_colors[0])
+        self.addLayer('Meadows', distinct_colors[1])
+        self.addLayer('Gravel', distinct_colors[2])
+        self.addLayer('Trees', distinct_colors[3])
+        self.addLayer('Painted metal sheets', distinct_colors[4])
+        self.addLayer('Bare Soil', distinct_colors[5])
+        self.addLayer('Bitumen', distinct_colors[6])
+        self.addLayer('Self-Blocking Bricks', distinct_colors[7])
+        self.addLayer('Shadows', distinct_colors[8])
+        self.addLayer('Asphalt', distinct_colors[0])
+        self.addLayer('Meadows', distinct_colors[1])
+        self.addLayer('Gravel', distinct_colors[2])
+        self.addLayer('Trees', distinct_colors[3])
+        self.addLayer('Painted metal sheets', distinct_colors[4])
+        self.addLayer('Bare Soil', distinct_colors[5])
+        self.addLayer('Bitumen', distinct_colors[6])
+        self.addLayer('Self-Blocking Bricks', distinct_colors[7])
+        self.addLayer('Shadows', distinct_colors[8])
+
+        # self.gridLayout.addLayout(self.verticalLayout, 2, 0, 1, 1)
+
+        spacerItem = QtGui.QSpacerItem(
+            20,
+            40,
+            QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding
+        )
         self.gridLayout.addItem(spacerItem, 3, 0, 1, 1)
 
         self.learnButton = QtGui.QPushButton(self)
@@ -151,7 +254,8 @@ class LearningToolbox(QtGui.QWidget):
 
     def addLayer(self, name, color):
         horizontalLayout = QtGui.QHBoxLayout()
-        colorButton = QtGui.QPushButton(self)
+        colorButton = QtGui.QPushButton(self.frame)
+        colorButton.clicked.connect(self.changeColor)
 
         pixmap = QtGui.QPixmap(32, 32)
         pixmap.fill()
@@ -163,11 +267,15 @@ class LearningToolbox(QtGui.QWidget):
         colorButton.setIconSize(QtCore.QSize(16, 16))
 
         horizontalLayout.addWidget(colorButton)
-        nameEdit = QtGui.QLineEdit(self)
+        nameEdit = QtGui.QLineEdit(self.frame)
         nameEdit.setText(name)
         horizontalLayout.addWidget(nameEdit)
 
         self.verticalLayout.addLayout(horizontalLayout)
+
+    def changeColor(self, event):
+        QtGui.QColorDialog.getColor()
+
 
 class AnalysisToolbox(QtGui.QWidget):
     def __init__(self, parent):
@@ -189,19 +297,23 @@ class AnalysisToolbox(QtGui.QWidget):
 
         self.verticalLayout = QtGui.QVBoxLayout()
 
-        self.addLayer('Asphalt', colors[0])
-        self.addLayer('Meadows', colors[1])
-        self.addLayer('Gravel', colors[2])
-        self.addLayer('Trees', colors[3])
-        self.addLayer('Painted metal sheets', colors[4])
-        self.addLayer('Bare Soil', colors[5])
-        self.addLayer('Bitumen', colors[6])
-        self.addLayer('Self-Blocking Bricks', colors[7])
-        self.addLayer('Shadows', colors[8])
+        self.addLayer('Asphalt', distinct_colors[0])
+        self.addLayer('Meadows', distinct_colors[1])
+        self.addLayer('Gravel', distinct_colors[2])
+        self.addLayer('Trees', distinct_colors[3])
+        self.addLayer('Painted metal sheets', distinct_colors[4])
+        self.addLayer('Bare Soil', distinct_colors[5])
+        self.addLayer('Bitumen', distinct_colors[6])
+        self.addLayer('Self-Blocking Bricks', distinct_colors[7])
+        self.addLayer('Shadows', distinct_colors[8])
 
         self.gridLayout.addLayout(self.verticalLayout, 2, 0, 1, 2)
 
-        spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        spacerItem = QtGui.QSpacerItem(
+            20,
+            40,
+            QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding
+        )
         self.gridLayout.addItem(spacerItem, 3, 0, 1, 2)
 
         self.analyseButton = QtGui.QPushButton(self)
@@ -236,6 +348,7 @@ class AnalysisToolbox(QtGui.QWidget):
 
         self.verticalLayout.addLayout(horizontalLayout)
 
+
 class ImageWithToolbox(QtGui.QWidget):
     def __init__(self, parent, image, toolbox):
         super(ImageWithToolbox, self).__init__(parent)
@@ -247,8 +360,9 @@ class ImageWithToolbox(QtGui.QWidget):
 
         self.setLayout(verticalLayout)
 
+
 class dockdemo(QtGui.QMainWindow):
-    def __init__(self, parent = None):
+    def __init__(self, parent=None):
         super(dockdemo, self).__init__(parent)
 
         bar = self.menuBar()
@@ -262,20 +376,45 @@ class dockdemo(QtGui.QMainWindow):
         dataImage = ImageWidget(self, True)
         dataToolbox = DataToolbox(self)
         dataDockWidget = QtGui.QDockWidget(self)
+        dataDockWidget.setFeatures(
+            QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable
+        )
         dataDockWidget.setWidget(ImageWithToolbox(self, dataImage, dataToolbox))
         dataDockWidget.setWindowTitle('Input')
 
         learningImage = ImageWidget(self, False)
         learningToolbox = LearningToolbox(self)
         learningDockWidget = QtGui.QDockWidget(self)
+        learningDockWidget.setFeatures(
+            QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable
+        )
         learningDockWidget.setWidget(ImageWithToolbox(self, learningImage, learningToolbox))
         learningDockWidget.setWindowTitle('Ground-truth')
 
         analysisImage = ImageWidget(self, False)
         analysisToolbox = AnalysisToolbox(self)
         analysisDockWidget = QtGui.QDockWidget(self)
+        analysisDockWidget.setFeatures(
+            QtGui.QDockWidget.DockWidgetMovable | QtGui.QDockWidget.DockWidgetFloatable
+        )
         analysisDockWidget.setWidget(ImageWithToolbox(self, analysisImage, analysisToolbox))
         analysisDockWidget.setWindowTitle('Analysis')
+
+        timer = QtCore.QTimer(self)
+        timer.timeout.connect(dataImage.onBlink)
+        timer.timeout.connect(learningImage.onBlink)
+        timer.timeout.connect(analysisImage.onBlink)
+        timer.start(50)
+
+        dataImage.pointSelected.connect(dataImage.onPointSelected)
+        dataImage.pointSelected.connect(learningImage.onPointSelected)
+        dataImage.pointSelected.connect(analysisImage.onPointSelected)
+        learningImage.pointSelected.connect(dataImage.onPointSelected)
+        learningImage.pointSelected.connect(learningImage.onPointSelected)
+        learningImage.pointSelected.connect(analysisImage.onPointSelected)
+        analysisImage.pointSelected.connect(dataImage.onPointSelected)
+        analysisImage.pointSelected.connect(learningImage.onPointSelected)
+        analysisImage.pointSelected.connect(analysisImage.onPointSelected)
 
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea, dataDockWidget)
         self.addDockWidget(QtCore.Qt.TopDockWidgetArea, learningDockWidget)
@@ -292,11 +431,13 @@ class dockdemo(QtGui.QMainWindow):
 
         self.setWindowTitle('HyperNet')
 
+
 def main():
     app = QtGui.QApplication(sys.argv)
     ex = dockdemo()
     ex.show()
     sys.exit(app.exec_())
+
 
 if __name__ == '__main__':
     main()
