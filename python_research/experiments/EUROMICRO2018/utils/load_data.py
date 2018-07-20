@@ -11,11 +11,11 @@ import matplotlib.pyplot as plt
 try:
     PATH = ''
     os.listdir(PATH)
-except:
+except OSError:
     try:
         PATH = '/mnt/morpheus/Hyperspectral_Images'
         os.listdir(PATH)
-    except:
+    except OSError:
         PATH = '/home/econib/jenkins/workspace/Hyperspectral_Imagining/Datasets'
 
 DATA = {'indiana': 'Indian_pines_corrected.npy',
@@ -100,6 +100,3 @@ def load_data(dataset_name: str) -> Tuple[np.ndarray, np.ndarray]:
         data = np.load(dataset_name)
         ground_truth = np.load(dataset_name.replace('corrected', 'gt'))
         return data.transpose((2, 0, 1)).astype(np.float), ground_truth
-
-
-

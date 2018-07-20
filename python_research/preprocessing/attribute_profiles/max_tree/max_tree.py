@@ -3,9 +3,9 @@ from copy import copy
 from typing import List, Dict
 from python_research.preprocessing.attribute_profiles.utils.data_types import Pixel
 from python_research.preprocessing.attribute_profiles\
-    .max_tree.attribute_matrix_construction import matrix_construction_builder
-from python_research.preprocessing.attribute_profiles.utils.aux_functions \
-    import radix_sort, invert_array_values
+    .max_tree.attribute_matrix_construction import construct_matrix
+from operator import attrgetter
+
 
 IMAGE_DIMS = 2
 IMPLEMENTED_ATTRIBUTES = ['area', 'stddev', 'diagonal', 'moment']
@@ -13,39 +13,38 @@ NOT_PROCESSED = -1
 
 
 class MaxTree:
-    def __init__(self, image: np.ndarray,
-                 attributes_to_compute: List[str] = None):
+    def __init__(
+        self, image: np.ndarray,
+        attributes_to_compute: List[str] = None
+    ):
         if attributes_to_compute is None:
             attributes_to_compute = ['area']
         for attribute in attributes_to_compute:
             if attribute not in IMPLEMENTED_ATTRIBUTES:
                 raise ValueError(
-                    "Attribute {} is not implemented".format(attribute))
+                    "Attribute {} is not implemented".format(attribute)
+                )
         if image.ndim != IMAGE_DIMS:
-            raise ValueError("Image should have two dimensions, "
-                             "not {}".format(image.ndim))
+            raise ValueError(
+                "Image should have {} dimensions, not {}".format(IMAGE_DIMS, image.ndim)
+            )
         self.image = image
         self.parent = np.full(image.shape, NOT_PROCESSED, dtype=Pixel)
         self.zpar = np.zeros(image.shape, dtype=Pixel)
         self.s = []
         self.node_index = np.full(image.shape, -1)
         self.attribute_names = attributes_to_compute
-        print("Building tree...")
         self._build_tree()
         self._compute_nani()
-        print("Tree successfully built")
 
     def _get_neighbours(self, pixel: Pixel):
         neighbours = []
-        adjacency = [(i, j) for i in (-1, 0, 1) for j in (-1, 0, 1) if
-                     not (i == j == 0)]
+        adjacency = [(i, j) for i in (-1, 0, 1) for j in (-1, 0, 1) if not (i == j == 0)]
         for dx, dy in adjacency:
-            if 0 <= pixel.x + dx < self.image.shape[1] and 0 <= pixel.y + dy \
-                    < self.image.shape[0]:
+            if 0 <= pixel.x + dx < self.image.shape[1] and 0 <= pixel.y + dy < self.image.shape[0]:
                 x = pixel.x + dx
                 y = pixel.y + dy
-                gray_level = self.image[y, x]
-                neighbours.append(Pixel(x, y, gray_level))
+                neighbours.append(Pixel(x, y, self.image[y, x]))
         return neighbours
 
     def _sort_pixels(self):
@@ -54,7 +53,8 @@ class MaxTree:
             x = index % image_width
             y = int(index / image_width)
             self.s.append(Pixel(x, y, pixel_value))
-        self.s = radix_sort(self.s)
+
+        self.s = sorted(self.s, key=attrgetter('value'))
 
     def _find_root(self, pixel: Pixel):
         parent_pixel = self.zpar[pixel.coords]
@@ -85,9 +85,7 @@ class MaxTree:
     def _construct_attribute_matrices(self):
         attribute_matrices = dict()
         for attribute in self.attribute_names:
-            matrix_constructor = matrix_construction_builder(attribute)
-            attribute_matrices[attribute] = \
-                matrix_constructor.construct(self.image)
+            attribute_matrices[attribute] = construct_matrix(attribute, self.image)
         return attribute_matrices
 
     def _compute_attributes(self):
@@ -96,27 +94,30 @@ class MaxTree:
         attribute_matrices = self._construct_attribute_matrices()
         for pixel in reversed(self.s):
             for attribute_matrix in attribute_matrices.values():
-                attribute_matrix[self.parent[pixel.coords].coords] += \
-                    attribute_matrix[pixel.coords]
-            if self.image[self.parent[pixel.coords].coords] != self.image[
-                pixel.coords] or self.parent[pixel.coords] == pixel:
+                attribute_matrix[self.parent[pixel.coords].coords] += attribute_matrix[pixel.coords]
+            if (
+                self.image[self.parent[pixel.coords].coords] != self.image[pixel.coords] or
+                self.parent[pixel.coords] == pixel
+            ):
                 sorted_lvroots.append(pixel)
                 nlvroots += 1
         return sorted_lvroots, nlvroots, attribute_matrices
 
-    def _fill_nani(self, sorted_lvroots: List,
-                   attribute_matrices: Dict[str, np.ndarray]):
+    def _fill_nani(
+        self,
+        sorted_lvroots: List,
+        attribute_matrices: Dict[str, np.ndarray]
+    ):
         for index, pixel in enumerate(reversed(sorted_lvroots)):
             self.node_index[pixel.coords] = index
             self.parent_gray_level_relation[index, 0] = self.node_index[
-                self.parent[
-                    pixel.coords].coords]
-            self.parent_gray_level_relation[index, 1] = self.image[
-                pixel.coords]
+                self.parent[pixel.coords].coords
+            ]
+            self.parent_gray_level_relation[index, 1] = self.image[pixel.coords]
             for attribute_name in self.attribute_values.keys():
-                self.attribute_values[attribute_name][index] = \
-                    attribute_matrices[
-                        attribute_name][pixel.coords].get()
+                self.attribute_values[attribute_name][index] = attribute_matrices[
+                    attribute_name
+                ][pixel.coords].get()
 
     def _fill_remaining_positions(self):
         node_index_width = self.node_index.shape[1]
@@ -124,15 +125,16 @@ class MaxTree:
             x = index % node_index_width
             y = int(index / node_index_width)
             if self.node_index[y, x] == -1:
-                self.node_index[y, x] = self.node_index[self.parent[y,
-                                                                    x].coords]
+                self.node_index[y, x] = self.node_index[
+                    self.parent[y, x].coords
+                ]
 
     def _compute_nani(self):
-        sorted_lvroots, nlvroots, attribute_matrices = \
-            self._compute_attributes()
+        sorted_lvroots, nlvroots, attribute_matrices = self._compute_attributes()
         self.parent_gray_level_relation = np.zeros((nlvroots, 2))
-        self.attribute_values = {attribute_name: np.zeros((nlvroots,)) for
-                                 attribute_name in self.attribute_names}
+        self.attribute_values = {
+            attribute_name: np.zeros((nlvroots,)) for attribute_name in self.attribute_names
+        }
         self._fill_nani(sorted_lvroots, attribute_matrices)
         self._fill_remaining_positions()
 
@@ -140,7 +142,6 @@ class MaxTree:
         to_keep = self.attribute_values[attribute] < threshold
         return ~to_keep
 
-    # noinspection PyTypeChecker
     def _direct_filter(self, attribute, threshold):
         to_keep = self._define_removed_nodes(attribute, threshold)
         to_keep[0] = True

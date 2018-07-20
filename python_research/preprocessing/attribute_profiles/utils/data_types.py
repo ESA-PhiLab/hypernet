@@ -3,26 +3,17 @@ from typing import NamedTuple
 
 
 class Pixel:
-
-    def __init__(self, x, y, gray_level):
+    def __init__(self, x, y, value):
         self.x = np.uint16(x)
         self.y = np.uint16(y)
-        self.gray_level = gray_level
+        self.value = value
 
     @property
     def coords(self):
         return self.y, self.x
 
-    def __eq__(self, other):
-        if type(other) != Pixel:
-            return False
-        return self.x == other.x and self.y == other.y
-
-    def __lt__(self, other):
-        if type(other) != Pixel:
-            return self.gray_level < other
-        else:
-            return self.gray_level < other.gray_level
+    def __float__(self):
+        return float(self.value)
 
 
 class Moments(NamedTuple):
