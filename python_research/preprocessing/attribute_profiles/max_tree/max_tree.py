@@ -58,7 +58,7 @@ class MaxTree:
 
     def _find_root(self, pixel: Pixel):
         parent_pixel = self.zpar[pixel.coords]
-        if parent_pixel != pixel:
+        if parent_pixel.coords != pixel.coords:
             self.zpar[pixel.coords] = self._find_root(parent_pixel)
         return self.zpar[pixel.coords]
 
