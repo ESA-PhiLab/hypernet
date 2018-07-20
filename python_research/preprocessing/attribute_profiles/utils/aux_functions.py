@@ -1,7 +1,5 @@
 import numpy as np
-from copy import copy
 from sklearn.decomposition import PCA
-from typing import List, Tuple
 
 
 def calculate_pca(x, n_components):
@@ -19,3 +17,4 @@ def normalize_pca(pc, lower_limit, upper_limit):
 
 def invert_array(x):
     return np.amax(x) - x
+

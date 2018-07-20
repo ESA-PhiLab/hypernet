@@ -4,9 +4,8 @@ from typing import List, Dict
 from python_research.preprocessing.attribute_profiles.utils.data_types import Pixel
 from python_research.preprocessing.attribute_profiles\
     .max_tree.attribute_matrix_construction import construct_matrix
-from python_research.preprocessing.attribute_profiles.utils.aux_functions \
-    import invert_array
 from operator import attrgetter
+
 
 IMAGE_DIMS = 2
 IMPLEMENTED_ATTRIBUTES = ['area', 'stddev', 'diagonal', 'moment']
@@ -59,7 +58,7 @@ class MaxTree:
 
     def _find_root(self, pixel: Pixel):
         parent_pixel = self.zpar[pixel.coords]
-        if parent_pixel != pixel:
+        if parent_pixel.coords != pixel.coords:
             self.zpar[pixel.coords] = self._find_root(parent_pixel)
         return self.zpar[pixel.coords]
 
