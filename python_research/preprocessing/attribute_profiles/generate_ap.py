@@ -1,7 +1,7 @@
 import numpy as np
 from copy import copy
 from typing import List, Tuple
-from .utils.aux_functions import invert_array
+from .utils.aux_functions import invert_array_values
 
 
 def attribute_thickening(tree, attribute: str, thresholds: List,
@@ -18,7 +18,7 @@ def attribute_thinning(tree, attribute: str, thresholds: List,
     thinned = np.zeros(shape_2d + (len(thresholds), ))
     for index, threshold in enumerate(thresholds):
         filtered = tree.filter(attribute, threshold)
-        filtered = invert_array(filtered)
+        filtered = invert_array_values(filtered)
         thinned[:, :, index] = copy(filtered)
     return thinned
 

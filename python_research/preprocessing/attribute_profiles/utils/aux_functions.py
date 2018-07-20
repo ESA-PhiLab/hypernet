@@ -1,10 +1,10 @@
 import numpy as np
-from copy import copy
+from typing import List
 from sklearn.decomposition import PCA
-from typing import List, Tuple
+from ..utils.data_types import Pixel
 
 
-def radix_sort(array, base=10):
+def radix_sort(array: List[Pixel], base=10):
     def list_to_buckets(array, base, iteration):
         buckets = [[] for _ in range(base)]
         for number in array:
@@ -45,7 +45,7 @@ def normalize_pca(pc, lower_limit, upper_limit):
     return pc
 
 
-def invert_array(x):
+def invert_array_values(x):
     max_ = np.amax(x)
     x = max_ - x
     return x

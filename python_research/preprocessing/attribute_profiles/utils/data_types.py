@@ -1,6 +1,7 @@
 import numpy as np
 from typing import NamedTuple
 
+
 class Pixel:
 
     def __init__(self, x, y, gray_level):
