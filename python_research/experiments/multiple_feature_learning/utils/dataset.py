@@ -142,14 +142,3 @@ class Dataset:
                     neighbours = self._get_neighbours(point)
                     train_indices[label] += neighbours
         self.train_indices = train_indices
-
-import cProfile
-import re
-import pstats
-def run():
-    d = Dataset("C:\\Users\MMyller\Documents\datasets\Indian\Indian_pines_corrected.npy",
-                "C:\\Users\MMyller\Documents\datasets\Indian\Indian_pines_gt.npy", 1, (5,5))
-    a = 5
-cProfile.run('run()', 'elo')
-# p = pstats.Stats('elo')
-# p.strip_dirs().sort_stats(-1).print_stats()
