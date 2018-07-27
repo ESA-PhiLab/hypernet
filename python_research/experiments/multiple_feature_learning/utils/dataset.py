@@ -1,16 +1,19 @@
 import random
-import numpy as np
+from copy import copy
 from math import ceil
 from typing import Tuple, List
-from copy import copy, deepcopy
+
+import numpy as np
 from keras.utils import to_categorical
-from python_research.segmentation import Point
+from scipy.ndimage.filters import gaussian_filter
+
 from python_research.experiments.multiple_feature_learning.utils.data_types \
     import TrainTestIndices
-
+from python_research.segmentation import Point
 
 PROBABILITY_THRESHOLD = 0.5
 BACKGROUND_LABEL = 0
+SIGMA = 2
 
 
 class Dataset:
@@ -107,7 +110,8 @@ class Dataset:
         x = np.hstack((x, h_padding))
         return x
 
-    def _construct_sets(self, data_cube, indices, padding_size):
+    @staticmethod
+    def _construct_sets(data_cube, indices, padding_size):
         x, y = list(), list()
         for label in indices:
             for point in indices[label]:
@@ -135,10 +139,17 @@ class Dataset:
         label_probabilities = [1 - (label_count - min_labels_count) /
                                (max_labels_count - min_labels_count)
                                for label_count in self.no_train_samples]
-        train_indices = deepcopy(self.train_indices)
+        neighbours = set()
         for label in self.train_indices.keys():
             for point in self.train_indices[label]:
                 if label_probabilities[label] > PROBABILITY_THRESHOLD:
-                    neighbours = self._get_neighbours(point)
-                    train_indices[label] += neighbours
-        self.train_indices = train_indices
+                    neighbours.update(self._get_neighbours(point))
+            neighbours.update(self.train_indices[label])
+            self.train_indices[label] = list(neighbours)
+            neighbours = set()
+
+    def _apply_gaussian_filter(self):
+        filtered_cube = np.empty(self.x.shape)
+        for wavelength in range(self.x.shape[-1]):
+            filtered_cube[:, :, wavelength] = gaussian_filter(self.x[:, :, wavelength], SIGMA)
+        return filtered_cube

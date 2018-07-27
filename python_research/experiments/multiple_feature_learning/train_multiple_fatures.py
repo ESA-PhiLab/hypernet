@@ -52,7 +52,7 @@ def main():
     settings = build_settings_for_dataset(args.dataset_name)
 
     model = build_multiple_features_model(settings,
-                                          len(original_data.labels) - 1,
+                                          len(np.unique(original_data.y)) - 1,
                                           original_data.x.shape[-1],
                                           area_data.x.shape[-1],
                                           stddev_data.x.shape[-1],

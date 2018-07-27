@@ -24,7 +24,7 @@ def main():
     settings = build_settings_for_dataset(args.dataset_name)
 
     model = build_single_feature_model(settings,
-                                       len(data.labels) - 1,
+                                       len(np.unique(data.y)) - 1,
                                        data.x.shape[-1])
 
     model.fit(x=data.x_train,
@@ -37,8 +37,8 @@ def main():
 
     model = load_model(os.path.join(args.output_dir, args.output_name) + "_model")
 
-    model.evaluate(x=data.x_test,
-                   y=data.y_test)
+    print(model.evaluate(x=data.x_test,
+                         y=data.y_test))
     times = timer.times
     np.savetxt(os.path.join(args.output_dir, args.output_name) + "_times.csv",
                times,
