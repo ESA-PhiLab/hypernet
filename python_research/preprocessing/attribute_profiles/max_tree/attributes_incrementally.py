@@ -100,14 +100,14 @@ class LengthOfDiagonal(IncrementalAttribute):
 class FirstHuMoment(IncrementalAttribute):
     def __init__(self, pixel=None, moments=None):
         if moments is None and pixel is not None:
-            gray_level = float(pixel.gray_level)
+            pixel_value = float(pixel.value)
             self.x_mass_center = float(pixel.x)
             self.y_mass_center = float(pixel.y)
-            self.moment00 = gray_level
-            self.moment10 = self.x_mass_center * gray_level
-            self.moment01 = self.y_mass_center * gray_level
-            self.moment20 = pow(self.x_mass_center, 2) * gray_level
-            self.moment02 = pow(self.y_mass_center, 2) * gray_level
+            self.moment00 = pixel_value
+            self.moment10 = self.x_mass_center * pixel_value
+            self.moment01 = self.y_mass_center * pixel_value
+            self.moment20 = pow(self.x_mass_center, 2) * pixel_value
+            self.moment02 = pow(self.y_mass_center, 2) * pixel_value
         else:
             self.moment00 = moments.moment00
             self.moment10 = moments.moment10

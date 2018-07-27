@@ -17,4 +17,3 @@ def normalize_pca(pc, lower_limit, upper_limit):
 
 def invert_array(x):
     return np.amax(x) - x
-
