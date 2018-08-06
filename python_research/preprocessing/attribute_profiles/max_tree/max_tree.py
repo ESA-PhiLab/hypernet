@@ -169,7 +169,7 @@ class MaxTree:
         M = self.parent_gray_level_relation.shape[0]
         index_fix = [None for _ in range(0, M)]
         index_fix[0] = ~to_keep[0]
-        for i in range(1, M):
+        for i in range(1, M - 1):
             index_fix[i] = index_fix[i - 1] + ~to_keep[i]
             lut[i] = lut[i] + index_fix[i]
         return lut

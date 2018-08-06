@@ -20,19 +20,25 @@ class Dataset:
     def __init__(self, dataset_file_path: str, gt_filepath: str,
                  no_train_samples: float, neighbours_size: Tuple[int, int],
                  validation_set_portion=0.1,
+                 normalize=True,
+                 classes_count: int=None,
                  train_test_indices: TrainTestIndices=None):
         self.x = np.load(dataset_file_path)
         self.y = np.load(gt_filepath)
-        self.x = self._normalize_data()
+        self.min_value = np.min(self.x)
+        self.max_value = np.max(self.x)
+        if normalize:
+            self.x = self._normalize_data()
         self.no_train_samples = self._get_train_samples_per_class_count(no_train_samples)
         if train_test_indices is None:
             self.train_indices, self.test_indices = self._get_train_test_indices()
+            self.val_indices = self._get_val_indices(validation_set_portion)
         else:
             self.train_indices = train_test_indices.train_indices
             self.test_indices = train_test_indices.test_indices
-        self.val_indices = self._get_val_indices(validation_set_portion)
+            self.val_indices = train_test_indices.val_indices
 
-        self._label_augmentation()
+        # self._label_augmentation()
 
         padding_size = neighbours_size[0] % ceil(float(neighbours_size[0]) / 2.)
         padded_cube = self.get_padded_cube(padding_size)
@@ -41,32 +47,62 @@ class Dataset:
         self.x_test, self.y_test = self._construct_sets(padded_cube, self.test_indices, padding_size)
         self.x_val, self.y_val = self._construct_sets(padded_cube, self.val_indices, padding_size)
 
-        labels_count = len(np.unique(self.y)) - 1
-        self.y_train = to_categorical(self.y_train - 1, labels_count)
-        self.y_test = to_categorical(self.y_test - 1, labels_count)
-        self.y_val = to_categorical(self.y_val - 1, labels_count)
+        if classes_count is None:
+            classes_count = len(np.unique(self.y)) - 1
+        self.y_train = to_categorical(self.y_train - 1, classes_count)
+        self.y_test = to_categorical(self.y_test - 1, classes_count)
+        self.y_val = to_categorical(self.y_val - 1, classes_count)
+
+    def __add__(self, other):
+        if self.x_train.size != 0 and other.x_train.size != 0:
+            self.x_train = np.concatenate([self.x_train, other.x_train], axis=0)
+            self.y_train = np.concatenate([self.y_train, other.y_train], axis=0)
+        if self.x_test.size != 0 and other.x_test.size != 0:
+            self.x_test = np.concatenate([self.x_test, other.x_test], axis=0)
+            self.y_test = np.concatenate([self.y_test, other.y_test], axis=0)
+        if self.x_val.size != 0 and other.x_val.size != 0:
+            self.x_val = np.concatenate([self.x_val, other.x_val], axis=0)
+            self.y_val = np.concatenate([self.y_val, other.y_val], axis=0)
+        self.min_value = self.min_value if self.min_value < other.min_value else other.min_value
+        self.max_value = self.max_value if self.max_value > other.max_value else other.max_value
+        return self
 
     def _normalize_data(self):
         min_ = np.min(self.x, keepdims=True)
         max_ = np.max(self.x, keepdims=True)
         return (self.x - min_) / (max_ - min_)
 
+    def normalize_train_test_data(self):
+        self.x_train[self.x_train != 0] = (self.x_train[self.x_train != 0] - self.min_value) / (self.max_value - self.min_value)
+        self.x_val[self.x_val != 0] = (self.x_val[self.x_val != 0] - self.min_value) / (self.max_value - self.min_value)
+
     def _get_train_samples_per_class_count(self, no_train_samples):
-        _, classes_count = np.unique(self.y, return_counts=True)
+        labels, classes_count = np.unique(self.y, return_counts=True)
+        if BACKGROUND_LABEL in labels:
+            labels = np.delete(labels, BACKGROUND_LABEL)
+            classes_count = np.delete(classes_count, BACKGROUND_LABEL)
+        train_samples_per_class = dict.fromkeys(labels)
 
         # treat as a percentage of samples
         if 1 > no_train_samples > 0:
-            train_samples_per_class = np.array(classes_count * no_train_samples,
-                                               dtype=np.uint16)
+            for index, label in enumerate(sorted(train_samples_per_class.keys())):
+                train_samples_per_class[label] = classes_count[index] * no_train_samples
 
         # samples count strictly for Indiana
         elif no_train_samples == 1:
-            train_samples_per_class = [0, 30, 250, 250, 150, 250, 250, 20, 250,
-                                       15, 250, 250, 250, 150, 250, 50, 50]
-            train_samples_per_class = np.array(train_samples_per_class)
+            counts = [30, 250, 250, 150, 250, 250, 20, 250, 15, 250, 250, 250,
+                      150, 250, 50, 50]
+            for index, label in enumerate(sorted(train_samples_per_class.keys())):
+                train_samples_per_class[label] = counts[index]
+
+        # all samples as train samples
+        elif no_train_samples == -1:
+            for index, label in enumerate(sorted(train_samples_per_class.keys())):
+                train_samples_per_class[label] = classes_count[index]
+
         else:
-            train_samples_per_class = [no_train_samples for _ in classes_count]
-            train_samples_per_class = np.array(train_samples_per_class)
+            for index, label in enumerate(sorted(train_samples_per_class.keys())):
+                train_samples_per_class[label] = no_train_samples
         return train_samples_per_class
 
     def _get_train_test_indices(self):
@@ -81,12 +117,13 @@ class Dataset:
         return self._randomly_select_samples(label_indices)
 
     def _get_val_indices(self, validation_set_portion):
-        val_samples_per_class = self.no_train_samples * validation_set_portion
-        val_samples_per_class = np.array(val_samples_per_class, dtype=np.int16)
+        val_samples_per_label = dict.fromkeys(self.no_train_samples.keys())
+        for label in self.no_train_samples.keys():
+            val_samples_per_label[label] = int(self.no_train_samples[label] * validation_set_portion)
         val_indices = dict()
         for label in self.train_indices.keys():
-            val_indices[label] = self.train_indices[label][0:val_samples_per_class[label]]
-            self.train_indices[label] = self.train_indices[label][val_samples_per_class[label]:]
+            val_indices[label] = self.train_indices[label][0:val_samples_per_label[label]]
+            self.train_indices[label] = self.train_indices[label][val_samples_per_label[label]:]
         return val_indices
 
     def _randomly_select_samples(self, label_indices):

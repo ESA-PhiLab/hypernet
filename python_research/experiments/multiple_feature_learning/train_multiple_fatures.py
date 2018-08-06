@@ -20,6 +20,7 @@ def main():
                             args.neighbourhood)
 
     train_test_indices = TrainTestIndices(original_data.train_indices,
+                                          original_data.val_indices,
                                           original_data.test_indices)
 
     area_data = Dataset(args.area_path,
@@ -49,7 +50,7 @@ def main():
                                  save_best_only=True)
     timer = TimeHistory()
 
-    settings = build_settings_for_dataset(args.dataset_name)
+    settings = build_settings_for_dataset(args.neighbourhood)
 
     model = build_multiple_features_model(settings,
                                           len(np.unique(original_data.y)) - 1,
