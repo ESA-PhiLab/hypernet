@@ -1,20 +1,10 @@
 import argparse
 import os
 import numpy as np
-import math
-import sys
-
-from keras.utils import to_categorical
-import torchvision.transforms as transforms
-from torchvision.utils import save_image
-
-from torch.utils.data import DataLoader
-from torchvision import datasets
 from torch.autograd import Variable
 
 from torch.utils.data import DataLoader
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.autograd as autograd
 import torch
 
@@ -28,6 +18,7 @@ os.makedirs('GAN', exist_ok=True)
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_path', type=str, help='Path to the dataset in .npy format')
 parser.add_argument('--gt_path', type=str, help='Path to the ground truth file in .npy format')
+parser.add_argument('--artifacts_path', type=str, help='Path in which artifacts will be stored')
 parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs of training')
 parser.add_argument('--batch_size', type=int, default=64, help='size of the batches')
 parser.add_argument('--lr', type=float, default=0.0002, help='adam: learning rate')
@@ -159,3 +150,5 @@ for epoch in range(opt.n_epochs):
 
             batches_done += opt.n_critic
     print("[Epoch {}/{}] [D loss {}] [G loss {}] [C loss {}]".format(epoch, opt.n_epochs, np.average(d_losses), np.average(g_losses), np.average(c_losses)))
+
+torch.save(generator.state_dict(), opt.artifacts_path)
