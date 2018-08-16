@@ -3,7 +3,7 @@ import numpy as np
 from keras.models import Model, Sequential
 from keras.optimizers import Adam
 from keras.layers import MaxPooling2D, Flatten, Conv2D, Softmax, Input, \
-    concatenate
+    concatenate, Conv1D, MaxPooling1D, Dense, BatchNormalization
 from ..utils.data_types import ModelSettings
 
 
@@ -96,6 +96,23 @@ def build_single_feature_model(settings: ModelSettings,
                      padding='valid'))
     model.add(Flatten())
     model.add(Softmax())
+    model.compile(optimizer=optimizer,
+                  metrics=['accuracy'],
+                  loss='categorical_crossentropy')
+    return model
+
+
+def build_1d_model(input_shape, filters, kernel_size, classes_count):
+    optimizer = Adam()
+
+    model = Sequential()
+    model.add(Conv1D(filters, kernel_size, input_shape=input_shape, padding="valid", activation='relu'))
+    model.add(BatchNormalization())
+    model.add(MaxPooling1D(pool_size=2))
+    model.add(Flatten())
+    model.add(Dense(units=512, activation='relu'))
+    model.add(Dense(units=128, activation='relu'))
+    model.add(Dense(units=classes_count, activation='softmax'))
     model.compile(optimizer=optimizer,
                   metrics=['accuracy'],
                   loss='categorical_crossentropy')

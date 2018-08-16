@@ -70,7 +70,7 @@ class Dataset:
     def _normalize_data(self):
         min_ = np.min(self.x, keepdims=True)
         max_ = np.max(self.x, keepdims=True)
-        return (self.x - min_) / (max_ - min_)
+        return (self.x.astype(np.float64) - min_) / (max_ - min_)
 
     def normalize_train_test_data(self):
         self.x_train[self.x_train != 0] = (self.x_train[self.x_train != 0] - self.min_value) / (self.max_value - self.min_value)
@@ -86,7 +86,7 @@ class Dataset:
         # treat as a percentage of samples
         if 1 > no_train_samples > 0:
             for index, label in enumerate(sorted(train_samples_per_class.keys())):
-                train_samples_per_class[label] = classes_count[index] * no_train_samples
+                train_samples_per_class[label] = int(classes_count[index] * no_train_samples)
 
         # samples count strictly for Indiana
         elif no_train_samples == 1:
@@ -102,7 +102,7 @@ class Dataset:
 
         else:
             for index, label in enumerate(sorted(train_samples_per_class.keys())):
-                train_samples_per_class[label] = no_train_samples
+                train_samples_per_class[label] = int(no_train_samples)
         return train_samples_per_class
 
     def _get_train_test_indices(self):
@@ -157,6 +157,16 @@ class Dataset:
                          point.y:point.y + padding_size * 2 + 1, :]))
                 y.append(label)
         return np.array(x), np.array(y)
+
+    def _construct_1d_sets(self, indices):
+        x, y = list(), list()
+        for label in indices:
+            for point in indices[label]:
+                sample = copy(self.x[point.x, point.y, :])
+                sample = sample.reshape(sample.shape[-1], 1)
+                x.append(sample)
+                y.append(label)
+        return np.array(x).astype(np.float64), np.array(y).astype(np.float64)
 
     def _get_neighbours(self, point: Point) -> List[Point]:
         neighbours = []

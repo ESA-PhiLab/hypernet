@@ -129,7 +129,7 @@ def parse_single_feature():
     parser.add_argument('-w',
                         action='store',
                         dest='nb_samples',
-                        type=int,
+                        type=float,
                         help="Number of training samples used")
     parser.add_argument('-b',
                         action="store",
@@ -184,6 +184,7 @@ def parse_grids():
                         dest="neighbourhood",
                         nargs="+",
                         type=int,
+                        default=[1, 1],
                         help="Neighbourhood size of the pixel")
     parser.add_argument('-w',
                         action='store',
@@ -207,4 +208,16 @@ def parse_grids():
                         type=int,
                         default=1,
                         help='Verbosity of training')
+    parser.add_argument('-t',
+                        action="store",
+                        dest="kernels",
+                        type=int,
+                        default=1,
+                        help='Number of kernels in convolutional layers')
+    parser.add_argument('-o',
+                        action="store",
+                        dest="kernel_size",
+                        type=int,
+                        default=1,
+                        help='Size of the kernel in convolutional layers')
     return parser.parse_args()
