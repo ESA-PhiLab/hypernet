@@ -153,14 +153,16 @@ for epoch in range(opt.n_epochs):
     metrics = open(METRICS_PATH, 'a')
     metrics.write("{},{},{},{},{}\n".format(epoch, epoch_duration, np.average(d_losses), np.average(g_losses), np.average(c_losses)))
     metrics.close()
-    if best_generator_loss > np.average(g_losses):
+    generator_loss = np.average(g_losses)
+    if best_generator_loss > generator_loss:
         torch.save(generator.state_dict(), BEST_MODEL_PATH)
+        best_generator_loss = generator_loss
         epochs_without_improvement = 0
     else:
         epochs_without_improvement += 1
         if epochs_without_improvement >= opt.patience:
             print("{} epochs without improvement, terminating".format(opt.patience))
             break
-    print("[Epoch {}/{}] [D loss {}] [G loss {}] [C loss {}]".format(epoch, opt.n_epochs, np.average(d_losses), np.average(g_losses), np.average(c_losses)))
+    print("[Epoch {}/{}] [D loss {}] [G loss {}] [C loss {}]".format(epoch, opt.n_epochs, np.average(d_losses), generator_loss, np.average(c_losses)))
 
 
