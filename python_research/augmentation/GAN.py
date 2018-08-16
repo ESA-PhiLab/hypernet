@@ -53,6 +53,7 @@ classifier = Classifier(input_shape, len(transformed_dataset.classes))
 if cuda:
     generator.cuda()
     discriminator.cuda()
+    classifier.cuda()
 
 # Optimizers
 optimizer_G = torch.optim.RMSprop(generator.parameters(), lr=0.001, centered=True)
