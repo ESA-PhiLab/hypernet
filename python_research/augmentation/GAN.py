@@ -151,4 +151,5 @@ for epoch in range(opt.n_epochs):
             batches_done += opt.n_critic
     print("[Epoch {}/{}] [D loss {}] [G loss {}] [C loss {}]".format(epoch, opt.n_epochs, np.average(d_losses), np.average(g_losses), np.average(c_losses)))
 
-torch.save(generator.state_dict(), opt.artifacts_path)
+os.makedirs(opt.artifacts_path, exist_ok=True)
+torch.save(generator.state_dict(), os.path.join(opt.artifacts_path, "generator_model"))
