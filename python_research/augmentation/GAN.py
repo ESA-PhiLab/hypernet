@@ -91,9 +91,9 @@ for epoch in range(opt.n_epochs):
     for i, (samples, labels) in enumerate(dataloader):
 
         # Configure input
-        real_samples = Variable(samples.type(torch.FloatTensor))
+        real_samples = Variable(samples.type(torch.cuda.FloatTensor))
         batch_size = len(real_samples)
-        labels = Variable(labels.type(torch.LongTensor))
+        labels = Variable(labels.type(torch.cuda.LongTensor))
         # ---------------------
         #  Train Discriminator and Classifier
         # ---------------------
@@ -102,10 +102,10 @@ for epoch in range(opt.n_epochs):
         optimizer_C.zero_grad()
 
         # Sample noise as generator input
-        noise = Variable(Tensor(np.random.normal(0, 1, (batch_size, input_shape))).type(torch.FloatTensor))
+        noise = Variable(Tensor(np.random.normal(0, 1, (batch_size, input_shape))).type(torch.cuda.FloatTensor))
 
         # Generate a batch of samples
-        reshaped_labels = torch.reshape(labels, (labels.shape[0], 1)).type(torch.FloatTensor)
+        reshaped_labels = torch.reshape(labels, (labels.shape[0], 1)).type(torch.cuda.FloatTensor)
         noise_with_labels = torch.cat([noise, reshaped_labels], dim=1)
         fake_samples = generator(noise_with_labels)
 
