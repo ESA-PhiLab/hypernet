@@ -53,9 +53,9 @@ if cuda:
     classifier.cuda()
 
 # Optimizers
-optimizer_G = torch.optim.RMSprop(generator.parameters(), lr=0.001, centered=True)
-optimizer_D = torch.optim.RMSprop(discriminator.parameters(), lr=0.001, centered=True)
-optimizer_C = torch.optim.RMSprop(classifier.parameters(), lr=0.001, centered=True)
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.001)
+optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.001)
+optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.001)
 classifier_criterion = nn.CrossEntropyLoss()
 
 FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
@@ -138,7 +138,7 @@ for epoch in range(opt.n_epochs):
 
             # Generate a batch of images
             fake_samples = generator(noise_with_labels)
-            # Loss measures generator's ability to fool the discriminator and generate sample with correct class
+            # Loss measures generator's ability to fool the discriminator and generate samples from correct class
             # Train on fake images
             fake_discriminator_validity = discriminator(fake_samples)
             fake_classifier_validity = classifier(fake_samples)
