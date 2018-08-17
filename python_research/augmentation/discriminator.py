@@ -16,5 +16,4 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, input_data):
-        validity = self.model(input_data)
-        return validity
+        return self.model(input_data)

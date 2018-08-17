@@ -21,5 +21,4 @@ class Generator(nn.Module):
         )
 
     def forward(self, z):
-        img = self.model(z)
-        return img
+        return self.model(z)

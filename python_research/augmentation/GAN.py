@@ -23,8 +23,10 @@ parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs 
 parser.add_argument('--batch_size', type=int, default=64, help='size of the batches')
 parser.add_argument('--n_critic', type=int, default=2, help='number of training steps for discriminator per iter')
 parser.add_argument('--patience', type=int, default=50, help='Number of epochs withour improvement on generator loss after which training will be terminated')
+parser.add_argument('--verbose', type=bool, help="If True, metric will be printed after each epoch")
 opt = parser.parse_args()
-print(opt)
+if opt.verbose:
+    print(opt)
 
 CLASS_LABEL = 1
 METRICS_PATH = os.path.join(opt.artifacts_path, "metrics.csv")
@@ -42,7 +44,7 @@ dataloader = DataLoader(transformed_dataset, batch_size=opt.batch_size, shuffle=
 
 input_shape = transformed_dataset.x.shape[-1]
 
-# Initialize generator and discriminator
+# Initialize generator, discriminator and classifier
 generator = Generator(input_shape + CLASS_LABEL)
 discriminator = Discriminator(input_shape)
 classifier = Classifier(input_shape, len(transformed_dataset.classes))
@@ -79,7 +81,7 @@ def compute_gradient_penalty(D, real_samples, fake_samples):
 
 
 batches_done = 0
-best_generator_loss = np.inf
+best_loss = np.inf
 epochs_without_improvement = 0
 # ----------
 #  Training
@@ -136,7 +138,7 @@ for epoch in range(opt.n_epochs):
             #  Train Generator
             # -----------------
 
-            # Generate a batch of images
+            # Generate a batch of samples
             fake_samples = generator(noise_with_labels)
             # Loss measures generator's ability to fool the discriminator and generate samples from correct class
             # Train on fake images
@@ -151,18 +153,28 @@ for epoch in range(opt.n_epochs):
             batches_done += opt.n_critic
     epoch_duration = time() - epoch_start
     metrics = open(METRICS_PATH, 'a')
-    metrics.write("{},{},{},{},{}\n".format(epoch, epoch_duration, np.average(d_losses), np.average(g_losses), np.average(c_losses)))
+    metrics.write("{},{},{},{},{}\n".format(epoch,
+                                            epoch_duration,
+                                            np.average(d_losses),
+                                            np.average(g_losses),
+                                            np.average(c_losses)))
     metrics.close()
     generator_loss = np.average(g_losses)
-    if best_generator_loss > generator_loss:
+    classifier_loss = np.average(c_losses)
+    if best_loss > abs(generator_loss + classifier_loss):
         torch.save(generator.state_dict(), BEST_MODEL_PATH)
-        best_generator_loss = generator_loss
+        best_loss = abs(generator_loss + classifier_loss)
         epochs_without_improvement = 0
     else:
         epochs_without_improvement += 1
         if epochs_without_improvement >= opt.patience:
             print("{} epochs without improvement, terminating".format(opt.patience))
             break
-    print("[Epoch {}/{}] [D loss {}] [G loss {}] [C loss {}]".format(epoch, opt.n_epochs, np.average(d_losses), generator_loss, np.average(c_losses)))
+    if opt.verbose:
+        print("[Epoch {}/{}] [D loss {}] [G loss {}] [C loss {}]".format(epoch,
+                                                                         opt.n_epochs,
+                                                                         np.average(d_losses),
+                                                                         generator_loss,
+                                                                         np.average(c_losses)))
 
 
