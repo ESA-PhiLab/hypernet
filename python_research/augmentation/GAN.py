@@ -62,6 +62,8 @@ classifier_criterion = nn.CrossEntropyLoss()
 
 FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if cuda else torch.LongTensor
+max_label = float(max(np.unique(transformed_dataset.y)))
+max_label = FloatTensor([max_label])
 
 
 def compute_gradient_penalty(D, real_samples, fake_samples):
@@ -108,7 +110,7 @@ for epoch in range(opt.n_epochs):
 
         # Generate a batch of samples
         reshaped_labels = torch.reshape(labels, (labels.shape[0], 1)).type(FloatTensor)
-        noise_with_labels = torch.cat([noise, reshaped_labels], dim=1)
+        noise_with_labels = torch.cat([noise, reshaped_labels/max_label], dim=1)
         fake_samples = generator(noise_with_labels)
 
         # Real samples
