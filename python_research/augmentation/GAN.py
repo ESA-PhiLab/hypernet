@@ -163,9 +163,9 @@ for epoch in range(opt.n_epochs):
     metrics.close()
     generator_loss = np.average(g_losses)
     classifier_loss = np.average(c_losses)
-    if best_loss > abs(generator_loss + classifier_loss):
+    if best_loss > abs(generator_loss) + abs(classifier_loss):
         torch.save(generator.state_dict(), BEST_MODEL_PATH)
-        best_loss = abs(generator_loss + classifier_loss)
+        best_loss = abs(generator_loss) + abs(classifier_loss)
         epochs_without_improvement = 0
     else:
         epochs_without_improvement += 1
