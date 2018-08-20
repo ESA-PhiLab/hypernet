@@ -8,6 +8,7 @@ from torch.utils.data import DataLoader
 import torch.nn as nn
 import torch.autograd as autograd
 import torch
+from tensorboardX import SummaryWriter
 
 from python_research.augmentation.discriminator import Discriminator
 from python_research.augmentation.generator import Generator
@@ -21,7 +22,7 @@ parser.add_argument('--gt_path', type=str, help='Path to the ground truth file i
 parser.add_argument('--artifacts_path', type=str, help='Path in which artifacts will be stored')
 parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs of training')
 parser.add_argument('--batch_size', type=int, default=64, help='size of the batches')
-parser.add_argument('--n_critic', type=int, default=3, help='number of training steps for discriminator per iter')
+parser.add_argument('--n_critic', type=int, default=2, help='number of training steps for discriminator per iter')
 parser.add_argument('--patience', type=int, default=50, help='Number of epochs withour improvement on generator loss after which training will be terminated')
 parser.add_argument('--verbose', type=bool, help="If True, metric will be printed after each epoch")
 args = parser.parse_args()
@@ -31,6 +32,7 @@ if args.verbose:
 CLASS_LABEL = 1
 METRICS_PATH = os.path.join(args.artifacts_path, "metrics.csv")
 BEST_MODEL_PATH = os.path.join(args.artifacts_path, "best_model")
+writer = SummaryWriter(args.artifacts_path)
 
 os.makedirs(args.artifacts_path, exist_ok=True)
 
@@ -82,7 +84,6 @@ def compute_gradient_penalty(D, real_samples, fake_samples):
     return gradient_penalty
 
 
-batches_done = 0
 best_loss = np.inf
 epochs_without_improvement = 0
 # ----------
@@ -127,7 +128,7 @@ for epoch in range(args.n_epochs):
         gradient_penalty = compute_gradient_penalty(discriminator, real_samples.data, fake_samples.data)
         # Adversarial loss
         c_loss = classifier_criterion(real_classifier_validity, labels)
-        d_loss = torch.mean(real_discriminator_validity) - torch.mean(fake_discriminator_validity) + lambda_gp * gradient_penalty
+        d_loss = -torch.mean(real_discriminator_validity) + torch.mean(fake_discriminator_validity) + lambda_gp * gradient_penalty
         real.append(torch.mean(real_discriminator_validity).cpu().detach().numpy())
         fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
         d_loss.backward()
@@ -154,15 +155,15 @@ for epoch in range(args.n_epochs):
             # Loss measures generator's ability to fool the discriminator and generate samples from correct class
             # Train on fake images
             fake_discriminator_validity = discriminator(fake_samples)
+            real_discriminator_validity = discriminator(real_samples)
             fake_classifier_validity = classifier(fake_samples)
-            g_loss = abs(torch.mean(fake_discriminator_validity)) + classifier_criterion(fake_classifier_validity, labels)
+            g_loss = -torch.mean(fake_discriminator_validity) + classifier_criterion(fake_classifier_validity, labels)
             g_fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
             g_class.append(classifier_criterion(fake_classifier_validity, labels).cpu().detach().numpy())
             g_loss.backward()
             optimizer_G.step()
             g_losses.append(g_loss.item())
 
-            batches_done += args.n_critic
     epoch_duration = time() - epoch_start
     metrics = open(METRICS_PATH, 'a')
     metrics.write("{},{},{},{},{}\n".format(epoch,
@@ -182,6 +183,9 @@ for epoch in range(args.n_epochs):
         if epochs_without_improvement >= args.patience:
             print("{} epochs without improvement, terminating".format(args.patience))
             break
+    writer.add_scalars('GAN', {'D': np.average(d_losses),
+                               'G': np.average(g_losses),
+                               'C': np.average(c_losses)}, epoch)
     if args.verbose:
         print("[Epoch {}/{}] [D loss {}] [G loss {}] [C loss {}] [real: {} fake: {}] [g_fake {} g_class {}]".format(epoch,
                                                                          args.n_epochs,
