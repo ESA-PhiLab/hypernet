@@ -128,8 +128,8 @@ for epoch in range(args.n_epochs):
         # Adversarial loss
         c_loss = classifier_criterion(real_classifier_validity, labels)
         d_loss = torch.mean(real_discriminator_validity) - torch.mean(fake_discriminator_validity) + lambda_gp * gradient_penalty
-        real.append(torch.mean(real_discriminator_validity).detach().numpy())
-        fake.append(torch.mean(fake_discriminator_validity).detach().numpy())
+        real.append(torch.mean(real_discriminator_validity).cpu().detach().numpy())
+        fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
         d_loss.backward()
         c_loss.backward()
 
@@ -157,7 +157,7 @@ for epoch in range(args.n_epochs):
             fake_classifier_validity = classifier(fake_samples)
             g_loss = abs(torch.mean(fake_discriminator_validity)) + classifier_criterion(fake_classifier_validity, labels)
             g_fake.append(torch.mean(fake_discriminator_validity).detach().numpy())
-            g_class.append(classifier_criterion(fake_classifier_validity, labels).detach().numpy())
+            g_class.append(classifier_criterion(fake_classifier_validity, labels).cpu().detach().numpy())
             g_loss.backward()
             optimizer_G.step()
             g_losses.append(g_loss.item())
