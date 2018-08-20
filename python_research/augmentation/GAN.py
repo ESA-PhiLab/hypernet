@@ -156,7 +156,7 @@ for epoch in range(args.n_epochs):
             fake_discriminator_validity = discriminator(fake_samples)
             fake_classifier_validity = classifier(fake_samples)
             g_loss = abs(torch.mean(fake_discriminator_validity)) + classifier_criterion(fake_classifier_validity, labels)
-            g_fake.append(torch.mean(fake_discriminator_validity).detach().numpy())
+            g_fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
             g_class.append(classifier_criterion(fake_classifier_validity, labels).cpu().detach().numpy())
             g_loss.backward()
             optimizer_G.step()
