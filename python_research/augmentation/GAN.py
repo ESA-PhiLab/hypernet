@@ -22,7 +22,7 @@ parser.add_argument('--gt_path', type=str, help='Path to the ground truth file i
 parser.add_argument('--artifacts_path', type=str, help='Path in which artifacts will be stored')
 parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs of training')
 parser.add_argument('--batch_size', type=int, default=64, help='size of the batches')
-parser.add_argument('--n_critic', type=int, default=2, help='number of training steps for discriminator per iter')
+parser.add_argument('--n_critic', type=int, default=10, help='number of training steps for discriminator per iter')
 parser.add_argument('--patience', type=int, default=50, help='Number of epochs withour improvement on generator loss after which training will be terminated')
 parser.add_argument('--verbose', type=bool, help="If True, metric will be printed after each epoch")
 args = parser.parse_args()
@@ -57,9 +57,9 @@ if cuda:
     classifier.cuda()
 
 # Optimizers
-optimizer_G = torch.optim.RMSprop(generator.parameters(), lr=0.0001, centered=True)
-optimizer_D = torch.optim.RMSprop(discriminator.parameters(), lr=0.0001, centered=True)
-optimizer_C = torch.optim.RMSprop(classifier.parameters(), lr=0.001, centered=True)
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.0001)
+optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.0001)
+optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.001)
 classifier_criterion = nn.CrossEntropyLoss()
 
 FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
@@ -116,7 +116,7 @@ for epoch in range(args.n_epochs):
         # Generate a batch of samples
         reshaped_labels = torch.reshape(labels, (labels.shape[0], 1)).type(FloatTensor)
         noise_with_labels = torch.cat([noise, reshaped_labels/max_label], dim=1)
-        fake_samples = generator(noise_with_labels)
+        fake_samples = generator(noise_with_labels).detach()
 
         # Real samples
         real_discriminator_validity = discriminator(real_samples)
@@ -129,18 +129,18 @@ for epoch in range(args.n_epochs):
         # Adversarial loss
         c_loss = classifier_criterion(real_classifier_validity, labels)
         d_loss = -torch.mean(real_discriminator_validity) + torch.mean(fake_discriminator_validity) + lambda_gp * gradient_penalty
-        real.append(torch.mean(real_discriminator_validity).cpu().detach().numpy())
-        fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
         d_loss.backward()
         c_loss.backward()
 
         optimizer_D.step()
         optimizer_C.step()
+        real.append(torch.mean(real_discriminator_validity).cpu().detach().numpy())
+        fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
         d_losses.append(d_loss.item())
         c_losses.append(c_loss.item())
 
-        for p in discriminator.parameters():
-            p.data.clamp_(-0.01, 0.01)
+        # for p in discriminator.parameters():
+        #     p.data.clamp_(-0.01, 0.01)
 
         # Train the generator every n_critic steps
         if i % args.n_critic == 0:
@@ -158,10 +158,10 @@ for epoch in range(args.n_epochs):
             real_discriminator_validity = discriminator(real_samples)
             fake_classifier_validity = classifier(fake_samples)
             g_loss = -torch.mean(fake_discriminator_validity) + classifier_criterion(fake_classifier_validity, labels)
-            g_fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
-            g_class.append(classifier_criterion(fake_classifier_validity, labels).cpu().detach().numpy())
             g_loss.backward()
             optimizer_G.step()
+            g_fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
+            g_class.append(classifier_criterion(fake_classifier_validity, labels).cpu().detach().numpy())
             g_losses.append(g_loss.item())
 
     epoch_duration = time() - epoch_start
@@ -173,10 +173,9 @@ for epoch in range(args.n_epochs):
                                             np.average(c_losses)))
     metrics.close()
     generator_loss = np.average(g_losses)
-    classifier_loss = np.average(c_losses)
-    if best_loss > abs(generator_loss) + abs(classifier_loss):
+    if best_loss > generator_loss:
         torch.save(generator.state_dict(), BEST_MODEL_PATH)
-        best_loss = abs(generator_loss) + abs(classifier_loss)
+        best_loss = generator_loss
         epochs_without_improvement = 0
     else:
         epochs_without_improvement += 1
