@@ -57,8 +57,8 @@ if cuda:
     classifier.cuda()
 
 # Optimizers
-optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.0001)
-optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.0001)
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.001)
+optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.001)
 optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.001)
 classifier_criterion = nn.CrossEntropyLoss()
 
