@@ -22,8 +22,8 @@ parser.add_argument('--gt_path', type=str, help='Path to the ground truth file i
 parser.add_argument('--artifacts_path', type=str, help='Path in which artifacts will be stored')
 parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs of training')
 parser.add_argument('--batch_size', type=int, default=64, help='size of the batches')
-parser.add_argument('--n_critic', type=int, default=10, help='number of training steps for discriminator per iter')
-parser.add_argument('--patience', type=int, default=50, help='Number of epochs withour improvement on generator loss after which training will be terminated')
+parser.add_argument('--n_critic', type=int, default=1, help='number of training steps for discriminator per iter')
+parser.add_argument('--patience', type=int, default=200, help='Number of epochs withour improvement on generator loss after which training will be terminated')
 parser.add_argument('--verbose', type=bool, help="If True, metric will be printed after each epoch")
 args = parser.parse_args()
 if args.verbose:
@@ -41,7 +41,7 @@ cuda = True if torch.cuda.is_available() else False
 lambda_gp = 10
 
 # Configure data loader
-transformed_dataset = HyperspectralDataset(args.dataset_path, args.gt_path)
+transformed_dataset = HyperspectralDataset(args.dataset_path, args.gt_path, samples_per_class=0)
 dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
 
 input_shape = transformed_dataset.x.shape[-1]
@@ -51,16 +51,17 @@ generator = Generator(input_shape + CLASS_LABEL)
 discriminator = Discriminator(input_shape)
 classifier = Classifier(input_shape, len(transformed_dataset.classes))
 
+# Optimizers
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.001)
+optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.0001)
+optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.001)
+classifier_criterion = nn.CrossEntropyLoss()
+
 if cuda:
     generator.cuda()
     discriminator.cuda()
     classifier.cuda()
-
-# Optimizers
-optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.001)
-optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.001)
-optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.001)
-classifier_criterion = nn.CrossEntropyLoss()
+    classifier_criterion.cuda()
 
 FloatTensor = torch.cuda.FloatTensor if cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if cuda else torch.LongTensor
@@ -84,7 +85,7 @@ def compute_gradient_penalty(D, real_samples, fake_samples):
     return gradient_penalty
 
 
-best_loss = np.inf
+best_loss = -np.inf
 epochs_without_improvement = 0
 # ----------
 #  Training
@@ -134,8 +135,8 @@ for epoch in range(args.n_epochs):
 
         optimizer_D.step()
         optimizer_C.step()
-        real.append(torch.mean(real_discriminator_validity).cpu().detach().numpy())
-        fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
+        # real.append(torch.mean(real_discriminator_validity).cpu().detach().numpy())
+        # fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
         d_losses.append(d_loss.item())
         c_losses.append(c_loss.item())
 
@@ -155,9 +156,8 @@ for epoch in range(args.n_epochs):
             # Loss measures generator's ability to fool the discriminator and generate samples from correct class
             # Train on fake images
             fake_discriminator_validity = discriminator(fake_samples)
-            real_discriminator_validity = discriminator(real_samples)
             fake_classifier_validity = classifier(fake_samples)
-            g_loss = -torch.mean(fake_discriminator_validity) + classifier_criterion(fake_classifier_validity, labels)
+            g_loss = -torch.mean(fake_discriminator_validity)# + classifier_criterion(fake_classifier_validity, labels)
             g_loss.backward()
             optimizer_G.step()
             g_fake.append(torch.mean(fake_discriminator_validity).cpu().detach().numpy())
@@ -172,8 +172,8 @@ for epoch in range(args.n_epochs):
                                             np.average(g_losses),
                                             np.average(c_losses)))
     metrics.close()
-    generator_loss = np.average(g_losses)
-    if best_loss > generator_loss:
+    generator_loss = np.average(d_losses)
+    if best_loss < generator_loss:
         torch.save(generator.state_dict(), BEST_MODEL_PATH)
         best_loss = generator_loss
         epochs_without_improvement = 0

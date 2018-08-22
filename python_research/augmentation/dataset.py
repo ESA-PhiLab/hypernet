@@ -1,6 +1,6 @@
 import numpy as np
 from torch.utils.data import Dataset
-from keras.utils import to_categorical
+from random import shuffle
 
 BACKGROUND_LABEL = 0
 
@@ -10,16 +10,19 @@ class HyperspectralDataset(Dataset):
                  data_path: str,
                  ground_truth_path: str,
                  transform=None,
-                 normalize: bool=True):
+                 normalize: bool=True,
+                 samples_per_class: int=None):
         self.x, self.y = self._transform_data(data_path, ground_truth_path)
         self.transform = transform
         self.classes = np.unique(self.y)
         if normalize:
             self.x = self._normalize()
         self.y = self.y - 1
+        if samples_per_class is not None:
+            self.x, self.y = self._balance_set(samples_per_class)
 
     @staticmethod
-    def _transform_data(data_path, ground_truth_path):
+    def _transform_data(data_path: str, ground_truth_path: str):
         x = np.load(data_path)
         y = np.load(ground_truth_path)
         transformed = []
@@ -34,6 +37,19 @@ class HyperspectralDataset(Dataset):
 
     def _normalize(self):
         return (self.x - np.min(self.x)) / (np.max(self.x) - np.min(self.x))
+
+    def _balance_set(self, samples_per_class: int):
+        labels, count = np.unique(self.y, return_counts=True)
+        if samples_per_class == 0:
+            samples_per_class = min(count)
+        to_remove = []
+        for label in labels:
+            label_indices = np.where(self.y == label)[0]
+            shuffle(label_indices)
+            to_remove += list(label_indices[samples_per_class:])
+        x = np.delete(self.x, to_remove, axis=0)
+        y = np.delete(self.y, to_remove, axis=0)
+        return x, y
 
     def __len__(self):
         return len(self.x)

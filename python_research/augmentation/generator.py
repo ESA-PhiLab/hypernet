@@ -13,10 +13,11 @@ class Generator(nn.Module):
             return layers
 
         self.model = nn.Sequential(
-            *block(input_shape, 512, normalize=True),
-            *block(512, 512),
-            *block(512, 512),
-            nn.Linear(512, input_shape - 1),
+            *block(input_shape, 128),
+            *block(128, 256),
+            *block(256, 512),
+            *block(512,1024),
+            nn.Linear(1024, input_shape - 1),
             nn.Sigmoid()
         )
 
