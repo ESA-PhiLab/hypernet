@@ -135,6 +135,7 @@ class GAN:
                                                                      bands_count)
                 if self.use_cuda:
                     noise_with_labels = noise_with_labels.cuda()
+                    labels = labels.cuda()
 
                 self._generator_iteration(noise_with_labels, labels)
 
