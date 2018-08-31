@@ -67,7 +67,11 @@ class GAN:
         real_validity = self.discriminator(real_samples)
         fake_validity = self.discriminator(fake_samples)
 
+        print(real_validity.mean())
+        print(fake_validity.mean())
+
         gradient_penalty = self._gradient_penalty(real_samples, fake_samples)
+        print(gradient_penalty)
         self.discriminator_optimizer.zero_grad()
         loss = fake_validity.mean() - real_validity.mean() + gradient_penalty
         loss.backward()
@@ -86,14 +90,13 @@ class GAN:
 
         fake_discriminator_validity = self.discriminator(fake_samples)
         fake_discriminator_validity = -fake_discriminator_validity.mean()
-
+        print(fake_discriminator_validity)
         fake_classifier_validity = self.classifier(fake_samples)
         fake_classifier_validity = self.classifier.criterion(fake_classifier_validity, labels)
         fake_classifier_validity = fake_classifier_validity.mean()
-
+        print(fake_classifier_validity)
         loss = fake_discriminator_validity + fake_classifier_validity
         loss.backward()
-        print(loss.item())
         self.generator_optimizer.step()
         if self.verbose:
             self.losses['G'].append(loss.item())
@@ -156,13 +159,9 @@ class GAN:
         gp = np.average(self.losses['GP'])
         self.summary_writer.add_scalars('GAN', {'D': discriminator_loss,
                                                 'G': generator_loss}, epoch)
-        print("[Epoch: {}][D loss: {}] [G loss: {}] [R: {}] [F: {}] [GP: {}] [GC: {}]".format(epoch,
-                                                                                discriminator_loss,
-                                                                                generator_loss,
-                                                                                real,
-                                                                                fake,
-                                                                                gp,
-                                                                                gc))
+        print("[Epoch: {}][D loss: {}] [G loss: {}] "
+              "[R: {}] [F: {}] [GP: {}] [GC: {}]".format(epoch, discriminator_loss,
+                                                         generator_loss, real, fake, gp, gc))
 
     def _save_generator(self, path, name=None):
         if name is not None:
