@@ -57,8 +57,8 @@ classifier = Classifier(classifier_criterion, input_shape, classes_count,
                         use_cuda=cuda, patience=args.classifier_patience)
 
 # Optimizers
-optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.0001)
-optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.0001)
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.0001, betas=(args.b1, args.b2))
+optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.0001, betas=(args.b1, args.b2))
 optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.001)
 
 if cuda:
