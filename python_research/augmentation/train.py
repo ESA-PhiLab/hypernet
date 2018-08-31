@@ -28,7 +28,7 @@ parser.add_argument('--classifier_patience', type=int, default=15, help='Number 
 parser.add_argument('--verbose', type=bool, help="If True, metric will be printed after each epoch")
 parser.add_argument('--classes_count', type=int, default=0, help='Number of classes present in the dataset, if 0 then this count is deduced from the data')
 parser.add_argument('--lambda_gp', type=int, default=10)
-parser.add_argument('--b1', type=float, default=0.5)
+parser.add_argument('--b1', type=float, default=0)
 parser.add_argument('--b2', type=float, default=0.9)
 args = parser.parse_args()
 if args.verbose:

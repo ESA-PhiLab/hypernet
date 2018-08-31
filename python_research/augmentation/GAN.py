@@ -95,7 +95,7 @@ class GAN:
         loss.backward()
 
         self.generator_optimizer.step()
-
+        print(loss.item())
         if self.verbose:
             self.losses['G'].append(loss.item())
             self.losses['GC'].append(fake_classifier_validity.item())
@@ -208,5 +208,3 @@ class GAN:
             if self.verbose:
                 self._print_metrics(epoch)
             self._save_generator(artifacts_path)
-
-
