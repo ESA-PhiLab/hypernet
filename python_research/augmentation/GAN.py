@@ -119,8 +119,8 @@ class GAN:
                                                                  batch_size,
                                                                  bands_count)
             if self.use_cuda:
-                real_samples.cuda()
-                noise_with_labels.cuda()
+                real_samples = real_samples.cuda()
+                noise_with_labels = noise_with_labels.cuda()
 
             self._discriminator_iteration(real_samples, noise_with_labels)
 
