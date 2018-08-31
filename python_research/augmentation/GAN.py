@@ -156,18 +156,13 @@ class GAN:
         gp = np.average(self.losses['GP'])
         self.summary_writer.add_scalars('GAN', {'D': discriminator_loss,
                                                 'G': generator_loss}, epoch)
-        print("[D loss: {}] [G loss: {}] [R: {}] [F: {}] [GP: {}] [GC: {}]".format(discriminator_loss,
-                                                                          generator_loss,
-                                                                          real,
-                                                                          fake,
-                                                                          gp,
-                                                                          gc))
-        self.losses['G'].clear()
-        self.losses['D'].clear()
-        self.losses['Real'].clear()
-        self.losses['Fake'].clear()
-        self.losses['GC'].clear()
-        self.losses['GP'].clear()
+        print("[Epoch: ][D loss: {}] [G loss: {}] [R: {}] [F: {}] [GP: {}] [GC: {}]".format(epoch,
+                                                                                discriminator_loss,
+                                                                                generator_loss,
+                                                                                real,
+                                                                                fake,
+                                                                                gp,
+                                                                                gc))
 
     def _save_generator(self, path, name=None):
         if name is not None:
@@ -175,6 +170,10 @@ class GAN:
         else:
             final_path = os.path.join(path, 'generator_model')
         torch.save(self.generator.state_dict(), final_path)
+
+    def _zero_losses(self):
+        for loss in self.losses:
+            self.losses[loss].clear()
 
     def _early_stopping(self) -> bool:
         if np.average(self.losses['D']) > self.best_discriminator_loss:
@@ -206,4 +205,5 @@ class GAN:
                     break
             if self.verbose:
                 self._print_metrics(epoch)
+            self._zero_losses()
             self._save_generator(artifacts_path)
