@@ -156,18 +156,18 @@ class GAN:
         gp = np.average(self.losses['GP'])
         self.summary_writer.add_scalars('GAN', {'D': discriminator_loss,
                                                 'G': generator_loss}, epoch)
-        self.losses['G'].clear()
-        self.losses['D'].clear()
-        self.losses['Real'].clear()
-        self.losses['Fake'].clear()
-        self.losses['GC'].clear()
-        self.losses['GP'].clear()
         print("[D loss: {}] [G loss: {}] [R: {}] [F: {}] [GP: {}] [GC: {}]".format(discriminator_loss,
                                                                           generator_loss,
                                                                           real,
                                                                           fake,
                                                                           gp,
                                                                           gc))
+        self.losses['G'].clear()
+        self.losses['D'].clear()
+        self.losses['Real'].clear()
+        self.losses['Fake'].clear()
+        self.losses['GC'].clear()
+        self.losses['GP'].clear()
 
     def _save_generator(self, path, name=None):
         if name is not None:
