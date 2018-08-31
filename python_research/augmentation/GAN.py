@@ -93,7 +93,7 @@ class GAN:
 
         loss = fake_discriminator_validity + fake_classifier_validity
         loss.backward()
-
+        print(loss.item())
         self.generator_optimizer.step()
         if self.verbose:
             self.losses['G'].append(loss.item())
@@ -156,7 +156,7 @@ class GAN:
         gp = np.average(self.losses['GP'])
         self.summary_writer.add_scalars('GAN', {'D': discriminator_loss,
                                                 'G': generator_loss}, epoch)
-        print("[Epoch: ][D loss: {}] [G loss: {}] [R: {}] [F: {}] [GP: {}] [GC: {}]".format(epoch,
+        print("[Epoch: {}][D loss: {}] [G loss: {}] [R: {}] [F: {}] [GP: {}] [GC: {}]".format(epoch,
                                                                                 discriminator_loss,
                                                                                 generator_loss,
                                                                                 real,
