@@ -29,7 +29,7 @@ class HyperspectralDataset(Dataset):
         labels = []
         for i, row in enumerate(x):
             for j, pixel in enumerate(row):
-                if y[i, j] != BACKGROUND_LABEL:
+                if y[i, j] == 1 or y[i, j] != BACKGROUND_LABEL:
                     sample = x[i, j, :]
                     transformed.append(sample)
                     labels.append(y[i, j])
