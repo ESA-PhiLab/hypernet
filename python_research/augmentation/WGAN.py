@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 
 
-class GAN:
+class WGAN:
     def __init__(self, generator: nn.Module,
                  discriminator: nn.Module,
                  classifier: nn.Module,
@@ -86,11 +86,14 @@ class GAN:
 
         fake_discriminator_validity = self.discriminator(fake_samples)
         fake_discriminator_validity = -fake_discriminator_validity.mean()
+
         fake_classifier_validity = self.classifier(fake_samples)
         fake_classifier_validity = self.classifier.criterion(fake_classifier_validity, labels)
         fake_classifier_validity = fake_classifier_validity.mean()
+
         loss = fake_discriminator_validity + fake_classifier_validity
         loss.backward()
+
         self.generator_optimizer.step()
         if self.verbose:
             self.losses['G'].append(loss.item())
@@ -137,6 +140,8 @@ class GAN:
 
                 for p in self.generator.parameters():
                     p.requires_grad = False
+
+            self.steps += 1
 
     @staticmethod
     def _generate_noise_with_labels(labels_one_hot, labels, batch_size, bands_count):

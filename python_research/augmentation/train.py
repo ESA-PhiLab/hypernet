@@ -13,7 +13,7 @@ from tensorboardX import SummaryWriter
 from python_research.augmentation.discriminator import Discriminator
 from python_research.augmentation.generator import Generator
 from python_research.augmentation.classifier import Classifier
-from python_research.augmentation.GAN import GAN
+from python_research.augmentation.WGAN import WGAN
 from python_research.augmentation.dataset import HyperspectralDataset
 
 parser = argparse.ArgumentParser()
@@ -22,7 +22,7 @@ parser.add_argument('--gt_path', type=str, help='Path to the ground truth file i
 parser.add_argument('--artifacts_path', type=str, help='Path in which artifacts will be stored')
 parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs of training')
 parser.add_argument('--batch_size', type=int, default=64, help='size of the batches')
-parser.add_argument('--n_critic', type=int, default=5, help='number of training steps for discriminator per iter')
+parser.add_argument('--n_critic', type=int, default=2, help='number of training steps for discriminator per iter')
 parser.add_argument('--patience', type=int, default=200, help='Number of epochs without improvement on generator loss after which training will be terminated')
 parser.add_argument('--classifier_patience', type=int, default=15, help='Number of epochs without improvement on classifier loss after which training will be terminated')
 parser.add_argument('--verbose', type=bool, help="If True, metric will be printed after each epoch")
@@ -41,8 +41,7 @@ cuda = True if torch.cuda.is_available() else False
 transformed_dataset = HyperspectralDataset(args.dataset_path, args.gt_path, samples_per_class=0)
 dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
 
-bands_count = transformed_dataset.x.shape[-1]
-input_shape = transformed_dataset.x.shape[-1]
+input_shape = bands_count = transformed_dataset.x.shape[-1]
 if args.classes_count == 0:
     classes_count = len(np.unique(transformed_dataset.y))
 else:
@@ -57,9 +56,9 @@ classifier = Classifier(classifier_criterion, input_shape, classes_count,
                         use_cuda=cuda, patience=args.classifier_patience)
 
 # Optimizers
-optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.0001, betas=(args.b1, args.b2))
-optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.0001, betas=(args.b1, args.b2))
-optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.0001)
+optimizer_G = torch.optim.RMSprop(generator.parameters(), lr=0.0001)
+optimizer_D = torch.optim.RMSprop(discriminator.parameters(), lr=0.0001)
+optimizer_C = torch.optim.RMSprop(classifier.parameters(), lr=0.001)
 
 if cuda:
     generator.cuda()
@@ -69,7 +68,7 @@ if cuda:
 
 classifier.train_(dataloader, optimizer_C, args.n_epochs)
 
-gan = GAN(generator, discriminator, classifier, optimizer_G, optimizer_D,
-          use_cuda=cuda, lambda_gp=args.lambda_gp, critic_iters=args.n_critic,
-          patience=args.patience, summary_writer=SummaryWriter(args.artifacts_path))
+gan = WGAN(generator, discriminator, classifier, optimizer_G, optimizer_D,
+           use_cuda=cuda, lambda_gp=args.lambda_gp, critic_iters=args.n_critic,
+           patience=args.patience, summary_writer=SummaryWriter(args.artifacts_path))
 gan.train(dataloader, args.n_epochs, bands_count, args.batch_size, classes_count, args.artifacts_path)
