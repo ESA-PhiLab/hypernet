@@ -67,11 +67,7 @@ class GAN:
         real_validity = self.discriminator(real_samples)
         fake_validity = self.discriminator(fake_samples)
 
-        print(real_validity.mean())
-        print(fake_validity.mean())
-
         gradient_penalty = self._gradient_penalty(real_samples, fake_samples)
-        print(gradient_penalty)
         self.discriminator_optimizer.zero_grad()
         loss = fake_validity.mean() - real_validity.mean() + gradient_penalty
         loss.backward()
@@ -90,11 +86,9 @@ class GAN:
 
         fake_discriminator_validity = self.discriminator(fake_samples)
         fake_discriminator_validity = -fake_discriminator_validity.mean()
-        print(fake_discriminator_validity)
         fake_classifier_validity = self.classifier(fake_samples)
         fake_classifier_validity = self.classifier.criterion(fake_classifier_validity, labels)
         fake_classifier_validity = fake_classifier_validity.mean()
-        print(fake_classifier_validity)
         loss = fake_discriminator_validity + fake_classifier_validity
         loss.backward()
         self.generator_optimizer.step()
@@ -147,7 +141,10 @@ class GAN:
     @staticmethod
     def _generate_noise_with_labels(labels_one_hot, labels, batch_size, bands_count):
         noise = torch.FloatTensor(np.random.normal(0.5, 0.1, (batch_size, bands_count)))
+        print(noise)
         labels_one_hot.scatter_(1, labels.view(batch_size, 1), 1)
+        print(labels_one_hot)
+        print(Variable(torch.cat([noise, labels_one_hot], dim=1)))
         return Variable(torch.cat([noise, labels_one_hot], dim=1))
 
     def _print_metrics(self, epoch: int):
