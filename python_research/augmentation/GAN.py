@@ -100,7 +100,7 @@ class GAN:
                      bands_count: int,
                      batch_size: int,
                      classes_count: int):
-        labels_one_hot = torch.FloatTensor(batch_size, classes_count)
+        labels_one_hot = torch.zeros([batch_size, classes_count]).type(torch.FloatTensor)
 
         for p in self.generator.parameters():
             p.requires_grad = False
@@ -141,10 +141,7 @@ class GAN:
     @staticmethod
     def _generate_noise_with_labels(labels_one_hot, labels, batch_size, bands_count):
         noise = torch.FloatTensor(np.random.normal(0.5, 0.1, (batch_size, bands_count)))
-        print(noise)
         labels_one_hot.scatter_(1, labels.view(batch_size, 1), 1)
-        print(labels_one_hot)
-        print(Variable(torch.cat([noise, labels_one_hot], dim=1)))
         return Variable(torch.cat([noise, labels_one_hot], dim=1))
 
     def _print_metrics(self, epoch: int):
