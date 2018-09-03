@@ -37,7 +37,7 @@ class GAN:
         self.patience = patience
         self.summary_writer = summary_writer
         self.epochs_without_improvement = 0
-        self.best_discriminator_loss = -np.inf
+        self.best_discriminator_loss = np.inf
 
     def _gradient_penalty(self, real_samples, fake_samples):
         """Calculates the gradient penalty loss for WGAN GP"""
@@ -169,8 +169,8 @@ class GAN:
             self.losses[loss].clear()
 
     def _early_stopping(self) -> bool:
-        if np.average(self.losses['D']) > self.best_discriminator_loss:
-            self.best_discriminator_loss = np.average(self.losses['D'])
+        if abs(np.average(self.losses['D'])) < self.best_discriminator_loss:
+            self.best_discriminator_loss = abs(np.average(self.losses['D']))
             self.epochs_without_improvement = 0
             return False
         else:
