@@ -33,13 +33,12 @@ class WGAN:
         self.lambda_gp = lambda_gp
         self.critic_iters = critic_iters
         self.verbose = verbose
-        self.steps = 0
         self.patience = patience
         self.summary_writer = summary_writer
         self.epochs_without_improvement = 0
         self.best_discriminator_loss = np.inf
 
-    def _gradient_penalty(self, real_samples, fake_samples):
+    def _gradient_penalty(self, real_samples, fake_samples, labels):
         """Calculates the gradient penalty loss for WGAN GP"""
         # Random weight term for interpolation between real and fake samples
         alpha = torch.FloatTensor(np.random.random((real_samples.size(0), 1)))
@@ -49,7 +48,7 @@ class WGAN:
         interpolates = Variable(alpha * real_samples + ((1 - alpha) * fake_samples), requires_grad=True)
         if self.use_cuda:
             interpolates = interpolates.cuda()
-        d_interpolates = self.discriminator(interpolates)
+        d_interpolates = self.discriminator(interpolates, labels)
         fake = Variable(real_samples.new_full((real_samples.size()[0], 1), 1.0), requires_grad=False)
         if self.use_cuda:
             fake = fake.cuda()
@@ -60,14 +59,14 @@ class WGAN:
         gradient_penalty = self.lambda_gp * ((gradients.norm(2, dim=1) - 1) ** 2).mean()
         return gradient_penalty
 
-    def _discriminator_iteration(self, real_samples: Variable, noise: Variable):
+    def _discriminator_iteration(self, real_samples: Variable, labels: Variable, noise: Variable):
         with torch.no_grad():
-            fake_samples = self.generator(noise)
+            fake_samples = self.generator(noise, labels)
 
-        real_validity = self.discriminator(real_samples)
-        fake_validity = self.discriminator(fake_samples)
+        real_validity = self.discriminator(real_samples, labels)
+        fake_validity = self.discriminator(fake_samples, labels)
 
-        gradient_penalty = self._gradient_penalty(real_samples, fake_samples)
+        gradient_penalty = self._gradient_penalty(real_samples, fake_samples, labels)
         self.discriminator_optimizer.zero_grad()
         loss = fake_validity.mean() - real_validity.mean() + gradient_penalty
         loss.backward()
@@ -79,16 +78,16 @@ class WGAN:
             self.losses['Fake'].append(fake_validity.mean().item())
             self.losses['GP'].append(gradient_penalty.item())
 
-    def _generator_iteration(self, noise, labels):
+    def _generator_iteration(self, noise, labels, labels_one_hot):
         self.generator_optimizer.zero_grad()
 
-        fake_samples = self.generator(noise)
+        fake_samples = self.generator(noise, labels_one_hot)
 
-        fake_discriminator_validity = self.discriminator(fake_samples)
+        fake_discriminator_validity = self.discriminator(fake_samples, labels_one_hot)
         fake_discriminator_validity = -fake_discriminator_validity.mean()
 
         fake_classifier_validity = self.classifier(fake_samples)
-        fake_classifier_validity = self.classifier.criterion(fake_classifier_validity, labels)
+        fake_classifier_validity = self.classifier.criterion(fake_classifier_validity, labels.type(torch.LongTensor))
         fake_classifier_validity = fake_classifier_validity.mean()
 
         loss = fake_discriminator_validity + fake_classifier_validity
@@ -104,50 +103,44 @@ class WGAN:
                      batch_size: int,
                      classes_count: int):
         labels_one_hot = torch.zeros([batch_size, classes_count]).type(torch.FloatTensor)
+        if self.use_cuda:
+            labels_one_hot = labels_one_hot.cuda()
 
-        for p in self.generator.parameters():
-            p.requires_grad = False
+        for parameter in self.generator.parameters():
+            parameter.requires_grad = False
 
         for i, (samples, labels) in enumerate(data_loader):
             real_samples = Variable(samples).type(torch.FloatTensor)
             batch_size = len(real_samples)
-            labels = Variable(labels.type(torch.LongTensor))
+            labels = Variable(labels.view(-1, 1).type(torch.LongTensor))
+            labels_one_hot.scatter_(1, labels, 1)
 
-            noise_with_labels = self._generate_noise_with_labels(labels_one_hot,
-                                                                 labels,
-                                                                 batch_size,
-                                                                 bands_count)
+            noise = self._generate_noise(batch_size, bands_count)
             if self.use_cuda:
                 real_samples = real_samples.cuda()
-                noise_with_labels = noise_with_labels.cuda()
+                noise = noise.cuda()
 
-            self._discriminator_iteration(real_samples, noise_with_labels)
+            self._discriminator_iteration(real_samples, labels_one_hot, noise)
 
-            if self.steps % self.critic_iters == 0:
+            if i % self.critic_iters == 0:
 
-                for p in self.generator.parameters():
-                    p.requires_grad = True
+                for parameter in self.generator.parameters():
+                    parameter.requires_grad = True
 
-                noise_with_labels = self._generate_noise_with_labels(labels_one_hot,
-                                                                     labels,
-                                                                     batch_size,
-                                                                     bands_count)
+                noise = self._generate_noise(batch_size, bands_count)
                 if self.use_cuda:
-                    noise_with_labels = noise_with_labels.cuda()
+                    noise = noise.cuda()
                     labels = labels.cuda()
 
-                self._generator_iteration(noise_with_labels, labels)
+                self._generator_iteration(noise, labels.view(labels.shape[0]), labels_one_hot)
 
-                for p in self.generator.parameters():
-                    p.requires_grad = False
-
-            self.steps += 1
+                for parameter in self.generator.parameters():
+                    parameter.requires_grad = False
 
     @staticmethod
-    def _generate_noise_with_labels(labels_one_hot, labels, batch_size, bands_count):
+    def _generate_noise(batch_size, bands_count):
         noise = torch.FloatTensor(np.random.normal(0.5, 0.1, (batch_size, bands_count)))
-        labels_one_hot.scatter_(1, labels.view(batch_size, 1), 1)
-        return Variable(torch.cat([noise, labels_one_hot], dim=1))
+        return Variable(noise)
 
     def _print_metrics(self, epoch: int):
         generator_loss = np.average(self.losses['G'])
@@ -193,8 +186,8 @@ class WGAN:
               classes_count: int,
               artifacts_path: str):
 
-        for p in self.classifier.parameters():
-            p.requires_grad = False
+        for parameter in self.classifier.parameters():
+            parameter.requires_grad = False
 
         for epoch in range(epochs):
             self._train_epoch(data_loader, bands_count, batch_size, classes_count)

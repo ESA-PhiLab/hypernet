@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 
 
@@ -20,5 +21,6 @@ class Generator(nn.Module):
             nn.Sigmoid()
         )
 
-    def forward(self, z):
-        return self.model(z)
+    def forward(self, data, labels):
+        data = torch.cat([data, labels], dim=1)
+        return self.model(data)
