@@ -38,7 +38,7 @@ os.makedirs(args.artifacts_path, exist_ok=True)
 
 cuda = True if torch.cuda.is_available() else False
 
-transformed_dataset = HyperspectralDataset(args.dataset_path, args.gt_path, samples_per_class=0)
+transformed_dataset = HyperspectralDataset(args.dataset_path, args.gt_path, samples_per_class=None)
 dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
 
 input_shape = bands_count = transformed_dataset.x.shape[-1]
@@ -58,7 +58,7 @@ classifier = Classifier(classifier_criterion, input_shape, classes_count,
 # Optimizers
 optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.0001, betas=(args.b1, args.b2))
 optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.0001, betas=(args.b1, args.b2))
-optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.001, betas=(args.b1, args.b2))
+optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.0001, betas=(args.b1, args.b2))
 
 if cuda:
     generator.cuda()
@@ -67,6 +67,9 @@ if cuda:
     classifier_criterion.cuda()
 
 classifier.train_(dataloader, optimizer_C, args.n_epochs)
+
+dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=False, drop_last=True)
+
 
 gan = WGAN(generator, discriminator, classifier, optimizer_G, optimizer_D,
            use_cuda=cuda, lambda_gp=args.lambda_gp, critic_iters=args.n_critic,

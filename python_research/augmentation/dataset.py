@@ -29,7 +29,7 @@ class HyperspectralDataset(Dataset):
         labels = []
         for i, row in enumerate(x):
             for j, pixel in enumerate(row):
-                if y[i, j] == 1 or y[i, j] != BACKGROUND_LABEL:
+                if y[i, j] != BACKGROUND_LABEL:
                     sample = x[i, j, :]
                     transformed.append(sample)
                     labels.append(y[i, j])
@@ -49,7 +49,14 @@ class HyperspectralDataset(Dataset):
             to_remove += list(label_indices[samples_per_class:])
         x = np.delete(self.x, to_remove, axis=0)
         y = np.delete(self.y, to_remove, axis=0)
-        return x, y
+        indexes = list(range(len(y)))
+        indexes.sort(key=y.__getitem__)
+        soted = map(y.__getitem__, indexes)
+        sorted_x = map(x.__getitem__, indexes)
+        soted = list(soted)
+        sorted_x = list(sorted_x)
+        sorted_x = np.array(sorted_x)
+        return sorted_x, np.array(soted)
 
     def __len__(self):
         return len(self.x)
