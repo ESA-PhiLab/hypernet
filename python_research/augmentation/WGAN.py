@@ -113,13 +113,14 @@ class WGAN:
             real_samples = Variable(samples).type(torch.FloatTensor)
             batch_size = len(real_samples)
             labels = Variable(labels.view(-1, 1).type(torch.LongTensor))
-            labels_one_hot.scatter_(1, labels, 1)
 
             noise = self._generate_noise(batch_size, bands_count)
             if self.use_cuda:
                 real_samples = real_samples.cuda()
                 noise = noise.cuda()
+                labels = labels.cuda()
 
+            labels_one_hot.scatter_(1, labels, 1)
             self._discriminator_iteration(real_samples, labels_one_hot, noise)
 
             if i % self.critic_iters == 0:
