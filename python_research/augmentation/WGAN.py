@@ -87,7 +87,7 @@ class WGAN:
         fake_discriminator_validity = -fake_discriminator_validity.mean()
 
         fake_classifier_validity = self.classifier(fake_samples)
-        fake_classifier_validity = self.classifier.criterion(fake_classifier_validity, labels.type(torch.LongTensor))
+        fake_classifier_validity = self.classifier.criterion(fake_classifier_validity, labels)
         fake_classifier_validity = fake_classifier_validity.mean()
 
         loss = fake_discriminator_validity + fake_classifier_validity
