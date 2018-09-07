@@ -14,7 +14,7 @@ from python_research.augmentation.discriminator import Discriminator
 from python_research.augmentation.generator import Generator
 from python_research.augmentation.classifier import Classifier
 from python_research.augmentation.WGAN import WGAN
-from python_research.augmentation.dataset import HyperspectralDataset
+from python_research.augmentation.dataset import HyperspectralDataset, CustomDataLoader
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_path', type=str, help='Path to the dataset in .npy format')
@@ -22,7 +22,7 @@ parser.add_argument('--gt_path', type=str, help='Path to the ground truth file i
 parser.add_argument('--artifacts_path', type=str, help='Path in which artifacts will be stored')
 parser.add_argument('--n_epochs', type=int, default=200, help='number of epochs of training')
 parser.add_argument('--batch_size', type=int, default=64, help='size of the batches')
-parser.add_argument('--n_critic', type=int, default=4, help='number of training steps for discriminator per iter')
+parser.add_argument('--n_critic', type=int, default=2, help='number of training steps for discriminator per iter')
 parser.add_argument('--patience', type=int, default=200, help='Number of epochs without improvement on generator loss after which training will be terminated')
 parser.add_argument('--classifier_patience', type=int, default=15, help='Number of epochs without improvement on classifier loss after which training will be terminated')
 parser.add_argument('--verbose', type=bool, help="If True, metric will be printed after each epoch")
@@ -68,7 +68,7 @@ if cuda:
 
 classifier.train_(dataloader, optimizer_C, args.n_epochs)
 
-dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=False, drop_last=True)
+dataloader = CustomDataLoader(transformed_dataset, args.batch_size)
 
 
 gan = WGAN(generator, discriminator, classifier, optimizer_G, optimizer_D,
