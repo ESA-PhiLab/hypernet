@@ -1,5 +1,5 @@
 {
-    "remote_host_name" : "fp-sat-ci.fp.lan",
+    "remote_host_name" : "ci.kplabs.pl",
     "remote_host_port" : "80",
     "job_name"         : "HyperNet_GPU-Research",
     "credentials_id"   : "gitlab_hypernet",

@@ -18,6 +18,7 @@ from python_research.experiments.multiple_feature_learning.utils.arguments impor
 )
 
 from typing import List, NamedTuple
+from python_research.validation import validate
 
 
 class TrainingSet(NamedTuple):
@@ -173,7 +174,7 @@ def main():
     )
 
     model = load_model(output_path + "_model")
-    print(model.evaluate(training_set.x_test, training_set.y_test))
+    print(validate(model, training_set))
     times = timer.times
     np.savetxt(output_path + "_times.csv", times, fmt="%1.4f")
 
