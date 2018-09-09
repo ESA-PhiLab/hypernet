@@ -94,8 +94,8 @@ class CustomDataLoader:
             return batch
 
     def _get_indexes(self):
-        labels = list(range(len(self.label_samples_indices)))
-        shuffle(labels)
+        labels = self.label_samples_indices.keys()
+        # shuffle(labels)
         indexes = []
         for label in labels:
             shuffle(self.label_samples_indices[label])
