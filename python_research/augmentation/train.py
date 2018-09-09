@@ -38,7 +38,7 @@ os.makedirs(args.artifacts_path, exist_ok=True)
 
 cuda = True if torch.cuda.is_available() else False
 
-transformed_dataset = HyperspectralDataset(args.dataset_path, args.gt_path, samples_per_class=900)
+transformed_dataset = HyperspectralDataset(args.dataset_path, args.gt_path, samples_per_class=None)
 dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
 
 input_shape = bands_count = transformed_dataset.x.shape[-1]
