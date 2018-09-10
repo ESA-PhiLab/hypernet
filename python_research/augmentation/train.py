@@ -51,7 +51,7 @@ else:
 classifier_criterion = nn.CrossEntropyLoss()
 # Initialize generator, discriminator and classifier
 generator = Generator(input_shape, classes_count)
-discriminator = Discriminator(input_shape, classes_count)
+discriminator = Discriminator(input_shape)
 classifier = Classifier(classifier_criterion, input_shape, classes_count,
                         use_cuda=cuda, patience=args.classifier_patience)
 

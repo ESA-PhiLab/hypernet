@@ -48,7 +48,7 @@ class WGAN:
         interpolates = Variable(alpha * real_samples + ((1 - alpha) * fake_samples), requires_grad=True)
         if self.use_cuda:
             interpolates = interpolates.cuda()
-        d_interpolates = self.discriminator(interpolates, labels)
+        d_interpolates = self.discriminator(interpolates)
         fake = Variable(real_samples.new_full((real_samples.size()[0], 1), 1.0), requires_grad=False)
         if self.use_cuda:
             fake = fake.cuda()
@@ -63,8 +63,8 @@ class WGAN:
         with torch.no_grad():
             fake_samples = self.generator(noise, labels)
 
-        real_validity = self.discriminator(real_samples, labels)
-        fake_validity = self.discriminator(fake_samples, labels)
+        real_validity = self.discriminator(real_samples)
+        fake_validity = self.discriminator(fake_samples)
 
         gradient_penalty = self._gradient_penalty(real_samples, fake_samples, labels)
         self.discriminator_optimizer.zero_grad()
@@ -83,7 +83,7 @@ class WGAN:
 
         fake_samples = self.generator(noise, labels_one_hot)
 
-        fake_discriminator_validity = self.discriminator(fake_samples, labels_one_hot)
+        fake_discriminator_validity = self.discriminator(fake_samples)
         fake_discriminator_validity = -fake_discriminator_validity.mean()
 
         fake_classifier_validity = self.classifier(fake_samples)
