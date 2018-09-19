@@ -1,3 +1,13 @@
+# HYPERNET
+
+HYPERNET is a library which implements state-of-the-art and new algorithms for (among others):
+
+* accurate hyperspectral image (HSI) segmentation and analysis using deep neural networks,
+* optimization of deep neural network architectures for hyperspectral data segmentation,
+* hyperspectral data augmentation,
+* validation of existent and emerging HSI segmentation algorithms,
+* simulation of multispectral data using HSI.
+
 # Requirements
 
 The main requirements in python 3.6, available from https://www.python.org/downloads/
