@@ -1,3 +1,5 @@
+torch
+torchvision
 pyqt5
 pyqtgraph
 numpy

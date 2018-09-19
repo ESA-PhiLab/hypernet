@@ -3,6 +3,7 @@ from typing import Tuple, NamedTuple
 
 class TrainTestIndices(NamedTuple):
     train_indices: dict
+    val_indices: dict
     test_indices: dict
 
 
