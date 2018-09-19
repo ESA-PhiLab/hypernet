@@ -97,4 +97,20 @@ def parse_multiple_features():
         default=1,
         help='Verbosity of training'
     )
+    parser.add_argument(
+        '-t',
+        action="store",
+        dest="kernels",
+        type=int,
+        default=1,
+        help='Number of kernels in convolutional layers'
+    )
+    parser.add_argument(
+        '-o',
+        action="store",
+        dest="kernel_size",
+        type=int,
+        default=1,
+        help='Size of the kernel in convolutional layers'
+    )
     return parser.parse_args()

@@ -15,6 +15,12 @@ class Point:
         self.x = x
         self.y = y
 
+    def __eq__(self, other):
+        return True if self.x == other.x and self.y == other.y else False
+
+    def __hash__(self):
+        return hash((self.x, self.y))
+
     @staticmethod
     def from_point(other):
         '''
