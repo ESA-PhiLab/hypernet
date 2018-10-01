@@ -58,7 +58,10 @@ def get_cmap(n, name='hsv'):
 def plot_distribution(dataset, generator_model_path, output_path, input_shape, classes_count,
                       device='cpu'):
     model = Generator(input_shape, classes_count)
-    model.load_state_dict(torch.load(generator_model_path, map_location=device))
+    if device == 'cpu':
+        model.load_state_dict(torch.load(generator_model_path, map_location=device))
+    else:
+        model.load_state_dict(torch.load(generator_model_path))
     classes = np.unique(dataset.y)
     original_dataset_shape = dataset.x.shape
     real_label_samples = dict.fromkeys(classes)

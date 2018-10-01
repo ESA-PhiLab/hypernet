@@ -4,10 +4,5 @@
     "job_name"         : "HyperNet_GPU-Research",
     "credentials_id"   : "gitlab_hypernet",
     "url"              : "git@git.kplabs.pl:hypernet/software.git",
-<<<<<<< HEAD
-    "artifacts"        : "D:\\GAN"
-}
-=======
     "artifacts"        : ""
 }
->>>>>>> 778e9c1a2f27ab1c664bb6d8ea49c65d0c7bdade
