@@ -74,7 +74,7 @@ def plot_distribution(dataset, generator_model_path, output_path, input_shape, c
         real_label_samples[label] = samples
 
     fake_dataset = generate_fake_dataset(model, input_shape, original_dataset_shape,
-                                         real_label_samples, device=device)
+                                         real_label_samples)
     fake_dataset = PCA(2).fit_transform(fake_dataset)
     fake_label_samples = list_to_dict(fake_dataset, real_label_samples)
 
@@ -90,7 +90,7 @@ def plot_distribution(dataset, generator_model_path, output_path, input_shape, c
     plt.savefig(output_path)
 
 
-def generate_fake_dataset(model, input_shape, dataset_shape, real_label_samples, device='cpu'):
+def generate_fake_dataset(model, input_shape, dataset_shape, real_label_samples):
     fake = np.zeros(dataset_shape)
     fake_label_samples = dict.fromkeys(real_label_samples)
     classes_count = len(real_label_samples.keys())
@@ -99,9 +99,6 @@ def generate_fake_dataset(model, input_shape, dataset_shape, real_label_samples,
         noise = torch.FloatTensor(np.random.normal(0.5, 0.1, (len(real_label_samples[label]), input_shape)))
         label_one_hot = to_categorical(np.full(len(real_label_samples[label]), label), classes_count)
         label_one_hot = torch.from_numpy(label_one_hot)
-        if device == 'gpu':
-            noise = noise.cuda()
-            label_one_hot = label_one_hot.cuda()
         fake_samples = model(noise, label_one_hot)
         fake[last_insert:last_insert + len(fake_samples)] = fake_samples.detach().numpy()
         last_insert = last_insert + len(fake_samples)
