@@ -9,6 +9,7 @@ import torch.autograd as autograd
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 
+from testing_generator import plot_distribution
 
 class WGAN:
     def __init__(self, generator: nn.Module,
@@ -21,7 +22,8 @@ class WGAN:
                  critic_iters: int=5,
                  patience: int=None,
                  summary_writer: SummaryWriter=None,
-                 verbose: bool=True):
+                 verbose: bool=True,
+                 generator_checkout: int=None):
 
         self.generator = generator
         self.discriminator = discriminator
@@ -37,8 +39,9 @@ class WGAN:
         self.summary_writer = summary_writer
         self.epochs_without_improvement = 0
         self.best_discriminator_loss = np.inf
+        self.generator_checkout = generator_checkout
 
-    def _gradient_penalty(self, real_samples, fake_samples, labels):
+    def _gradient_penalty(self, real_samples, fake_samples):
         """Calculates the gradient penalty loss for WGAN GP"""
         # Random weight term for interpolation between real and fake samples
         alpha = torch.FloatTensor(np.random.random((real_samples.size(0), 1)))
@@ -66,7 +69,7 @@ class WGAN:
         real_validity = self.discriminator(real_samples)
         fake_validity = self.discriminator(fake_samples)
 
-        gradient_penalty = self._gradient_penalty(real_samples, fake_samples, labels)
+        gradient_penalty = self._gradient_penalty(real_samples, fake_samples)
         self.discriminator_optimizer.zero_grad()
         loss = fake_validity.mean() - real_validity.mean() + gradient_penalty
         loss.backward()
@@ -156,9 +159,11 @@ class WGAN:
               "[R: {}] [F: {}] [GP: {}] [GC: {}]".format(epoch, discriminator_loss,
                                                          generator_loss, real, fake, gp, gc))
 
-    def _save_generator(self, path, name=None):
+    def _save_generator(self, path, epoch=None, name=None):
         if name is not None:
             final_path = os.path.join(path, name)
+        elif epoch is not None:
+            final_path = os.path.join(path, 'generator_model_epoch_{}'.format(epoch))
         else:
             final_path = os.path.join(path, 'generator_model')
         torch.save(self.generator.state_dict(), final_path)
@@ -180,7 +185,8 @@ class WGAN:
                 return True
             return False
 
-    def train(self, data_loader: DataLoader,
+    def train(self, dataset,
+              data_loader: DataLoader,
               epochs: int,
               bands_count: int,
               batch_size: int,
@@ -197,5 +203,10 @@ class WGAN:
                     break
             if self.verbose:
                 self._print_metrics(epoch)
+            if self.generator_checkout:
+                figure_path = os.path.join(artifacts_path, 'pca_plot_epoch_{}'.format(epoch))
+                device = 'gpu' if self.use_cuda else 'cpu'
+                self._save_generator(artifacts_path, epoch)
+                plot_distribution(dataset, os.path.join(artifacts_path, 'generator_model_epoch_{}'.format(epoch)),
+                                  figure_path, bands_count, classes_count, device=device)
             self._zero_losses()
-            self._save_generator(artifacts_path)

@@ -50,14 +50,7 @@ class HyperspectralDataset(Dataset):
             to_remove += list(label_indices[samples_per_class:])
         x = np.delete(self.x, to_remove, axis=0)
         y = np.delete(self.y, to_remove, axis=0)
-        indexes = list(range(len(y)))
-        indexes.sort(key=y.__getitem__)
-        soted = map(y.__getitem__, indexes)
-        sorted_x = map(x.__getitem__, indexes)
-        soted = list(soted)
-        sorted_x = list(sorted_x)
-        sorted_x = np.array(sorted_x)
-        return sorted_x, np.array(soted)
+        return x, y
 
     def __len__(self):
         return len(self.x)

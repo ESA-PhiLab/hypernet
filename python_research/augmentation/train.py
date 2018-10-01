@@ -1,12 +1,10 @@
-import argparse
 import os
+import argparse
 import numpy as np
-from time import time
+from copy import copy
 
-from torch.autograd import Variable
 from torch.utils.data import DataLoader
 import torch.nn as nn
-import torch.autograd as autograd
 import torch
 from tensorboardX import SummaryWriter
 
@@ -27,6 +25,7 @@ parser.add_argument('--patience', type=int, default=200, help='Number of epochs 
 parser.add_argument('--classifier_patience', type=int, default=15, help='Number of epochs without improvement on classifier loss after which training will be terminated')
 parser.add_argument('--verbose', type=bool, help="If True, metric will be printed after each epoch")
 parser.add_argument('--classes_count', type=int, default=0, help='Number of classes present in the dataset, if 0 then this count is deduced from the data')
+parser.add_argument('--generator_checkout', type=int, default=100, help='Number of epochs after which the PCa plot for generator will be saved')
 parser.add_argument('--lambda_gp', type=int, default=10)
 parser.add_argument('--b1', type=float, default=0)
 parser.add_argument('--b2', type=float, default=0.9)
@@ -56,9 +55,9 @@ classifier = Classifier(classifier_criterion, input_shape, classes_count,
                         use_cuda=cuda, patience=args.classifier_patience)
 
 # Optimizers
-optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.00001, betas=(args.b1, args.b2))
-optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.00001, betas=(args.b1, args.b2))
-optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.00001, betas=(args.b1, args.b2))
+optimizer_G = torch.optim.Adam(generator.parameters(), lr=0.0001, betas=(args.b1, args.b2))
+optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=0.0001, betas=(args.b1, args.b2))
+optimizer_C = torch.optim.Adam(classifier.parameters(), lr=0.0001, betas=(args.b1, args.b2))
 
 if cuda:
     generator = generator.cuda()
@@ -73,5 +72,6 @@ dataloader = CustomDataLoader(transformed_dataset, args.batch_size)
 
 gan = WGAN(generator, discriminator, classifier, optimizer_G, optimizer_D,
            use_cuda=cuda, lambda_gp=args.lambda_gp, critic_iters=args.n_critic,
-           patience=args.patience, summary_writer=SummaryWriter(args.artifacts_path))
-gan.train(dataloader, args.n_epochs, bands_count, args.batch_size, classes_count, args.artifacts_path)
+           patience=args.patience, summary_writer=SummaryWriter(args.artifacts_path),
+           generator_checkout=args.generator_checkout)
+gan.train(copy(transformed_dataset), dataloader, args.n_epochs, bands_count, args.batch_size, classes_count, args.artifacts_path)
