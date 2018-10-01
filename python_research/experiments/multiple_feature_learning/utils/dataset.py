@@ -1,6 +1,7 @@
 import random
 from copy import copy
 from math import ceil
+from random import shuffle
 from typing import Tuple, List
 
 import numpy as np
@@ -17,41 +18,61 @@ SIGMA = 2
 
 
 class Dataset:
-    def __init__(self, dataset_file_path: str, gt_filepath: str,
-                 no_train_samples: float, neighbours_size: Tuple[int, int],
+    def __init__(self, dataset_file: [str, np.ndarray], gt_file: [str, np.ndarray],
+                 no_train_samples: float, neighbours_size: Tuple[int, int]=(1, 1),
                  validation_set_portion=0.1,
-                 normalize=True,
+                 normalize=False,
                  classes_count: int=None,
-                 train_test_indices: TrainTestIndices=None):
-        self.x = np.load(dataset_file_path)
-        self.y = np.load(gt_filepath)
+                 train_test_indices: TrainTestIndices=None,
+                 val_split=True):
+        if type(dataset_file) is str and type(gt_file) is str:
+            self.x = np.load(dataset_file)
+            self.y = np.load(gt_file)
+        elif type(dataset_file) is np.ndarray and type(gt_file) is np.ndarray:
+            self.x = dataset_file
+            self.y = gt_file
+        else:
+            raise TypeError("The 'dataset_file' and 'gt_file' arguments have to be a "
+                            "string (a path to dataset in .npy format) or a numpy array itself")
         self.min_value = np.min(self.x)
         self.max_value = np.max(self.x)
-        if normalize:
-            self.x = self._normalize_data()
         self.no_train_samples = self._get_train_samples_per_class_count(no_train_samples)
         if train_test_indices is None:
             self.train_indices, self.test_indices = self._get_train_test_indices()
-            self.val_indices = self._get_val_indices(validation_set_portion)
+            if val_split:
+                self.val_indices = self._get_val_indices(validation_set_portion)
         else:
             self.train_indices = train_test_indices.train_indices
             self.test_indices = train_test_indices.test_indices
-            self.val_indices = train_test_indices.val_indices
+            if val_split:
+                self.val_indices = train_test_indices.val_indices
 
-        # self._label_augmentation()
+        if not all(np.array(neighbours_size) == 1):
+            padding_size = neighbours_size[0] % ceil(float(neighbours_size[0]) / 2.)
+            padded_cube = self.get_padded_cube(padding_size)
 
-        padding_size = neighbours_size[0] % ceil(float(neighbours_size[0]) / 2.)
-        padded_cube = self.get_padded_cube(padding_size)
-
-        self.x_train, self.y_train = self._construct_sets(padded_cube, self.train_indices, padding_size)
-        self.x_test, self.y_test = self._construct_sets(padded_cube, self.test_indices, padding_size)
-        self.x_val, self.y_val = self._construct_sets(padded_cube, self.val_indices, padding_size)
-
+            self.x_train, self.y_train = self._construct_sets(padded_cube, self.train_indices, padding_size)
+            self.x_test, self.y_test = self._construct_sets(padded_cube, self.test_indices, padding_size)
+            if val_split:
+                self.x_val, self.y_val = self._construct_sets(padded_cube, self.val_indices, padding_size)
+        else:
+            self.x_train, self.y_train = self._construct_1d_sets(self.train_indices)
+            self.x_test, self.y_test = self._construct_1d_sets(self.test_indices)
+            if val_split:
+                self.x_val, self.y_val = self._construct_1d_sets(self.val_indices)
         if classes_count is None:
             classes_count = len(np.unique(self.y)) - 1
         self.y_train = to_categorical(self.y_train - 1, classes_count)
         self.y_test = to_categorical(self.y_test - 1, classes_count)
-        self.y_val = to_categorical(self.y_val - 1, classes_count)
+        if val_split:
+            self.y_val = to_categorical(self.y_val - 1, classes_count)
+
+        self.augmented = []
+        self.augmented_labels = []
+        self.sample_indices = None
+        self.augmented_samples_count = None
+        self.band_means = None
+        self.band_stds = None
 
     def __add__(self, other):
         if self.x_train.size != 0 and other.x_train.size != 0:
@@ -72,9 +93,26 @@ class Dataset:
         max_ = np.max(self.x, keepdims=True)
         return (self.x.astype(np.float64) - min_) / (max_ - min_)
 
-    def normalize_train_test_data(self):
+    def train_val_split(self, portion: float=0.1):
+        y = np.argmax(self.y_train, axis=1)
+        labels = np.unique(y)
+        for_val = []
+        for label in labels:
+            label_indices = np.where(y == label)[0]
+            samples = int(len(label_indices) * portion)
+            shuffle(label_indices)
+            for_val += list(label_indices[0:samples])
+        self.x_val = self.x_train[for_val, ...]
+        self.y_val = self.y_train[for_val, ...]
+        self.x_train = np.delete(self.x_train, for_val, axis=0)
+        self.y_train = np.delete(self.y_train, for_val, axis=0)
+
+    def normalize_data(self):
+        self.min_value = np.min(self.x_train) if np.min(self.x_train) < np.min(self.x_val) else np.min(self.x_val)
+        self.max_value = np.max(self.x_train) if np.max(self.x_train) > np.max(self.x_val) else np.max(self.x_val)
         self.x_train[self.x_train != 0] = (self.x_train[self.x_train != 0] - self.min_value) / (self.max_value - self.min_value)
         self.x_val[self.x_val != 0] = (self.x_val[self.x_val != 0] - self.min_value) / (self.max_value - self.min_value)
+        self.x_test = (self.x_test - self.min_value) / (self.max_value - self.min_value)
 
     def _get_train_samples_per_class_count(self, no_train_samples):
         labels, classes_count = np.unique(self.y, return_counts=True)
@@ -195,8 +233,64 @@ class Dataset:
             self.train_indices[label] = list(neighbours)
             neighbours = set()
 
-    def _apply_gaussian_filter(self):
-        filtered_cube = np.empty(self.x.shape)
-        for wavelength in range(self.x.shape[-1]):
-            filtered_cube[:, :, wavelength] = gaussian_filter(self.x[:, :, wavelength], SIGMA)
-        return filtered_cube
+    def get_samples_info(self):
+        y = np.argmax(self.y_train, axis=1)
+        self.sample_indices = dict.fromkeys(np.unique(y))
+        self.band_means = dict.fromkeys(np.unique(y))
+        self.band_stds = dict.fromkeys(np.unique(y))
+        for label in self.sample_indices:
+            self.sample_indices[label] = np.where(y == label)[0]
+            self.band_means[label] = np.mean(self.x_train[self.sample_indices[label]], axis=0)
+            self.band_stds[label] = np.std(self.x_train[self.sample_indices[label]], axis=0)
+
+    def apply_gaussian_filter(self, classes_count, sigma):
+        most_numerous_label = 0
+        if self.augmented_samples_count is None:
+            self.augmented_samples_count = dict.fromkeys(self.sample_indices.keys(), 0)
+        for label in self.sample_indices:
+            if len(self.sample_indices[label]) > most_numerous_label:
+                most_numerous_label = len(self.sample_indices[label])
+        for label in self.sample_indices:
+            if self.augmented_samples_count[label] * 2 + len(self.sample_indices[label]) >= most_numerous_label:
+                to_augment = most_numerous_label - (self.augmented_samples_count[label] + len(self.sample_indices[label]))
+                self.augmented_samples_count[label] += to_augment
+            else:
+                to_augment = len(self.sample_indices[label])
+                self.augmented_samples_count[label] += to_augment
+            shuffle(self.sample_indices[label])
+            for i in range(to_augment):
+                augmented = gaussian_filter(self.x_train[self.sample_indices[label][i], ...], sigma)
+                self.augmented.append(augmented)
+                self.augmented_labels.append(to_categorical([label], classes_count).reshape((classes_count, )))
+
+    def add_noise(self, classes_count):
+        most_numerous_label = 0
+        if self.augmented_samples_count is None:
+            self.augmented_samples_count = dict.fromkeys(self.sample_indices.keys(), 0)
+        for label in self.sample_indices:
+            if len(self.sample_indices[label]) > most_numerous_label:
+                most_numerous_label = len(self.sample_indices[label])
+        for label in self.sample_indices:
+            if self.augmented_samples_count[label] * 2 + len(
+                    self.sample_indices[label]) >= most_numerous_label:
+                to_augment = most_numerous_label - (
+                            self.augmented_samples_count[label] + len(self.sample_indices[label]))
+                self.augmented_samples_count[label] += to_augment
+            else:
+                to_augment = len(self.sample_indices[label])
+                self.augmented_samples_count[label] += to_augment
+            shuffle(self.sample_indices[label])
+            for i in range(to_augment):
+                augmented = np.empty(self.x_train.shape[1:])
+                for band in range(self.x.shape[-1]):
+                    noise = 0.25 * np.random.normal(loc=0, scale=self.band_stds[label][band])
+                    augmented[band] = self.x_train[self.sample_indices[label][i]][band] + noise
+                self.augmented.append(augmented)
+                self.augmented_labels.append(
+                    to_categorical([label], classes_count).reshape((classes_count,)))
+
+    def add_augmented(self):
+        self.x_train = np.concatenate([self.x_train, self.augmented], axis=0)
+        self.y_train = np.concatenate([self.y_train, np.array(self.augmented_labels)], axis=0)
+        self.augmented = None
+        self.augmented_labels = None

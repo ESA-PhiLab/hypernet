@@ -8,3 +8,4 @@ tensorflow
 keras
 sklearn
 matplotlib
+spectral

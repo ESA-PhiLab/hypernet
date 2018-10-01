@@ -72,9 +72,9 @@ def build_multiple_features_model(settings: ModelSettings,
     return model
 
 
-def build_single_feature_model(settings: ModelSettings,
-                               no_of_classes: int,
-                               no_of_bands: int):
+def build_model(settings: ModelSettings,
+                no_of_classes: int,
+                no_of_bands: int):
     optimizer = Adam(lr=0.001)
 
     model = Sequential()

@@ -16,6 +16,7 @@ import jenkinsapi
 from jenkinsapi.jenkins import Jenkins
 from jenkinsapi.utils.crumb_requester import CrumbRequester
 
+
 def process_request(
         host_name: str,
         host_port: str,
@@ -79,7 +80,9 @@ def get_commit_id() -> str:
     Get id of the latest commit
     :return: (str) Commit id of HEAD
     """
+
     process = subprocess.Popen('git rev-parse HEAD', stdout = subprocess.PIPE)
+
     commit_id, error = process.communicate()
     assert error is None, 'There was an error when trying to retrieve the latest commit ID'
 

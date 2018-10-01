@@ -1,9 +1,11 @@
+from random import randint
 from base64 import b64encode
 from io import BytesIO
 import imageio
 from ipyleaflet import Map, ImageOverlay
 import numpy as np
 from matplotlib import pyplot as plt
+from matplotlib.patches import Rectangle
 
 
 def normalize_to_zero_one(image_data: np.ndarray) -> np.ndarray:
@@ -53,3 +55,20 @@ def create_image(normalized_image: np.ndarray, label: str=None):
         plt.imshow(np.repeat(normalized_image, 3, axis=2), interpolation='none')
     else:
         plt.imshow(normalized_image, interpolation='none')
+
+
+def show_samples_location(dataset, neighbourhood, samples_to_show_count):
+    class_to_display = randint(0, len(np.unique(dataset.y)))
+    train_indices = dataset.train_indices[class_to_display][0:samples_to_show_count]
+    test_indices = dataset.test_indices[class_to_display][0:samples_to_show_count]
+    im = dataset.x[:, :, randint(0, dataset.x.shape[-1])]
+    fig, ax = plt.subplots(1)
+    ax.imshow(im)
+    for train in train_indices:
+        x = [train.y - int(neighbourhood[0]/2), train.x - int(neighbourhood[1]/2)]
+        ax.add_patch(Rectangle(x, neighbourhood[0], neighbourhood[1], color='r', fill=False))
+
+    for test in test_indices:
+        x = [test.y - int(neighbourhood[0]/2), test.x - int(neighbourhood[1]/2)]
+        ax.add_patch(Rectangle(x, neighbourhood[0], neighbourhood[1], color='y', fill=False))
+    plt.show()
