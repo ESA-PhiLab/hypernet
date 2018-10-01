@@ -204,9 +204,10 @@ class WGAN:
             if self.verbose:
                 self._print_metrics(epoch)
             if self.generator_checkout:
-                figure_path = os.path.join(artifacts_path, 'pca_plot_epoch_{}'.format(epoch))
-                device = 'gpu' if self.use_cuda else 'cpu'
-                self._save_generator(artifacts_path, epoch)
-                plot_distribution(dataset, os.path.join(artifacts_path, 'generator_model_epoch_{}'.format(epoch)),
-                                  figure_path, bands_count, classes_count, device=device)
+                if epoch % self.generator_checkout == 0:
+                    figure_path = os.path.join(artifacts_path, 'pca_plot_epoch_{}'.format(epoch))
+                    device = 'gpu' if self.use_cuda else 'cpu'
+                    self._save_generator(artifacts_path, epoch)
+                    plot_distribution(dataset, os.path.join(artifacts_path, 'generator_model_epoch_{}'.format(epoch)),
+                                      figure_path, bands_count, classes_count, device=device)
             self._zero_losses()
