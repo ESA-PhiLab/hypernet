@@ -1,5 +1,6 @@
 import os.path
 import numpy as np
+from copy import copy
 
 import torch
 import torch.nn as nn
@@ -10,6 +11,7 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 
 from testing_generator import plot_distribution
+
 
 class WGAN:
     def __init__(self, generator: nn.Module,
@@ -208,6 +210,7 @@ class WGAN:
                     figure_path = os.path.join(artifacts_path, 'pca_plot_epoch_{}'.format(epoch))
                     device = 'gpu' if self.use_cuda else 'cpu'
                     self._save_generator(artifacts_path, epoch)
-                    plot_distribution(dataset, os.path.join(artifacts_path, 'generator_model_epoch_{}'.format(epoch)),
+                    plot_distribution(copy(dataset), os.path.join(artifacts_path,
+                                      'generator_model_epoch_{}'.format(epoch)),
                                       figure_path, bands_count, classes_count, device=device)
             self._zero_losses()
