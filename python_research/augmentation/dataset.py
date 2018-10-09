@@ -8,17 +8,23 @@ BACKGROUND_LABEL = 0
 
 class HyperspectralDataset(Dataset):
     def __init__(self,
-                 data_path: str,
-                 ground_truth_path: str,
+                 data: [str, np.ndarray],
+                 ground_truth: [str, np.ndarray],
                  transform=None,
                  normalize: bool=True,
                  samples_per_class: int=None):
-        self.x, self.y = self._transform_data(data_path, ground_truth_path)
+        if type(data) is str and type(ground_truth) is str:
+            self.x, self.y = self._transform_data(data, ground_truth)
+        elif type(data) is np.ndarray and type(ground_truth) is np.ndarray:
+            self.x, self.y = data, ground_truth
+        else:
+            raise TypeError("Data should be provided as a path to the .npy file or numpy array "
+                            "itself, was: {}".format(type(data)))
         self.transform = transform
         self.classes = np.unique(self.y)
         if normalize:
             self.x = self._normalize()
-        self.y = self.y - 1
+            self.y = self.y - 1
         if samples_per_class is not None:
             self.x, self.y = self._balance_set(samples_per_class)
 

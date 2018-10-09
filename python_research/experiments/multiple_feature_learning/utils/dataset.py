@@ -88,11 +88,6 @@ class Dataset:
         self.max_value = self.max_value if self.max_value > other.max_value else other.max_value
         return self
 
-    def _normalize_data(self):
-        min_ = np.min(self.x, keepdims=True)
-        max_ = np.max(self.x, keepdims=True)
-        return (self.x.astype(np.float64) - min_) / (max_ - min_)
-
     def train_val_split(self, portion: float=0.1):
         y = np.argmax(self.y_train, axis=1)
         labels = np.unique(y)

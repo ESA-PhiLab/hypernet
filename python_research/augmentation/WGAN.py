@@ -168,7 +168,7 @@ class WGAN:
             final_path = os.path.join(path, 'generator_model_epoch_{}'.format(epoch))
         else:
             final_path = os.path.join(path, 'generator_model')
-        torch.save(self.generator.state_dict(), final_path)
+        torch.save(self.generator.state_dict(), path)
 
     def _zero_losses(self):
         for loss in self.losses:
@@ -201,8 +201,9 @@ class WGAN:
         for epoch in range(epochs):
             self._train_epoch(data_loader, bands_count, batch_size, classes_count)
             if self.patience is not None:
-                if self._early_stopping():
-                    break
+                if epoch > 20:
+                    if self._early_stopping():
+                        break
             if self.verbose:
                 self._print_metrics(epoch)
             if self.generator_checkout:
@@ -214,3 +215,4 @@ class WGAN:
                                       'generator_model_epoch_{}'.format(epoch)),
                                       figure_path, bands_count, classes_count, device=device)
             self._zero_losses()
+        self._save_generator(artifacts_path, -1)

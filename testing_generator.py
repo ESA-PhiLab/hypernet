@@ -79,14 +79,13 @@ def plot_distribution(dataset, generator_model_path, output_path, input_shape, c
     fake_label_samples = list_to_dict(fake_dataset, real_label_samples)
 
     colors = get_cmap(classes_count)
+    fig, (ax1, ax2) = plt.subplots(1, 2)
     for label in real_label_samples:
-        plt.subplot(1, 2, 1)
-        plt.scatter(real_label_samples[label][:, 0], real_label_samples[label][:, 1], s=1, c=colors(label))
-        plt.title('Real')
+        ax1.scatter(real_label_samples[label][:, 0], real_label_samples[label][:, 1], s=1, c=colors(label))
+        ax1.set_title('Real')
     for label in real_label_samples:
-        plt.subplot(1, 2, 2)
-        plt.scatter(fake_label_samples[label][:, 0], fake_label_samples[label][:, 1], s=1, c=colors(label))
-        plt.title('Fake')
+        ax2.scatter(fake_label_samples[label][:, 0], fake_label_samples[label][:, 1], s=1, c=colors(label))
+        ax2.set_title('Fake')
     plt.savefig(output_path)
 
 
@@ -112,3 +111,13 @@ def list_to_dict(fake_dataset, real_label_samples):
         fake_label_samples[label] = fake_dataset[last:last + len(real_label_samples[label])]
         last = last + len(real_label_samples[label])
     return fake_label_samples
+
+# dataset = HyperspectralDataset("C:\\Users\mmyller.KPLABS\Documents\datasets\Indian\Indian_pines_corrected.npy", "C:\\Users\mmyller.KPLABS\Documents\datasets\Indian\Indian_pines_gt.npy", normalize=True)
+# path = "C:\\Users\mmyller.KPLABS\OneDrive - KP Labs Sp. z o.o\salinas3\generator_model_epoch_{}"
+# output_path = "salinas/salinas_pca_epoch_{}"
+#
+# for i in range(0, 10000, 50):
+#     path_ = path.format(i)
+#     out = output_path.format(i)
+#     plot_distribution(dataset, path_, out, 203, 16)
+

@@ -1,3 +1,4 @@
+import torch
 import numpy as np
 from random import shuffle
 from keras.utils import to_categorical
@@ -16,8 +17,12 @@ def get_samples_per_class_indices(ground_truth):
 def get_most_numerous_class(samples_per_class):
     max_ = -np.inf
     for label in samples_per_class:
-        if len(samples_per_class[label]) > max_:
-            max_ = samples_per_class[label]
+        if type(samples_per_class[label]) is int:
+            if samples_per_class[label] > max_:
+                max_ = samples_per_class[label]
+        else:
+            if len(samples_per_class[label]) > max_:
+                max_ = len(samples_per_class[label])
     return max_
 
 
@@ -92,9 +97,27 @@ def augment_with_noise(alpha, augmented_x, augmented_y, bands_stds, classes_coun
 
 
 def calculate_how_many_to_augment(label, most_numerous_class, samples_per_class):
-    class_count = len(samples_per_class[label])
-    if class_count * 2 >= most_numerous_class:
-        to_augment = most_numerous_class - class_count
+    if type(samples_per_class[label]) is int:
+        class_count = samples_per_class[label]
     else:
-        to_augment = class_count
+        class_count = len(samples_per_class[label])
+    to_augment = most_numerous_class - class_count
     return to_augment
+
+
+def generate_samples(generator, samples_per_class, bands_count, mode='even'):
+    if mode == 'even':
+        most_numerous_class = get_most_numerous_class(samples_per_class)
+        generated_x = torch.Tensor(0)
+        generated_y = []
+        for label in samples_per_class:
+            to_augment = calculate_how_many_to_augment(label, most_numerous_class, samples_per_class)
+            if to_augment < 2:
+                continue
+            noise = torch.FloatTensor(np.random.normal(0.5, 0.1, (to_augment, bands_count)))
+            label_one_hot = to_categorical(np.full(to_augment, label), 16)
+            label_one_hot = torch.from_numpy(label_one_hot)
+            generated = generator(noise, label_one_hot)
+            generated_x = torch.cat([generated_x, generated])
+            generated_y += [label for _ in range(to_augment)]
+        return generated_x, generated_y
