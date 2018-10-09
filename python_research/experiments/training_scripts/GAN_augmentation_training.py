@@ -136,7 +136,7 @@ def main(args):
               args.batch_size, classes_count, os.path.join(args.output_dir, args.output_file) + "generator_model")
 
     samples_per_class = get_samples_per_class_count(data_to_augment_on.y)
-    generated_x, generated_y = generate_samples(gan.generator, samples_per_class, bands_count)
+    generated_x, generated_y = generate_samples(gan.generator, samples_per_class, bands_count, classes_count)
 
     generated_x = np.reshape(generated_x.numpy(), generated_x.shape + (1, ))
     generated_y = to_categorical(generated_y, classes_count)
