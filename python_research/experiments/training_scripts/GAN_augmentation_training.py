@@ -149,7 +149,11 @@ def main(args):
     generated_x, generated_y = generate_samples(generator, samples_per_class, bands_count,
                                                 classes_count, device=device)
 
-    generated_x = np.reshape(generated_x.detach().numpy(), generated_x.shape + (1, ))
+    if not cuda:
+        generated_x = np.reshape(generated_x.detach().numpy(), generated_x.shape + (1, ))
+    else:
+        generated_x = generated_x.cpu()
+        generated_x = np.reshape(generated_x.detach().numpy(), generated_x.shape + (1,))
     generated_y = to_categorical(generated_y, classes_count)
 
     data.x_train = np.concatenate([data.x_train, generated_x], axis=0)
