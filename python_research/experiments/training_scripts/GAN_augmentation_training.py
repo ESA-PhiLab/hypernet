@@ -142,7 +142,12 @@ def main(args):
     # generator.load_state_dict(torch.load(generator_path))
 
     samples_per_class = get_samples_per_class_count(data_to_augment_on.y)
-    generated_x, generated_y = generate_samples(generator, samples_per_class, bands_count, classes_count)
+    if cuda:
+        device='gpu'
+    else:
+        device='cpu'
+    generated_x, generated_y = generate_samples(generator, samples_per_class, bands_count,
+                                                classes_count, device=device)
 
     generated_x = np.reshape(generated_x.detach().numpy(), generated_x.shape + (1, ))
     generated_y = to_categorical(generated_y, classes_count)
