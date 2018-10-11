@@ -110,6 +110,8 @@ def generate_samples(generator, samples_per_class, bands_count, classes_count, m
     if mode == 'even':
         most_numerous_class = get_most_numerous_class(samples_per_class)
         generated_x = torch.Tensor(0)
+        if device == 'gpu':
+            generated_x = generated_x.cuda()
         generated_y = []
         for label in samples_per_class:
             to_augment = calculate_how_many_to_augment(label, most_numerous_class, samples_per_class)
