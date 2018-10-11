@@ -41,7 +41,7 @@ def parse_args():
                         help="How many times to run the validation")
     parser.add_argument("--training_samples_per_class", type=int, default=250,
                         help="Number of train samples per class to use")
-    parser.add_argument('--epochs', type=int, default=200,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='Size of training batch')
@@ -86,11 +86,13 @@ def get_samples_per_class_count(y):
 def main(args):
     os.makedirs(os.path.join(args.output_dir), exist_ok=True)
     # Load patches
-    data, test = load_patches(args.dataset_file, args.classes_count, [1,1])
+    # data, test = load_patches(args.dataset_file, args.classes_count, [1,1])
 
+    data = Dataset(args.dataset_file, args.gt_file, args.training_samples_per_class)
+    data.normalize_data()
     # Normalize data
-    data.normalize_data(args.classes_count)
-    test.x_test = (test.x_test.astype(np.float64) - data.min) / (data.max - data.min)
+    # data.normalize_data(args.classes_count)
+    # test.x_test = (test.x_test.astype(np.float64) - data.min) / (data.max - data.min)
     data_to_augment_on = HyperspectralDataset(data.x_train[:, :, 0], np.argmax(data.y_train, axis=1),
                                               normalize=False)
     custom_data_loader = CustomDataLoader(data_to_augment_on, args.batch_size)
@@ -135,10 +137,14 @@ def main(args):
     gan.train(copy(data_to_augment_on), custom_data_loader, args.n_epochs_gan, bands_count,
               args.batch_size, classes_count, os.path.join(args.output_dir, args.output_file) + "generator_model")
 
-    samples_per_class = get_samples_per_class_count(data_to_augment_on.y)
-    generated_x, generated_y = generate_samples(gan.generator, samples_per_class, bands_count, classes_count)
+    # generator = Generator(input_shape, classes_count)
+    # generator_path = os.path.join(args.output_dir, args.output_file + "generator_model")
+    # generator.load_state_dict(torch.load(generator_path))
 
-    generated_x = np.reshape(generated_x.numpy(), generated_x.shape + (1, ))
+    samples_per_class = get_samples_per_class_count(data_to_augment_on.y)
+    generated_x, generated_y = generate_samples(generator, samples_per_class, bands_count, classes_count)
+
+    generated_x = np.reshape(generated_x.detach().numpy(), generated_x.shape + (1, ))
     generated_y = to_categorical(generated_y, classes_count)
 
     data.x_train = np.concatenate([data.x_train, generated_x], axis=0)
@@ -168,13 +174,13 @@ def main(args):
     model = load_model(os.path.join(args.output_dir, args.output_file) + "_model")
 
     # Calculate test set score
-    test_score = model.evaluate(x=test.x_test,
-                                y=test.y_test)
+    test_score = model.evaluate(x=data.x_test,
+                                y=data.y_test)
 
     # Calculate accuracy for each class
-    predictions = model.predict(x=test.x_test)
+    predictions = model.predict(x=data.x_test)
     predictions = np.argmax(predictions, axis=1)
-    y_true = np.argmax(test.y_test, axis=1)
+    y_true = np.argmax(data.y_test, axis=1)
     matrix = confusion_matrix(y_true, predictions, labels=np.unique(y_true))
     matrix = matrix / matrix.astype(np.float).sum(axis=1)
     class_accuracy = np.diagonal(matrix)
@@ -200,9 +206,9 @@ def main(args):
 
 if __name__ == "__main__":
     args = parse_args()
-    for j in range(0, 5):
-        args.dataset_file = args.dataset_file[:-1] + str(j)
-        args.output_dir = args.output_dir[:-1] + str(j)
-        for i in range(1, 6):
+    for i in range(0, args.runs):
+        if i < 10:
             args.output_file = args.output_file[:-1] + str(i)
-            main(args)
+        else:
+            args.output_file = args.output_file[:-2] + str(i)
+        main(args)

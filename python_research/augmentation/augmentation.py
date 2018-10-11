@@ -101,7 +101,7 @@ def calculate_how_many_to_augment(label, most_numerous_class, samples_per_class)
         class_count = samples_per_class[label]
     else:
         class_count = len(samples_per_class[label])
-    to_augment = most_numerous_class - class_count
+    to_augment = class_count
     return to_augment
 
 
@@ -117,8 +117,8 @@ def generate_samples(generator, samples_per_class, bands_count, classes_count, m
             noise = torch.FloatTensor(np.random.normal(0.5, 0.1, (to_augment, bands_count)))
             label_one_hot = to_categorical(np.full(to_augment, label), classes_count)
             label_one_hot = torch.from_numpy(label_one_hot)
-            noise = noise.cuda()
-            label_one_hot = label_one_hot.cuda()
+            # noise = noise.cuda()
+            # label_one_hot = label_one_hot.cuda()
             generated = generator(noise, label_one_hot)
             generated_x = torch.cat([generated_x, generated])
             generated_y += [label for _ in range(to_augment)]

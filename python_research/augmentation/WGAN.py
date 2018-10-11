@@ -215,4 +215,4 @@ class WGAN:
                                       'generator_model_epoch_{}'.format(epoch)),
                                       figure_path, bands_count, classes_count, device=device)
             self._zero_losses()
-        self._save_generator(artifacts_path, -1)
+        self._save_generator(artifacts_path)
