@@ -21,7 +21,7 @@ class Dataset:
     def __init__(self, dataset_file: [str, np.ndarray], gt_file: [str, np.ndarray],
                  no_train_samples: float, neighbours_size: Tuple[int, int]=(1, 1),
                  validation_set_portion=0.1,
-                 normalize=False,
+                 imbalanced: int=None,
                  classes_count: int=None,
                  train_test_indices: TrainTestIndices=None,
                  val_split=True):
@@ -36,7 +36,7 @@ class Dataset:
                             "string (a path to dataset in .npy format) or a numpy array itself")
         self.min_value = np.min(self.x)
         self.max_value = np.max(self.x)
-        self.no_train_samples = self._get_train_samples_per_class_count(no_train_samples)
+        self.no_train_samples = self._get_train_samples_per_class_count(no_train_samples, imbalanced)
         if train_test_indices is None:
             self.train_indices, self.test_indices = self._get_train_test_indices()
             if val_split:
@@ -109,12 +109,12 @@ class Dataset:
         self.x_val[self.x_val != 0] = (self.x_val[self.x_val != 0] - self.min_value) / (self.max_value - self.min_value)
         self.x_test = (self.x_test - self.min_value) / (self.max_value - self.min_value)
 
-    def _get_train_samples_per_class_count(self, no_train_samples):
+    def _get_train_samples_per_class_count(self, no_train_samples, imbalanced):
         labels, classes_count = np.unique(self.y, return_counts=True)
         if BACKGROUND_LABEL in labels:
             labels = np.delete(labels, BACKGROUND_LABEL)
             classes_count = np.delete(classes_count, BACKGROUND_LABEL)
-        train_samples_per_class = dict.fromkeys(labels)
+        train_samples_per_class = dict.fromkeys(labels, 0)
 
         # treat as a percentage of samples
         if 1 > no_train_samples > 0:
@@ -132,7 +132,14 @@ class Dataset:
         elif no_train_samples == -1:
             for index, label in enumerate(sorted(train_samples_per_class.keys())):
                 train_samples_per_class[label] = classes_count[index]
-
+        elif imbalanced is not None:
+            total_samples_count = sum(classes_count)
+            probas = [float(classes_count[i])/total_samples_count for i in range(len(classes_count))]
+            for train_sample in range(no_train_samples):
+                selected_label = random.choices(labels, probas)[0]
+                if train_samples_per_class[selected_label] > classes_count[selected_label - 1]:
+                    continue
+                train_samples_per_class[selected_label] += 1
         else:
             for index, label in enumerate(sorted(train_samples_per_class.keys())):
                 train_samples_per_class[label] = int(no_train_samples)
