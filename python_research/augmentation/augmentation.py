@@ -101,7 +101,10 @@ def calculate_how_many_to_augment(label, most_numerous_class, samples_per_class)
         class_count = samples_per_class[label]
     else:
         class_count = len(samples_per_class[label])
-    to_augment = class_count
+    if class_count * 2 >= most_numerous_class:
+        to_augment = most_numerous_class - class_count
+    else:
+        to_augment = class_count
     return to_augment
 
 

@@ -40,14 +40,14 @@ def parse_args():
                         help="How many times to run the validation")
     parser.add_argument("--training_samples", type=int, default=2000,
                         help="Number of train samples per class to use")
-    parser.add_argument('--epochs', type=int, default=200,
+    parser.add_argument('--epochs', type=int, default=1,
                         help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='Size of training batch')
     parser.add_argument('--patience', type=int, default=15,
                         help='Number of epochs without improvement on validation score before '
                              'stopping the learning')
-    parser.add_argument('--kernels', type=int, default=200,
+    parser.add_argument('--kernels', type=int, default=1,
                         help='Number of kernels in fir convolutional layer')
     parser.add_argument('--kernel_size', type=int, default=5,
                         help='Number of epochs without improvement on validation score before '
@@ -55,7 +55,7 @@ def parse_args():
     parser.add_argument('--verbose', type=int, default=2,
                         help='Verbosity of training')
     # WGAN parameters
-    parser.add_argument('--n_epochs_gan', type=int, default=200,
+    parser.add_argument('--n_epochs_gan', type=int, default=1,
                         help='number of epochs of training for GAN')
     parser.add_argument('--n_critic', type=int, default=4,
                         help='number of training steps for discriminator per iter')
@@ -85,10 +85,8 @@ def get_samples_per_class_count(y):
 def main(args):
     os.makedirs(os.path.join(args.output_dir), exist_ok=True)
     # Load patches
-    data = UnbalancedData(args.dataset_file, args.gt_file, args.training_samples, [1, 1])
+    data = UnbalancedData(args.dataset_file, args.gt_file, args.training_samples)
 
-    # Normalize data
-    data.normalize_sets()
     data_to_augment_on = HyperspectralDataset(data.x_train[:, :, 0], np.argmax(data.y_train, axis=1),
                                               normalize=False)
     custom_data_loader = CustomDataLoader(data_to_augment_on, args.batch_size)
