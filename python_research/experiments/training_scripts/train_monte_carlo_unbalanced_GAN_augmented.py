@@ -14,8 +14,7 @@ from keras.callbacks import EarlyStopping, CSVLogger, ModelCheckpoint
 
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import \
     build_1d_model
-from python_research.experiments.multiple_feature_learning.utils.utils import load_patches
-from python_research.experiments.multiple_feature_learning.utils.dataset import Dataset
+from python_research.experiments.multiple_feature_learning.utils.unbalanced_data import UnbalancedData
 from python_research.experiments.multiple_feature_learning.utils.keras_custom_callbacks import \
     TimeHistory
 from python_research.augmentation.dataset import HyperspectralDataset, CustomDataLoader
@@ -39,9 +38,9 @@ def parse_args():
                         help="Name of the output file in which data will be stored")
     parser.add_argument("--runs", type=int, default=10,
                         help="How many times to run the validation")
-    parser.add_argument("--training_samples_per_class", type=int, default=250,
+    parser.add_argument("--training_samples", type=int, default=2000,
                         help="Number of train samples per class to use")
-    parser.add_argument('--epochs', type=int, default=1,
+    parser.add_argument('--epochs', type=int, default=200,
                         help='Number of training epochs')
     parser.add_argument('--batch_size', type=int, default=64,
                         help='Size of training batch')
@@ -86,13 +85,10 @@ def get_samples_per_class_count(y):
 def main(args):
     os.makedirs(os.path.join(args.output_dir), exist_ok=True)
     # Load patches
-    # data, test = load_patches(args.dataset_file, args.classes_count, [1,1])
+    data = UnbalancedData(args.dataset_file, args.gt_file, args.training_samples, [1, 1])
 
-    data = Dataset(args.dataset_file, args.gt_file, args.training_samples_per_class)
-    data.normalize_data()
     # Normalize data
-    # data.normalize_data(args.classes_count)
-    # test.x_test = (test.x_test.astype(np.float64) - data.min) / (data.max - data.min)
+    data.normalize_sets()
     data_to_augment_on = HyperspectralDataset(data.x_train[:, :, 0], np.argmax(data.y_train, axis=1),
                                               normalize=False)
     custom_data_loader = CustomDataLoader(data_to_augment_on, args.batch_size)
@@ -137,23 +133,14 @@ def main(args):
     gan.train(copy(data_to_augment_on), custom_data_loader, args.n_epochs_gan, bands_count,
               args.batch_size, classes_count, os.path.join(args.output_dir, args.output_file) + "generator_model")
 
-    # generator = Generator(input_shape, classes_count)
-    # generator_path = os.path.join(args.output_dir, args.output_file + "generator_model")
-    # generator.load_state_dict(torch.load(generator_path))
+    generator = Generator(input_shape, classes_count)
+    generator_path = os.path.join(args.output_dir, args.output_file + "generator_model")
+    generator.load_state_dict(torch.load(generator_path))
 
     samples_per_class = get_samples_per_class_count(data_to_augment_on.y)
-    if cuda:
-        device='gpu'
-    else:
-        device='cpu'
-    generated_x, generated_y = generate_samples(generator, samples_per_class, bands_count,
-                                                classes_count, device=device)
+    generated_x, generated_y = generate_samples(generator, samples_per_class, bands_count, classes_count)
 
-    if not cuda:
-        generated_x = np.reshape(generated_x.detach().numpy(), generated_x.shape + (1, ))
-    else:
-        generated_x = generated_x.cpu()
-        generated_x = np.reshape(generated_x.detach().numpy(), generated_x.shape + (1,))
+    generated_x = np.reshape(generated_x.detach().numpy(), generated_x.shape + (1, ))
     generated_y = to_categorical(generated_y, classes_count)
 
     data.x_train = np.concatenate([data.x_train, generated_x], axis=0)
