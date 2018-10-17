@@ -70,6 +70,9 @@ class HyperspectralDataset(Dataset):
 
 
 class CustomDataLoader:
+    """
+    Shuffling is performed only withing classes, the order of the returned classes is fixed.
+    """
     def __init__(self, dataset: Dataset, batch_size: int=64):
         self.data = dataset
         self.batch_size = batch_size
@@ -94,7 +97,6 @@ class CustomDataLoader:
 
     def _get_indexes(self):
         labels = self.label_samples_indices.keys()
-        # shuffle(labels)
         indexes = []
         for label in labels:
             shuffle(self.label_samples_indices[label])

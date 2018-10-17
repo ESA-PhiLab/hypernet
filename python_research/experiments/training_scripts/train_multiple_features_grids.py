@@ -1,17 +1,14 @@
 import os.path
 import numpy as np
 import argparse
-import string
-from copy import copy
-from random import shuffle
 import re
 from keras.models import load_model
 from keras.utils import to_categorical
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 from sklearn.metrics import confusion_matrix
-from python_research.experiments.multiple_feature_learning.utils.dataset import Dataset
-from python_research.experiments.multiple_feature_learning.utils.patch_data import PatchData
-from python_research.experiments.multiple_feature_learning.utils.keras_custom_callbacks import \
+from python_research.experiments.utils import Dataset
+from python_research.experiments.utils import PatchData
+from python_research.experiments.utils import \
     TimeHistory
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import \
     build_multiple_features_model, build_settings_for_dataset

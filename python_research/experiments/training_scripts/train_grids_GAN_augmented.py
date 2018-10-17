@@ -14,9 +14,8 @@ from keras.callbacks import EarlyStopping, CSVLogger, ModelCheckpoint
 
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import \
     build_1d_model
-from python_research.experiments.multiple_feature_learning.utils.utils import load_patches
-from python_research.experiments.multiple_feature_learning.utils.dataset import Dataset
-from python_research.experiments.multiple_feature_learning.utils.keras_custom_callbacks import \
+from python_research.experiments.utils import load_patches
+from python_research.experiments.utils import \
     TimeHistory
 from python_research.augmentation.dataset import HyperspectralDataset, CustomDataLoader
 from python_research.augmentation.classifier import Classifier

@@ -5,10 +5,10 @@ from keras.models import load_model
 from sklearn.metrics import confusion_matrix
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 
-from python_research.experiments.multiple_feature_learning.utils.utils import load_patches
-from python_research.experiments.multiple_feature_learning.utils.keras_custom_callbacks import TimeHistory
+from python_research.experiments.utils import load_patches
+from python_research.experiments.utils import TimeHistory
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import \
-    build_1d_model, build_settings_for_dataset
+    build_1d_model
 
 
 def parse_args():

@@ -7,13 +7,12 @@ from sklearn.metrics import confusion_matrix
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 from typing import NamedTuple, List
 
-from python_research.experiments.multiple_feature_learning.utils.keras_custom_callbacks import TimeHistory
-from python_research.experiments.multiple_feature_learning.utils.dataset import Dataset
-from python_research.experiments.multiple_feature_learning.builders.keras_builders import build_settings_for_dataset, build_model
+from python_research.experiments.utils import TimeHistory
+from python_research.experiments.utils import Dataset
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import (
     build_multiple_features_model,
     build_settings_for_dataset)
-from python_research.experiments.multiple_feature_learning.utils.data_types import (
+from python_research.experiments.utils import (
     TrainTestIndices
 )
 

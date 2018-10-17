@@ -8,7 +8,7 @@ import numpy as np
 from keras.utils import to_categorical
 from scipy.ndimage.filters import gaussian_filter
 
-from python_research.experiments.multiple_feature_learning.utils.data_types \
+from python_research.experiments.utils \
     import TrainTestIndices
 from python_research.segmentation import Point
 

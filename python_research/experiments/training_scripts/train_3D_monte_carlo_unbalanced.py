@@ -4,8 +4,8 @@ import numpy as np
 from keras.models import load_model
 from sklearn.metrics import confusion_matrix
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
-from python_research.experiments.multiple_feature_learning.utils.keras_custom_callbacks import TimeHistory
-from python_research.experiments.multiple_feature_learning.utils.unbalanced_data import UnbalancedData
+from python_research.experiments.utils import TimeHistory
+from python_research.experiments.utils import UnbalancedData
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import build_settings_for_dataset, build_model
 
 

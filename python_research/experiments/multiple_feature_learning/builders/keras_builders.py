@@ -4,7 +4,7 @@ from keras.models import Model, Sequential
 from keras.optimizers import Adam
 from keras.layers import MaxPooling2D, Flatten, Conv2D, Softmax, Input, \
     concatenate, Conv1D, MaxPooling1D, Dense, BatchNormalization
-from ..utils.data_types import ModelSettings
+from python_research.experiments.utils import ModelSettings
 
 
 def build_layers(input_shape, kernel_size):

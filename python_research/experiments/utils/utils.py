@@ -1,7 +1,7 @@
 import re
 import os
-from python_research.experiments.multiple_feature_learning.utils.dataset import Dataset
-from python_research.experiments.multiple_feature_learning.utils.patch_data import PatchData
+from python_research.experiments.utils import Dataset
+from python_research.experiments.utils import PatchData
 
 
 def sorted_alphanumeric(data):
@@ -30,8 +30,8 @@ def load_patches(directory, classes_count, neighbourhood):
 
 
 def combine_patches(patches, patches_gt, test, test_gt, neighbourhood, classes_count):
-    from python_research.experiments.multiple_feature_learning.utils.patch_data import PatchData
-    from python_research.experiments.multiple_feature_learning.utils.dataset import Dataset
+    from python_research.experiments.utils import PatchData
+    from python_research.experiments.utils import Dataset
     train_val_data = PatchData(patches[0], patches_gt[0], neighbourhood)
     patches.pop(0)
     patches_gt.pop(0)

@@ -1,0 +1,86 @@
+import abc
+import numpy as np
+from copy import copy
+from random import shuffle
+from typing import List
+from python_research.experiments.utils.hyperspectral_dataset import Dataset
+
+class Subset(abc.ABC):
+
+    @abc.abstractmethod
+    def extract_subset(self, *args, **kwargs) -> \
+            [np.ndarray, np.ndarray]:
+        """"
+        Extract some part of a given dataset
+        :param dataset: Dataset from which the subset should be extracted
+        :return: Extracted data and labels
+        """
+
+
+class BalancedSubset(Subset):
+
+    def __init__(self, dataset: Dataset,
+                 samples_per_class: int,
+                 delete_extracted: bool=True):
+        self.data, self.labels = self.extract_subset(dataset,
+                                                     samples_per_class,
+                                                     delete_extracted)
+
+    @staticmethod
+    def _collect_indices_to_extract(classes: List[int],
+                                    labels: np.ndarray,
+                                    samples_per_class: int):
+        indices_to_extract = []
+        for label in classes:
+            class_indices = list(np.where(labels == label)[0])
+            shuffle(class_indices)
+            indices_to_extract += class_indices[0:samples_per_class]
+        return indices_to_extract
+
+    def extract_subset(self, dataset: Dataset,
+                       samples_per_class: int,
+                       delete_extracted: bool) -> [np.ndarray, np.ndarray]:
+        classes, counts = np.unique(dataset.labels, return_counts=True)
+        if np.any(counts < samples_per_class):
+            raise ValueError("Chosen number of samples per class is too big "
+                             "for one of the classes")
+        indices_to_extract = self._collect_indices_to_extract(classes,
+                                                              dataset.labels,
+                                                              samples_per_class)
+
+        data = copy(dataset.data[indices_to_extract, ...])
+        labels = copy(dataset.data[indices_to_extract, ...])
+
+        if delete_extracted:
+            np.delete(dataset.data, indices_to_extract)
+            np.delete(dataset.data, indices_to_extract)
+
+        return data, labels
+
+
+class UnbalancedSubset(Subset):
+
+    def __init__(self, dataset: Dataset,
+                 total_samples_count: int,
+                 delete_extracted: bool=True):
+        self.data, self.labels = self.extract_subset(dataset,
+                                                     total_samples_count,
+                                                     delete_extracted)
+
+    def extract_subset(self, dataset: Dataset,
+                       total_samples_count: int,
+                       delete_extracted: bool) -> [np.ndarray, np.ndarray]:
+        indices = [i for i in range(len(dataset.labels))]
+        shuffle(indices)
+
+        indices_to_extract = indices[0:total_samples_count]
+
+        data = copy(dataset.data[indices_to_extract, ...])
+        labels = copy(dataset.data[indices_to_extract, ...])
+
+        if delete_extracted:
+            np.delete(dataset.data, indices_to_extract)
+            np.delete(dataset.data, indices_to_extract)
+
+        return data, labels
+
