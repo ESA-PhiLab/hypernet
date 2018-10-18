@@ -88,6 +88,28 @@ def sliding_window(image: np.ndarray, window_size: WindowSize,
 
 def extract_grids(dataset_path: str, ground_truth_path: str, window_size: Tuple,
                   total_samples_count: int):
+    """
+    Divide an image into patches and extract them randomly until a provided
+    number of samples is contained in those patches. If a patch is empty
+    (does not contain any samples, only background) then it is omitted.
+    :param dataset_path: Path to the dataset (.npy or .mat format)
+    :param ground_truth_path: Path to the ground truth file (.npy or .mat format)
+    :param window_size: Size of a single patch
+    :param total_samples_count: Desired number of samples contained in
+                                all of the extracted patches
+    :returns: tuple (extracted_patches, extracted_patches_gt),
+              tuple(test, test_gt), data_visualization
+              WHERE
+              List[Patch] extracted_patches is a list of extracted patches
+              List[Patch] extracted_patches_gt is a list with ground truths
+                          corresponding to extracted patches
+              np.ndarray test is the remaining part of the image, where
+                         extracted patches are marked as 0
+              np.ndarray test_gt is the ground truth file of the remaining part,
+                         which also has extracted patches marked as 0
+              np.ndarray data_visualization is a random band presenting
+                         positions of the extracted patches
+    """
     window = WindowSize(window_size[0], window_size[1])
     input_data = np.load(dataset_path)
     patches = sliding_window(input_data, window)
@@ -98,7 +120,7 @@ def extract_grids(dataset_path: str, ground_truth_path: str, window_size: Tuple,
     extracted_patches_gt = []
     for patch in patches:
         nonzero = np.count_nonzero(gt[patch.upper_y:patch.lower_y,
-                                              patch.left_x:patch.right_x])
+                                      patch.left_x:patch.right_x])
         if nonzero == 0:
             continue
         total += nonzero
@@ -109,12 +131,15 @@ def extract_grids(dataset_path: str, ground_truth_path: str, window_size: Tuple,
         extracted_patches.append(extracted_patch)
         extracted_patches_gt.append(extracted_patch_gt)
 
-        input_data[patch.upper_y:patch.lower_y, patch.left_x:patch.right_x, :] = 0
-        gt[patch.upper_y:patch.lower_y, patch.left_x:patch.right_x] = 0
+        input_data[patch.upper_y:patch.lower_y,
+                   patch.left_x:patch.right_x, :] = 0
+        gt[patch.upper_y:patch.lower_y,
+           patch.left_x:patch.right_x] = 0
 
         if total >= total_samples_count:
             break
     data_visualization = input_data[:, :, randint(0, input_data.shape[-1])]
     test = input_data
     test_gt = gt
-    return (extracted_patches, extracted_patches_gt), (test, test_gt), data_visualization
+    return (extracted_patches, extracted_patches_gt), (test, test_gt), \
+            data_visualization

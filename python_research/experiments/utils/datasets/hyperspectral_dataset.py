@@ -1,3 +1,5 @@
+import abc
+from collections import Iterable
 from math import ceil
 from copy import copy
 from os import PathLike
@@ -12,12 +14,52 @@ WIDTH = 1
 DEPTH = 2
 
 
-class HyperspectralDataset:
+class Dataset(abc.ABC):
+
+    @property
+    @abc.abstractmethod
+    def get_data(self) -> np.ndarray:
+        """
+        :return: Data from a given dataset
+        """
+
+    @property
+    @abc.abstractmethod
+    def get_labels(self) -> np.ndarray:
+        """
+        :return: Labels from a given dataset
+        """
+
+    @abc.abstractmethod
+    def delete_by_indices(self, indices: Iterable):
+        """
+        Delete a chunk of data given as indices
+        :param indices: Indices to delete from both data and labels arrays
+        :return: None
+        """
+
+    @abc.abstractmethod
+    def __len__(self):
+        """
+        Method providing a size of the dataaset (number of samples)
+        :return: Size of the dataset
+        """
+
+    @abc.abstractmethod
+    def __getitem__(self, item) -> np.ndarray:
+        """
+        Method supporting integer indexing
+        :param item:
+        :return:
+        """
+
+
+class HyperspectralDataset(Dataset):
 
     def __init__(self, dataset: [np.ndarray, PathLike],
                  ground_truth: [np.ndarray, PathLike],
-                 neighbourhood_size: int=1,
-                 background_label: int=0):
+                 neighbourhood_size: int = 1,
+                 background_label: int = 0):
         if type(dataset) is np.ndarray and type(ground_truth) is np.ndarray:
             raw_data = dataset
             ground_truth = ground_truth
@@ -33,6 +75,20 @@ class HyperspectralDataset:
                                                       neighbourhood_size,
                                                       background_label)
 
+    def get_data(self):
+        return self.data
+
+    def get_labels(self):
+        return self.labels
+
+    def __len__(self):
+        return len(self.labels)
+
+    def __getitem__(self, item):
+        sample_x = self.data[item, ...]
+        sample_y = self.labels[item, ...]
+        return sample_x, sample_y
+
     @staticmethod
     def _get_padded_cube(data, padding_size):
         x = copy(data)
@@ -45,9 +101,9 @@ class HyperspectralDataset:
         return x
 
     @staticmethod
-    def prepare_1d(raw_data: np.ndarray,
-                   ground_truth: np.ndarray,
-                   background_label: int):
+    def _prepare_1d(raw_data: np.ndarray,
+                    ground_truth: np.ndarray,
+                    background_label: int):
         samples, labels = list(), list()
         col_indexes = [x for x in range(0, raw_data.shape[WIDTH])]
         row_indexes = [y for y in range(0, raw_data.shape[HEIGHT])]
@@ -59,10 +115,10 @@ class HyperspectralDataset:
                 labels.append(ground_truth[y, x])
         return samples, labels
 
-    def prepare_3d(self, raw_data: np.ndarray,
-                   ground_truth: np.ndarray,
-                   neighbourhood_size: int,
-                   background_label: int):
+    def _prepare_3d(self, raw_data: np.ndarray,
+                    ground_truth: np.ndarray,
+                    neighbourhood_size: int,
+                    background_label: int):
         col_indexes = [x for x in range(0, raw_data.shape[WIDTH])]
         row_indexes = [y for y in range(0, raw_data.shape[HEIGHT])]
         padding_size = neighbourhood_size % ceil(float(neighbourhood_size) / 2.)
@@ -81,16 +137,17 @@ class HyperspectralDataset:
                         neighbourhood_size: int,
                         background_label: int):
         if neighbourhood_size > 1:
-            samples, labels = self.prepare_3d(raw_data,
-                                              ground_truth,
-                                              neighbourhood_size,
-                                              background_label)
+            samples, labels = self._prepare_3d(raw_data,
+                                               ground_truth,
+                                               neighbourhood_size,
+                                               background_label)
         else:
-            samples, labels = self.prepare_1d(raw_data,
-                                              ground_truth,
-                                              background_label)
+            samples, labels = self._prepare_1d(raw_data,
+                                               ground_truth,
+                                               background_label)
         return (np.array(samples).astype(np.float32),
                 np.array(labels).astype(np.int8))
 
-
-
+    def delete_by_indices(self, indices: Iterable):
+        np.delete(self.data, indices)
+        np.delete(self.labels, indices)

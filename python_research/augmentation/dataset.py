@@ -71,7 +71,8 @@ class HyperspectralDataset(Dataset):
 
 class CustomDataLoader:
     """
-    Shuffling is performed only withing classes, the order of the returned classes is fixed.
+    Shuffling is performed only withing classes, the order of the
+    returned classes is fixed.
     """
     def __init__(self, dataset: Dataset, batch_size: int=64):
         self.data = dataset

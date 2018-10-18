@@ -6,6 +6,7 @@ from ipyleaflet import Map, ImageOverlay
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
+from sklearn.metrics import confusion_matrix
 
 
 def normalize_to_zero_one(image_data: np.ndarray) -> np.ndarray:
@@ -72,3 +73,19 @@ def show_samples_location(dataset, neighbourhood, samples_to_show_count):
         x = [test.y - int(neighbourhood[0]/2), test.x - int(neighbourhood[1]/2)]
         ax.add_patch(Rectangle(x, neighbourhood[0], neighbourhood[1], color='y', fill=False))
     plt.show()
+
+
+def calculate_class_accuracy(y_pred: np.ndarray,
+                             y_true: np.ndarray,
+                             classes_count: int) -> np.ndarray:
+    """
+    Calculate per class accuracy for given predictions
+    :param y_pred: Predictions provided as a list with a predicted class number
+    :param y_true: True value of a class
+    :param classes_count: Number of classes in the dataset
+    :return: An accuracy for each class individually
+    """
+    matrix = confusion_matrix(y_true, y_pred,
+                              labels=[x for x in range(classes_count)])
+    matrix = matrix / matrix.as_type(np.float32).sum(axis=1)
+    return np.diagonal(matrix)

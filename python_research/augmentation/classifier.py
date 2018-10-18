@@ -45,12 +45,13 @@ class Classifier(nn.Module):
             self.epochs_without_improvement += 1
             if self.epochs_without_improvement >= self.patience:
                 if self.verbose:
-                    print("{} epochs without improvement, terminating".format(self.patience))
+                    print("{} epochs without improvement, "
+                          "terminating".format(self.patience))
                 return True
             return False
 
     def _train_epoch(self, dataloader, optimizer):
-        for i, (samples, labels) in enumerate(dataloader):
+        for samples, labels in dataloader:
             samples = Variable(samples).type(torch.FloatTensor)
             labels = Variable(labels).type(torch.LongTensor)
             if self.use_cuda:
