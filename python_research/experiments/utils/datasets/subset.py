@@ -3,17 +3,15 @@ import numpy as np
 from copy import copy
 from random import shuffle
 from typing import List
-from python_research.experiments.utils.hyperspectral_dataset import Dataset
+from python_research.experiments.utils.datasets.hyperspectral_dataset import Dataset
+
 
 class Subset(abc.ABC):
 
     @abc.abstractmethod
-    def extract_subset(self, *args, **kwargs) -> \
-            [np.ndarray, np.ndarray]:
+    def extract_subset(self, *args, **kwargs) -> [np.ndarray, np.ndarray]:
         """"
         Extract some part of a given dataset
-        :param dataset: Dataset from which the subset should be extracted
-        :return: Extracted data and labels
         """
 
 

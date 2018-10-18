@@ -1,4 +1,3 @@
-import abc
 from math import ceil
 from copy import copy
 from os import PathLike
@@ -13,12 +12,7 @@ WIDTH = 1
 DEPTH = 2
 
 
-class Dataset(abc.ABC):
-    """Interface for Hyperspectral Dataset"""
-    pass
-
-
-class HyperspectralDataset(Dataset):
+class HyperspectralDataset:
 
     def __init__(self, dataset: [np.ndarray, PathLike],
                  ground_truth: [np.ndarray, PathLike],
