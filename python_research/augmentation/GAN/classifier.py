@@ -9,11 +9,23 @@ from torch.utils.data import DataLoader
 class Classifier(nn.Module):
     def __init__(self,
                  criterion,
-                 input_length,
-                 classes_count,
+                 input_length: int,
+                 classes_count: int,
                  use_cuda: bool=False,
                  patience: int=None,
                  verbose: bool=True):
+        """
+
+        :param criterion: PyTorch criterion calculating difference between
+                          target and generated values
+        :param input_length: Length of the input vector (number of neurons in
+                             first layer)
+        :param classes_count: Number of classes in the dataset
+        :param use_cuda: Whether training should be performed
+                         on GPU (True) or CPU (False)
+        :param patience: Number of epochs without improvement on accuracy
+        :param verbose: Whether to print logs to output
+        """
         super(Classifier, self).__init__()
 
         self.model = nn.Sequential(
@@ -37,6 +49,11 @@ class Classifier(nn.Module):
         return self.model(input_data)
 
     def _early_stopping(self) -> bool:
+        """
+        Evaluates whether the training should be terminated based on the
+        loss of the discriminator
+        :return: Boolean whether the training should be terminated
+        """
         if np.average(self.losses) < self.best_loss:
             self.best_loss = np.average(self.losses)
             self.epochs_without_improvement = 0
@@ -51,6 +68,13 @@ class Classifier(nn.Module):
             return False
 
     def _train_epoch(self, dataloader, optimizer):
+        """
+        Performs one training iteration (epoch)
+        :param dataloader: Iterable returning a batch of (samples, labels)
+                           for each call
+        :param optimizer: PyTorch optimization algorithm (from torch.optim)
+        :return: None
+        """
         for samples, labels in dataloader:
             samples = Variable(samples).type(torch.FloatTensor)
             labels = Variable(labels).type(torch.LongTensor)
@@ -65,12 +89,26 @@ class Classifier(nn.Module):
             if self.verbose:
                 self.losses.append(loss.item())
 
-    def _print_metrics(self, epoch):
+    def _print_metrics(self, epoch: int):
+        """
+        Prints accuracy to output
+        :param epoch: Current epoch
+        :return:
+        """
         loss = np.average(self.losses)
         self.losses.clear()
         print("[Epoch {}] [Loss: {}]".format(epoch, loss))
 
     def train_(self, dataloader: DataLoader, optimizer, epochs: int):
+        """
+        Performs training of the model until for given number of epochs, or
+        stops early based on provided patience
+        :param dataloader: Iterable returning a batch of (samples, labels)
+                           for each call
+        :param optimizer: PyTorch optimization algorithm (from torch.optim)
+        :param epochs: Number of epochs the model should be trained
+        :return: None
+        """
         for epoch in range(epochs):
             self._train_epoch(dataloader, optimizer)
             if self.patience is not None:

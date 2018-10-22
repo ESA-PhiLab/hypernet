@@ -1,11 +1,10 @@
-from os import PathLike
+import os
 from typing import Iterable
-from os.path import splitext
 import numpy as np
 from scipy.io import loadmat
 
 
-def load_data(path: PathLike):
+def load_data(path: os.PathLike):
     """
     Loading data from NumPy array format (.npy) or from MATLAB format (.mat)
     :param path: Path to either .npy or .mat type file
@@ -24,7 +23,7 @@ def load_data(path: PathLike):
     return data
 
 
-def save_to_csv(path: PathLike, to_save: Iterable, mode: str='a'):
+def save_to_csv(path: os.PathLike, to_save: Iterable, mode: str='a'):
     """
     Save an iterable to a CSV file
     :param path: Path to the file
@@ -32,9 +31,12 @@ def save_to_csv(path: PathLike, to_save: Iterable, mode: str='a'):
     :param mode: Mode in which the file will be opened
     :return: None
     """
-    _, extension = splitext(path)
-    if extension != ".csv":
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    _, extension = os.path.splitext(path)
+    if extension != ".csv" and extension != '':
         path.replace(extension, ".csv")
+    elif extension == '':
+        path += ".csv"
     csv = open(path, mode=mode)
     to_save_string = ",".join(str(x) for x in to_save) + "\n"
     csv.write(to_save_string)

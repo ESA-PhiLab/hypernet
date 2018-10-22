@@ -2,7 +2,7 @@ import abc
 import numpy as np
 from copy import copy
 from random import shuffle
-from typing import List, Iterable
+from typing import List
 from python_research.experiments.utils.datasets.hyperspectral_dataset import Dataset
 
 
@@ -16,31 +16,17 @@ class Subset(abc.ABC):
 
 
 class BalancedSubset(Dataset, Subset):
+    """
+    Extracted a subset where all classes have the same number of samples
+    """
 
     def __init__(self, dataset: Dataset,
                  samples_per_class: int,
                  delete_extracted: bool=True):
-        self.data, self.labels = self.extract_subset(dataset,
-                                                     samples_per_class,
-                                                     delete_extracted)
-
-    def get_data(self):
-        return self.data
-
-    def get_labels(self):
-        return self.labels
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, item):
-        sample_x = self.data[item, ...]
-        sample_y = self.labels[item, ...]
-        return sample_x, sample_y
-
-    def delete_by_indices(self, indices: Iterable):
-        np.delete(self.data, indices)
-        np.delete(self.labels, indices)
+        data, labels = self.extract_subset(dataset,
+                                           samples_per_class,
+                                           delete_extracted)
+        super(BalancedSubset, self).__init__(data, labels)
 
     @staticmethod
     def _collect_indices_to_extract(classes: List[int],
@@ -65,7 +51,7 @@ class BalancedSubset(Dataset, Subset):
                                                               samples_per_class)
 
         data = copy(dataset.get_data[indices_to_extract, ...])
-        labels = copy(dataset.get_data[indices_to_extract, ...])
+        labels = copy(dataset.get_labels[indices_to_extract, ...])
 
         if delete_extracted:
             dataset.delete_by_indices(indices_to_extract)
@@ -74,31 +60,16 @@ class BalancedSubset(Dataset, Subset):
 
 
 class UnbalancedSubset(Dataset, Subset):
-
+    """
+    Extract a subset where samples are drawn randomly
+    """
     def __init__(self, dataset: Dataset,
                  total_samples_count: int,
                  delete_extracted: bool=True):
-        self.data, self.labels = self.extract_subset(dataset,
-                                                     total_samples_count,
-                                                     delete_extracted)
-
-    def get_data(self):
-        return self.data
-
-    def get_labels(self):
-        return self.labels
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, item):
-        sample_x = self.data[item, ...]
-        sample_y = self.labels[item, ...]
-        return sample_x, sample_y
-
-    def delete_by_indices(self, indices: Iterable):
-        np.delete(self.data, indices)
-        np.delete(self.labels, indices)
+        data, labels = self.extract_subset(dataset,
+                                           total_samples_count,
+                                           delete_extracted)
+        super(UnbalancedSubset, self).__init__(data, labels)
 
     def extract_subset(self, dataset: Dataset,
                        total_samples_count: int,
@@ -109,11 +80,41 @@ class UnbalancedSubset(Dataset, Subset):
         indices_to_extract = indices[0:total_samples_count]
 
         data = copy(dataset.get_data[indices_to_extract, ...])
-        labels = copy(dataset.get_data[indices_to_extract, ...])
+        labels = copy(dataset.get_labels[indices_to_extract, ...])
 
         if delete_extracted:
-            np.delete(dataset.get_data, indices_to_extract)
-            np.delete(dataset.get_data, indices_to_extract)
+            dataset.delete_by_indices(indices_to_extract)
 
         return data, labels
+
+
+class CustomSizeSubset(Dataset, Subset):
+    """
+    Extract a subset where number of samples for each class is provided
+    separately in a list
+    """
+    def __init__(self, dataset: Dataset,
+                 samples_count: List[int],
+                 delete_extracted: bool=True):
+        data, labels = self.extract_subset(dataset, samples_count,
+                                           delete_extracted)
+        super(CustomSizeSubset, self).__init__(data, labels)
+
+    def extract_subset(self, dataset: Dataset, samples_count: List[int],
+                       delete_extracted: bool):
+        classes = np.unique(dataset.get_labels)
+        to_extract = []
+        for label in range(classes):
+            indices = np.where(dataset.get_labels == label)[0]
+            shuffle(indices)
+            to_extract += indices[0:samples_count[label]]
+
+        data = copy(dataset.get_data[to_extract, ...])
+        labels = copy(dataset.get_labels[to_extract, ...])
+
+        if delete_extracted:
+            dataset.delete_by_indices(to_extract)
+
+        return data, labels
+
 

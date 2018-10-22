@@ -16,42 +16,50 @@ DEPTH = 2
 
 class Dataset(abc.ABC):
 
+    def __init__(self, data: np.ndarray, labels: np.ndarray):
+        self.data = data
+        self.labels = labels
+
     @property
-    @abc.abstractmethod
     def get_data(self) -> np.ndarray:
         """
         :return: Data from a given dataset
         """
+        return self.labels
 
     @property
-    @abc.abstractmethod
     def get_labels(self) -> np.ndarray:
         """
         :return: Labels from a given dataset
         """
+        return self.labels
 
-    @abc.abstractmethod
     def delete_by_indices(self, indices: Iterable):
         """
         Delete a chunk of data given as indices
         :param indices: Indices to delete from both data and labels arrays
         :return: None
         """
+        np.delete(self.data, indices)
+        np.delete(self.labels, indices)
 
-    @abc.abstractmethod
     def __len__(self):
         """
         Method providing a size of the dataaset (number of samples)
         :return: Size of the dataset
         """
+        return len(self.labels)
 
-    @abc.abstractmethod
     def __getitem__(self, item) -> np.ndarray:
         """
         Method supporting integer indexing
-        :param item:
-        :return:
+        :param item: Index or Iterable of indices pointing at elements to be
+                     returned
+        :return: Data at given indexes
         """
+        sample_x = self.data[item, ...]
+        sample_y = self.labels[item, ...]
+        return sample_x, sample_y
 
 
 class HyperspectralDataset(Dataset):
@@ -70,24 +78,11 @@ class HyperspectralDataset(Dataset):
             raise TypeError("Dataset and ground truth should be "
                             "provided either as a string or a numpy array, "
                             "not {}".format(type(dataset)))
-        self.data, self.labels = self.prepare_samples(raw_data,
-                                                      ground_truth,
-                                                      neighbourhood_size,
-                                                      background_label)
-
-    def get_data(self):
-        return self.data
-
-    def get_labels(self):
-        return self.labels
-
-    def __len__(self):
-        return len(self.labels)
-
-    def __getitem__(self, item):
-        sample_x = self.data[item, ...]
-        sample_y = self.labels[item, ...]
-        return sample_x, sample_y
+        data, labels = self.prepare_samples(raw_data,
+                                            ground_truth,
+                                            neighbourhood_size,
+                                            background_label)
+        super(HyperspectralDataset, self).__init__(data, labels)
 
     @staticmethod
     def _get_padded_cube(data, padding_size):
@@ -147,7 +142,3 @@ class HyperspectralDataset(Dataset):
                                                background_label)
         return (np.array(samples).astype(np.float32),
                 np.array(labels).astype(np.int8))
-
-    def delete_by_indices(self, indices: Iterable):
-        np.delete(self.data, indices)
-        np.delete(self.labels, indices)
