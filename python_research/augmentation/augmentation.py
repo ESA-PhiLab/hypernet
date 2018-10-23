@@ -135,15 +135,21 @@ def augment_with_noise(alpha, augmented_x, augmented_y, bands_stds, label,
         augmented_y.append([label])
 
 
-def calculate_how_many_to_augment(label, most_numerous_class, samples_per_class):
+def calculate_how_many_to_augment(label, most_numerous_class, samples_per_class,
+                                  mode):
     if type(samples_per_class[label]) is int:
         class_count = samples_per_class[label]
     else:
         class_count = len(samples_per_class[label])
-    if class_count * 2 >= most_numerous_class:
-        to_augment = most_numerous_class - class_count
-    else:
+    if mode == 'balanced_full':
         to_augment = class_count
+    if mode == 'balanced_half':
+        to_augment = int(class_count * 0.5)
+    elif mode == 'unbalanced':
+        if class_count * 2 >= most_numerous_class:
+            to_augment = most_numerous_class - class_count
+        else:
+            to_augment = class_count
     return to_augment
 
 
@@ -151,7 +157,8 @@ def generate_samples(generator: torch.nn.Module,
                      samples_per_class: Dict[int, List[int]],
                      bands_count: int,
                      classes_count: int,
-                     device='cpu'):
+                     device='cpu',
+                     augmentation_mode: str='balanced'):
     """
     Generate samples using provided generator. If twice the number of samples
     for each class does not exceed the number of samples in most numerous class,
@@ -164,6 +171,16 @@ def generate_samples(generator: torch.nn.Module,
     :param bands_count: Number of bands in the dataset
     :param classes_count: Number of classes in the dataset
     :param device: either 'gpu' or 'cpu'
+    :param augmentation_mode: balanced_full, balanced_half or unbalanced.
+                              balanced_full: all classes count will be doubled.
+                              balanced_half: all classes count will be
+                                             increased by half of the current
+                                             size.
+                              unbalanced: If twice the number of samples
+    for each class does not exceed the number of samples in most numerous class,
+    then the count will be doubled, if it does, the number of generated samples
+    can be calculated as a difference between most numerous class count and
+    number of samples in given class.
     :return: (Tensor with generated samples, Tensor with respective labels)
     """
 
@@ -174,7 +191,8 @@ def generate_samples(generator: torch.nn.Module,
     generated_y = []
     for label in samples_per_class:
         to_augment = calculate_how_many_to_augment(label, most_numerous_class,
-                                                   samples_per_class)
+                                                   samples_per_class,
+                                                   augmentation_mode)
         if to_augment < SMALLEST_POSSIBLE_BATCH_SIZE:
             continue
         noise = torch.FloatTensor(np.random.normal(0.5, 0.1, (to_augment,

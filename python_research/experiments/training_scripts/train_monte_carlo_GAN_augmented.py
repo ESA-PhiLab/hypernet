@@ -9,13 +9,14 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from keras.callbacks import EarlyStopping, CSVLogger, ModelCheckpoint
 
-from utils import calculate_class_accuracy, load_patches
+from utils import calculate_class_accuracy
 from python_research.experiments.utils.io import save_to_csv
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import \
     build_1d_model
 from python_research.experiments.utils.keras_custom_callbacks import \
     TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset
+from python_research.experiments.utils.datasets.subset import BalancedSubset, UnbalancedSubset
+from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
 from python_research.experiments.utils.datasets.data_loader import OrderedDataLoader
 from python_research.augmentation.GAN.classifier import Classifier
 from python_research.augmentation.GAN.discriminator import Discriminator
@@ -27,8 +28,10 @@ from python_research.augmentation.augmentation import generate_samples
 def parse_args():
     parser = argparse.ArgumentParser()
     # Learning parameters
-    parser.add_argument('--patches_dir', type=str,
+    parser.add_argument('--dataset_path', type=str,
                         help="Path to the dataset in .npy format")
+    parser.add_argument('--gt_path', type=str,
+                        help="Path to the ground truth in .npy format")
     parser.add_argument("--artifacts_path", type=str, default="artifacts",
                         help="Path to the output directory in which "
                              "artifacts will be stored")
@@ -38,6 +41,24 @@ def parse_args():
     parser.add_argument("--classes_count", type=int, default=0,
                         help='Number of classes present in the dataset, if 0 '
                              'then this count is deduced from the data')
+    parser.add_argument("--runs", type=int, default=10,
+                        help="How many times to run the validation")
+    parser.add_argument("--balanced", type=int, default=1,
+                        help="Whether each class should have an equal "
+                             "number of samples. If True, parameter "
+                             "train_samples should be equal to a number of "
+                             "samples for each class, if False, paramter "
+                             "train_samples should be equal to total number "
+                             "of samples in the extracted dataset")
+    parser.add_argument("--pixel_neighbourhood", type=int, default=1,
+                        help="Neighbourhood of an extracted pixel when "
+                             "preparing the data for training and "
+                             "classification. This value should define height "
+                             "and width simultaneously.  If equals 1, "
+                             "only spectral information will be included "
+                             "in a sample")
+    parser.add_argument("--train_samples", type=int, default=250,
+                        help="Number of train samples per class to use")
     parser.add_argument("--val_set_part", type=float, default=0.1,
                         help="Percentage of a training set to be extracted "
                              "as a validation set")
@@ -89,11 +110,14 @@ def get_samples_per_class_count(y):
 
 def main(args):
     os.makedirs(os.path.join(args.artifacts_path), exist_ok=True)
-    # Init data
-    train_data, test_data = load_patches(args.patches_dir,)
-    train_data.normalize_labels()
+    test_data = HyperspectralDataset(args.dataset_path, args.gt_path)
     test_data.normalize_labels()
-    val_data = BalancedSubset(train_data, args.val_set_part)
+    if args.balanced:
+        train_data = BalancedSubset(test_data, args.train_samples)
+        val_data = BalancedSubset(train_data, 0.1)
+    else:
+        train_data = UnbalancedSubset(test_data, args.train_samples)
+        val_data = UnbalancedSubset(train_data, 0.1)
 
     # Normalize data
     max_ = train_data.max if train_data.max > val_data.max else val_data.max
@@ -102,7 +126,6 @@ def main(args):
     val_data.normalize_min_max(min_=min_, max_=max_)
     test_data.normalize_min_max(min_=min_, max_=max_)
     custom_data_loader = OrderedDataLoader(train_data, args.batch_size)
-    # train_data.convert_to_tensors()
     data_loader = DataLoader(train_data, batch_size=args.batch_size,
                              shuffle=True, drop_last=True)
 
@@ -142,18 +165,26 @@ def main(args):
                use_cuda=cuda, lambda_gp=args.lambda_gp, critic_iters=args.n_critic,
                patience=args.patience_gan, summary_writer=SummaryWriter(args.artifacts_path),
                generator_checkout=args.generator_checkout)
+    # Train GAN
     gan.train(custom_data_loader, args.n_epochs_gan, bands_count,
               args.batch_size, args.classes_count,
               os.path.join(args.artifacts_path, args.output_file) + "_generator_model")
 
+    # Generate samples using trained Generator
     generator = Generator(input_shape, args.classes_count)
     generator_path = os.path.join(args.artifacts_path, args.output_file + "_generator_model")
     generator.load_state_dict(torch.load(generator_path))
-
     train_data.convert_to_numpy()
     samples_per_class = get_samples_per_class_count(train_data.get_labels)
+    if args.balanced:
+        augmentation_mode = 'balanced_full'
+    else:
+        augmentation_mode = 'unbalanced'
+    device = 'gpu' if cuda else 'cpu'
     generated_x, generated_y = generate_samples(generator, samples_per_class,
-                                                bands_count, args.classes_count)
+                                                bands_count, args.classes_count,
+                                                device=device,
+                                                augmentation_mode=augmentation_mode)
 
     generated_x = np.reshape(generated_x.detach().numpy(),
                              generated_x.shape + (1, ))
@@ -199,7 +230,7 @@ def main(args):
     predictions = model.predict(x=test_data.get_data)
     predictions = np.argmax(predictions, axis=1)
     class_accuracy = calculate_class_accuracy(predictions,
-                                              test_data.get_labels - 1,
+                                              test_data.get_labels,
                                               args.classes_count)
     # Collect metrics
     train_score = max(history.history['acc'])
@@ -222,9 +253,9 @@ def main(args):
 
 if __name__ == "__main__":
     args = parse_args()
-    for j in range(0, 5):
-        args.patches_dir = args.patches_dir[:-1] + str(j)
-        args.artifacts_path = args.artifacts_path[:-1] + str(j)
-        for i in range(1, 6):
+    for i in range(0, args.runs):
+        if i < 10:
             args.output_file = args.output_file[:-1] + str(i)
-            main(args)
+        else:
+            args.output_file = args.output_file[:-2] + str(i)
+        main(args)

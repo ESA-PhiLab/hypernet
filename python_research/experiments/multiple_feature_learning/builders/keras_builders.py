@@ -4,7 +4,7 @@ from keras.models import Model, Sequential
 from keras.optimizers import Adam
 from keras.layers import MaxPooling2D, Flatten, Conv2D, Softmax, Input, \
     concatenate, Conv1D, MaxPooling1D, Dense, BatchNormalization
-from python_research.experiments.utils import ModelSettings
+from python_research.experiments.utils.data_types import ModelSettings
 
 
 def build_layers(input_shape, kernel_size):
@@ -68,9 +68,9 @@ def build_multiple_features_model(settings: ModelSettings,
     return model
 
 
-def build_model(settings: ModelSettings,
-                no_of_classes: int,
-                no_of_bands: int):
+def build_3d_model(settings: ModelSettings,
+                   no_of_classes: int,
+                   no_of_bands: int):
     optimizer = Adam(lr=0.001)
 
     model = Sequential()

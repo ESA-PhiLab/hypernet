@@ -1,9 +1,11 @@
 import abc
+import torch
 from collections import Iterable
 from math import ceil
 from copy import copy
 from os import PathLike
 from itertools import product
+from keras.utils import to_categorical
 
 import numpy as np
 
@@ -25,7 +27,7 @@ class Dataset(abc.ABC):
         """
         :return: Data from a given dataset
         """
-        return self.labels
+        return self.data
 
     @property
     def get_labels(self) -> np.ndarray:
@@ -34,14 +36,93 @@ class Dataset(abc.ABC):
         """
         return self.labels
 
+    def get_one_hot_labels(self, classes_count: int=None):
+        if classes_count is None:
+            classes_count = len(np.unique(self.labels))
+        return to_categorical(self.labels, classes_count)
+
+    @property
+    def min(self):
+        return np.amin(self.data)
+
+    @property
+    def max(self):
+        return np.amax(self.data)
+
+    @property
+    def shape(self):
+        return self.data.shape
+
+    def vstack(self, to_stack: np.ndarray):
+        self.data = np.vstack([self.data, to_stack])
+
+    def hstack(self, to_stack: np.ndarray):
+        self.labels = np.hstack([self.labels, to_stack])
+
+    def expand_dims(self, axis: int=0, inplace: bool=True):
+        if inplace:
+            self.data = np.expand_dims(self.data, axis=axis)
+        else:
+            return np.expand_dims(self.data, axis=axis)
+
+    def normalize_min_max(self, min_: float=None, max_: float=None,
+                          inplace: bool=True):
+        """
+        Normalize data using Min Max normalization: (data - min) / (max - min)
+        :param min_: Minimal value for normalization, if not specified,
+                     it will be deducted from data
+        :param max_: Maximal value for normalization, if not specified,
+                     it will be deducted from data
+        :param inplace: Whether to change data in-place (True) or return
+                        normalized data and labels
+        :return: If inplace is True - return None,
+                 if inplace is False - return normalized (data, labels)
+        """
+        if min_ is None and max_ is None:
+            min_ = np.amin(self.get_data)
+            max_ = np.amax(self.get_data)
+            if inplace:
+                self.data = (self.get_data - min_) / (max_ - min_)
+                self.labels = self.get_labels - 1
+            else:
+                return (self.get_data - min_) / (max_ - min_)
+        elif min_ is not None and max_ is not None:
+            if inplace:
+                self.data = (self.get_data - min_) / (max_ - min_)
+            else:
+                return(self.get_data - min_) / (max_ - min_)
+
+    def normalize_labels(self):
+        """
+        Normalize label values so that they start from 0.
+        :return: None
+        """
+        min_ = min(self.labels)
+        self.labels = self.labels - min_
+
     def delete_by_indices(self, indices: Iterable):
         """
         Delete a chunk of data given as indices
         :param indices: Indices to delete from both data and labels arrays
         :return: None
         """
-        np.delete(self.data, indices)
-        np.delete(self.labels, indices)
+        self.data = np.delete(self.data, indices, axis=HEIGHT)
+        self.labels = np.delete(self.labels, indices, axis=HEIGHT)
+
+    def convert_to_tensors(self, inplace: bool=True):
+        if inplace:
+            self.data = torch.from_numpy(self.get_data)
+            self.labels = torch.from_numpy(self.get_labels)
+        else:
+            return torch.from_numpy(self.get_data), \
+                   torch.from_numpy(self.get_labels)
+
+    def convert_to_numpy(self, inplace: bool=True):
+        if inplace:
+            self.data = self.data.numpy()
+            self.labels = self.labels.numpy()
+        else:
+            return self.data.numpy(), self.labels.numpy()
 
     def __len__(self):
         """
@@ -63,7 +144,10 @@ class Dataset(abc.ABC):
 
 
 class HyperspectralDataset(Dataset):
-
+    """
+    Class representing hyperspectral data in a form of samples prepared for
+    training and classification (1D or 3D)
+    """
     def __init__(self, dataset: [np.ndarray, PathLike],
                  ground_truth: [np.ndarray, PathLike],
                  neighbourhood_size: int = 1,
@@ -105,7 +189,6 @@ class HyperspectralDataset(Dataset):
         for x, y in product(col_indexes, row_indexes):
             if ground_truth[y, x] != background_label:
                 sample = copy(raw_data[y, x, ...])
-                sample = sample.reshape(sample.shape[-1], 1)
                 samples.append(sample)
                 labels.append(ground_truth[y, x])
         return samples, labels
@@ -140,5 +223,5 @@ class HyperspectralDataset(Dataset):
             samples, labels = self._prepare_1d(raw_data,
                                                ground_truth,
                                                background_label)
-        return (np.array(samples).astype(np.float32),
-                np.array(labels).astype(np.int8))
+        return (np.array(samples).astype(np.float64),
+                np.array(labels).astype(np.uint8))

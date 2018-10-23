@@ -1,18 +1,18 @@
 import os
 import argparse
 import numpy as np
-from copy import copy
 
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 
-from python_research.augmentation.discriminator import Discriminator
-from python_research.augmentation.generator import Generator
-from python_research.augmentation.classifier import Classifier
-from python_research.augmentation.WGAN import WGAN
-from python_research.augmentation.dataset import HyperspectralDataset, CustomDataLoader
+from python_research.augmentation.GAN.discriminator import Discriminator
+from python_research.augmentation.GAN.generator import Generator
+from python_research.augmentation.GAN.classifier import Classifier
+from python_research.augmentation.GAN.WGAN import WGAN
+from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
+from python_research.experiments.utils.datasets.data_loader import OrderedDataLoader
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_path', type=str, help='Path to the dataset in .npy format')
@@ -38,12 +38,14 @@ os.makedirs(args.artifacts_path, exist_ok=True)
 
 cuda = True if torch.cuda.is_available() else False
 
-transformed_dataset = HyperspectralDataset(args.dataset_path, args.gt_path, samples_per_class=None)
-dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=True, drop_last=True)
+transformed_dataset = HyperspectralDataset(args.dataset_path, args.gt_path)
+transformed_dataset.normalize_min_max()
+dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size,
+                        shuffle=True, drop_last=True)
 
-input_shape = bands_count = transformed_dataset.x.shape[-1]
+input_shape = bands_count = transformed_dataset.get_data.shape[-1]
 if args.classes_count == 0:
-    classes_count = len(np.unique(transformed_dataset.y))
+    classes_count = len(np.unique(transformed_dataset.get_labels))
 else:
     classes_count = args.classes_count
 
@@ -68,11 +70,11 @@ if cuda:
 
 classifier.train_(dataloader, optimizer_C, args.n_epochs)
 
-dataloader = CustomDataLoader(transformed_dataset, args.batch_size)
-# dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size, shuffle=False, drop_last=True)
+dataloader = OrderedDataLoader(transformed_dataset, args.batch_size)
 
 gan = WGAN(generator, discriminator, classifier, optimizer_G, optimizer_D,
            use_cuda=cuda, lambda_gp=args.lambda_gp, critic_iters=args.n_critic,
            patience=args.patience, summary_writer=SummaryWriter(args.artifacts_path),
            generator_checkout=args.generator_checkout)
-gan.train(copy(transformed_dataset), dataloader, args.n_epochs, bands_count, args.batch_size, classes_count, args.artifacts_path)
+gan.train(dataloader, args.n_epochs, bands_count, args.batch_size,
+          classes_count, args.artifacts_path)

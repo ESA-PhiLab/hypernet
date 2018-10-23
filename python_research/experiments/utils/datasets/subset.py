@@ -36,7 +36,11 @@ class BalancedSubset(Dataset, Subset):
         for label in classes:
             class_indices = list(np.where(labels == label)[0])
             shuffle(class_indices)
-            indices_to_extract += class_indices[0:samples_per_class]
+            if 0 < samples_per_class < 1:
+                samples_to_extract = int(len(class_indices) * samples_per_class)
+                indices_to_extract += class_indices[0:samples_to_extract]
+            else:
+                indices_to_extract += class_indices[0:samples_per_class]
         return indices_to_extract
 
     def extract_subset(self, dataset: Dataset,
@@ -61,10 +65,12 @@ class BalancedSubset(Dataset, Subset):
 
 class UnbalancedSubset(Dataset, Subset):
     """
-    Extract a subset where samples are drawn randomly
+    Extract a subset where samples are drawn randomly. If total_samples_count
+    is a value between 0 and 1, it is treated as a percentage of dataset
+    to extract.
     """
     def __init__(self, dataset: Dataset,
-                 total_samples_count: int,
+                 total_samples_count: float,
                  delete_extracted: bool=True):
         data, labels = self.extract_subset(dataset,
                                            total_samples_count,
@@ -76,7 +82,8 @@ class UnbalancedSubset(Dataset, Subset):
                        delete_extracted: bool) -> [np.ndarray, np.ndarray]:
         indices = [i for i in range(len(dataset))]
         shuffle(indices)
-
+        if 0 < total_samples_count < 1:
+            total_samples_count = int(len(dataset) * total_samples_count)
         indices_to_extract = indices[0:total_samples_count]
 
         data = copy(dataset.get_data[indices_to_extract, ...])
