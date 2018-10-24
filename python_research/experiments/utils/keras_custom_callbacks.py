@@ -3,6 +3,9 @@ from keras.callbacks import Callback
 
 
 class TimeHistory(Callback):
+    """
+    Custom keras callback logging duration of each epoch
+    """
     def on_train_begin(self, logs={}):
         self.on_train_begin_time = time()
         self.times = []
