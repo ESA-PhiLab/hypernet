@@ -1,3 +1,10 @@
+"""
+Max tree implemented using algorithm described in
+https://arxiv.org/pdf/1212.1819.pdf
+For more info about max trees visit
+http://adessowiki.fee.unicamp.br/media/Attachments/MICLab/IC-Projects/maxtree.pdf
+"""
+
 import numpy as np
 from copy import copy
 from typing import List, Dict

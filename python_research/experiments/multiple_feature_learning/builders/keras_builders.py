@@ -4,7 +4,7 @@ from keras.models import Model, Sequential
 from keras.optimizers import Adam
 from keras.layers import MaxPooling2D, Flatten, Conv2D, Softmax, Input, \
     concatenate, Conv1D, MaxPooling1D, Dense, BatchNormalization
-from ..utils.data_types import ModelSettings
+from python_research.experiments.utils.data_types import ModelSettings
 
 
 def build_layers(input_shape, kernel_size):
@@ -27,26 +27,22 @@ def build_layers(input_shape, kernel_size):
 
 def build_multiple_features_model(settings: ModelSettings,
                                   no_of_classes: int,
-                                  original_bands: int,
-                                  area_bands: int,
-                                  stddev_bands: int,
-                                  diagonal_bands: int,
-                                  moment_bands: int):
+                                  bands_set):
 
     input1, conv2d_2_org = build_layers(settings.input_neighbourhood +
-                                        (original_bands, ),
+                                        (bands_set[0], ),
                                         settings.first_conv_kernel_size)
     input2, conv2d_2_area = build_layers(settings.input_neighbourhood +
-                                         (area_bands, ),
+                                         (bands_set[1], ),
                                          settings.first_conv_kernel_size)
     input3, conv2d_2_std = build_layers(settings.input_neighbourhood +
-                                        (stddev_bands, ),
+                                        (bands_set[2], ),
                                         settings.first_conv_kernel_size)
     input4, conv2d_2_diagonal = build_layers(settings.input_neighbourhood +
-                                             (diagonal_bands, ),
+                                             (bands_set[3], ),
                                              settings.first_conv_kernel_size)
     input5, conv2d_2_moment = build_layers(settings.input_neighbourhood +
-                                           (moment_bands, ),
+                                           (bands_set[4], ),
                                            settings.first_conv_kernel_size)
 
     concatenated = concatenate(
@@ -72,9 +68,9 @@ def build_multiple_features_model(settings: ModelSettings,
     return model
 
 
-def build_model(settings: ModelSettings,
-                no_of_classes: int,
-                no_of_bands: int):
+def build_3d_model(settings: ModelSettings,
+                   no_of_classes: int,
+                   no_of_bands: int):
     optimizer = Adam(lr=0.001)
 
     model = Sequential()

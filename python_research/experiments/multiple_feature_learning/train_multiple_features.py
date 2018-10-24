@@ -2,18 +2,18 @@ import numpy as np
 import os.path
 from keras.models import load_model, Model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
-from python_research.experiments.multiple_feature_learning.utils.keras_custom_callbacks import (
+from python_research.experiments.utils import (
     TimeHistory
 )
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import (
     build_multiple_features_model,
     build_settings_for_dataset
 )
-from python_research.experiments.multiple_feature_learning.utils.data_types import (
+from python_research.experiments.utils import (
     TrainTestIndices
 )
-from python_research.experiments.multiple_feature_learning.utils.dataset import Dataset
-from python_research.experiments.multiple_feature_learning.utils.arguments import (
+from python_research.experiments.utils import Dataset
+from python_research.experiments.utils import (
     parse_multiple_features
 )
 
