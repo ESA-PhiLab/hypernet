@@ -1,3 +1,8 @@
+"""
+Script load training a model and evaluating the accuracy on 1D or 3D data
+using already extracted patches (grids).
+"""
+
 import os.path
 import argparse
 import numpy as np

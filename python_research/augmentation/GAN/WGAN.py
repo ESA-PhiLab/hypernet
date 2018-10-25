@@ -194,7 +194,7 @@ class WGAN:
         if name is not None:
             final_path = os.path.join(path, name)
         elif epoch is not None:
-            final_path = os.path.join(path, 'generator_model_epoch_{}'.format(epoch))
+            final_path = path + '_epoch_{}'.format(epoch)
         else:
             final_path = path
         torch.save(self.generator.state_dict(), final_path)

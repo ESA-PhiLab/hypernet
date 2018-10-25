@@ -93,7 +93,7 @@ class Classifier(nn.Module):
         """
         Prints accuracy to output
         :param epoch: Current epoch
-        :return:
+        :return: None
         """
         loss = np.average(self.losses)
         self.losses.clear()

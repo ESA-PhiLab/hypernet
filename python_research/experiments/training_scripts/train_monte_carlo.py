@@ -1,3 +1,8 @@
+"""
+Script load training a model and evaluating the accuracy on 1D or 3D data
+using Monte Carlo validation method. Data can be either balanced (each class
+has the same number of samples) or unbalanced (samples drawn randomly)
+"""
 import os.path
 import argparse
 import numpy as np
