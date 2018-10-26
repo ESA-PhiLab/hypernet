@@ -139,7 +139,7 @@ class WGAN:
         for parameter in self.generator.parameters():
             parameter.requires_grad = False
 
-        for i, (samples, labels) in enumerate(data_loader):
+        for batch_number, (samples, labels) in enumerate(data_loader):
             real_samples = Variable(samples).type(torch.FloatTensor)
             batch_size = len(real_samples)
             labels = Variable(labels.view(-1, 1).type(torch.LongTensor))
@@ -153,7 +153,7 @@ class WGAN:
             labels_one_hot.scatter_(1, labels, 1)
             self._discriminator_iteration(real_samples, labels_one_hot, noise)
 
-            if i % self.critic_iters == 0:
+            if batch_number % self.critic_iters == 0:
 
                 for parameter in self.generator.parameters():
                     parameter.requires_grad = True

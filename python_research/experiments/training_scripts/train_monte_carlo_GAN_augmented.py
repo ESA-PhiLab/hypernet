@@ -107,10 +107,10 @@ def main(args):
     test_data.normalize_labels()
     if args.balanced:
         train_data = BalancedSubset(test_data, args.train_samples)
-        val_data = BalancedSubset(train_data, 0.1)
+        val_data = BalancedSubset(train_data, args.val_set_part)
     else:
         train_data = UnbalancedSubset(test_data, args.train_samples)
-        val_data = UnbalancedSubset(train_data, 0.1)
+        val_data = UnbalancedSubset(train_data, args.val_set_part)
 
     # Normalize data
     max_ = train_data.max if train_data.max > val_data.max else val_data.max
@@ -123,7 +123,7 @@ def main(args):
                              shuffle=True, drop_last=True)
 
     cuda = True if torch.cuda.is_available() else False
-    print(cuda)
+
     input_shape = bands_count = train_data.shape[-1]
     if args.classes_count == 0:
         args.classes_count = len(np.unique(train_data.get_labels))
@@ -152,6 +152,7 @@ def main(args):
         classifier = classifier.cuda()
         classifier_criterion = classifier_criterion.cuda()
 
+    # Train classifier
     classifier.train_(data_loader, optimizer_C, args.n_epochs_gan)
 
     gan = WGAN(generator, discriminator, classifier, optimizer_G, optimizer_D,
@@ -167,6 +168,8 @@ def main(args):
     generator = Generator(input_shape, args.classes_count)
     generator_path = os.path.join(args.artifacts_path, args.output_file + "_generator_model")
     generator.load_state_dict(torch.load(generator_path))
+    if cuda:
+        generator = generator.cuda()
     train_data.convert_to_numpy()
     samples_per_class = get_samples_per_class_count(train_data.get_labels)
     if args.balanced:
