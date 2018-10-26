@@ -70,7 +70,7 @@ def parse_args():
     parser.add_argument('--verbose', type=int, default=2,
                         help='Verbosity of training')
     # WGAN parameters
-    parser.add_argument('--n_epochs_gan', type=int, default=1,
+    parser.add_argument('--n_epochs_gan', type=int, default=10000,
                         help='number of epochs of training for GAN')
     parser.add_argument('--n_critic', type=int, default=4,
                         help='number of training steps for discriminator '
