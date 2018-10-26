@@ -182,7 +182,7 @@ def main(args):
                                                 device=device,
                                                 augmentation_mode=augmentation_mode)
 
-    generated_x = np.reshape(generated_x.detach().numpy(),
+    generated_x = np.reshape(generated_x.detach().cpu().numpy(),
                              generated_x.shape + (1, ))
 
     train_data.expand_dims(axis=-1)
