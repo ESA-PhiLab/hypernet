@@ -2,10 +2,15 @@ from random import randint
 from base64 import b64encode
 from io import BytesIO
 import imageio
+import os
+from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
+from python_research.experiments.utils.datasets.concat_dataset import ConcatDataset
 from ipyleaflet import Map, ImageOverlay
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
+from sklearn.metrics import confusion_matrix
+import re
 
 
 def normalize_to_zero_one(image_data: np.ndarray) -> np.ndarray:
@@ -72,3 +77,51 @@ def show_samples_location(dataset, neighbourhood, samples_to_show_count):
         x = [test.y - int(neighbourhood[0]/2), test.x - int(neighbourhood[1]/2)]
         ax.add_patch(Rectangle(x, neighbourhood[0], neighbourhood[1], color='y', fill=False))
     plt.show()
+
+
+def calculate_class_accuracy(y_pred: np.ndarray,
+                             y_true: np.ndarray,
+                             classes_count: int) -> np.ndarray:
+    """
+    Calculate per class accuracy for given predictions
+    :param y_pred: Predictions provided as a list with a predicted class number
+    :param y_true: True value of a class
+    :param classes_count: Number of classes in the dataset
+    :return: An accuracy for each class individually
+    """
+    matrix = confusion_matrix(y_true, y_pred,
+                              labels=[x for x in range(classes_count)])
+    matrix = matrix / matrix.astype(np.float32).sum(axis=1)
+    return np.diagonal(matrix)
+
+
+def load_patches(directory: os.PathLike, neighbourhood_size: int=1):
+    patches_paths = [x for x in os.listdir(directory)
+                     if 'gt' not in x and 'patch' in x]
+    gt_paths = [x for x in os.listdir(directory) if 'gt' in x and 'patch' in x]
+    test_paths = [x for x in os.listdir(directory) if 'test' in x and '.npy' in x]
+    patches_paths = sorted_alphanumeric(patches_paths)
+    gt_paths = sorted_alphanumeric(gt_paths)
+    data = []
+    for patch_path, gt_path in zip(patches_paths, gt_paths):
+        data.append(HyperspectralDataset(os.path.join(directory, patch_path),
+                                         os.path.join(directory, gt_path),
+                                         neighbourhood_size))
+    test_data = HyperspectralDataset(os.path.join(directory, test_paths[0]),
+                                     os.path.join(directory, test_paths[1]),
+                                     neighbourhood_size)
+    return ConcatDataset(data), test_data
+
+
+def combine_patches(patches, patches_gt, test, test_gt, neighbourhood_size:int=1):
+    data = []
+    for patch, gt in zip(patches, patches_gt):
+        data.append(HyperspectralDataset(patch, gt, neighbourhood_size))
+    test_set = HyperspectralDataset(test, test_gt, neighbourhood_size)
+    return ConcatDataset(data), test_set
+
+
+def sorted_alphanumeric(data):
+    convert = lambda text: int(text) if text.isdigit() else text.lower()
+    alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key) ]
+    return sorted(data, key=alphanum_key)

@@ -75,18 +75,18 @@ def process_request(
     print("Build queued:")
     print(build.get_result_url())
 
-
 def get_commit_id() -> str:
     """
     Get id of the latest commit
     :return: (str) Commit id of HEAD
     """
-    process = subprocess.Popen('git rev-parse HEAD', stdout=subprocess.PIPE)
+
+    process = subprocess.Popen('git rev-parse HEAD', stdout = subprocess.PIPE)
+
     commit_id, error = process.communicate()
     assert error is None, 'There was an error when trying to retrieve the latest commit ID'
 
     return commit_id[:-1].decode(sys.stdout.encoding)
-
 
 def parse_arguments() -> argparse.ArgumentParser:
     """
@@ -165,7 +165,6 @@ def parse_arguments() -> argparse.ArgumentParser:
 
     return parser
 
-
 def main() -> None:
     """
     Entry point
@@ -193,7 +192,6 @@ def main() -> None:
         parameters=args.parameters,
         target_labels=args.target_labels
     )
-
 
 if __name__ == '__main__':
     main()

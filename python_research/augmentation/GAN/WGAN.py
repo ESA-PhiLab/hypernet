@@ -10,6 +10,16 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 
 
+"""
+This module implements Wasserstein Generative Adversarial Network with 
+with gradient penalty method.
+More info can be found in paper:
+Nicolas Audebert, Bertrand Le Saux, Sébastien Lefèvre. Generative Adversarial 
+Networks for Realistic Synthesis of Hyperspectral Samples. International 
+Geoscience and Remote Sensing Symposium (IGARSS 2018), Jul 2018, Valencia, Spain
+"""
+
+
 class WGAN:
     def __init__(self, generator: nn.Module,
                  discriminator: nn.Module,
@@ -21,8 +31,27 @@ class WGAN:
                  critic_iters: int=5,
                  patience: int=None,
                  summary_writer: SummaryWriter=None,
-                 verbose: bool=True):
-
+                 verbose: bool=True,
+                 generator_checkout: int=None):
+        """
+        :param generator: Generator object
+        :param discriminator: Discriminator object
+        :param classifier: Classifier object (should already be trained!)
+        :param generator_optimizer: PyTorch optimizer algorithm for generator
+        :param discriminator_optimizer: PyTorch optimizer algorithm for
+                                        discriminator
+        :param use_cuda: Whether to perform training on GPU or CPU
+        :param lambda_gp: Gradient penalty scaler
+        :param critic_iters: Number of optimization iterations of the critic
+                             before optimizing generator
+        :param patience: Number of epochs without improvement on
+                         discriminator loss after which the training
+                         will be terminated
+        :param summary_writer: Object for logging metrics using tensorboard
+        :param verbose: Whether to print logs
+        :param generator_checkout: Number of epochs after which the generator
+                                   model will be saved
+        """
         self.generator = generator
         self.discriminator = discriminator
         self.classifier = classifier
@@ -37,8 +66,9 @@ class WGAN:
         self.summary_writer = summary_writer
         self.epochs_without_improvement = 0
         self.best_discriminator_loss = np.inf
+        self.generator_checkout = generator_checkout
 
-    def _gradient_penalty(self, real_samples, fake_samples, labels):
+    def _gradient_penalty(self, real_samples, fake_samples):
         """Calculates the gradient penalty loss for WGAN GP"""
         # Random weight term for interpolation between real and fake samples
         alpha = torch.FloatTensor(np.random.random((real_samples.size(0), 1)))
@@ -66,7 +96,7 @@ class WGAN:
         real_validity = self.discriminator(real_samples)
         fake_validity = self.discriminator(fake_samples)
 
-        gradient_penalty = self._gradient_penalty(real_samples, fake_samples, labels)
+        gradient_penalty = self._gradient_penalty(real_samples, fake_samples)
         self.discriminator_optimizer.zero_grad()
         loss = fake_validity.mean() - real_validity.mean() + gradient_penalty
         loss.backward()
@@ -109,7 +139,7 @@ class WGAN:
         for parameter in self.generator.parameters():
             parameter.requires_grad = False
 
-        for i, (samples, labels) in enumerate(data_loader):
+        for batch_number, (samples, labels) in enumerate(data_loader):
             real_samples = Variable(samples).type(torch.FloatTensor)
             batch_size = len(real_samples)
             labels = Variable(labels.view(-1, 1).type(torch.LongTensor))
@@ -123,7 +153,7 @@ class WGAN:
             labels_one_hot.scatter_(1, labels, 1)
             self._discriminator_iteration(real_samples, labels_one_hot, noise)
 
-            if i % self.critic_iters == 0:
+            if batch_number % self.critic_iters == 0:
 
                 for parameter in self.generator.parameters():
                     parameter.requires_grad = True
@@ -133,14 +163,16 @@ class WGAN:
                     noise = noise.cuda()
                     labels = labels.cuda()
 
-                self._generator_iteration(noise, labels.view(labels.shape[0]), labels_one_hot)
+                self._generator_iteration(noise, labels.view(labels.shape[0]),
+                                          labels_one_hot)
 
                 for parameter in self.generator.parameters():
                     parameter.requires_grad = False
 
     @staticmethod
     def _generate_noise(batch_size, bands_count):
-        noise = torch.FloatTensor(np.random.normal(0.5, 0.1, (batch_size, bands_count)))
+        noise = torch.FloatTensor(np.random.normal(0.5, 0.1,
+                                                   (batch_size, bands_count)))
         return Variable(noise)
 
     def _print_metrics(self, epoch: int):
@@ -150,17 +182,21 @@ class WGAN:
         fake = np.average(self.losses['Fake'])
         gc = np.average(self.losses['GC'])
         gp = np.average(self.losses['GP'])
-        self.summary_writer.add_scalars('GAN', {'D': discriminator_loss,
-                                                'G': generator_loss}, epoch)
+        if self.summary_writer is not None:
+            self.summary_writer.add_scalars('GAN', {'D': discriminator_loss,
+                                                    'G': generator_loss}, epoch)
         print("[Epoch: {}][D loss: {}] [G loss: {}] "
-              "[R: {}] [F: {}] [GP: {}] [GC: {}]".format(epoch, discriminator_loss,
-                                                         generator_loss, real, fake, gp, gc))
+              "[R: {}] [F: {}] "
+              "[GP: {}] [GC: {}]".format(epoch, discriminator_loss,
+                                         generator_loss, real, fake, gp, gc))
 
-    def _save_generator(self, path, name=None):
+    def _save_generator(self, path, epoch=None, name=None):
         if name is not None:
             final_path = os.path.join(path, name)
+        elif epoch is not None:
+            final_path = path + '_epoch_{}'.format(epoch)
         else:
-            final_path = os.path.join(path, 'generator_model')
+            final_path = path
         torch.save(self.generator.state_dict(), final_path)
 
     def _zero_losses(self):
@@ -176,16 +212,29 @@ class WGAN:
             self.epochs_without_improvement += 1
             if self.epochs_without_improvement >= self.patience:
                 if self.verbose:
-                    print("{} epochs without improvement, terminating".format(self.patience))
+                    print("{} epochs without improvement, "
+                          "terminating".format(self.patience))
                 return True
             return False
 
-    def train(self, data_loader: DataLoader,
+    def train(self,
+              data_loader: DataLoader,
               epochs: int,
               bands_count: int,
               batch_size: int,
               classes_count: int,
               artifacts_path: str):
+        """
+        Perform training
+        :param data_loader: Iterable returning a batch of (samples, labels)
+                            for each call
+        :param epochs: Number of epochs
+        :param bands_count: Number of spectral bands in the dataset
+        :param batch_size: Size of a batch returned by data_loader
+        :param classes_count: Number of classes in the dataset
+        :param artifacts_path: Path to store artifacts
+        :return: None
+        """
 
         for parameter in self.classifier.parameters():
             parameter.requires_grad = False
@@ -193,9 +242,13 @@ class WGAN:
         for epoch in range(epochs):
             self._train_epoch(data_loader, bands_count, batch_size, classes_count)
             if self.patience is not None:
-                if self._early_stopping():
-                    break
+                if epoch > 20:
+                    if self._early_stopping():
+                        break
             if self.verbose:
                 self._print_metrics(epoch)
-            self._zero_losses()
-            self._save_generator(artifacts_path)
+                self._zero_losses()
+            if self.generator_checkout:
+                if epoch % self.generator_checkout == 0:
+                    self._save_generator(artifacts_path, epoch)
+        self._save_generator(artifacts_path)

@@ -1,3 +1,6 @@
+ipyleaflet
+imageio
+tensorboardX
 torch
 torchvision
 pyqt5
