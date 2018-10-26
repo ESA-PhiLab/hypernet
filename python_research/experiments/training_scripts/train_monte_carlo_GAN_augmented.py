@@ -123,7 +123,7 @@ def main(args):
                              shuffle=True, drop_last=True)
 
     cuda = True if torch.cuda.is_available() else False
-
+    print(cuda)
     input_shape = bands_count = train_data.shape[-1]
     if args.classes_count == 0:
         args.classes_count = len(np.unique(train_data.get_labels))
