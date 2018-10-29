@@ -16,7 +16,7 @@ class Point:
         self.y = y
 
     def __eq__(self, other):
-        return True if self.x == other.x and self.y == other.y else False
+        return self.x == other.x and self.y == other.y
 
     def __hash__(self):
         return hash((self.x, self.y))

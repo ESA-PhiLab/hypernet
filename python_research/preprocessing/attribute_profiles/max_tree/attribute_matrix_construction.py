@@ -5,6 +5,11 @@ from ..utils.data_types import Pixel
 
 
 def construct_area_matrix(image: np.ndarray) -> np.ndarray:
+    """
+    Constructs area matrix
+    :param image: (np.ndarray) Image data
+    :return: (np.ndarray) Area matrix
+    """
     matrix = np.ones(image.shape, dtype=Area)
     image_width = image.shape[1]
     for index, _ in enumerate(image.flatten()):
@@ -15,6 +20,11 @@ def construct_area_matrix(image: np.ndarray) -> np.ndarray:
 
 
 def construct_std_dev_matrix(image: np.ndarray) -> np.ndarray:
+    """
+    Constructs standard deviation matrix
+    :param image: (np.ndarray) Image data
+    :return: (np.ndarray) Standard deviation matrix
+    """
     image_width = image.shape[1]
     std_dev_matrix = np.zeros(image.shape, dtype=StandardDeviation)
     for index, pixel_value in enumerate(image.flatten()):
@@ -25,6 +35,11 @@ def construct_std_dev_matrix(image: np.ndarray) -> np.ndarray:
 
 
 def construct_length_of_diagonal_matrix(image: np.ndarray) -> np.ndarray:
+    """
+    Constructs length of diagonal matrix
+    :param image: (np.ndarray) Image data
+    :return: (np.ndarray) Length of diagonal matrix
+    """
     width = image.shape[1]
     image_size = image.size
     matrix = np.zeros(image.shape, dtype=LengthOfDiagonal)
@@ -36,6 +51,11 @@ def construct_length_of_diagonal_matrix(image: np.ndarray) -> np.ndarray:
 
 
 def construct_first_hu_moment_matrix(image: np.ndarray) -> np.ndarray:
+    """
+    Constructs first HU moment matrix
+    :param image: (np.ndarray) Image data
+    :return: (np.ndarray) First HU moment matrix
+    """
     width = image.shape[1]
     max_ = float(np.amax(image))
     min_ = float(np.amin(image))
@@ -57,4 +77,10 @@ matrix_constructs = {
 
 
 def construct_matrix(attribute_name: str, image: np.ndarray) -> np.ndarray:
+    """
+    Constructs matrix
+    :param attribute_name: (str) Which matrix to construct
+    :param image: (np.ndarray) Image data
+    :return: (np.ndarray) Matrix
+    """
     return matrix_constructs[attribute_name](image)

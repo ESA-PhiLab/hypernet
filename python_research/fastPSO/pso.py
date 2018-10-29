@@ -63,7 +63,6 @@ class Logger(object):
         )
 
 
-# pylint: disable=too-few-public-methods
 class ObjectiveFunctionBase(object):
     """
     Objective function base class to be overriden
