@@ -17,7 +17,7 @@ from experiments.EUROMICRO2018.builders.keras_builder import uff_hu
 '''
 
 '''Remote run:
--m titan -i "..\experiments/EUROMICRO2018/train.py" -p "-d indiana -s 0 -e 200 -b 100 -v 1 -c "
+-m titan -i "..\experiments/EUROMICRO2018/train_GAN.py" -p "-d indiana -s 0 -e 200 -b 100 -v 1 -c "
 -d dataset {indiana, pavia, salinas}
 -s amount of samples for training, 0 - all possible
 -e number of epochs

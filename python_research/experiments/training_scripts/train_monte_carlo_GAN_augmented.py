@@ -50,6 +50,13 @@ def parse_args():
                              "samples for each class, if False, paramter "
                              "train_samples should be equal to total number "
                              "of samples in the extracted dataset")
+    parser.add_argument("--pixel_neighbourhood", type=int, default=1,
+                        help="Neighbourhood of an extracted pixel when "
+                             "preparing the data for training and "
+                             "classification. This value should define height "
+                             "and width simultaneously.  If equals 1, "
+                             "only spectral information will be included "
+                             "in a sample")
     parser.add_argument("--train_samples", type=int, default=250,
                         help="Number of train samples per class to use")
     parser.add_argument("--val_set_part", type=float, default=0.1,
@@ -70,7 +77,7 @@ def parse_args():
     parser.add_argument('--verbose', type=int, default=2,
                         help='Verbosity of training')
     # WGAN parameters
-    parser.add_argument('--n_epochs_gan', type=int, default=10000,
+    parser.add_argument('--n_epochs_gan', type=int, default=1,
                         help='number of epochs of training for GAN')
     parser.add_argument('--n_critic', type=int, default=4,
                         help='number of training steps for discriminator '
