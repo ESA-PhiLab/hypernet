@@ -1,3 +1,6 @@
+"""
+Helper procedures for jupyter notebook
+"""
 from random import randint
 from base64 import b64encode
 from io import BytesIO
@@ -14,6 +17,11 @@ import re
 
 
 def normalize_to_zero_one(image_data: np.ndarray) -> np.ndarray:
+    """
+    Normalizes image data to zero-one floating point range
+    :param image_data: Image data to normalize
+    :return: Normalized image data
+    """
     max_value = image_data.max()
     if max_value == 0:
         return image_data.astype(np.float32)
@@ -22,12 +30,22 @@ def normalize_to_zero_one(image_data: np.ndarray) -> np.ndarray:
 
 
 def normalize_to_byte(image_data: np.ndarray) -> np.ndarray:
+    """
+    Normalizes image data to 0-255 8-bit integer range
+    :param image_data: Image data to normalize
+    :return: Normalized image data
+    """
     byte_data = 255 * normalize_to_zero_one(image_data)
 
     return byte_data.astype(np.uint8)
 
 
 def serialize_to_url(image_data: np.ndarray) -> str:
+    """
+    Serializes image data to base64 encoded png format
+    :param image_data: Image data to serialize
+    :return: String containing serialized image data
+    """
     in_memory_file = BytesIO()
 
     imageio.imwrite(in_memory_file, image_data, format='png')
@@ -38,6 +56,11 @@ def serialize_to_url(image_data: np.ndarray) -> str:
 
 
 def create_map(normalized_image: np.ndarray) -> Map:
+    """
+    Creates leaflet map with given image
+    :param normalized_image: Image data normalized to 0-255 8-bit integer
+    :return: Leaflet map
+    """
     width = normalized_image.shape[0]
     height = normalized_image.shape[1]
     bounds = [(-width / 2, -height / 2), (width / 2, height / 2)]
@@ -51,6 +74,11 @@ def create_map(normalized_image: np.ndarray) -> Map:
 
 
 def create_image(normalized_image: np.ndarray, label: str=None):
+    """
+    Creates jupyter image with given image data
+    :param normalized_image: Image data normalized to 0-255 8-bit integer
+    :return: Jupyter image
+    """
     plt.figure(figsize=(10, 10))
 
     if label is not None:

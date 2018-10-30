@@ -3,6 +3,9 @@ from ..utils.data_types import Moments
 
 
 class IncrementalAttribute:
+    """
+    Base class for incremental attributes
+    """
     def __add__(self, other):
         raise NotImplementedError
 
@@ -11,6 +14,9 @@ class IncrementalAttribute:
 
 
 class Area(IncrementalAttribute):
+    """
+    Area incremental attribute
+    """
     def __init__(self, area=1):
         self.area = area
 
@@ -23,6 +29,9 @@ class Area(IncrementalAttribute):
 
 
 class StandardDeviation(IncrementalAttribute):
+    """
+    Standard deviation incremental attribute
+    """
     mean = 0.0
     n_samples = 1.0
     variance = 0.0
@@ -77,6 +86,9 @@ class StandardDeviation(IncrementalAttribute):
 
 
 class LengthOfDiagonal(IncrementalAttribute):
+    """
+    Length of diagonal incremental attribute
+    """
     def __init__(self, far_left, far_right, far_up, far_down):
         self.far_left = far_left
         self.far_right = far_right
@@ -98,6 +110,9 @@ class LengthOfDiagonal(IncrementalAttribute):
 
 
 class FirstHuMoment(IncrementalAttribute):
+    """
+    First Hu moment incremental attribute
+    """
     def __init__(self, pixel=None, moments=None):
         if moments is None and pixel is not None:
             pixel_value = float(pixel.value)
