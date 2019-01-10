@@ -8,7 +8,8 @@ from python_research.experiments.band_selection_algorithms.BS_IC.improved_class_
 from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
 
 
-def train_classifiers(data, train_samples, train_labels, test_samples, test_labels):
+def train_classifiers(data: np.ndarray, train_samples: list, train_labels: list,
+                      test_samples: list, test_labels: list):
     """
     Train SVMs on each band and obtain accuracies.
 
@@ -29,9 +30,9 @@ def train_classifiers(data, train_samples, train_labels, test_samples, test_labe
     return band_scores
 
 
-def select_bands(ref_map, args):
+def select_bands(ref_map: np.ndarray, args):
     """
-    Select args.bands_num bands based on SVM fitness scores.
+    Select, save and show args.bands_num - number of bands, based on SVM fitness scores.
 
     :param ref_map: Reference map.
     :param args: Arguments passed.

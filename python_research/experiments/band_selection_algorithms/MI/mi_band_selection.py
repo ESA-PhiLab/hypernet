@@ -64,7 +64,7 @@ class MI(object):
             'The "b" parameter was set to high together with the number of bands to be selected.'
         self.S = np.sort(self.S)
 
-    def calculate_mi(self, draw_plot=False):
+    def calculate_mi(self, draw_plot: bool = False):
         h_b = -np.sum(np.dot(self.ref_map_hist, np.ma.log2(self.ref_map_hist)))
         for i in range(len(self.bands_histograms)):
             h_a = -np.sum(np.dot(self.bands_histograms[i], np.ma.log2(self.bands_histograms[i])))

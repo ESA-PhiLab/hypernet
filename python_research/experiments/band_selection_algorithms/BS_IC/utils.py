@@ -5,6 +5,11 @@ from scipy.io import loadmat
 
 
 def arg_parser():
+    """
+    Parse arguments for band selection algorithm.
+
+    :return: Parsed arguments.
+    """
     parser = argparse.ArgumentParser(description='Arguments for band selection based on improved classification map.')
     parser.add_argument('--data_path', dest='data_path', type=str)
     parser.add_argument('--ref_map_path', dest='ref_map_path', type=str)
