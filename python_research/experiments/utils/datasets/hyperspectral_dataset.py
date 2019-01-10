@@ -1,4 +1,3 @@
-import abc
 import torch
 from collections import Iterable
 from math import ceil
@@ -16,20 +15,18 @@ WIDTH = 1
 DEPTH = 2
 
 
-class Dataset(abc.ABC):
+class Dataset:
 
     def __init__(self, data: np.ndarray, labels: np.ndarray):
         self.data = data
         self.labels = labels
 
-    @property
     def get_data(self) -> np.ndarray:
         """
         :return: Data from a given dataset
         """
         return self.data
 
-    @property
     def get_labels(self) -> np.ndarray:
         """
         :return: Labels from a given dataset
@@ -79,26 +76,24 @@ class Dataset(abc.ABC):
                  if inplace is False - return normalized (data, labels)
         """
         if min_ is None and max_ is None:
-            min_ = np.amin(self.get_data)
-            max_ = np.amax(self.get_data)
+            min_ = np.amin(self.get_data())
+            max_ = np.amax(self.get_data())
             if inplace:
-                self.data = (self.get_data - min_) / (max_ - min_)
-                self.labels = self.get_labels - 1
+                self.data = (self.get_data() - min_) / (max_ - min_)
             else:
-                return (self.get_data - min_) / (max_ - min_)
+                return (self.get_data() - min_) / (max_ - min_)
         elif min_ is not None and max_ is not None:
             if inplace:
-                self.data = (self.get_data - min_) / (max_ - min_)
+                self.data = (self.get_data() - min_) / (max_ - min_)
             else:
-                return(self.get_data - min_) / (max_ - min_)
+                return(self.get_data() - min_) / (max_ - min_)
 
     def normalize_labels(self):
         """
         Normalize label values so that they start from 0.
         :return: None
         """
-        min_ = min(self.labels)
-        self.labels = self.labels - min_
+        self.labels = self.labels - 1
 
     def delete_by_indices(self, indices: Iterable):
         """
@@ -111,11 +106,11 @@ class Dataset(abc.ABC):
 
     def convert_to_tensors(self, inplace: bool=True):
         if inplace:
-            self.data = torch.from_numpy(self.get_data)
-            self.labels = torch.from_numpy(self.get_labels)
+            self.data = torch.from_numpy(self.get_data())
+            self.labels = torch.from_numpy(self.get_labels())
         else:
-            return torch.from_numpy(self.get_data), \
-                   torch.from_numpy(self.get_labels)
+            return torch.from_numpy(self.get_data()), \
+                   torch.from_numpy(self.get_labels())
 
     def convert_to_numpy(self, inplace: bool=True):
         if inplace:
@@ -124,14 +119,14 @@ class Dataset(abc.ABC):
         else:
             return self.data.numpy(), self.labels.numpy()
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Method providing a size of the dataaset (number of samples)
         :return: Size of the dataset
         """
         return len(self.labels)
 
-    def __getitem__(self, item) -> np.ndarray:
+    def __getitem__(self, item) -> [np.ndarray, np.ndarray]:
         """
         Method supporting integer indexing
         :param item: Index or Iterable of indices pointing at elements to be
@@ -139,7 +134,7 @@ class Dataset(abc.ABC):
         :return: Data at given indexes
         """
         sample_x = self.data[item, ...]
-        sample_y = self.labels[item, ...]
+        sample_y = self.labels[item]
         return sample_x, sample_y
 
 
@@ -205,7 +200,7 @@ class HyperspectralDataset(Dataset):
         for x, y in product(col_indexes, row_indexes):
             if ground_truth[y, x] != background_label:
                 sample = copy(padded_cube[y:y + padding_size * 2 + 1,
-                              x:x + padding_size * 2 + 1, ...])
+                                          x:x + padding_size * 2 + 1, ...])
                 samples.append(sample)
                 labels.append(ground_truth[y, x])
         return samples, labels

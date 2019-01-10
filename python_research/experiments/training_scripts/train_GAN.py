@@ -43,9 +43,9 @@ transformed_dataset.normalize_min_max()
 dataloader = DataLoader(transformed_dataset, batch_size=args.batch_size,
                         shuffle=True, drop_last=True)
 
-input_shape = bands_count = transformed_dataset.get_data.shape[-1]
+input_shape = bands_count = transformed_dataset.get_data().shape[-1]
 if args.classes_count == 0:
-    classes_count = len(np.unique(transformed_dataset.get_labels))
+    classes_count = len(np.unique(transformed_dataset.get_labels()))
 else:
     classes_count = args.classes_count
 

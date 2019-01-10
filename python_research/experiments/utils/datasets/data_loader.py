@@ -1,4 +1,3 @@
-import torch
 import numpy as np
 from random import shuffle
 from python_research.experiments.utils.datasets.hyperspectral_dataset import Dataset
@@ -18,11 +17,9 @@ class OrderedDataLoader:
         self.samples_returned = 0
         self.samples_count = len(dataset)
         self.indexes = self._get_indexes()
+        self.data = dataset
         if use_tensors:
-            self.data = dataset
             self.data.convert_to_tensors()
-        else:
-            self.data = dataset
 
     def __iter__(self):
         self.indexes = self._get_indexes()
@@ -49,9 +46,9 @@ class OrderedDataLoader:
 
     @staticmethod
     def _get_label_samples_indices(dataset):
-        labels = np.unique(dataset.get_labels)
+        labels = np.unique(dataset.get_labels())
         label_samples_indices = dict.fromkeys(labels)
         for label in label_samples_indices:
-            label_samples_indices[label] = list(np.where(dataset.get_labels == label)[0])
+            label_samples_indices[label] = list(np.where(dataset.get_labels() == label)[0])
         return label_samples_indices
 

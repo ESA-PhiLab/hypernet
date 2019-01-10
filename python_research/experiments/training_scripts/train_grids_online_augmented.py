@@ -1,28 +1,27 @@
 """
 Script load training a model and evaluating the accuracy on 1D or 3D data
-using Monte Carlo validation method. Data can be either balanced (each class
-has the same number of samples) or unbalanced (samples drawn randomly)
+using already extracted patches (grids).
 """
+
 import os.path
 import argparse
 import numpy as np
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 from python_research.experiments.utils.keras_custom_callbacks import TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset, ImbalancedSubset
-from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
+from python_research.experiments.utils.datasets.subset import BalancedSubset
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import build_1d_model, build_3d_model, build_settings_for_dataset
-from python_research.preprocessing.band_mapper import BandMapper
-from utils import calculate_class_accuracy
+from utils import load_patches
 from python_research.experiments.utils.io import save_to_csv
+from python_research.augmentation.online_augmenter import OnlineAugmenter
+from python_research.augmentation.transformations import PCATransformation
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--dataset_path', type=str,
+    parser.add_argument('--patches_dir', type=str,
                         help="Path to the dataset in .npy format")
-    parser.add_argument('--gt_path', type=str,
-                        help="Path to the ground truth in .npy format")
+    parser.add_argument('--model_path', type=str)
     parser.add_argument("--artifacts_path", type=str, default="artifacts",
                         help="Path to the output directory in which "
                              "artifacts will be stored")
@@ -34,17 +33,6 @@ def parse_args():
     parser.add_argument("--val_set_part", type=float, default=0.1,
                         help="Percentage of a training set to be extracted "
                              "as a validation set")
-    parser.add_argument("--runs", type=int, default=10,
-                        help="How many times to run the validation")
-    parser.add_argument("--balanced", type=int, default=1,
-                        help="Whether each class should have an equal "
-                             "number of samples. If True, parameter "
-                             "train_samples should be equal to a number of "
-                             "samples for each class, if False, paramter "
-                             "train_samples should be equal to total number "
-                             "of samples in the extracted dataset")
-    parser.add_argument("--train_samples", type=int, default=250,
-                        help="Number of train samples per class to use")
     parser.add_argument("--pixel_neighbourhood", type=int, default=1,
                         help="Neighbourhood of an extracted pixel when "
                              "preparing the data for training and "
@@ -68,29 +56,28 @@ def parse_args():
                              "(only for 1D model)")
     parser.add_argument('--verbose', type=int, default=2,
                         help='Verbosity of training')
+    parser.add_argument('--folds', type=int, default=0,
+                        help='Number of a fold from which to start from')
     return parser.parse_args()
 
 
 def main(args):
     os.makedirs(os.path.join(args.artifacts_path), exist_ok=True)
     # Init data
-    test_data = HyperspectralDataset(args.dataset_path, args.gt_path,
-                                     neighbourhood_size=args.pixel_neighbourhood)
-    mapper = BandMapper()
-    test_data.data = mapper.map(test_data.get_data(), 50)
+    train_data, test_data = load_patches(args.patches_dir,
+                                         args.pixel_neighbourhood)
+    train_data.normalize_labels()
     test_data.normalize_labels()
     if args.pixel_neighbourhood == 1:
+        train_data.expand_dims(axis=-1)
         test_data.expand_dims(axis=-1)
-    if args.balanced:
-        train_data = BalancedSubset(test_data, args.train_samples)
-        val_data = BalancedSubset(train_data, args.val_set_part)
-    else:
-        train_data = ImbalancedSubset(test_data, args.train_samples)
-        val_data = ImbalancedSubset(train_data, args.val_set_part)
+    val_data = BalancedSubset(train_data, args.val_set_part)
     # Callbacks
     early = EarlyStopping(patience=args.patience)
-    logger = CSVLogger(os.path.join(args.artifacts_path, args.output_file) + ".csv")
-    checkpoint = ModelCheckpoint(os.path.join(args.artifacts_path, args.output_file) + "_model",
+    logger = CSVLogger(os.path.join(args.artifacts_path, args.output_file) +
+                       ".csv")
+    checkpoint = ModelCheckpoint(os.path.join(args.artifacts_path,
+                                              args.output_file) + "_model",
                                  save_best_only=True)
     timer = TimeHistory()
 
@@ -124,18 +111,18 @@ def main(args):
                                          val_data.get_one_hot_labels(args.classes_count)))
 
     # Load best model
-    model = load_model(os.path.join(args.artifacts_path, args.output_file) + "_model")
+    model = load_model(os.path.join(args.model_path, args.output_file) + "_model")
 
-    # Calculate test set score
-    test_score = model.evaluate(x=test_data.get_data(),
-                                y=test_data.get_one_hot_labels(args.classes_count))
+    # Remove last dimension
+    train_data.data = train_data.get_data()[:, :, 0]
+    test_data.data = test_data.get_data()[:, :, 0]
 
-    # Calculate accuracy for each class
-    predictions = model.predict(x=test_data.get_data())
-    predictions = np.argmax(predictions, axis=1)
-    class_accuracy = calculate_class_accuracy(predictions,
-                                              test_data.get_labels(),
-                                              args.classes_count)
+    transformation = PCATransformation(n_components=train_data.shape[-1],
+                                       low=0.9, high=1.1)
+    transformation.fit(train_data.get_data())
+    augmenter = OnlineAugmenter()
+    test_score, class_accuracy = augmenter.evaluate(model, test_data,
+                                                    transformation)
     # Collect metrics
     train_score = max(history.history['acc'])
     val_score = max(history.history['val_acc'])
@@ -147,8 +134,9 @@ def main(args):
     # Save metrics
     metrics_path = os.path.join(args.artifacts_path, "metrics.csv")
     save_to_csv(metrics_path, [train_score, val_score,
-                               test_score[1], time, epochs, avg_epoch_time])
-    class_accuracy_path = os.path.join(args.artifacts_path, "class_accuracy.csv")
+                               test_score, time, epochs, avg_epoch_time])
+    class_accuracy_path = os.path.join(args.artifacts_path,
+                                       "class_accuracy.csv")
     save_to_csv(class_accuracy_path, class_accuracy)
     np.savetxt(os.path.join(args.artifacts_path, args.output_file) +
                "_times.csv", times, fmt="%1.4f")
@@ -156,9 +144,10 @@ def main(args):
 
 if __name__ == "__main__":
     args = parse_args()
-    for i in range(0, args.runs):
-        if i < 10:
+    for j in range(args.folds, 5):
+        args.patches_dir = args.patches_dir[:-1] + str(j)
+        args.model_path = args.model_path[:-1] + str(j)
+        args.artifacts_path = args.artifacts_path[:-1] + str(j)
+        for i in range(1, 6):
             args.output_file = args.output_file[:-1] + str(i)
-        else:
-            args.output_file = args.output_file[:-2] + str(i)
-        main(args)
+            main(args)

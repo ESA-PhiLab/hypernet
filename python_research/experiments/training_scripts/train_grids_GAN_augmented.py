@@ -110,7 +110,7 @@ def main(args):
 
     input_shape = bands_count = train_data.shape[-1]
     if args.classes_count == 0:
-        args.classes_count = len(np.unique(train_data.get_labels))
+        args.classes_count = len(np.unique(train_data.get_labels()))
 
     classifier_criterion = nn.CrossEntropyLoss()
     # Initialize generator, discriminator and classifier
@@ -151,7 +151,7 @@ def main(args):
     generator.load_state_dict(torch.load(generator_path))
 
     train_data.convert_to_numpy()
-    samples_per_class = get_samples_per_class_count(train_data.get_labels)
+    samples_per_class = get_samples_per_class_count(train_data.get_labels())
     generated_x, generated_y = generate_samples(generator, samples_per_class,
                                                 bands_count, args.classes_count)
 
@@ -178,28 +178,28 @@ def main(args):
                             args.kernel_size, args.classes_count)
 
     # Train model
-    history = model.fit(x=train_data.get_data,
+    history = model.fit(x=train_data.get_data(),
                         y=train_data.get_one_hot_labels(args.classes_count),
                         batch_size=args.batch_size,
                         epochs=args.epochs,
                         verbose=args.verbose,
                         callbacks=[early, logger, checkpoint, timer],
-                        validation_data=(val_data.get_data,
+                        validation_data=(val_data.get_data(),
                                          val_data.get_one_hot_labels(args.classes_count)))
 
     # Load best model
     model = load_model(os.path.join(args.artifacts_path, args.output_file) + "_model")
 
     # Calculate test set score
-    test_score = model.evaluate(x=test_data.get_data,
+    test_score = model.evaluate(x=test_data.get_data(),
                                 y=test_data.get_one_hot_labels(
                                     args.classes_count))
 
     # Calculate accuracy for each class
-    predictions = model.predict(x=test_data.get_data)
+    predictions = model.predict(x=test_data.get_data())
     predictions = np.argmax(predictions, axis=1)
     class_accuracy = calculate_class_accuracy(predictions,
-                                              test_data.get_labels - 1,
+                                              test_data.get_labels() - 1,
                                               args.classes_count)
     # Collect metrics
     train_score = max(history.history['acc'])
