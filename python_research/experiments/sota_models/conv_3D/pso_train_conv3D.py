@@ -11,7 +11,15 @@ from python_research.fastPSO.pso import Pso, Particle, Bounds
 
 
 class PsoRunner:
+    """
+    PSO runner for 3D convolutional network.
+    """
+
     def __init__(self, args):
+        """
+        Initialization.
+        :param args: Arguments for runner.
+        """
         self.args = args
         self.archive = {}
 
@@ -60,6 +68,10 @@ class PsoRunner:
         return score
 
     def run(self):
+        """
+        Run the optimizer.
+        :return: (best_neighbourhood, best_channels) tuple.
+        """
         min_channels = [0] * len(self.args.min_channels)
         max_channels = [
             int((channel[1] - channel[0]) / channel[2]) + 1 for channel in
@@ -111,8 +123,14 @@ class PsoRunner:
 
         pickle.dump([best_neighbourhood, best_channels], open(os.path.join(path, 'best'), 'wb'))
 
+        return (best_neighbourhood, best_channels)
+
 
 def arguments():
+    """
+    Arguments parser.
+    :return: Parsed arguments.
+    """
     parser = argparse.ArgumentParser(description='Arguments for runner.')
     parser.add_argument('--run_idx', dest='run_idx', help='Run index.')
     parser.add_argument('--dtype', dest='dtype', help='Data type.')
