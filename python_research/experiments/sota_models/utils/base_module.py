@@ -3,7 +3,16 @@ import torch
 
 
 class BaseModule(torch.nn.Module):
+    """
+    Base class for models which implements several helper methods concerning artifacts.
+    """
+
     def __init__(self, classes):
+        """
+        Declare instance variables designed to hold results.
+
+        :param classes: Number of classes.
+        """
         super(BaseModule, self).__init__()
 
         self.train_accuracies = []
@@ -27,7 +36,13 @@ class BaseModule(torch.nn.Module):
         pass
 
     @staticmethod
-    def check_dtype(dtype):
+    def check_dtype(dtype: str):
+        """
+        Check and evaluate tpe of data on which the model will operate.
+
+        :param dtype: Data type.
+        :return: Adjusted data type.
+        """
         if dtype == 'torch.cuda.FloatTensor':
             return torch.cuda.FloatTensor, torch.cuda.LongTensor
         elif dtype == 'torch.FloatTensor':

@@ -49,6 +49,7 @@ class Bass(BaseModule):
     def forward(self, x, y, val=False, test=False):
         """
         Feed forward method of the model.
+
         :param x: Input sample.
         :param y: Target
         :param val: Set to True during validation process.

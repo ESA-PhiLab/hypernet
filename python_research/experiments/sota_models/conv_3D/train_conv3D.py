@@ -11,6 +11,7 @@ from python_research.experiments.sota_models.utils.monte_carlo import prep_monte
 def arguments():
     """
     Arguments for 3D convolutional neural network.
+
     :return: Parsed arguments.
     """
     parser = argparse.ArgumentParser(description='Arguments for runner.')

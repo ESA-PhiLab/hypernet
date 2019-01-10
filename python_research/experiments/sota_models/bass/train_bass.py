@@ -10,6 +10,7 @@ from python_research.experiments.sota_models.utils.sets_by_sizes import prep_set
 def arguments():
     """
     Arguments for BASS model.
+
     :return: Parsed arguments.
     """
     parser = argparse.ArgumentParser(description='Input arguments for runner.')
