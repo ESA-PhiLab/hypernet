@@ -7,7 +7,8 @@ def build_block1(in_channels, out_channels, dtype):
     Each filter extends throughout the entire spectral axis of the input volume.
     :param in_channels: Number of input channels.
     :param out_channels: Number of feature maps.
-    :param dtype: Data type.
+    :param dtype: Data type used by the model.
+    :return: Sequential container which stores all modules.
     """
     return torch.nn.Sequential(
         torch.nn.Conv2d(in_channels=in_channels, out_channels=out_channels, kernel_size=(1, 1)),
@@ -17,9 +18,12 @@ def build_block1(in_channels, out_channels, dtype):
 
 def build_block2(dtype, neighbourhood_size):
     """
-    Architectural design of the second block of configuration 4, (details in the paper).
+    Architectural design of the second block of configuration 4.
     Applies a spectral - wise 1D convolution over an input signal.
-    :param dtype: Data type.
+
+    :param dtype: Data type used by the model.
+    :param neighbourhood_size: Spatial size of the sample.
+    :return: Sequential container which stores all modules.
     """
     return torch.nn.Sequential(
         torch.nn.Conv1d(in_channels=neighbourhood_size ** 2, out_channels=20, kernel_size=3),
@@ -38,7 +42,8 @@ def build_block3(entries, num_of_classes, dtype):
     Produce logits for each class respectively.
     :param entries: Number of entries into the dense layer.
     :param num_of_classes: Number of output neural activations.
-    :param dtype: Data type.
+    :param dtype: Data type used by the model.
+    :return: Sequential container which stores all modules.
     """
     return torch.nn.Sequential(
         torch.nn.Linear(entries, 100),

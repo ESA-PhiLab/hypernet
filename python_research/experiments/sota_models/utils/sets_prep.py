@@ -25,7 +25,7 @@ def attention_selection(data, args):
 
 
 def generate_samples(args):
-    samples = HyperspectralDataset(dataset=args.data_set, ground_truth=args.labels,
+    samples = HyperspectralDataset(dataset=args.data_path, ground_truth=args.labels_path,
                                    neighbourhood_size=args.neighbourhood_size)
     samples.normalize_min_max()
     samples.normalize_labels()

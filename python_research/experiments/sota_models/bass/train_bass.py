@@ -8,12 +8,16 @@ from python_research.experiments.sota_models.utils.sets_by_sizes import prep_set
 
 
 def arguments():
+    """
+    Arguments for BASS model.
+    :return: Parsed arguments.
+    """
     parser = argparse.ArgumentParser(description='Input arguments for runner.')
     parser.add_argument('--dtype', dest='dtype', help='Data type used by the model.')
     parser.add_argument('--cont', dest='cont', help='Path to file containing indexes of selected bands.', type=str)
     parser.add_argument('--run_idx', dest='run_idx', help='Run index.')
     parser.add_argument('--epochs', dest='epochs', help='Number of epochs.', type=int)
-    parser.add_argument('--data_set', dest='data_set', help='Path to the data set.')
+    parser.add_argument('--data_path', dest='data_path', help='Path to the data set.')
     parser.add_argument('--data_name', dest='data_name', help='Name of the data set.')
     parser.add_argument('--neighbourhood_size', dest='neighbourhood_size',
                         help='Spatial size of the patch. The default is 3.', type=int, default=3)
@@ -26,13 +30,18 @@ def arguments():
     parser.add_argument('--in_channels', type=int, dest='in_channels', help='Number of input channels for first block.')
     parser.add_argument('--out_channels', type=int, dest='out_channels',
                         help='Number of output channels for first block.')
-    parser.add_argument('--labels', dest='labels', help='Path to labels.')
+    parser.add_argument('--labels_path', dest='labels_path', help='Path to labels.')
     parser.add_argument('--dest_path', dest='dest_path', help='Destination of the artifacts folder.')
     parser.add_argument('--classes', dest='classes', help='Number of classes.', type=int)
     return parser.parse_args()
 
 
 def main(args):
+    """
+    Create model.
+
+    :param args: Parsed arguments.
+    """
     model = Bass(classes=args.classes, in_channels_in_block1=args.in_channels,
                  out_channels_in_block1=args.out_channels,
                  nb=args.nb, batch_size=args.batch, dtype=args.dtype, neighbourhood_size=args.neighbourhood_size)

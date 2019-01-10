@@ -9,16 +9,18 @@ class Bass(BaseModule):
     def __init__(self, classes, nb, in_channels_in_block1, out_channels_in_block1,
                  neighbourhood_size, batch_size, dtype, lr=0.0005):
         """
-        Bass model of Configuration 4 - this configuration constitute the SOTA accuracy.
-        Cost function: CrossEntropyLoss, Optimizer: Adam, (lr=0.0005).
+        Bass model of topology of Configuration 4.
+        Cost function: CrossEntropyLoss
+        Optimizer: Adam, (lr=0.0005).
 
         :param classes: Number of classes.
         :param nb: Number of second blocks.
         :param in_channels_in_block1: Number of input channels for first block.
         :param out_channels_in_block1: Number of output channels for first block.
-        :param lr: Learning rate hyperparameter for the optimizer. The default is 0.0005 - (see BASS paper).
-        :param batch_size: Size of batch.
-        :param dtype: Data type.
+        :param neighbourhood_size: Spatial size of samples.
+        :param batch_size: Size of the batch.
+        :param dtype: Data type used by the model.
+        :param lr: Learning rate hyperparameter for the optimizer. The default is 0.0005.
         """
         super(Bass, self).__init__(classes=classes)
         assert out_channels_in_block1 % nb == 0, \
@@ -30,7 +32,7 @@ class Bass(BaseModule):
         self._batch_size = batch_size
         self._block2 = torch.nn.ModuleList()
 
-        # Calculations for dimensionality after the second block:
+        # Calculations of dimensionality after the second layer:
         self._final_band_size = int(((out_channels_in_block1 / nb) - 10) * 5)
 
         self._block1 = build_block1(in_channels=in_channels_in_block1,
@@ -45,6 +47,14 @@ class Bass(BaseModule):
         self.optimizer = torch.optim.Adam(params=self.parameters(), lr=lr)
 
     def forward(self, x, y, val=False, test=False):
+        """
+        Feed forward method of the model.
+        :param x: Input sample.
+        :param y: Target
+        :param val: Set to True during validation process.
+        :param test: Set to False during inference process.
+        :return: Loss of the model over given set of samples.
+        """
         x = self._block1(x)
         x = torch.split(x, int(x.shape[1] / self._nb), dim=1)
         x = [x_.view(self._batch_size, x_.shape[1], -1) for x_ in x]
