@@ -5,8 +5,22 @@ import time
 import torch
 from torch.utils.data.dataloader import DataLoader
 
+from typing import List, NamedTuple
 
-def run_model(args, model, data_prep_function):
+
+class History(NamedTuple):
+    acc: list
+    loss: list
+    time: list
+
+
+class HistoryPack(NamedTuple):
+    train: History
+    val: History
+    test: History
+
+
+def run_model(args, model, data_prep_function) -> HistoryPack:
     train_dataset, val_dataset, test_dataset = data_prep_function(args=args)
 
     train_data_loader = DataLoader(dataset=train_dataset, batch_size=args.batch, shuffle=False, drop_last=True,
@@ -33,10 +47,16 @@ def run_model(args, model, data_prep_function):
                                                                     args.run_idx)), exist_ok=True)
         path = os.path.join(args.dest_path, '{}_run_{}'.format(args.data_name,
                                                                args.run_idx))
-    train_model(model=model, train_data_loader=train_data_loader, val_data_loader=val_data_loader, path=path, args=args)
+    train_history, val_history = train_model(model=model, train_data_loader=train_data_loader, val_data_loader=val_data_loader, path=path, args=args)
 
     model = torch.load(os.path.join(path, 'saved_model'))
-    infer_model(model=model, test_data_loader=test_data_loader, path=path, args=args)
+    test_history = infer_model(model=model, test_data_loader=test_data_loader, path=path, args=args)
+
+    return HistoryPack(
+        train=train_history,
+        val=val_history,
+        test=test_history
+    )
 
 
 def infer_model(model, test_data_loader, args, path):
@@ -60,6 +80,12 @@ def infer_model(model, test_data_loader, args, path):
     pickle.dump(test_time_history, open(os.path.join(path, 'test_time'), 'wb'))
     pickle.dump(model.acc_per_class, open(os.path.join(path, 'acc_per_class'), 'wb'))
 
+    return History(
+        acc=test_acc_history,
+        loss=test_loss_history,
+        time=test_time_history
+    )
+
 
 def train_model(model, train_data_loader, val_data_loader, args, path):
     train_acc_history = []
@@ -70,7 +96,6 @@ def train_model(model, train_data_loader, val_data_loader, args, path):
     val_time_history = []
 
     for epoch in range(int(args.epochs)):
-
         model.train()
         begin = time.time()
         for x, y in train_data_loader:
@@ -111,4 +136,17 @@ def train_model(model, train_data_loader, val_data_loader, args, path):
 
         if epoch > int(args.patience):
             if max(val_acc_history[:-int(args.patience)]) > max(val_acc_history[-int(args.patience):]):
-                return
+                break
+
+    return (
+        History(
+            acc=train_acc_history,
+            loss=train_loss_history,
+            time=train_time_history
+        ),
+        History(
+            acc=val_acc_history,
+            loss=val_loss_history,
+            time=val_time_history
+        )
+    )
