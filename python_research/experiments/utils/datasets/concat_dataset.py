@@ -13,6 +13,6 @@ class ConcatDataset(Dataset):
 
     @staticmethod
     def combine_datasets(datasets: List[Dataset]) -> [np.ndarray, np.ndarray]:
-        data = [dataset.get_data for dataset in datasets]
-        labels = [dataset.get_labels for dataset in datasets]
+        data = [dataset.get_data() for dataset in datasets]
+        labels = [dataset.get_labels() for dataset in datasets]
         return np.vstack(data), np.hstack(labels)

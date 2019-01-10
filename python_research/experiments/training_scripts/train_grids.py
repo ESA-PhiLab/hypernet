@@ -84,7 +84,7 @@ def main(args):
     test_data.normalize_min_max(min_=min_, max_=max_)
 
     if args.classes_count == 0:
-        args.classes_count = len(np.unique(test_data.get_labels))
+        args.classes_count = len(np.unique(test_data.get_labels()))
 
     # Build model
     if args.pixel_neighbourhood == 1:
@@ -96,27 +96,27 @@ def main(args):
         model = build_3d_model(settings, args.classes_count, test_data.shape[-1])
 
     # Train model
-    history = model.fit(x=train_data.get_data,
+    history = model.fit(x=train_data.get_data(),
                         y=train_data.get_one_hot_labels(args.classes_count),
                         batch_size=args.batch_size,
                         epochs=args.epochs,
                         verbose=args.verbose,
                         callbacks=[early, logger, checkpoint, timer],
-                        validation_data=(val_data.get_data,
+                        validation_data=(val_data.get_data(),
                                          val_data.get_one_hot_labels(args.classes_count)))
 
     # Load best model
     model = load_model(os.path.join(args.artifacts_path, args.output_file) + "_model")
 
     # Calculate test set score
-    test_score = model.evaluate(x=test_data.get_data,
+    test_score = model.evaluate(x=test_data.get_data(),
                                 y=test_data.get_one_hot_labels(args.classes_count))
 
     # Calculate accuracy for each class
-    predictions = model.predict(x=test_data.get_data)
+    predictions = model.predict(x=test_data.get_data())
     predictions = np.argmax(predictions, axis=1)
     class_accuracy = calculate_class_accuracy(predictions,
-                                              test_data.get_labels - 1,
+                                              test_data.get_labels(),
                                               args.classes_count)
     # Collect metrics
     train_score = max(history.history['acc'])
@@ -138,7 +138,7 @@ def main(args):
 
 if __name__ == "__main__":
     args = parse_args()
-    for j in range(0, 5):
+    for j in range(4, 5):
         args.patches_dir = args.patches_dir[:-1] + str(j)
         args.artifacts_path = args.artifacts_path[:-1] + str(j)
         for i in range(1, 6):

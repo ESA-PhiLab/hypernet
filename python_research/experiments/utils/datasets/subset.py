@@ -46,16 +46,16 @@ class BalancedSubset(Dataset, Subset):
     def extract_subset(self, dataset: Dataset,
                        samples_per_class: int,
                        delete_extracted: bool) -> [np.ndarray, np.ndarray]:
-        classes, counts = np.unique(dataset.get_labels, return_counts=True)
+        classes, counts = np.unique(dataset.get_labels(), return_counts=True)
         if np.any(counts < samples_per_class):
             raise ValueError("Chosen number of samples per class is too big "
                              "for one of the classes")
         indices_to_extract = self._collect_indices_to_extract(classes,
-                                                              dataset.get_labels,
+                                                              dataset.get_labels(),
                                                               samples_per_class)
 
-        data = copy(dataset.get_data[indices_to_extract, ...])
-        labels = copy(dataset.get_labels[indices_to_extract, ...])
+        data = copy(dataset.get_data()[indices_to_extract, ...])
+        labels = copy(dataset.get_labels()[indices_to_extract, ...])
 
         if delete_extracted:
             dataset.delete_by_indices(indices_to_extract)
@@ -63,7 +63,7 @@ class BalancedSubset(Dataset, Subset):
         return data, labels
 
 
-class UnbalancedSubset(Dataset, Subset):
+class ImbalancedSubset(Dataset, Subset):
     """
     Extract a subset where samples are drawn randomly. If total_samples_count
     is a value between 0 and 1, it is treated as a percentage of dataset
@@ -75,7 +75,7 @@ class UnbalancedSubset(Dataset, Subset):
         data, labels = self.extract_subset(dataset,
                                            total_samples_count,
                                            delete_extracted)
-        super(UnbalancedSubset, self).__init__(data, labels)
+        super(ImbalancedSubset, self).__init__(data, labels)
 
     def extract_subset(self, dataset: Dataset,
                        total_samples_count: int,
@@ -86,8 +86,8 @@ class UnbalancedSubset(Dataset, Subset):
             total_samples_count = int(len(dataset) * total_samples_count)
         indices_to_extract = indices[0:total_samples_count]
 
-        data = copy(dataset.get_data[indices_to_extract, ...])
-        labels = copy(dataset.get_labels[indices_to_extract, ...])
+        data = copy(dataset.get_data()[indices_to_extract, ...])
+        labels = copy(dataset.get_labels()[indices_to_extract, ...])
 
         if delete_extracted:
             dataset.delete_by_indices(indices_to_extract)
@@ -109,15 +109,15 @@ class CustomSizeSubset(Dataset, Subset):
 
     def extract_subset(self, dataset: Dataset, samples_count: List[int],
                        delete_extracted: bool):
-        classes = np.unique(dataset.get_labels)
+        classes = np.unique(dataset.get_labels())
         to_extract = []
-        for label in range(classes):
-            indices = np.where(dataset.get_labels == label)[0]
+        for label in classes:
+            indices = np.where(dataset.get_labels() == label)[0]
             shuffle(indices)
-            to_extract += indices[0:samples_count[label]]
+            to_extract += list(indices[0:samples_count[label]])
 
-        data = copy(dataset.get_data[to_extract, ...])
-        labels = copy(dataset.get_labels[to_extract, ...])
+        data = copy(dataset.get_data()[to_extract, ...])
+        labels = copy(dataset.get_labels()[to_extract, ...])
 
         if delete_extracted:
             dataset.delete_by_indices(to_extract)

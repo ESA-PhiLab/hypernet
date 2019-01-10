@@ -15,7 +15,7 @@ from python_research.experiments.multiple_feature_learning.builders.keras_builde
     build_1d_model
 from python_research.experiments.utils.keras_custom_callbacks import \
     TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset, UnbalancedSubset
+from python_research.experiments.utils.datasets.subset import BalancedSubset, ImbalancedSubset
 from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
 from python_research.experiments.utils.datasets.data_loader import OrderedDataLoader
 from python_research.augmentation.GAN.classifier import Classifier
@@ -116,8 +116,8 @@ def main(args):
         train_data = BalancedSubset(test_data, args.train_samples)
         val_data = BalancedSubset(train_data, args.val_set_part)
     else:
-        train_data = UnbalancedSubset(test_data, args.train_samples)
-        val_data = UnbalancedSubset(train_data, args.val_set_part)
+        train_data = ImbalancedSubset(test_data, args.train_samples)
+        val_data = ImbalancedSubset(train_data, args.val_set_part)
 
     # Normalize data
     max_ = train_data.max if train_data.max > val_data.max else val_data.max
@@ -133,7 +133,7 @@ def main(args):
 
     input_shape = bands_count = train_data.shape[-1]
     if args.classes_count == 0:
-        args.classes_count = len(np.unique(train_data.get_labels))
+        args.classes_count = len(np.unique(train_data.get_labels()))
 
     classifier_criterion = nn.CrossEntropyLoss()
     # Initialize generator, discriminator and classifier
@@ -178,7 +178,7 @@ def main(args):
     if cuda:
         generator = generator.cuda()
     train_data.convert_to_numpy()
-    samples_per_class = get_samples_per_class_count(train_data.get_labels)
+    samples_per_class = get_samples_per_class_count(train_data.get_labels())
     if args.balanced:
         augmentation_mode = 'balanced_full'
     else:
@@ -212,28 +212,28 @@ def main(args):
                             args.kernel_size, args.classes_count)
 
     # Train model
-    history = model.fit(x=train_data.get_data,
+    history = model.fit(x=train_data.get_data(),
                         y=train_data.get_one_hot_labels(args.classes_count),
                         batch_size=args.batch_size,
                         epochs=args.epochs,
                         verbose=args.verbose,
                         callbacks=[early, logger, checkpoint, timer],
-                        validation_data=(val_data.get_data,
+                        validation_data=(val_data.get_data(),
                                          val_data.get_one_hot_labels(args.classes_count)))
 
     # Load best model
     model = load_model(os.path.join(args.artifacts_path, args.output_file) + "_model")
 
     # Calculate test set score
-    test_score = model.evaluate(x=test_data.get_data,
+    test_score = model.evaluate(x=test_data.get_data(),
                                 y=test_data.get_one_hot_labels(
                                     args.classes_count))
 
     # Calculate accuracy for each class
-    predictions = model.predict(x=test_data.get_data)
+    predictions = model.predict(x=test_data.get_data())
     predictions = np.argmax(predictions, axis=1)
     class_accuracy = calculate_class_accuracy(predictions,
-                                              test_data.get_labels,
+                                              test_data.get_labels(),
                                               args.classes_count)
     # Collect metrics
     train_score = max(history.history['acc'])

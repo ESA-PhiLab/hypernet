@@ -9,18 +9,19 @@ import numpy as np
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 from python_research.experiments.utils.keras_custom_callbacks import TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset, ImbalancedSubset
+from python_research.experiments.utils.datasets.subset import BalancedSubset, ImbalancedSubset, CustomSizeSubset
 from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import build_1d_model, build_3d_model, build_settings_for_dataset
-from python_research.preprocessing.band_mapper import BandMapper
-from utils import calculate_class_accuracy
 from python_research.experiments.utils.io import save_to_csv
+from python_research.augmentation.online_augmenter import OnlineAugmenter
+from python_research.augmentation.transformations import StdDevNoiseTransformation, PCATransformation
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--dataset_path', type=str,
                         help="Path to the dataset in .npy format")
+    parser.add_argument('--model_path', type=str)
     parser.add_argument('--gt_path', type=str,
                         help="Path to the ground truth in .npy format")
     parser.add_argument("--artifacts_path", type=str, default="artifacts",
@@ -76,8 +77,6 @@ def main(args):
     # Init data
     test_data = HyperspectralDataset(args.dataset_path, args.gt_path,
                                      neighbourhood_size=args.pixel_neighbourhood)
-    mapper = BandMapper()
-    test_data.data = mapper.map(test_data.get_data(), 50)
     test_data.normalize_labels()
     if args.pixel_neighbourhood == 1:
         test_data.expand_dims(axis=-1)
@@ -125,17 +124,16 @@ def main(args):
 
     # Load best model
     model = load_model(os.path.join(args.artifacts_path, args.output_file) + "_model")
+    # Remove last dimension
+    train_data.data = train_data.get_data()[:, :, 0]
+    test_data.data = test_data.get_data()[:, :, 0]
 
-    # Calculate test set score
-    test_score = model.evaluate(x=test_data.get_data(),
-                                y=test_data.get_one_hot_labels(args.classes_count))
-
-    # Calculate accuracy for each class
-    predictions = model.predict(x=test_data.get_data())
-    predictions = np.argmax(predictions, axis=1)
-    class_accuracy = calculate_class_accuracy(predictions,
-                                              test_data.get_labels(),
-                                              args.classes_count)
+    transformation = PCATransformation(n_components=train_data.shape[-1],
+                                       low=0.9, high=1.1)
+    transformation.fit(train_data.get_data())
+    augmenter = OnlineAugmenter()
+    test_score, class_accuracy = augmenter.evaluate(model, test_data,
+                                                    transformation)
     # Collect metrics
     train_score = max(history.history['acc'])
     val_score = max(history.history['val_acc'])
@@ -147,7 +145,7 @@ def main(args):
     # Save metrics
     metrics_path = os.path.join(args.artifacts_path, "metrics.csv")
     save_to_csv(metrics_path, [train_score, val_score,
-                               test_score[1], time, epochs, avg_epoch_time])
+                               test_score, time, epochs, avg_epoch_time])
     class_accuracy_path = os.path.join(args.artifacts_path, "class_accuracy.csv")
     save_to_csv(class_accuracy_path, class_accuracy)
     np.savetxt(os.path.join(args.artifacts_path, args.output_file) +
