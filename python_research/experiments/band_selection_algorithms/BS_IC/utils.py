@@ -5,6 +5,11 @@ from scipy.io import loadmat
 
 
 def arg_parser():
+    """
+    Parse arguments for band selection algorithm.
+
+    :return: Parsed arguments.
+    """
     parser = argparse.ArgumentParser(description='Arguments for band selection based on improved classification map.')
     parser.add_argument('--data_path', dest='data_path', type=str)
     parser.add_argument('--ref_map_path', dest='ref_map_path', type=str)
@@ -16,6 +21,14 @@ def arg_parser():
 
 
 def load_data(path, ref_map_path, get_ref_map=True):
+    """
+    Load data method.
+
+    :param path: Path to data.
+    :param ref_map_path: Path to labels.
+    :param get_ref_map: True if return reference map.
+    :return: Prepared data.
+    """
     data = None
     ref_map = None
     if path.endswith(".npy"):

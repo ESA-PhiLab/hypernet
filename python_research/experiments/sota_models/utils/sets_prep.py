@@ -7,9 +7,12 @@ from python_research.experiments.sota_models.utils.list_dataset import ListDatas
 from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
 
 
-def attention_selection(data, args):
+def attention_selection(data, args) -> List:
     """
-    Selection of bands.
+     Select bands chosen by the attention mechanism.
+
+    :param data: Hyperspectral data block.
+    :param args: Parsed arguments containing path to the file which stores selected bands ids.
     """
     content = None
     with open(args.cont) as f:
@@ -24,8 +27,14 @@ def attention_selection(data, args):
     return data
 
 
-def generate_samples(args):
-    samples = HyperspectralDataset(dataset=args.data_set, ground_truth=args.labels,
+def generate_samples(args) -> List:
+    """
+    Given paths to data and labels generate samples and normalize them.
+
+    :param args: Parsed arguments.
+    :return: List of samples
+    """
+    samples = HyperspectralDataset(dataset=args.data_path, ground_truth=args.labels_path,
                                    neighbourhood_size=args.neighbourhood_size)
     samples.normalize_min_max()
     samples.normalize_labels()
@@ -37,9 +46,13 @@ def generate_samples(args):
     return samples
 
 
-def prep_dataset(train_set: List, val_set: List, test_set: List):
+def prep_dataset(train_set: List, val_set: List, test_set: List) -> tuple:
     """
-    Stores data sets as objects of type ListDataset, which are used in DataLoader.
+    Stores data sets as objects of type ListDataset.
+
+    :param train_set: Samples designed for training.
+    :param val_set: Samples designed for validation.
+    :param test_set: Samples designed for testing.
     """
     shuffle(train_set), shuffle(val_set), shuffle(test_set)
     samples, labels = zip(*train_set)
@@ -51,9 +64,13 @@ def prep_dataset(train_set: List, val_set: List, test_set: List):
     return train_dataset, val_dataset, test_dataset
 
 
-def unravel_dataset(train_set: List[List[object]], val_set: List[List], test_set: List[List[object]]):
+def unravel_dataset(train_set: List[List[object]], val_set: List[List], test_set: List[List[object]]) -> tuple:
     """
-    Unravels a data set from nested lists into one single list containing all items inside.
+    Unravels data set from nested lists into the single one containing all samples inside.
+
+    :param train_set: Samples designed for training.
+    :param val_set: Samples designed for validation.
+    :param test_set: Samples designed for testing.
     """
     train_set = [item for sublist in train_set for item in sublist]
     val_set = [item for sublist in val_set for item in sublist]

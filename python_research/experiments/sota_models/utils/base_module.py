@@ -3,7 +3,16 @@ import torch
 
 
 class BaseModule(torch.nn.Module):
+    """
+    Base class for models which implements several helper methods concerning artifacts.
+    """
+
     def __init__(self, classes):
+        """
+        Declare instance variables designed to hold results.
+
+        :param classes: Number of classes.
+        """
         super(BaseModule, self).__init__()
 
         self.train_accuracies = []
@@ -27,7 +36,13 @@ class BaseModule(torch.nn.Module):
         pass
 
     @staticmethod
-    def check_dtype(dtype):
+    def check_dtype(dtype: str):
+        """
+        Check and evaluate tpe of data on which the model will operate.
+
+        :param dtype: Data type.
+        :return: Adjusted data type.
+        """
         if dtype == 'torch.cuda.FloatTensor':
             return torch.cuda.FloatTensor, torch.cuda.LongTensor
         elif dtype == 'torch.FloatTensor':
@@ -37,7 +52,12 @@ class BaseModule(torch.nn.Module):
         elif dtype == 'torch.DoubleTensor':
             return torch.DoubleTensor, torch.LongTensor
 
-    def get_train_results(self):
+    def get_train_results(self) -> tuple:
+        """
+        Get training results.
+
+        :return: Training results.
+        """
         accuracy = np.mean(np.asarray(self.train_accuracies))
         self.train_acc_history.append(accuracy)
         loss = np.mean(np.asarray(self.train_losses))
@@ -46,7 +66,12 @@ class BaseModule(torch.nn.Module):
         self.train_losses = []
         return accuracy, loss
 
-    def get_val_results(self):
+    def get_val_results(self) -> tuple:
+        """
+        Get validation results.
+
+        :return: Validation results.
+        """
         accuracy = np.average(np.asarray(self.val_accuracies))
         self.val_acc_history.append(accuracy)
         loss = np.mean(np.asarray(self.val_losses))
@@ -55,7 +80,12 @@ class BaseModule(torch.nn.Module):
         self.val_losses = []
         return accuracy, loss
 
-    def get_test_results(self):
+    def get_test_results(self) -> tuple:
+        """
+        Get testing results.
+
+        :return: Testing results.
+        """
         accuracy = np.mean(np.asarray(self.test_accuracies))
         self.test_acc_history.append(accuracy)
         loss = np.mean(np.asarray(self.test_losses))

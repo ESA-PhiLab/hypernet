@@ -41,7 +41,7 @@ def prepare_datasets(ref_map: np.ndarray, training_patch: float, do_shuffle: boo
     return train_samples, np.asarray(train_labels), test_samples, np.asarray(test_labels)
 
 
-def get_data_by_indexes(indexes, data) -> np.ndarray:
+def get_data_by_indexes(indexes: list, data: np.ndarray) -> np.ndarray:
     """
     Return data block given indexes.
 
@@ -55,7 +55,13 @@ def get_data_by_indexes(indexes, data) -> np.ndarray:
     return np.asarray(train_samples)
 
 
-def one_hot_map(ref_map):
+def one_hot_map(ref_map: np.ndarray) -> np.ndarray:
+    """
+    Perform one - hot encoding over passed reference map.
+
+    :param ref_map: Passed reference map.
+    :return: One - hot reference map.
+    """
     max_ = (ref_map.max() + abs(CONST_BG_CLASS)).astype(int)
     c = np.zeros(shape=[ref_map.shape[CONST_ROW_AXIS], ref_map.shape[CONST_COLUMNS_AXIS], max_])
     rows, columns = list(range(ref_map.shape[CONST_ROW_AXIS])), list(range((ref_map.shape[CONST_COLUMNS_AXIS])))
@@ -64,11 +70,25 @@ def one_hot_map(ref_map):
     return c
 
 
-def get_guided_image(data):
+def get_guided_image(data: np.ndarray) -> np.ndarray:
+    """
+    Return the guided image as a mean array over all bands.
+
+    :param data: Hyperspectral data block.
+    :return: Mean array over all bands.
+    """
     return np.mean(data, axis=CONST_SPECTRAL_AXIS)
 
 
-def construct_new_ref_map(labels, samples, shape):
+def construct_new_ref_map(labels: np.ndarray, samples: list, shape: list):
+    """
+    Based on the SVM predictions, create new reference map.
+
+    :param labels: Labels for indexes for constructing new reference map.
+    :param samples: Indexes of samples for constructing new reference map.
+    :param shape: Designed shape of the new reference map.
+    :return:
+    """
     labels += CONST_CLASS_LABEL
     new_ref_map = np.zeros(shape=shape)
     for i, indexes in enumerate(samples):
@@ -76,7 +96,17 @@ def construct_new_ref_map(labels, samples, shape):
     return new_ref_map
 
 
-def train_svm(data, test_labels, test_samples, train_labels, train_samples):
+def train_svm(data: np.ndarray, test_labels: list, test_samples: list, train_labels: list, train_samples: list):
+    """
+    Train SVM on input data and return its predictions.
+
+    :param data: Hyperspectral data block.
+    :param test_labels: Indexes of test labels.
+    :param test_samples: Indexes of test samples.
+    :param train_labels: Indexes of train labels.
+    :param train_samples: Indexes of train samples.
+    :return: Prediction which is used to create new reference map.
+    """
     model = OneVsRestClassifier(svm.SVC(kernel='rbf', C=1024, gamma=2, decision_function_shape='ovo',
                                         probability=True, class_weight='balanced'))
     model.fit(get_data_by_indexes(train_samples, data), train_labels)
@@ -86,6 +116,11 @@ def train_svm(data, test_labels, test_samples, train_labels, train_samples):
 
 
 def generate_pseudo_ground_truth_map(args):
+    """
+    Generate and save pseudo ground thruth map that is used in the band selection process.
+
+    :param args: Parsed arguments.
+    """
     data, ref_map = load_data(path=args.data_path, ref_map_path=args.ref_map_path)
     guided_image = get_guided_image(data)
     train_samples, train_labels, test_samples, test_labels = prepare_datasets(ref_map=ref_map,

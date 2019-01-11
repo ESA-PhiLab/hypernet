@@ -5,17 +5,18 @@ import numpy as np
 from python_research.experiments.sota_models.utils.sets_prep import generate_samples, prep_dataset, unravel_dataset
 
 
-def prep_monte_carlo(args):
+def prep_monte_carlo(args) -> tuple:
     """
-    Divides samples by folds, i.e.: finds the size of the smallest class - population,
+    Finds the size of the smallest population among all classes,
     then divides on three sets:
-    - Training set takes 1 - (args.val_size + args.test_size) * lowest_class_population samples.
-    - Validation set takes args.val_size * lowest_class_population samples.
-    args.val_size is the size of the validation fold.
-    - Testing set takes args.test_size * lowest_class_population samples.
-    args.test_size is the size of the testing fold.
 
-    :param args: Arguments passed.
+    - Training set takes (1 - (args.val_size + args.test_size) * lowest_class_population) samples.
+    - Validation set takes (args.val_size * lowest_class_population) samples.
+    args.val_size is the fraction of samples designed for validation.
+    - Testing set takes (args.test_size * lowest_class_population) samples.
+    args.test_size is the fraction of samples designed for testing.
+
+    :param args: Parsed arguments.
     :return: Training, Validation and Testing objects.
     """
     print('Monte Carlo data prep:')

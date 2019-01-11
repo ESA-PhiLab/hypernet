@@ -4,9 +4,9 @@ from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
 
 def arguments():
     """
-    Collect all arguments.
+    Arguments for running BOMBS selection algorithm. The default values are taken from the paper itself.
     """
-    parser = argparse.ArgumentParser(description='Arguments for data loader.')
+    parser = argparse.ArgumentParser(description='Arguments for runner.')
     parser.add_argument('--G', dest='G', type=int, help='Number of generations.', default=99999999)
     parser.add_argument('--Gmax', dest='Gmax', type=int, help='Max. number of generations.', default=100)
     parser.add_argument('--Na', dest='Na', type=int, help='Max. size of active population.', default=20)
@@ -26,7 +26,7 @@ def arguments():
 
 def run(args):
     """
-    Main loop of the band selection algorithm.
+    Main loop of the BOMBS band selection algorithm.
     """
     model = AntibodyPopulation(args=args)
     model.initialization()

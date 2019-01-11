@@ -1,11 +1,10 @@
 import os
 import pickle
 import time
+from typing import NamedTuple
 
 import torch
 from torch.utils.data.dataloader import DataLoader
-
-from typing import List, NamedTuple
 
 
 class History(NamedTuple):
@@ -21,6 +20,14 @@ class HistoryPack(NamedTuple):
 
 
 def run_model(args, model, data_prep_function) -> HistoryPack:
+    """
+    Train, validate and test model.
+
+    :param args: Parsed arguments.
+    :param model: Model designed for training, validation and testing.
+    :param data_prep_function: Data preparation function.
+    :return: Artifacts of the experiment.
+    """
     train_dataset, val_dataset, test_dataset = data_prep_function(args=args)
 
     train_data_loader = DataLoader(dataset=train_dataset, batch_size=args.batch, shuffle=False, drop_last=True,
@@ -47,10 +54,11 @@ def run_model(args, model, data_prep_function) -> HistoryPack:
                                                                     args.run_idx)), exist_ok=True)
         path = os.path.join(args.dest_path, '{}_run_{}'.format(args.data_name,
                                                                args.run_idx))
-    train_history, val_history = train_model(model=model, train_data_loader=train_data_loader, val_data_loader=val_data_loader, path=path, args=args)
+    train_history, val_history = train_model(model=model, train_data_loader=train_data_loader,
+                                             val_data_loader=val_data_loader, path=path, args=args)
 
     model = torch.load(os.path.join(path, 'saved_model'))
-    test_history = infer_model(model=model, test_data_loader=test_data_loader, path=path, args=args)
+    test_history = infer_model(model=model, test_data_loader=test_data_loader, path=path)
 
     return HistoryPack(
         train=train_history,
@@ -59,7 +67,15 @@ def run_model(args, model, data_prep_function) -> HistoryPack:
     )
 
 
-def infer_model(model, test_data_loader, args, path):
+def infer_model(model, test_data_loader, path) -> History:
+    """
+    Prosecute inference on the model.
+
+    :param model: Model for inference.
+    :param test_data_loader: Testing data loader.
+    :param path: Destination path.
+    :return: Inference results.
+    """
     test_acc_history = []
     test_loss_history = []
     test_time_history = []
@@ -87,7 +103,17 @@ def infer_model(model, test_data_loader, args, path):
     )
 
 
-def train_model(model, train_data_loader, val_data_loader, args, path):
+def train_model(model, train_data_loader, val_data_loader, args, path) -> tuple:
+    """
+    Train model using passed data loaders.
+
+    :param model: Model designed for training.
+    :param train_data_loader: Training data loader.
+    :param val_data_loader: Validation data loader.
+    :param args: Parsed arguments.
+    :param path: Destination path.
+    :return: History of training.
+    """
     train_acc_history = []
     train_loss_history = []
     train_time_history = []

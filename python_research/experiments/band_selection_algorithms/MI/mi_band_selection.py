@@ -10,6 +10,13 @@ USED_BAND_FLAG = -1
 
 class MI(object):
     def __init__(self, x: int, b: int, eta: float):
+        """
+        Initialize all instance variables.
+
+        :param x: Number of bands to select.
+        :param b: The neighbourhood of selected band.
+        :param eta: Prevents from redundancy in the selected bands.
+        """
         self.ref_map = None
         self.ref_map_hist = None
         self.S = []
@@ -23,6 +30,9 @@ class MI(object):
         self.init_bands_size = None
 
     def select_band_index(self):
+        """
+        Select band indexes by choosing the maximum argument from the mutual information list.
+        """
         s = np.argmax(self.mutual_information).astype(int)
         n = list(range(int(s - (self.b + 1)), int(s + self.b + 1)))
         if n[0] < 0:
@@ -44,6 +54,9 @@ class MI(object):
         self.bands_ids[s] = USED_BAND_FLAG
 
     def perform_search(self):
+        """
+        Main loop for selecting bands.
+        """
         while self.S.__len__() < self.x:
             self.select_band_index()
         assert np.unique(
@@ -51,7 +64,12 @@ class MI(object):
             'The "b" parameter was set to high together with the number of bands to be selected.'
         self.S = np.sort(self.S)
 
-    def calculate_mi(self, draw_plot=False):
+    def calculate_mi(self, draw_plot: bool = False):
+        """
+        Calculate mutual information between the reference image and each band in the hyperspectral data block.
+
+        :param draw_plot: True if drawing plot of mutual information is intended.
+        """
         h_b = -np.sum(np.dot(self.ref_map_hist, np.ma.log2(self.ref_map_hist)))
         for i in range(len(self.bands_histograms)):
             h_a = -np.sum(np.dot(self.bands_histograms[i], np.ma.log2(self.bands_histograms[i])))
@@ -65,6 +83,12 @@ class MI(object):
             plt.show()
 
     def prep_bands(self, data: np.ndarray, ref_map: np.ndarray):
+        """
+        Prepare bands, grey level histograms and joint histograms.
+
+        :param data: Data block.
+        :param ref_map: Reference map.
+        """
         self.init_bands_size = data.shape[CONST_SPECTRAL_AXIS] + CONST_BG_CLASS
         non_zeros = np.nonzero(ref_map)
         self.ref_map = ref_map[non_zeros]
@@ -83,6 +107,11 @@ class MI(object):
 
 
 def arg_parser():
+    """
+    Arguments for running the mutual information based band selection algorithm.
+
+    :return: Parsed arguments.
+    """
     parser = argparse.ArgumentParser(description='Arguments for mutual information band selection.')
     parser.add_argument('--data_path', dest='data_path', type=str)
     parser.add_argument('--ref_map_path', dest='ref_map_path', type=str)
@@ -95,6 +124,15 @@ def arg_parser():
 
 
 def load_data(path, ref_map_path, get_ref_map=True):
+    """
+    Load data and labels.
+    Normalize data.
+
+    :param path: Path to data.
+    :param ref_map_path: Path to labels.
+    :param get_ref_map: True if returning labels.
+    :return: Normalized data.
+    """
     data = None
     ref_map = None
     if path.endswith(".npy"):
@@ -128,6 +166,11 @@ def load_data(path, ref_map_path, get_ref_map=True):
 
 
 def run(args):
+    """
+    Contains all steps of the band selection algorithm.
+
+    :param args: Parsed arguments.
+    """
     data, ref_map = load_data(path=args.data_path, ref_map_path=args.ref_map_path)
     mutual_info_band_selector = MI(x=args.X, b=args.b, eta=args.eta)
     mutual_info_band_selector.prep_bands(data=data, ref_map=ref_map)
