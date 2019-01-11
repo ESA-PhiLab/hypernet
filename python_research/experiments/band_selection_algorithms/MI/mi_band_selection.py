@@ -11,7 +11,7 @@ USED_BAND_FLAG = -1
 class MI(object):
     def __init__(self, x: int, b: int, eta: float):
         """
-        Initialize all arguments.
+        Initialize all instance variables.
 
         :param x: Number of bands to select.
         :param b: The neighbourhood of selected band.
@@ -31,7 +31,7 @@ class MI(object):
 
     def select_band_index(self):
         """
-        Select band indexes taking the maximum argument from the mutual information list.
+        Select band indexes by choosing the maximum argument from the mutual information list.
         """
         s = np.argmax(self.mutual_information).astype(int)
         n = list(range(int(s - (self.b + 1)), int(s + self.b + 1)))
@@ -108,7 +108,8 @@ class MI(object):
 
 def arg_parser():
     """
-    Arguments for the band selection algorithm.
+    Arguments for running the mutual information based band selection algorithm.
+
     :return: Parsed arguments.
     """
     parser = argparse.ArgumentParser(description='Arguments for mutual information band selection.')
