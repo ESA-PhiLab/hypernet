@@ -20,11 +20,11 @@ class Arguments(NamedTuple):
     dtype: str
     cont: str
     epochs: int
-    data_set: str
+    data_path: str
     data_name: str
     min_neighbourhood_size: int
     max_neighbourhood_size: int
-    labels: str
+    labels_path: str
     batch: int
     patience: int
     dest_path: str
@@ -176,11 +176,11 @@ def arguments() -> Arguments:
     parser.add_argument('--dtype', dest='dtype', help='Data type used by the model.', required=True)
     parser.add_argument('--cont', dest='cont', help='Path to file containing indexes of selected bands.', type=str)
     parser.add_argument('--epochs', dest='epochs', help='Number of epochs.', type=int, required=True)
-    parser.add_argument('--data_set', dest='data_set', help='Path to the data set.', required=True)
+    parser.add_argument('--data_path', dest='data_path', help='Path to the data set.', required=True)
     parser.add_argument('--data_name', dest='data_name', help='Name of the data set.', required=True)
     parser.add_argument('--min_neighbourhood_size', dest='min_neighbourhood_size', help='Min spatial size of the patch.', type=int, required=True)
     parser.add_argument('--max_neighbourhood_size', dest='max_neighbourhood_size', help='Max spatial size of the patch.', type=int, required=True)
-    parser.add_argument('--labels', dest='labels', help='Path to labels.', required=True)
+    parser.add_argument('--labels_path', dest='labels_path', help='Path to labels.', required=True)
     parser.add_argument('--batch', dest='batch', help='Batch size.', type=int, required=True)
     parser.add_argument('--patience', dest='patience', help='Number of epochs without improvement.', required=True)
     parser.add_argument('--dest_path', dest='dest_path', help='Destination of the artifacts folder.', required=True)
