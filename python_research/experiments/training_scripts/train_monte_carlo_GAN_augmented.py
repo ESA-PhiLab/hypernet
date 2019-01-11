@@ -23,7 +23,7 @@ from python_research.augmentation.GAN.discriminator import Discriminator
 from python_research.augmentation.GAN.generator import Generator
 from python_research.augmentation.GAN.WGAN import WGAN
 from python_research.augmentation.augmentation import generate_samples
-
+from python_research.augmentation.GAN.samples_generator import SamplesGenerator
 
 def parse_args():
     parser = argparse.ArgumentParser()
@@ -125,12 +125,12 @@ def main(args):
     train_data.normalize_min_max(min_=min_, max_=max_)
     val_data.normalize_min_max(min_=min_, max_=max_)
     test_data.normalize_min_max(min_=min_, max_=max_)
+
     custom_data_loader = OrderedDataLoader(train_data, args.batch_size)
     data_loader = DataLoader(train_data, batch_size=args.batch_size,
                              shuffle=True, drop_last=True)
 
     cuda = True if torch.cuda.is_available() else False
-
     input_shape = bands_count = train_data.shape[-1]
     if args.classes_count == 0:
         args.classes_count = len(np.unique(train_data.get_labels()))
@@ -178,17 +178,11 @@ def main(args):
     if cuda:
         generator = generator.cuda()
     train_data.convert_to_numpy()
-    samples_per_class = get_samples_per_class_count(train_data.get_labels())
-    if args.balanced:
-        augmentation_mode = 'balanced_full'
-    else:
-        augmentation_mode = 'unbalanced'
-    device = 'gpu' if cuda else 'cpu'
-    generated_x, generated_y = generate_samples(generator, samples_per_class,
-                                                bands_count, args.classes_count,
-                                                device=device,
-                                                augmentation_mode=augmentation_mode)
 
+    device = 'gpu' if cuda is True else 'cpu'
+    samples_generator = SamplesGenerator(device=device)
+    generated_x, generated_y = samples_generator.generate(train_data,
+                                                          generator)
     generated_x = np.reshape(generated_x.detach().cpu().numpy(),
                              generated_x.shape + (1, ))
 

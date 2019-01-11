@@ -1,19 +1,20 @@
 """
 Helper procedures for jupyter notebook
 """
+import os
+import re
+import imageio
+import numpy as np
+from io import BytesIO
+from typing import Dict
 from random import randint
 from base64 import b64encode
-from io import BytesIO
-import imageio
-import os
-from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
-from python_research.experiments.utils.datasets.concat_dataset import ConcatDataset
 from ipyleaflet import Map, ImageOverlay
-import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 from sklearn.metrics import confusion_matrix
-import re
+from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
+from python_research.experiments.utils.datasets.concat_dataset import ConcatDataset
 
 
 def normalize_to_zero_one(image_data: np.ndarray) -> np.ndarray:
@@ -153,3 +154,32 @@ def sorted_alphanumeric(data):
     convert = lambda text: int(text) if text.isdigit() else text.lower()
     alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key) ]
     return sorted(data, key=alphanum_key)
+
+
+def calculate_augmented_count_per_class(class_counts: Dict[int, int],
+                                         sampling_mode='twice') -> Dict[int, int]:
+    """
+    Calculate how many samples should be augmented for each class
+    :param class_counts: Number of samples for each class
+    :param sampling_mode: 'twice': Double the number of samples in each class
+    'max_twice': If twice the number of samples
+    for each class does not exceed the number of samples in most numerous class,
+    then the count will be doubled, if it does, the number of generated samples
+    will be calculated as a difference between most numerous class count and
+    number of samples in given class.
+    :return:
+    """
+    augmented_count = dict.fromkeys(class_counts.keys())
+    if sampling_mode == 'max_twice':
+        most_numerous_class = max(class_counts.values())
+        for label in class_counts.keys():
+            if class_counts[label] * 2 < most_numerous_class:
+                augmented_count[label] = class_counts[label]
+            else:
+                augmented_count[label] = most_numerous_class - \
+                                         class_counts[label]
+        return augmented_count
+    elif sampling_mode == 'twice':
+        for label in class_counts.keys():
+            augmented_count[label] = class_counts[label]
+        return augmented_count

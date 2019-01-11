@@ -28,7 +28,7 @@ class WGAN:
                  discriminator_optimizer: Optimizer,
                  use_cuda: bool=False,
                  lambda_gp: int=10,
-                 critic_iters: int=5,
+                 critic_iters: int=4,
                  patience: int=None,
                  summary_writer: SummaryWriter=None,
                  verbose: bool=True,
@@ -68,8 +68,14 @@ class WGAN:
         self.best_discriminator_loss = np.inf
         self.generator_checkout = generator_checkout
 
-    def _gradient_penalty(self, real_samples, fake_samples):
-        """Calculates the gradient penalty loss for WGAN GP"""
+    def _gradient_penalty(self, real_samples: torch.Tensor,
+                          fake_samples: torch.Tensor) -> float:
+        """
+        Calculates the gradient penalty loss for WGAN GP
+        :param real_samples: Tensor with real samples
+        :param fake_samples: Tensor with fake samples
+        :return: Gradient penalty
+        """
         # Random weight term for interpolation between real and fake samples
         alpha = torch.FloatTensor(np.random.random((real_samples.size(0), 1)))
         if self.use_cuda:
@@ -89,7 +95,15 @@ class WGAN:
         gradient_penalty = self.lambda_gp * ((gradients.norm(2, dim=1) - 1) ** 2).mean()
         return gradient_penalty
 
-    def _discriminator_iteration(self, real_samples: Variable, labels: Variable, noise: Variable):
+    def _discriminator_iteration(self, real_samples: torch.Tensor,
+                                 labels: torch.Tensor, noise: torch.Tensor):
+        """
+        Perform one iteration of the discriminator
+        :param real_samples: Real samples tensor
+        :param labels: Respective labels of real samples
+        :param noise: Random values acting as noise for the generator
+        :return: None
+        """
         with torch.no_grad():
             fake_samples = self.generator(noise, labels)
 
@@ -109,6 +123,14 @@ class WGAN:
             self.losses['GP'].append(gradient_penalty.item())
 
     def _generator_iteration(self, noise, labels, labels_one_hot):
+        """
+        Perform the generator iteration
+        :param noise: Random noise
+        :param labels: Labels indicating classes from which the generator should
+        generate samples
+        :param labels_one_hot: One-hot encoded labels
+        :return: None
+        """
         self.generator_optimizer.zero_grad()
 
         fake_samples = self.generator(noise, labels_one_hot)
@@ -132,6 +154,14 @@ class WGAN:
                      bands_count: int,
                      batch_size: int,
                      classes_count: int):
+        """
+        Train model for on epoch
+        :param data_loader: Data loader providing the data
+        :param bands_count: Number of bands in the dataset
+        :param batch_size: Size of the batch
+        :param classes_count: Number of classes in the dataset
+        :return: None
+        """
         labels_one_hot = torch.zeros([batch_size, classes_count]).type(torch.FloatTensor)
         if self.use_cuda:
             labels_one_hot = labels_one_hot.cuda()
@@ -170,12 +200,23 @@ class WGAN:
                     parameter.requires_grad = False
 
     @staticmethod
-    def _generate_noise(batch_size, bands_count):
+    def _generate_noise(batch_size, bands_count) -> torch.Tensor:
+        """
+        Generate random noise for the generator
+        :param batch_size: Size of the batch to generate
+        :param bands_count: Number of bands in the dataset
+        :return: Generated noise
+        """
         noise = torch.FloatTensor(np.random.normal(0.5, 0.1,
                                                    (batch_size, bands_count)))
         return Variable(noise)
 
     def _print_metrics(self, epoch: int):
+        """
+        Print current metrics
+        :param epoch: Current epoch
+        :return: None
+        """
         generator_loss = np.average(self.losses['G'])
         discriminator_loss = np.average(self.losses['D'])
         real = np.average(self.losses['Real'])
@@ -190,7 +231,14 @@ class WGAN:
               "[GP: {}] [GC: {}]".format(epoch, discriminator_loss,
                                          generator_loss, real, fake, gp, gc))
 
-    def _save_generator(self, path, epoch=None, name=None):
+    def _save_generator(self, path, epoch: int=None, name: str=None):
+        """
+        Save the currect state of the generator
+        :param path: Path under which the generator will be saved
+        :param epoch: Current epoch
+        :param name: Custom name of the generator file
+        :return: None
+        """
         if name is not None:
             final_path = os.path.join(path, name)
         elif epoch is not None:
@@ -200,10 +248,18 @@ class WGAN:
         torch.save(self.generator.state_dict(), final_path)
 
     def _zero_losses(self):
+        """
+        Reset stored losses
+        :return: None
+        """
         for loss in self.losses:
             self.losses[loss].clear()
 
     def _early_stopping(self) -> bool:
+        """
+        Check whether the stopping criterion has been met and update the state
+        :return: True if the stop criterion has been met, False if not
+        """
         if abs(np.average(self.losses['D'])) < self.best_discriminator_loss:
             self.best_discriminator_loss = abs(np.average(self.losses['D']))
             self.epochs_without_improvement = 0

@@ -9,7 +9,7 @@ import numpy as np
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
 
-from python_research.augmentation.augmenter import Augmenter
+from python_research.augmentation.offlineaugmenter import OfflineAugmenter
 from python_research.augmentation.online_augmenter import OnlineAugmenter
 from python_research.augmentation.transformations import PCATransformation
 from python_research.experiments.utils.keras_custom_callbacks import TimeHistory
@@ -93,7 +93,8 @@ def main(args):
                                        high=1.1,
                                        n_components=train_data.shape[-1])
     transformation.fit(train_data.get_data())
-    augmenter = Augmenter(transformation, sampling_mode="max_twice")
+
+    augmenter = OfflineAugmenter(transformation, sampling_mode="max_twice")
     augmented_data, augmented_labels = augmenter.augment(train_data,
                                                          transformations=1)
     train_data.vstack(augmented_data)

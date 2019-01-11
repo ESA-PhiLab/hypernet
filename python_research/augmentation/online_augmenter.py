@@ -1,5 +1,6 @@
 import numpy as np
 from collections import OrderedDict
+from typing import List, Dict
 
 from python_research.experiments.utils.datasets.hyperspectral_dataset import Dataset
 from python_research.augmentation.transformations import ITransformation
@@ -54,13 +55,25 @@ class OnlineAugmenter:
         return accuracy, class_accuracies
 
     @staticmethod
-    def _vote(predictions: np.ndarray):
+    def _vote(predictions: np.ndarray) -> int:
+        """
+        Perform the majority voting
+        :param predictions: Predictions returned by the model
+        :return: Final label
+        """
         unique, counts = np.unique(predictions, return_counts=True)
         max_index = np.argmax(counts)
         return unique[max_index]
 
     @staticmethod
-    def _calculate_class_accuracies(class_counts: dict):
+    def _calculate_class_accuracies(class_counts: Dict[int, [int, int]]) \
+            -> List:
+        """
+        Calculate accuracy for each class separately
+        :param class_counts: Dictionary with the number of correctly predicted
+        samples as well as with total number of samples for each class.
+        :return: List of accuracies for each class
+        """
         accuracies = []
         for key in class_counts.keys():
             accuracies.append(float(class_counts[key][CORRECT_COUNT]) /
@@ -68,7 +81,14 @@ class OnlineAugmenter:
         return np.array(accuracies)
 
     @staticmethod
-    def _calculate_overall_accuracy(class_counts: dict):
+    def _calculate_overall_accuracy(class_counts: Dict[int, [int, int]]) \
+            -> int:
+        """
+        Calculate overall accuracy (percentage of correctly predicted samples)
+        :param class_counts: Dictionary with the number of correctly predicted
+        samples as well as with total number of samples for each class.
+        :return: Percentage of correctly predicted samples
+        """
         total_count = 0
         correct_count = 0
         for key in class_counts.keys():
