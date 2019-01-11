@@ -13,9 +13,9 @@ from python_research.experiments.utils.datasets.subset import BalancedSubset, Im
 from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
 from python_research.experiments.multiple_feature_learning.builders.keras_builders import build_1d_model, build_3d_model, build_settings_for_dataset
 from python_research.experiments.utils.io import save_to_csv
-from python_research.augmentation.online_augmenter import OnlineAugmenter
 from python_research.augmentation.transformations import PCATransformation
-from python_research.augmentation.augmenter import Augmenter
+from python_research.augmentation.offlineaugmenter import OfflineAugmenter
+
 from utils import calculate_class_accuracy
 
 
@@ -111,7 +111,7 @@ def main(args):
                                        high=1.1,
                                        n_components=train_data.shape[-1])
     transformation.fit(train_data.get_data())
-    augmenter = Augmenter(transformation, sampling_mode=args.sampling_mode)
+    augmenter = OfflineAugmenter(transformation, sampling_mode=args.sampling_mode)
     augmented_data, augmented_labels = augmenter.augment(train_data,
                                                          transformations=1)
     train_data.vstack(augmented_data)
