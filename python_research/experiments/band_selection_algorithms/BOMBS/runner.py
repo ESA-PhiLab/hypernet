@@ -26,7 +26,7 @@ def arguments():
 
 def run(args):
     """
-    Main loop of the band selection algorithm.
+    Main loop of the BOMBS band selection algorithm.
     """
     model = AntibodyPopulation(args=args)
     model.initialization()

@@ -77,6 +77,7 @@ class AntibodyPopulation(object):
     def _copy(self, bands_ids: list, deep=None) -> Antibody:
         """
         Copy selected bands from given antibody and create its clone.
+
         :param bands_ids: Passed list of selected bands.
         :param deep: Flag determining the kind of copy procedure.
         :return: Cloned antibody.
@@ -165,7 +166,7 @@ class AntibodyPopulation(object):
 
     def end_generation(self):
         """
-        Clear memory.
+        Clear memory after generation is over.
         """
         self.A.clear(), self.D.clear(), self.TD.clear(), self.C.clear(), self.C_prime.clear()
         map(lambda obj: obj.clear_individual, self.P)
@@ -180,6 +181,9 @@ class AntibodyPopulation(object):
         return delta_tz
 
     def serialize_individuals(self):
+        """
+        Save results of the best individual from the population.
+        """
         max_i = np.argmax([i.dominant_fitness for i in self.D]).astype(int)
         np.savetxt(os.path.join(self.args.dest_path, 'best_individual_bands'),
                    np.sort(np.unique(self.D[max_i].bands_ids)), fmt='%d')
@@ -221,6 +225,7 @@ class AntibodyPopulation(object):
     def stop_condition(self, current_generation: int) -> bool:
         """
         Step 3: Termination check.
+
         :param current_generation: Index of current generation.
         """
         if current_generation >= self.args.Gmax:
@@ -232,8 +237,9 @@ class AntibodyPopulation(object):
     def randomize_bands(self, args) -> list:
         """
         Generate bands for each antibody.
-        :param args:
-        :return:
+
+        :param args: Parsed arguments.
+        :return: List of randomized hyperspectral data blocks.
         """
         population = []
         data = load_data(self.args.data_path, self.args.ref_map_path)

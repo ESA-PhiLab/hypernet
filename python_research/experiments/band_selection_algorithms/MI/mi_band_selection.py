@@ -65,6 +65,11 @@ class MI(object):
         self.S = np.sort(self.S)
 
     def calculate_mi(self, draw_plot: bool = False):
+        """
+        Calculate mutual information between the reference image and each band in the hyperspectral data block.
+
+        :param draw_plot: True if drawing plot of mutual information is intended.
+        """
         h_b = -np.sum(np.dot(self.ref_map_hist, np.ma.log2(self.ref_map_hist)))
         for i in range(len(self.bands_histograms)):
             h_a = -np.sum(np.dot(self.bands_histograms[i], np.ma.log2(self.bands_histograms[i])))

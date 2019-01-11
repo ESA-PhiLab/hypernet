@@ -1,5 +1,3 @@
-import numpy as np
-
 from python_research.experiments.band_selection_algorithms.BOMBS.utils import prep_bands
 from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
 
@@ -7,7 +5,7 @@ from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
 class Antibody(object):
     def __init__(self, selected_bands: np.ndarray, bands_ids: list, data_path: str, ref_map_path: str):
         """
-        Initialize all fields of the class.
+        Initialize all instance variables of the Antibody.
 
         :param selected_bands: Numpy array containing selected bands.
         :param bands_ids: List of selected bands.
@@ -60,6 +58,9 @@ class Antibody(object):
         self.L = len(np.unique(self.bands_ids).tolist())
 
     def calculate_fitness(self):
+        """
+        Calculate fitness of the antibody.
+        """
         self.entropy_fitness = self.calculate_entropy()
         self.distance_fitness = self.calculate_distance()
         self.dominant_fitness = self.dominant_fitness_check()
@@ -78,7 +79,7 @@ class Antibody(object):
 
     def calculate_distance(self):
         """
-        Cross Entropy is adopted as the distance criterion between selected bands in the antigen.
+        Cross Entropy is adopted as the distance criterion between selected bands in the antibody.
         """
         distances = 0
         for i in range(len(self.grey_scale_hist)):

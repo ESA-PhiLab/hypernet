@@ -3,12 +3,15 @@ from random import shuffle
 from python_research.experiments.sota_models.utils.sets_prep import generate_samples, prep_dataset, unravel_dataset
 
 
-def prep_sets_by_sizes(args):
+def prep_sets_by_sizes(args) -> tuple:
     """
-    Create sets grouped by the number of samples per class:
-    args.train_size - Number of samples for training for each class.
-    args.val_size - Number of samples for validation for each class.
-    Testing set will contain lowest_class_population - (args.train_size + args.val_size) per each class.
+    Create sets grouped by the number of samples per class.
+
+    args.train_size is the number of samples designed for training per each class.
+    args.val_size is the number of samples designed for validation for each class.
+    Testing set will contain lowest_class_population - (args.train_size + args.val_size) samples per each class.
+
+    :param args: Parsed arguments containing sizes of data sets.
     """
     print('Balanced data preparation:')
     samples = generate_samples(args=args)

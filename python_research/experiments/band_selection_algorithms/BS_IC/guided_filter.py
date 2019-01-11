@@ -2,13 +2,20 @@ from copy import copy
 from itertools import product
 from math import ceil
 
-import numpy as np
-
 from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
 
 
 def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
                            neighbourhood_size: int, epsilon: float = 1e-15):
+    """
+    Perform edge preserving filtering on the newly created reference map.
+
+    :param ref_map: Reference map.
+    :param guided_image: Guided image from hyperspectral data.
+    :param neighbourhood_size: Size of the convolving window.
+    :param epsilon: Regularizer.
+    :return:
+    """
     padding_size = neighbourhood_size % ceil(float(neighbourhood_size) / 2.0)
     padded_cube = pad_zeros_3d(padding_size, ref_map)
     padded_guided_map = pad_zeros_2d(guided_image, padding_size)
@@ -64,6 +71,13 @@ def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
 
 
 def pad_zeros_2d(guided_image, padding_size):
+    """
+    Padd zeros around 2D guided image.
+
+    :param guided_image: Guided image.
+    :param padding_size: Size of padding.
+    :return: Padded image.
+    """
     x = copy(guided_image)
     v_padding = np.zeros((padding_size, x.shape[1]))
     x = np.vstack((v_padding, x))
@@ -75,6 +89,13 @@ def pad_zeros_2d(guided_image, padding_size):
 
 
 def pad_zeros_3d(padding_size, ref_map):
+    """
+    Padd zeros around 3D reference map.
+
+    :param padding_size: size of padding.
+    :param ref_map: Reference map.
+    :return: Padded reference map.
+    """
     x = copy(ref_map)
     v_padding = np.zeros((padding_size * 2, x.shape[1], x.shape[-1]))
     x = np.vstack((v_padding, x))

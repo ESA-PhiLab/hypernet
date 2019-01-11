@@ -5,6 +5,7 @@ def build_block1(in_channels, out_channels, dtype):
     """
     Applies a spatial convolution with receptive filed of (1 x 1) over an input signal.
     Each filter extends throughout the entire spectral axis of the input volume.
+
     :param in_channels: Number of input channels.
     :param out_channels: Number of feature maps.
     :param dtype: Data type used by the model.
@@ -40,6 +41,7 @@ def build_block2(dtype, neighbourhood_size):
 def build_block3(entries, num_of_classes, dtype):
     """
     Produce logits for each class respectively.
+
     :param entries: Number of entries into the dense layer.
     :param num_of_classes: Number of output neural activations.
     :param dtype: Data type used by the model.
