@@ -192,7 +192,8 @@ def arguments() -> Arguments:
     parser.add_argument('--channels_step', dest='channels_step', nargs='+', help='List of step value between min and max channels.', required=True)
     parser.add_argument('--input_depth', dest='input_depth', help='Input depth dimensionality.', type=int, required=True)
     parser.add_argument('--swarm_size', dest='swarm_size', help='Swarm size.', type=int, required=True)
-    return parser.parse_args()
+    args = vars(parser.parse_args())
+    return Arguments(**args)
 
 
 def main():
