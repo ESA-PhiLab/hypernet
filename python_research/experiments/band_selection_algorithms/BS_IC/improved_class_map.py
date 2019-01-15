@@ -131,7 +131,7 @@ def generate_pseudo_ground_truth_map(args):
     updated_ref_map = construct_new_ref_map(np.concatenate((train_labels, prediction)),
                                             train_samples + test_samples, ref_map.shape)
     one_hot_ref_map = one_hot_map(updated_ref_map)
-    pseudo_ground_truth_map = edge_preserving_filter(ref_map=one_hot_ref_map, neighbourhood_size=args.r,
+    pseudo_ground_truth_map = edge_preserving_filter(ref_map=one_hot_ref_map, neighborhood_size=args.r,
                                                      guided_image=guided_image)
     np.save(os.path.join(args.dest_path, 'pseudo_ground_truth_map'),
             pseudo_ground_truth_map)

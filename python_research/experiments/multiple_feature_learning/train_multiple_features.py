@@ -39,15 +39,15 @@ def build_training_set(
     diagonal_path: str,
     moment_path: str,
     nb_samples: int,
-    neighbourhood: List[int]
+    neighborhood: List[int]
 ) -> TrainingSet:
-    settings = build_settings_for_dataset(neighbourhood)
+    settings = build_settings_for_dataset(neighborhood)
 
     original_data = Dataset(
         original_path,
         gt_path,
         nb_samples,
-        settings.input_neighbourhood
+        settings.input_neighborhood
     )
 
     train_test_indices = TrainTestIndices(
@@ -65,7 +65,7 @@ def build_training_set(
             area_path,
             gt_path,
             nb_samples,
-            settings.input_neighbourhood,
+            settings.input_neighborhood,
             train_test_indices=train_test_indices
         )
 
@@ -79,7 +79,7 @@ def build_training_set(
             stddev_path,
             gt_path,
             nb_samples,
-            settings.input_neighbourhood,
+            settings.input_neighborhood,
             train_test_indices=train_test_indices
         )
 
@@ -93,7 +93,7 @@ def build_training_set(
             diagonal_path,
             gt_path,
             nb_samples,
-            settings.input_neighbourhood,
+            settings.input_neighborhood,
             train_test_indices=train_test_indices
         )
 
@@ -107,7 +107,7 @@ def build_training_set(
             moment_path,
             gt_path,
             nb_samples,
-            settings.input_neighbourhood,
+            settings.input_neighborhood,
             train_test_indices=train_test_indices
         )
 
@@ -147,7 +147,7 @@ def main():
         args.diagonal_path,
         args.moment_path,
         args.nb_samples,
-        args.neighbourhood
+        args.neighborhood
     )
 
     early = EarlyStopping(patience=args.patience)

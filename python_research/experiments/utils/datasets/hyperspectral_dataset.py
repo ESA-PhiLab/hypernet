@@ -145,7 +145,7 @@ class HyperspectralDataset(Dataset):
     """
     def __init__(self, dataset: [np.ndarray, PathLike],
                  ground_truth: [np.ndarray, PathLike],
-                 neighbourhood_size: int = 1,
+                 neighborhood_size: int = 1,
                  background_label: int = 0):
         if type(dataset) is np.ndarray and type(ground_truth) is np.ndarray:
             raw_data = dataset
@@ -159,7 +159,7 @@ class HyperspectralDataset(Dataset):
                             "not {}".format(type(dataset)))
         data, labels = self.prepare_samples(raw_data,
                                             ground_truth,
-                                            neighbourhood_size,
+                                            neighborhood_size,
                                             background_label)
         super(HyperspectralDataset, self).__init__(data, labels)
 
@@ -190,11 +190,11 @@ class HyperspectralDataset(Dataset):
 
     def _prepare_3d(self, raw_data: np.ndarray,
                     ground_truth: np.ndarray,
-                    neighbourhood_size: int,
+                    neighborhood_size: int,
                     background_label: int):
         col_indexes = [x for x in range(0, raw_data.shape[WIDTH])]
         row_indexes = [y for y in range(0, raw_data.shape[HEIGHT])]
-        padding_size = neighbourhood_size % ceil(float(neighbourhood_size) / 2.)
+        padding_size = neighborhood_size % ceil(float(neighborhood_size) / 2.)
         padded_cube = self._get_padded_cube(raw_data, padding_size)
         samples, labels = list(), list()
         for x, y in product(col_indexes, row_indexes):
@@ -207,12 +207,12 @@ class HyperspectralDataset(Dataset):
 
     def prepare_samples(self, raw_data: np.ndarray,
                         ground_truth: np.ndarray,
-                        neighbourhood_size: int,
+                        neighborhood_size: int,
                         background_label: int):
-        if neighbourhood_size > 1:
+        if neighborhood_size > 1:
             samples, labels = self._prepare_3d(raw_data,
                                                ground_truth,
-                                               neighbourhood_size,
+                                               neighborhood_size,
                                                background_label)
         else:
             samples, labels = self._prepare_1d(raw_data,

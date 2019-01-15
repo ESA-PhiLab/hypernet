@@ -6,17 +6,17 @@ from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
 
 
 def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
-                           neighbourhood_size: int, epsilon: float = 1e-15):
+                           neighborhood_size: int, epsilon: float = 1e-15):
     """
     Perform edge preserving filtering on the newly created reference map.
 
     :param ref_map: Reference map.
     :param guided_image: Guided image from hyperspectral data.
-    :param neighbourhood_size: Size of the convolving window.
+    :param neighborhood_size: Size of the convolving window.
     :param epsilon: Regularizer.
     :return:
     """
-    padding_size = neighbourhood_size % ceil(float(neighbourhood_size) / 2.0)
+    padding_size = neighborhood_size % ceil(float(neighborhood_size) / 2.0)
     padded_cube = pad_zeros_3d(padding_size, ref_map)
     padded_guided_map = pad_zeros_2d(guided_image, padding_size)
     col_indexes, row_indexes = \
@@ -31,7 +31,7 @@ def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
             i_k = copy(padded_guided_map[row:row + padding_size * 2 + 1,
                        col:col + padding_size * 2 + 1])
             sum_ = np.divide(np.sum(np.subtract(np.multiply(i_k, p_k), (np.mean(i_k) * np.mean(p_k)))),
-                             neighbourhood_size ** 2)
+                             neighborhood_size ** 2)
             a_k = sum_ / (np.var(i_k) + epsilon)
             b_k = np.mean(p_k) - a_k * np.mean(i_k)
             a_k_map[row, col, i] = a_k
@@ -56,8 +56,8 @@ def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
                 b_k_window = b_k_map[row:row + padding_size * 2 + 1, col:col + padding_size * 2 + 1, i]
                 a_k_sum += np.sum(a_k_window)
                 b_k_sum += np.sum(b_k_window)
-            a_k_sum /= neighbourhood_size ** 2
-            b_k_sum /= neighbourhood_size ** 2
+            a_k_sum /= neighborhood_size ** 2
+            b_k_sum /= neighborhood_size ** 2
             yi[x - padding_size * 2, y - padding_size * 2, i] = a_k_sum * guided_image[
                 x - padding_size * 2, y - padding_size * 2] + b_k_sum
 

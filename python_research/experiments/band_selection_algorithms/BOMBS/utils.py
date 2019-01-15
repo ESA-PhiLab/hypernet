@@ -41,12 +41,12 @@ def calculate_crowding_distances(list_of_antibodies: list) -> np.ndarray:
 
 def calculate_zeta_entropy(antibody_index: int, antibodies_entropy: list, list_of_antibodies: list):
     """
-    Helper method for calculating neighbourhood entropy.
+    Helper method for calculating neighborhood entropy.
 
     :param antibody_index: Index of antibody.
     :param antibodies_entropy: Entropy of each antibody.
     :param list_of_antibodies: All individuals stored in list.
-    :return: Neighbourhood entropy.
+    :return: neighborhood entropy.
     """
     p_sorted_by_entropy = list(np.argsort(a=antibodies_entropy))
     if list_of_antibodies[antibody_index].L < list_of_antibodies[antibody_index].K:
@@ -63,12 +63,12 @@ def calculate_zeta_entropy(antibody_index: int, antibodies_entropy: list, list_o
 
 def calculate_zeta_distance(antibody_index: int, antibodies_distance: list, list_of_antibodies: list):
     """
-    Helper method for calculating neighbourhood distance.
+    Helper method for calculating neighborhood distance.
 
     :param antibody_index: Index of antibody.
     :param antibodies_distance: Distance of each antibody.
     :param list_of_antibodies: All individuals stored in list.
-    :return: Neighbourhood distance.
+    :return: neighborhood distance.
     """
     p_sorted_by_distance = list(np.argsort(a=antibodies_distance))
     if list_of_antibodies[antibody_index].L < list_of_antibodies[antibody_index].K:

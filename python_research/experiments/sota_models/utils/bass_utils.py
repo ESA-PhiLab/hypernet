@@ -17,17 +17,17 @@ def build_block1(in_channels, out_channels, dtype):
     ).type(dtype)
 
 
-def build_block2(dtype, neighbourhood_size):
+def build_block2(dtype, neighborhood_size):
     """
     Architectural design of the second block of configuration 4.
     Applies a spectral - wise 1D convolution over an input signal.
 
     :param dtype: Data type used by the model.
-    :param neighbourhood_size: Spatial size of the sample.
+    :param neighborhood_size: Spatial size of the sample.
     :return: Sequential container which stores all modules.
     """
     return torch.nn.Sequential(
-        torch.nn.Conv1d(in_channels=neighbourhood_size ** 2, out_channels=20, kernel_size=3),
+        torch.nn.Conv1d(in_channels=neighborhood_size ** 2, out_channels=20, kernel_size=3),
         torch.nn.ReLU(),
         torch.nn.Conv1d(in_channels=20, out_channels=20, kernel_size=3),
         torch.nn.ReLU(),

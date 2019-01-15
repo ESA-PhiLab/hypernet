@@ -7,7 +7,7 @@ from python_research.experiments.sota_models.utils.bass_utils import build_block
 
 class Bass(BaseModule):
     def __init__(self, classes, nb, in_channels_in_block1, out_channels_in_block1,
-                 neighbourhood_size, batch_size, dtype, lr=0.0005):
+                 neighborhood_size, batch_size, dtype, lr=0.0005):
         """
         Bass model of topology of Configuration 4.
         Cost function: CrossEntropyLoss
@@ -17,7 +17,7 @@ class Bass(BaseModule):
         :param nb: Number of second blocks.
         :param in_channels_in_block1: Number of input channels for first block.
         :param out_channels_in_block1: Number of output channels for first block.
-        :param neighbourhood_size: Spatial size of samples.
+        :param neighborhood_size: Spatial size of samples.
         :param batch_size: Size of the batch.
         :param dtype: Data type used by the model.
         :param lr: Learning rate hyperparameter for the optimizer. The default is 0.0005.
@@ -42,7 +42,7 @@ class Bass(BaseModule):
         self._block3 = build_block3(entries=nb * self._final_band_size, num_of_classes=classes,
                                     dtype=self.dtype[0])
         [self._block2.append(build_block2(dtype=self.dtype[0],
-                                          neighbourhood_size=neighbourhood_size)) for _ in range(nb)]
+                                          neighborhood_size=neighborhood_size)) for _ in range(nb)]
         self._cost_function = torch.nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(params=self.parameters(), lr=lr)
 

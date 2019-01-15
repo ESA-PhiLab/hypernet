@@ -14,7 +14,7 @@ class MI(object):
         Initialize all instance variables.
 
         :param x: Number of bands to select.
-        :param b: The neighbourhood of selected band.
+        :param b: The neighborhood of selected band.
         :param eta: Prevents from redundancy in the selected bands.
         """
         self.ref_map = None

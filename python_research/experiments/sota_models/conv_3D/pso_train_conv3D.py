@@ -22,8 +22,8 @@ class Arguments(NamedTuple):
     epochs: int
     data_path: str
     data_name: str
-    min_neighbourhood_size: int
-    max_neighbourhood_size: int
+    min_neighborhood_size: int
+    max_neighborhood_size: int
     labels_path: str
     batch: int
     patience: int
@@ -57,15 +57,15 @@ class PsoRunner:
         :param position: Position of the particle.
         :return: Particle parameters.
         """
-        swarm_neighbourhood_size, *swarm_channels = position
-        neighbourhood_size = int(swarm_neighbourhood_size)
-        if neighbourhood_size % 2 == 0:
-            neighbourhood_size += 1
+        swarm_neighborhood_size, *swarm_channels = position
+        neighborhood_size = int(swarm_neighborhood_size)
+        if neighborhood_size % 2 == 0:
+            neighborhood_size += 1
         channels = [
             min(int(channel[1]), int(int(channel[0]) + int(channel[2]) * round(channel[3]))) for channel in zip(self.args.min_channels, self.args.max_channels, self.args.channels_step, swarm_channels)
         ]
 
-        return neighbourhood_size, channels
+        return neighborhood_size, channels
 
     def _objective_function(self, particle: Particle):
         """
@@ -73,18 +73,18 @@ class PsoRunner:
         :param particle: Particle data.
         :return: Particle score.
         """
-        neighbourhood_size, channels = self._extract_parameters(particle.position())
-        print('Processing: neighbourhood = {}, channels = {}'.format(neighbourhood_size, channels))
+        neighborhood_size, channels = self._extract_parameters(particle.position())
+        print('Processing: neighborhood = {}, channels = {}'.format(neighborhood_size, channels))
 
-        archive_index = '{},{}'.format(neighbourhood_size, channels)
+        archive_index = '{},{}'.format(neighborhood_size, channels)
         if archive_index in self.archive:
             return self.archive[archive_index]
 
         args = lambda: None
         for field in self.args._fields:
             setattr(args, field, getattr(self.args, field))
-        args.neighbourhood_size = neighbourhood_size
-        args.input_dim = [args.input_depth, neighbourhood_size, neighbourhood_size]
+        args.neighborhood_size = neighborhood_size
+        args.input_dim = [args.input_depth, neighborhood_size, neighborhood_size]
         args.channels = channels
         args.run_idx = 'pso_{}_{}'.format(self.args.run_idx, archive_index)
 
@@ -110,7 +110,7 @@ class PsoRunner:
     def run(self):
         """
         Run the optimizer.
-        :return: (best_neighbourhood, best_channels) tuple.
+        :return: (best_neighborhood, best_channels) tuple.
         """
         min_channels = [0] * len(self.args.min_channels)
         max_channels = [
@@ -122,8 +122,8 @@ class PsoRunner:
                 )
         ]
 
-        lower_bounds = np.array([self.args.min_neighbourhood_size] + min_channels)
-        upper_bounds = np.array([self.args.max_neighbourhood_size] + max_channels)
+        lower_bounds = np.array([self.args.min_neighborhood_size] + min_channels)
+        upper_bounds = np.array([self.args.max_neighborhood_size] + max_channels)
 
         pso = Pso(
             swarm_size=self.args.swarm_size,
@@ -134,10 +134,10 @@ class PsoRunner:
         )
         best_position, best_score = pso.run()
 
-        best_neighbourhood, best_channels = self._extract_parameters(best_position)
+        best_neighborhood, best_channels = self._extract_parameters(best_position)
         print(
-            'Best result: neighbourhood = {}, channels = {} (score = {})'.format(
-                best_neighbourhood,
+            'Best result: neighborhood = {}, channels = {} (score = {})'.format(
+                best_neighborhood,
                 best_channels,
                 best_score
             )
@@ -161,9 +161,9 @@ class PsoRunner:
         )
         os.makedirs(path, exist_ok=True)
 
-        pickle.dump([best_neighbourhood, best_channels], open(os.path.join(path, 'best'), 'wb'))
+        pickle.dump([best_neighborhood, best_channels], open(os.path.join(path, 'best'), 'wb'))
 
-        return (best_neighbourhood, best_channels)
+        return (best_neighborhood, best_channels)
 
 
 def arguments() -> Arguments:
@@ -178,8 +178,8 @@ def arguments() -> Arguments:
     parser.add_argument('--epochs', dest='epochs', help='Number of epochs.', type=int, required=True)
     parser.add_argument('--data_path', dest='data_path', help='Path to the data set.', required=True)
     parser.add_argument('--data_name', dest='data_name', help='Name of the data set.', required=True)
-    parser.add_argument('--min_neighbourhood_size', dest='min_neighbourhood_size', help='Min spatial size of the patch.', type=int, required=True)
-    parser.add_argument('--max_neighbourhood_size', dest='max_neighbourhood_size', help='Max spatial size of the patch.', type=int, required=True)
+    parser.add_argument('--min_neighborhood_size', dest='min_neighborhood_size', help='Min spatial size of the patch.', type=int, required=True)
+    parser.add_argument('--max_neighborhood_size', dest='max_neighborhood_size', help='Max spatial size of the patch.', type=int, required=True)
     parser.add_argument('--labels_path', dest='labels_path', help='Path to labels.', required=True)
     parser.add_argument('--batch', dest='batch', help='Batch size.', type=int, required=True)
     parser.add_argument('--patience', dest='patience', help='Number of epochs without improvement.', required=True)

@@ -29,19 +29,19 @@ def build_multiple_features_model(settings: ModelSettings,
                                   no_of_classes: int,
                                   bands_set):
 
-    input1, conv2d_2_org = build_layers(settings.input_neighbourhood +
+    input1, conv2d_2_org = build_layers(settings.input_neighborhood +
                                         (bands_set[0], ),
                                         settings.first_conv_kernel_size)
-    input2, conv2d_2_area = build_layers(settings.input_neighbourhood +
+    input2, conv2d_2_area = build_layers(settings.input_neighborhood +
                                          (bands_set[1], ),
                                          settings.first_conv_kernel_size)
-    input3, conv2d_2_std = build_layers(settings.input_neighbourhood +
+    input3, conv2d_2_std = build_layers(settings.input_neighborhood +
                                         (bands_set[2], ),
                                         settings.first_conv_kernel_size)
-    input4, conv2d_2_diagonal = build_layers(settings.input_neighbourhood +
+    input4, conv2d_2_diagonal = build_layers(settings.input_neighborhood +
                                              (bands_set[3], ),
                                              settings.first_conv_kernel_size)
-    input5, conv2d_2_moment = build_layers(settings.input_neighbourhood +
+    input5, conv2d_2_moment = build_layers(settings.input_neighborhood +
                                            (bands_set[4], ),
                                            settings.first_conv_kernel_size)
 
@@ -78,7 +78,7 @@ def build_3d_model(settings: ModelSettings,
         Conv2D(filters=200,
                kernel_size=settings.first_conv_kernel_size,
                strides=(1, 1),
-               input_shape=settings.input_neighbourhood + (no_of_bands, ),
+               input_shape=settings.input_neighborhood + (no_of_bands, ),
                data_format='channels_last',
                padding='valid'))
     model.add(MaxPooling2D(pool_size=(2, 2),

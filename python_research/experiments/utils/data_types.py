@@ -8,5 +8,5 @@ class TrainTestIndices(NamedTuple):
 
 
 class ModelSettings(NamedTuple):
-    input_neighbourhood: Tuple[int, int]
+    input_neighborhood: Tuple[int, int]
     first_conv_kernel_size: Tuple[int, int]

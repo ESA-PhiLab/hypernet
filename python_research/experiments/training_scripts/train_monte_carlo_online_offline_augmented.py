@@ -47,8 +47,8 @@ def parse_args():
                              "of samples in the extracted dataset")
     parser.add_argument("--train_samples", type=int, default=250,
                         help="Number of train samples per class to use")
-    parser.add_argument("--pixel_neighbourhood", type=int, default=1,
-                        help="Neighbourhood of an extracted pixel when "
+    parser.add_argument("--pixel_neighborhood", type=int, default=1,
+                        help="neighborhood of an extracted pixel when "
                              "preparing the data for training and "
                              "classification. This value should define height "
                              "and width simultaneously.  If equals 1, "
@@ -79,7 +79,7 @@ def main(args):
     os.makedirs(os.path.join(args.artifacts_path), exist_ok=True)
     # Init data
     test_data = HyperspectralDataset(args.dataset_path, args.gt_path,
-                                     neighbourhood_size=args.pixel_neighbourhood)
+                                     neighborhood_size=args.pixel_neighborhood)
     test_data.normalize_labels()
     if args.balanced == 1:
         train_data = BalancedSubset(test_data, args.train_samples)
@@ -118,7 +118,7 @@ def main(args):
     train_data.vstack(augmented_data)
     train_data.hstack(augmented_labels)
 
-    if args.pixel_neighbourhood == 1:
+    if args.pixel_neighborhood == 1:
         test_data.expand_dims(axis=-1)
         train_data.expand_dims(axis=-1)
         val_data.expand_dims(axis=-1)
@@ -127,12 +127,12 @@ def main(args):
         args.classes_count = len(np.unique(test_data.get_labels()))
 
     # Build model
-    if args.pixel_neighbourhood == 1:
+    if args.pixel_neighborhood == 1:
         model = build_1d_model((test_data.shape[1:]), args.kernels,
                                args.kernel_size, args.classes_count)
     else:
-        settings = build_settings_for_dataset((args.pixel_neighbourhood,
-                                               args.pixel_neighbourhood))
+        settings = build_settings_for_dataset((args.pixel_neighborhood,
+                                               args.pixel_neighborhood))
         model = build_3d_model(settings, args.classes_count, test_data.shape[-1])
 
     # Train model

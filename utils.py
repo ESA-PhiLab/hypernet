@@ -91,7 +91,7 @@ def create_image(normalized_image: np.ndarray, label: str=None):
         plt.imshow(normalized_image, interpolation='none')
 
 
-def show_samples_location(dataset, neighbourhood, samples_to_show_count):
+def show_samples_location(dataset, neighborhood, samples_to_show_count):
     class_to_display = randint(0, len(np.unique(dataset.y)))
     train_indices = dataset.train_indices[class_to_display][0:samples_to_show_count]
     test_indices = dataset.test_indices[class_to_display][0:samples_to_show_count]
@@ -99,12 +99,12 @@ def show_samples_location(dataset, neighbourhood, samples_to_show_count):
     fig, ax = plt.subplots(1)
     ax.imshow(im)
     for train in train_indices:
-        x = [train.y - int(neighbourhood[0]/2), train.x - int(neighbourhood[1]/2)]
-        ax.add_patch(Rectangle(x, neighbourhood[0], neighbourhood[1], color='r', fill=False))
+        x = [train.y - int(neighborhood[0]/2), train.x - int(neighborhood[1]/2)]
+        ax.add_patch(Rectangle(x, neighborhood[0], neighborhood[1], color='r', fill=False))
 
     for test in test_indices:
-        x = [test.y - int(neighbourhood[0]/2), test.x - int(neighbourhood[1]/2)]
-        ax.add_patch(Rectangle(x, neighbourhood[0], neighbourhood[1], color='y', fill=False))
+        x = [test.y - int(neighborhood[0]/2), test.x - int(neighborhood[1]/2)]
+        ax.add_patch(Rectangle(x, neighborhood[0], neighborhood[1], color='y', fill=False))
     plt.show()
 
 
@@ -124,7 +124,7 @@ def calculate_class_accuracy(y_pred: np.ndarray,
     return np.diagonal(matrix)
 
 
-def load_patches(directory: os.PathLike, neighbourhood_size: int=1):
+def load_patches(directory: os.PathLike, neighborhood_size: int=1):
     patches_paths = [x for x in os.listdir(directory)
                      if 'gt' not in x and 'patch' in x]
     gt_paths = [x for x in os.listdir(directory) if 'gt' in x and 'patch' in x]
@@ -135,18 +135,18 @@ def load_patches(directory: os.PathLike, neighbourhood_size: int=1):
     for patch_path, gt_path in zip(patches_paths, gt_paths):
         data.append(HyperspectralDataset(os.path.join(directory, patch_path),
                                          os.path.join(directory, gt_path),
-                                         neighbourhood_size))
+                                         neighborhood_size))
     test_data = HyperspectralDataset(os.path.join(directory, test_paths[0]),
                                      os.path.join(directory, test_paths[1]),
-                                     neighbourhood_size)
+                                     neighborhood_size)
     return ConcatDataset(data), test_data
 
 
-def combine_patches(patches, patches_gt, test, test_gt, neighbourhood_size:int=1):
+def combine_patches(patches, patches_gt, test, test_gt, neighborhood_size:int=1):
     data = []
     for patch, gt in zip(patches, patches_gt):
-        data.append(HyperspectralDataset(patch, gt, neighbourhood_size))
-    test_set = HyperspectralDataset(test, test_gt, neighbourhood_size)
+        data.append(HyperspectralDataset(patch, gt, neighborhood_size))
+    test_set = HyperspectralDataset(test, test_gt, neighborhood_size)
     return ConcatDataset(data), test_set
 
 

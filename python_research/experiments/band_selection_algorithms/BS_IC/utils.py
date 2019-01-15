@@ -14,7 +14,7 @@ def arg_parser():
     parser.add_argument('--data_path', dest='data_path', type=str)
     parser.add_argument('--ref_map_path', dest='ref_map_path', type=str)
     parser.add_argument('--dest_path', dest='dest_path', type=str)
-    parser.add_argument('--neighbourhood_size', dest='r', type=int, default=5)
+    parser.add_argument('--neighborhood_size', dest='r', type=int, default=5)
     parser.add_argument('--training_patch', dest='training_patch', type=float, default=0.1)
     parser.add_argument('--bands_num', dest='bands_num', type=int)
     return parser.parse_args()

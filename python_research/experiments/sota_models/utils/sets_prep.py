@@ -35,7 +35,7 @@ def generate_samples(args) -> List:
     :return: List of samples
     """
     samples = HyperspectralDataset(dataset=args.data_path, ground_truth=args.labels_path,
-                                   neighbourhood_size=args.neighbourhood_size)
+                                   neighborhood_size=args.neighborhood_size)
     samples.normalize_min_max()
     samples.normalize_labels()
     data = samples.get_data()

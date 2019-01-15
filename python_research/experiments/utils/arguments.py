@@ -64,9 +64,9 @@ def parse_multiple_features():
     parser.add_argument(
         '-n',
         action='append',
-        dest="neighbourhood",
+        dest="neighborhood",
         type=int,
-        help="Neighbourhood size of the pixel"
+        help="neighborhood size of the pixel"
     )
     parser.add_argument(
         '-w',

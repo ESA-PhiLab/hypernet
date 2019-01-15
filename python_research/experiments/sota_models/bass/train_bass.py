@@ -20,7 +20,7 @@ def arguments():
     parser.add_argument('--epochs', dest='epochs', help='Number of epochs.', type=int)
     parser.add_argument('--data_path', dest='data_path', help='Path to the data set.')
     parser.add_argument('--data_name', dest='data_name', help='Name of the data set.')
-    parser.add_argument('--neighbourhood_size', dest='neighbourhood_size',
+    parser.add_argument('--neighborhood_size', dest='neighborhood_size',
                         help='Spatial size of the patch. The default is 3.', type=int, default=3)
     parser.add_argument('--batch', dest='batch', help='Batch size.', type=int)
     parser.add_argument('--train_size', dest='train_size', help='Train size.', type=int)
@@ -45,7 +45,7 @@ def main(args):
     """
     model = Bass(classes=args.classes, in_channels_in_block1=args.in_channels,
                  out_channels_in_block1=args.out_channels,
-                 nb=args.nb, batch_size=args.batch, dtype=args.dtype, neighbourhood_size=args.neighbourhood_size)
+                 nb=args.nb, batch_size=args.batch, dtype=args.dtype, neighborhood_size=args.neighborhood_size)
     if torch.cuda.is_available():
         model = model.cuda()
     run_model(args=args, model=model, data_prep_function=prep_sets_by_sizes)

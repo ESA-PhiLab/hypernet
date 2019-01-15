@@ -33,24 +33,24 @@ class MultipleFeaturesPso:
         max_batch_size,
         min_nb_samples,
         max_nb_samples,
-        min_neighbourhood,
-        max_neighbourhood
+        min_neighborhood,
+        max_neighborhood
     ):
         if min_nb_samples < 10:
             raise ValueError('min_nb_samples must greater or equal to 10')
         if max_nb_samples < 10:
             raise ValueError('max_nb_samples must greater or equal to 10')
-        if min_neighbourhood <= 0:
-            raise ValueError('min_neighbourhood must be positive')
-        if max_neighbourhood <= 0:
-            raise ValueError('max_neighbourhood must be positive')
-        if min_neighbourhood % 2 == 0:
-            raise ValueError('min_neighbourhood must be odd')
-        if max_neighbourhood % 2 == 0:
-            raise ValueError('max_neighbourhood must be odd')
+        if min_neighborhood <= 0:
+            raise ValueError('min_neighborhood must be positive')
+        if max_neighborhood <= 0:
+            raise ValueError('max_neighborhood must be positive')
+        if min_neighborhood % 2 == 0:
+            raise ValueError('min_neighborhood must be odd')
+        if max_neighborhood % 2 == 0:
+            raise ValueError('max_neighborhood must be odd')
 
-        lower_bounds = np.array([min_batch_size, min_nb_samples, min_neighbourhood])
-        upper_bounds = np.array([max_batch_size, max_nb_samples, max_neighbourhood])
+        lower_bounds = np.array([min_batch_size, min_nb_samples, min_neighborhood])
+        upper_bounds = np.array([max_batch_size, max_nb_samples, max_neighborhood])
 
         pso = Pso(
             swarm_size=swarm_size,
@@ -61,28 +61,28 @@ class MultipleFeaturesPso:
         )
         best_position, best_score = pso.run()
 
-        batch_size, nb_samples, neighbourhood = self._extract_parameters(best_position)
+        batch_size, nb_samples, neighborhood = self._extract_parameters(best_position)
         print(
-            'Best result: batch size = {}, samples = {}, neighbourhood = {} (score = {})'.format(
+            'Best result: batch size = {}, samples = {}, neighborhood = {} (score = {})'.format(
                 batch_size,
                 nb_samples,
-                neighbourhood,
+                neighborhood,
                 best_score
             )
         )
 
     def _objective_function(self, particle: Particle):
-        batch_size, nb_samples, neighbourhood = self._extract_parameters(particle.position())
+        batch_size, nb_samples, neighborhood = self._extract_parameters(particle.position())
 
         print(
-            'Processing: batch size = {}, samples = {}, neighbourhood = {}'.format(
+            'Processing: batch size = {}, samples = {}, neighborhood = {}'.format(
                 batch_size,
                 nb_samples,
-                neighbourhood
+                neighborhood
             )
         )
 
-        archive_index = '{}_{}_{}'.format(batch_size, nb_samples, neighbourhood)
+        archive_index = '{}_{}_{}'.format(batch_size, nb_samples, neighborhood)
         if archive_index in self.archive:
             return 1 - self.archive[archive_index]['val_acc'][-1]
 
@@ -94,7 +94,7 @@ class MultipleFeaturesPso:
             self.diagonal_path,
             self.moment_path,
             nb_samples,
-            (neighbourhood, neighbourhood)
+            (neighborhood, neighborhood)
         )
 
         early = EarlyStopping(patience=self.patience)
@@ -124,13 +124,13 @@ class MultipleFeaturesPso:
         return score
 
     def _extract_parameters(self, position):
-        batch_size, nb_samples, neighbourhood = position
+        batch_size, nb_samples, neighborhood = position
         batch_size = int(batch_size)
         nb_samples = int(nb_samples)
-        neighbourhood = int(neighbourhood)
-        if neighbourhood % 2 == 0:
-            neighbourhood += 1
-        return batch_size, nb_samples, neighbourhood
+        neighborhood = int(neighborhood)
+        if neighborhood % 2 == 0:
+            neighborhood += 1
+        return batch_size, nb_samples, neighborhood
 
 
 if __name__ == '__main__':
@@ -217,16 +217,16 @@ if __name__ == '__main__':
         help='Maximal number of training samples used'
     )
     parser.add_argument(
-        'minNeighbourhood',
+        'minneighborhood',
         action='store',
         type=int,
-        help='Minimal neighbourhood size of the pixel'
+        help='Minimal neighborhood size of the pixel'
     )
     parser.add_argument(
-        'maxNeighbourhood',
+        'maxneighborhood',
         action='store',
         type=int,
-        help='Maximal neighbourhood size of the pixel'
+        help='Maximal neighborhood size of the pixel'
     )
 
     args = parser.parse_args()
@@ -247,6 +247,6 @@ if __name__ == '__main__':
         args.maxBatchSize,
         args.minSamples,
         args.maxSamples,
-        args.minNeighbourhood,
-        args.maxNeighbourhood
+        args.minneighborhood,
+        args.maxneighborhood
     )
