@@ -1,5 +1,3 @@
-import argparse
-
 import numpy as np
 from scipy.io import loadmat
 
@@ -8,22 +6,6 @@ ROW_AXIS = 0
 COLUMNS_AXIS = 1
 SPECTRAL_AXIS = -1
 CLASS_LABEL = 1
-
-
-def arg_parser() -> argparse.Namespace:
-    """
-    Parse arguments for band selection algorithm.
-
-    :return: Parsed arguments.
-    """
-    parser = argparse.ArgumentParser(description='Arguments for band selection based on improved classification map.')
-    parser.add_argument('--data_path', dest='data_path', type=str)
-    parser.add_argument('--ref_map_path', dest='ref_map_path', type=str)
-    parser.add_argument('--dest_path', dest='dest_path', type=str)
-    parser.add_argument('--neighborhood_size', dest='r', type=int, default=5)
-    parser.add_argument('--training_patch', dest='training_patch', type=float)
-    parser.add_argument('--bands_num', dest='bands_num', type=int)
-    return parser.parse_args()
 
 
 def load_data(data_path, ref_map_path, get_ref_map=True):
