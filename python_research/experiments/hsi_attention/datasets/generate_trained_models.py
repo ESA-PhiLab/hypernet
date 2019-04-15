@@ -1,4 +1,4 @@
-from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
+from python_research.experiments.band_selection_algorithms.utils import *
 
 
 def create_sample_label_pairs(samples_by_class):
@@ -9,18 +9,6 @@ def create_sample_label_pairs(samples_by_class):
     np.random.shuffle(all_sample_label_pairs)
     samples, labels = zip(*all_sample_label_pairs)
     return np.array(samples), np.array(labels)
-
-
-def create_class_label_pairs(samples_by_class):
-    all_pairs = []
-    for idx, class_ in enumerate(samples_by_class):
-        small_pairs = []
-        for sample in class_:
-            labels = np.zeros((1, len(samples_by_class)))
-            labels[0][idx] = 1
-            small_pairs.append((sample, labels.reshape((1, len(samples_by_class)))))
-        all_pairs.append(small_pairs)
-    return all_pairs
 
 
 def produce_splits(X, Y, validation_size, test_size):
@@ -60,13 +48,13 @@ def produce_splits(X, Y, validation_size, test_size):
            create_sample_label_pairs(test_set)
 
 
-def get_loader_function(data_path, ref_map_path):
+def get_loader_function(data_path, ref_map_path) -> tuple:
     """
     Load data method.
 
     :param data_path: Path to data.
     :param ref_map_path: Path to labels.
-    :return: Prepared data.
+    :return: Prepared data as a tuple.
     """
     data = None
     ref_map = None
@@ -97,18 +85,10 @@ def get_loader_function(data_path, ref_map_path):
     data = (data - min_) / (max_ - min_)
     non_zeros = np.nonzero(ref_map)
     prepared_data = []
-    for i in range(data.shape[CONST_SPECTRAL_AXIS]):
+    for i in range(data.shape[SPECTRAL_AXIS]):
         band = data[..., i][non_zeros]
         prepared_data.append(band)
     ref_map = ref_map[non_zeros]
     ref_map -= 1
     prepared_data = np.asarray(prepared_data).T
     return prepared_data, ref_map
-
-
-def split_by_batchsize(dataset, batch_size):
-    for i in range(0, len(dataset), batch_size):
-        if i + batch_size > len(dataset):
-            yield dataset[i:]
-        else:
-            yield dataset[i:i + batch_size]

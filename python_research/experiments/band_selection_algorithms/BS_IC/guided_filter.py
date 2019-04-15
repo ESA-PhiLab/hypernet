@@ -2,7 +2,7 @@ from copy import copy
 from itertools import product
 from math import ceil
 
-from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
+from python_research.experiments.band_selection_algorithms.utils import *
 
 
 def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
@@ -20,11 +20,11 @@ def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
     padded_cube = pad_zeros_3d(padding_size, ref_map)
     padded_guided_map = pad_zeros_2d(guided_image, padding_size)
     col_indexes, row_indexes = \
-        list(range(ref_map.shape[CONST_ROW_AXIS])), list(range(ref_map.shape[CONST_COLUMNS_AXIS]))
+        list(range(ref_map.shape[ROW_AXIS])), list(range(ref_map.shape[COLUMNS_AXIS]))
     a_k_map, b_k_map = np.empty(shape=ref_map.shape), np.empty(shape=ref_map.shape)
 
-    for i in range(ref_map.shape[CONST_SPECTRAL_AXIS]):
-        print('{} band of one-hot ref map.'.format(i))
+    for i in range(ref_map.shape[SPECTRAL_AXIS]):
+        print('{} band of one hot ref map.'.format(i))
         for row, col in product(col_indexes, row_indexes):
             p_k = copy(padded_cube[row:row + padding_size * 2 + 1,
                        col:col + padding_size * 2 + 1, i])
@@ -41,10 +41,10 @@ def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
     b_k_map = pad_zeros_3d(padding_size, b_k_map)
     yi = np.empty(shape=ref_map.shape)
     row_indexes, col_indexes = \
-        list(range(padding_size * 2, a_k_map.shape[CONST_ROW_AXIS] - (padding_size * 2))), \
-        list(range(padding_size * 2, a_k_map.shape[CONST_COLUMNS_AXIS] - (padding_size * 2)))
+        list(range(padding_size * 2, a_k_map.shape[ROW_AXIS] - (padding_size * 2))), \
+        list(range(padding_size * 2, a_k_map.shape[COLUMNS_AXIS] - (padding_size * 2)))
 
-    for i in range(ref_map.shape[CONST_SPECTRAL_AXIS]):
+    for i in range(ref_map.shape[SPECTRAL_AXIS]):
         for x, y in product(row_indexes, col_indexes):
             x_indexes, y_indexes = \
                 list(range(x - (padding_size * 2), x + 1)), \
@@ -61,10 +61,10 @@ def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
             yi[x - padding_size * 2, y - padding_size * 2, i] = a_k_sum * guided_image[
                 x - padding_size * 2, y - padding_size * 2] + b_k_sum
 
-    new_ref_map = np.empty(shape=yi.shape[:CONST_SPECTRAL_AXIS])
-    new_ref_map.fill(CONST_BG_CLASS)
+    new_ref_map = np.empty(shape=yi.shape[:SPECTRAL_AXIS])
+    new_ref_map.fill(BG_CLASS)
     row_indexes, col_indexes = \
-        list(range(new_ref_map.shape[CONST_ROW_AXIS])), list(range(new_ref_map.shape[CONST_COLUMNS_AXIS]))
+        list(range(new_ref_map.shape[ROW_AXIS])), list(range(new_ref_map.shape[COLUMNS_AXIS]))
     for row, col in product(row_indexes, col_indexes):
         new_ref_map[row, col] = np.argmax(yi[row, col]).astype(int)
     return new_ref_map

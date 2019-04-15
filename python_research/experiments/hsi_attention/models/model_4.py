@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 
 from python_research.experiments.hsi_attention.models.util import build_convolutional_block, AttentionBlock, \
@@ -19,31 +20,34 @@ class Model4(torch.nn.Module):
         self._attention_block_4 = AttentionBlock(24, int(input_dimension / 16), num_of_classes)
         self._classifier = build_classifier_block(24 * int(input_dimension / 16), num_of_classes)
         self._classifier_confidence = build_classifier_confidence(24 * int(input_dimension / 16))
-        self._optimizer = torch.optim.Adam(self.parameters(), lr=0.0001)
-        self._loss = torch.nn.CrossEntropyLoss()
-        self._uses_attention = uses_attention
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.0001)
+        self.loss = torch.nn.CrossEntropyLoss()
+        self.uses_attention = uses_attention
 
-    def with_attention(self, on):
-        self._uses_attention = on
-
-    def forward(self, x):
+    def forward(self, x, y, infer):
+        global first_module_prediction, second_module_prediction, \
+            third_module_prediction, fourth_module_prediction
         z = self._conv_block_1(x)
-        if self._uses_attention:
-            heatmap_1 = self._attention_block_1(z)
+        if self.uses_attention:
+            first_module_prediction = self._attention_block_1(z, y, infer)
         z = self._conv_block_2(z)
-        if self._uses_attention:
-            heatmap_2 = self._attention_block_2(z)
+        if self.uses_attention:
+            second_module_prediction = self._attention_block_2(z, y, infer)
         z = self._conv_block_3(z)
-        if self._uses_attention:
-            heatmap_3 = self._attention_block_3(z)
+        if self.uses_attention:
+            third_module_prediction = self._attention_block_3(z, y, infer)
         z = self._conv_block_4(z)
-        if self._uses_attention:
-            heatmap_4 = self._attention_block_4(z)
-        prediction = self._classifier(z.view(z.shape[0], -1) * self._classifier_confidence(z.view(z.shape[0], -1)))
-        if self._uses_attention:
-            return prediction + heatmap_1 + heatmap_2 + heatmap_3 + heatmap_4
+        if self.uses_attention:
+            fourth_module_prediction = self._attention_block_4(z, y, infer)
+        prediction = self._classifier(z.view(z.shape[0], -1)) * \
+                     self._classifier_confidence(z.view(z.shape[0], -1))
+        if self.uses_attention:
+            return prediction + first_module_prediction + second_module_prediction + \
+                   third_module_prediction + fourth_module_prediction
         return prediction
 
     def get_heatmaps(self, input_size):
-        return [self._attention_block_1.get_heatmaps(input_size), self._attention_block_2.get_heatmaps(input_size),
-                self._attention_block_3.get_heatmaps(input_size), self._attention_block_4.get_heatmaps(input_size)]
+        return np.mean([self._attention_block_1.get_heatmaps(input_size).squeeze(),
+                        self._attention_block_2.get_heatmaps(input_size).squeeze(),
+                        self._attention_block_3.get_heatmaps(input_size).squeeze(),
+                        self._attention_block_4.get_heatmaps(input_size).squeeze()], axis=0).squeeze()

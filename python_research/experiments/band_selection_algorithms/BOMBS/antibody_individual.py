@@ -1,5 +1,5 @@
 from python_research.experiments.band_selection_algorithms.BOMBS.utils import prep_bands
-from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
+from python_research.experiments.band_selection_algorithms.utils import *
 
 
 class Antibody(object):
@@ -17,7 +17,7 @@ class Antibody(object):
         self.entropy_fitness = None
         self.distance_fitness = None
         self.dominant_fitness = None
-        self.K = selected_bands.shape[CONST_SPECTRAL_AXIS]
+        self.K = selected_bands.shape[SPECTRAL_AXIS]
         self.dominant_fitness_check = lambda: np.max([self.entropy_fitness, self.distance_fitness])
         self.data_path = data_path
         self.ref_map_path = ref_map_path

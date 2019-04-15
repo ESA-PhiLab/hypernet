@@ -3,19 +3,19 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
-from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
+from python_research.experiments.band_selection_algorithms.utils import *
 
 USED_BAND_FLAG = -1
 
 
-class MI(object):
+class MutualInformation(object):
     def __init__(self, x: int, b: int, eta: float):
         """
         Initialize all instance variables.
 
         :param x: Number of bands to select.
         :param b: The neighborhood of selected band.
-        :param eta: Prevents from redundancy in the selected bands.
+        :param eta: Threshold which prevents from redundancy in the selected bands.
         """
         self.ref_map = None
         self.ref_map_hist = None
@@ -89,20 +89,20 @@ class MI(object):
         :param data: Data block.
         :param ref_map: Reference map.
         """
-        self.init_bands_size = data.shape[CONST_SPECTRAL_AXIS] + CONST_BG_CLASS
+        self.init_bands_size = data.shape[SPECTRAL_AXIS] + BG_CLASS
         non_zeros = np.nonzero(ref_map)
         self.ref_map = ref_map[non_zeros]
         self.ref_map_hist = np.histogram(self.ref_map.flatten(),
                                          (self.ref_map.max() - 1))[0] / self.ref_map.size
         min_max_scaler = MinMaxScaler(feature_range=(0, 255))
-        self.bands_ids = list(range(data.shape[CONST_SPECTRAL_AXIS]))
-        for i in range(data.shape[CONST_SPECTRAL_AXIS]):
+        self.bands_ids = list(range(data.shape[SPECTRAL_AXIS]))
+        for i in range(data.shape[SPECTRAL_AXIS]):
             band = np.asarray(min_max_scaler.fit_transform(data[..., i])).astype(int)
             band = band[non_zeros]
             self.bands_histograms.append(np.histogram(band, 256)[0] / band.size)
             self.joint_entropy.append(np.histogram2d(x=band,
                                                      y=self.ref_map,
-                                                     bins=[256, (self.ref_map.max() + CONST_BG_CLASS)])
+                                                     bins=[256, (self.ref_map.max() + BG_CLASS)])
                                       [0] / self.ref_map.size)
 
 
@@ -123,56 +123,14 @@ def arg_parser():
     return parser.parse_args()
 
 
-def load_data(path, ref_map_path, get_ref_map=True):
-    """
-    Load data and labels.
-    Normalize data.
-
-    :param path: Path to data.
-    :param ref_map_path: Path to labels.
-    :param get_ref_map: True if returning labels.
-    :return: Normalized data.
-    """
-    data = None
-    ref_map = None
-    if path.endswith(".npy"):
-        data = np.load(path)
-    elif path.endswith(".mat"):
-        mat = loadmat(path)
-        for key in mat.keys():
-            if "__" not in key:
-                data = mat[key]
-                break
-    else:
-        raise ValueError("This file type is not supported.")
-    if ref_map_path.endswith(".npy"):
-        ref_map = np.load(ref_map_path)
-    elif ref_map_path.endswith(".mat"):
-        mat = loadmat(ref_map_path)
-        for key in mat.keys():
-            if "__" not in key:
-                ref_map = mat[key]
-                break
-    else:
-        raise ValueError("This file type is not supported.")
-    assert data is not None and ref_map_path is not None, 'There is no data to be loaded.'
-    min_ = np.amin(data)
-    max_ = np.amax(data)
-    data = (data - min_) / (max_ - min_)
-    if get_ref_map is False:
-        return data
-    ref_map = ref_map.astype(int) + CONST_BG_CLASS
-    return data.astype(float), ref_map.astype(int)
-
-
-def run(args):
+def main(args):
     """
     Contains all steps of the band selection algorithm.
 
     :param args: Parsed arguments.
     """
-    data, ref_map = load_data(path=args.data_path, ref_map_path=args.ref_map_path)
-    mutual_info_band_selector = MI(x=args.X, b=args.b, eta=args.eta)
+    data, ref_map = load_data(data_path=args.data_path, ref_map_path=args.ref_map_path)
+    mutual_info_band_selector = MutualInformation(x=args.X, b=args.b, eta=args.eta)
     mutual_info_band_selector.prep_bands(data=data, ref_map=ref_map)
     mutual_info_band_selector.calculate_mi(draw_plot=True)
     mutual_info_band_selector.perform_search()
@@ -182,4 +140,4 @@ def run(args):
 
 
 if __name__ == '__main__':
-    run(arg_parser())
+    main(arg_parser())
