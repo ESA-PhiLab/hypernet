@@ -6,15 +6,14 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
-from sklearn.covariance import EllipticEnvelope
-from tqdm import tqdm
-
 from python_research.experiments.hsi_attention.arguments import arguments
 from python_research.experiments.hsi_attention.datasets.generate_trained_models import get_loader_function, \
     produce_splits
 from python_research.experiments.hsi_attention.models.model_2 import Model2
 from python_research.experiments.hsi_attention.models.model_3 import Model3
 from python_research.experiments.hsi_attention.models.model_4 import Model4
+from sklearn.covariance import EllipticEnvelope
+from tqdm import tqdm
 
 
 def train_network(x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y_val: np.ndarray, model,
@@ -217,7 +216,7 @@ def run(args: argparse.Namespace, selected_bands: np.ndarray = None) -> None:
     infer_network(x_test, y_test, args, input_size=x_train.shape[-1])
 
 
-def plot_heatmaps(heatmaps: np.ndarray):
+def plot_heatmaps(heatmaps: np.ndarray, args: argparse.Namespace):
     fig, axis = plt.subplots()
     heatmap = axis.pcolor(heatmaps)
     axis.set_yticklabels([str(class_ + 1) for class_ in range(heatmaps.shape[0])], minor=False)
@@ -226,7 +225,7 @@ def plot_heatmaps(heatmaps: np.ndarray):
     plt.title("Attention heatmaps scores")
     plt.ylabel("Class index")
     plt.xlabel("Band index")
-    plt.show()
+    plt.savefig(os.path.join(args.output_dir, args.run_idx + "_attention_map.pdf"))
 
 
 def eval_heatmaps(args: argparse.Namespace) -> np.ndarray:
@@ -237,7 +236,7 @@ def eval_heatmaps(args: argparse.Namespace) -> np.ndarray:
     :return: Array containing selected bands.
     """
     heatmaps = pickle.load(open(os.path.join(args.output_dir, args.run_idx + "_attention_bands.pkl"), "rb"))
-    plot_heatmaps(heatmaps)
+    plot_heatmaps(heatmaps, args)
     clf = EllipticEnvelope(contamination=float(args.cont))
     outliers = np.asarray(
         [(clf.fit(np.expand_dims(map_, axis=1))).predict(np.expand_dims(map_, axis=1)) for map_ in heatmaps])

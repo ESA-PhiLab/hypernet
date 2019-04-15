@@ -8,7 +8,6 @@ ROW_AXIS = 0
 COLUMNS_AXIS = 1
 SPECTRAL_AXIS = -1
 CLASS_LABEL = 1
-SELECTED_BAND_FLAG = 0
 
 
 def arg_parser() -> argparse.Namespace:
