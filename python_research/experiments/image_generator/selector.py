@@ -20,13 +20,15 @@ def load_data(path):
     return data.astype(float)
 
 
-def get_images(data_name: str, path: str, bands_txt: str, dest_path: str) -> None:
+def get_images(data_name: str, path: str, bands_txt: str, dest_path: str, do_shuffle: bool) -> None:
     """
     Generate images based on selected bands.
 
     :param data_name: Name of the data.
     :param path: Path to data.
     :param bands_txt: Path to txt file containing selected bands.
+    :param dest_path: Path to destination directory.
+    :param do_shuffle: Boolean indicating whether to shuffle spectral bands.
     :return: None.
     """
     if not os.path.exists(dest_path):
@@ -36,8 +38,8 @@ def get_images(data_name: str, path: str, bands_txt: str, dest_path: str) -> Non
     with open(bands_txt) as f:
         content = f.readlines()
         content = np.asarray([x.rstrip('\n') for x in content], dtype=int)
-
-    shuffle(content)
+    if do_shuffle:
+        shuffle(content)
     data *= (255.0 / data.max())
     for i in range(0, len(content) - 2):
         image = data[..., content[slice(i, i + 3)]]
@@ -56,4 +58,4 @@ def get_images(data_name: str, path: str, bands_txt: str, dest_path: str) -> Non
 if __name__ == '__main__':
     get_images('salinas', r"C:\Users\ltulczyjew\Desktop\hypernet-data\Salinas.mat",
                r"C:\Users\ltulczyjew\Desktop\band_selection_results\ic\salinas\38_bands\selected_bands_38",
-               r"C:\Users\ltulczyjew\Desktop\d")
+               r"C:\Users\ltulczyjew\Desktop\d", do_shuffle=True)

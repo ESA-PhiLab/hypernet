@@ -6,14 +6,15 @@ import time
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
+from sklearn.covariance import EllipticEnvelope
+from tqdm import tqdm
+
 from python_research.experiments.hsi_attention.arguments import arguments
 from python_research.experiments.hsi_attention.datasets.generate_trained_models import get_loader_function, \
     produce_splits
 from python_research.experiments.hsi_attention.models.model_2 import Model2
 from python_research.experiments.hsi_attention.models.model_3 import Model3
 from python_research.experiments.hsi_attention.models.model_4 import Model4
-from sklearn.covariance import EllipticEnvelope
-from tqdm import tqdm
 
 
 def train_network(x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y_val: np.ndarray, model,
@@ -189,31 +190,25 @@ def run(args: argparse.Namespace, selected_bands: np.ndarray = None) -> None:
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
     print("Training attention model for dataset: {}".format(os.path.basename(os.path.normpath(args.dataset_path))))
-    samples, labels = get_loader_function(args.dataset_path, args.labels_path)
+    samples, labels = get_loader_function(data_path=args.dataset_path, ref_map_path=args.labels_path)
     if selected_bands is not None:
         print("Selecting bands...")
         samples = samples[..., selected_bands]
         print("Number of selected bands: {}".format(samples.shape[-1]))
-    print("Spectral size: {}".format(samples.shape[-1]))
-    (x_train, y_train), \
-    (x_val, y_val), \
-    (x_test, y_test) = produce_splits(samples,
-                                      labels,
-                                      args.validation,
-                                      args.test)
-    model = load_model(args.modules, y_train.max() + 1, x_train.shape[-1])
+    (x_train, y_train), (x_val, y_val), (x_test, y_test) = produce_splits(samples=samples,
+                                                                          labels=labels,
+                                                                          validation_size=args.validation,
+                                                                          test_size=args.test)
+    model = load_model(n_attention_modules=args.modules,
+                       n_classes=int(y_train.max() + 1),
+                       input_dimension=x_train.shape[-1])
     model.to(device)
     if args.attn == "true":
         model.uses_attention = True
     if args.attn == "false":
         model.uses_attention = False
-    train_network(x_train,
-                  y_train,
-                  x_val,
-                  y_val,
-                  model,
-                  args)
-    infer_network(x_test, y_test, args, input_size=x_train.shape[-1])
+    train_network(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val, model=model, args=args)
+    infer_network(x_test=x_test, y_test=y_test, args=args, input_size=x_train.shape[-1])
 
 
 def plot_heatmaps(heatmaps: np.ndarray, args: argparse.Namespace):
@@ -247,8 +242,12 @@ def eval_heatmaps(args: argparse.Namespace) -> np.ndarray:
     return selected_bands
 
 
-if __name__ == "__main__":
+def main():
     args = arguments()
     run(args)
     selected_bands = eval_heatmaps(args)
     run(args, selected_bands)
+
+
+if __name__ == "__main__":
+    main()

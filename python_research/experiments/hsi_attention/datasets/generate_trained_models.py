@@ -1,7 +1,8 @@
-from python_research.experiments.band_selection_algorithms.utils import *
+import numpy as np
+from scipy.io import loadmat
 
 
-def create_sample_label_pairs(samples_by_class):
+def create_sample_label_pairs(samples_by_class: list):
     all_sample_label_pairs = []
     for idx, class_ in enumerate(samples_by_class):
         for sample in class_:
@@ -11,9 +12,9 @@ def create_sample_label_pairs(samples_by_class):
     return np.array(samples), np.array(labels)
 
 
-def produce_splits(X, Y, validation_size, test_size):
-    samples_per_class = [[] for _ in range(Y.max() + 1)]
-    for x, y in zip(X, Y):
+def produce_splits(samples: list, labels: np.ndarray, validation_size: float, test_size: float):
+    samples_per_class = [[] for _ in range(labels.max() + 1)]
+    for x, y in zip(samples, labels):
         samples_per_class[y].append(x)
     lowest_class_population = len(samples_per_class[0])
     for class_ in samples_per_class:
@@ -48,7 +49,7 @@ def produce_splits(X, Y, validation_size, test_size):
            create_sample_label_pairs(test_set)
 
 
-def get_loader_function(data_path, ref_map_path) -> tuple:
+def get_loader_function(data_path: str, ref_map_path: str) -> tuple:
     """
     Load data method.
 
@@ -85,7 +86,7 @@ def get_loader_function(data_path, ref_map_path) -> tuple:
     data = (data - min_) / (max_ - min_)
     non_zeros = np.nonzero(ref_map)
     prepared_data = []
-    for i in range(data.shape[SPECTRAL_AXIS]):
+    for i in range(data.shape[-1]):
         band = data[..., i][non_zeros]
         prepared_data.append(band)
     ref_map = ref_map[non_zeros]

@@ -1,6 +1,6 @@
+import argparse
 import os
 from itertools import product
-from random import shuffle
 
 from sklearn import svm
 
@@ -8,33 +8,25 @@ from python_research.experiments.band_selection_algorithms.BS_IC.guided_filter i
 from python_research.experiments.band_selection_algorithms.utils import *
 
 
-def prepare_datasets(ref_map: np.ndarray, training_patch: float, do_shuffle: bool = False) -> tuple:
+def prepare_datasets(ref_map: np.ndarray, training_patch: float) -> tuple:
     """
     Prepare data for SVMs training.
 
     :param ref_map: Reference map for labels.
     :param training_patch: Patch for training data, concern the lowest population class.
-    :param do_shuffle: True if shuffle is considered.
     :return: Returns prepared data in tuple.
     """
-    print('Training data patch: {}'.format(training_patch))
     samples_by_classes = [[] for _ in range(int(ref_map.max()) + abs(BG_CLASS))]
     rows, columns = list(range(int(ref_map.shape[ROW_AXIS]))), list(range((int(ref_map.shape[COLUMNS_AXIS]))))
     for i, j in product(rows, columns):
         if ref_map[i, j] != BG_CLASS:
             samples_by_classes[ref_map[i, j]].append([[i, j], ref_map[i, j]])
-    lowest_class_population = samples_by_classes[0].__len__()
-    for i in range(1, samples_by_classes.__len__()):
-        if lowest_class_population > samples_by_classes[i].__len__():
-            lowest_class_population = samples_by_classes[i].__len__()
+    lowest_class_population = np.min([samples_by_classes[i].__len__() for i in range(samples_by_classes.__len__())])
     train_set, test_set = [], []
     train_size = int(training_patch * lowest_class_population)
     for i in range(samples_by_classes.__len__()):
         train_set.extend(samples_by_classes[i][:train_size])
         test_set.extend(samples_by_classes[i][train_size:])
-    if do_shuffle:
-        shuffle(train_set)
-        shuffle(test_set)
     train_samples, train_labels = list(map(list, zip(*train_set)))
     test_samples, test_labels = list(map(list, zip(*test_set)))
     return train_samples, np.asarray(train_labels), test_samples, np.asarray(test_labels)
@@ -44,29 +36,26 @@ def get_data_by_indexes(indexes: list, data: np.ndarray) -> np.ndarray:
     """
     Return data block given indexes.
 
-    :param indexes: List of indexes.
+    :param indexes: Indexes of samples.
     :param data: Hyperspectral data block.
-    :return: Chosen data blocks.
+    :return: Loaded samples.
     """
-    train_samples = []
-    for i, j in indexes:
-        train_samples.append(data[i, j, ...])
-    return np.asarray(train_samples)
+    return np.asarray([data[i, j] for i, j in indexes])
 
 
 def one_hot_map(ref_map: np.ndarray) -> np.ndarray:
     """
-    Perform one - hot encoding over passed reference map.
+    Perform one - hot encoding over new reference map.
 
     :param ref_map: Passed reference map.
-    :return: One - hot reference map.
+    :return: One - hot encoded reference map.
     """
     max_ = (ref_map.max() + abs(BG_CLASS)).astype(int)
-    c = np.zeros(shape=[ref_map.shape[ROW_AXIS], ref_map.shape[COLUMNS_AXIS], max_])
+    one_hot_ref_map = np.zeros(shape=[ref_map.shape[ROW_AXIS], ref_map.shape[COLUMNS_AXIS], max_])
     rows, columns = list(range(ref_map.shape[ROW_AXIS])), list(range((ref_map.shape[COLUMNS_AXIS])))
     for i, j in product(rows, columns):
-        c[i, j, ref_map[i, j].astype(int)] = CLASS_LABEL
-    return c
+        one_hot_ref_map[i, j, ref_map[i, j].astype(int)] = CLASS_LABEL
+    return one_hot_ref_map
 
 
 def get_guided_image(data: np.ndarray) -> np.ndarray:
@@ -79,60 +68,67 @@ def get_guided_image(data: np.ndarray) -> np.ndarray:
     return np.mean(data, axis=SPECTRAL_AXIS)
 
 
-def construct_new_ref_map(labels: np.ndarray, samples: list, shape: list):
+def construct_new_ref_map(labels: np.ndarray, samples: list, ref_map_shape: list):
     """
     Based on the SVM predictions, create new reference map.
 
-    :param labels: Labels for indexes for constructing new reference map.
+    :param labels: Labels for samples for constructing new reference map.
     :param samples: Indexes of samples for constructing new reference map.
-    :param shape: Designed shape of the new reference map.
-    :return:
+    :param ref_map_shape: Designed shape of the new reference map.
+    :return: New reference map based on the classifier prediction.
     """
-    labels += CLASS_LABEL
-    new_ref_map = np.zeros(shape=shape)
+    new_ref_map = np.zeros(shape=ref_map_shape) + BG_CLASS
     for i, indexes in enumerate(samples):
         new_ref_map[indexes[ROW_AXIS], indexes[COLUMNS_AXIS]] = labels[i]
-    return new_ref_map
+    return new_ref_map.astype(int)
 
 
 def train_svm(data: np.ndarray, test_labels: list, test_samples: list, train_labels: list, train_samples: list):
     """
     Train SVM on input data and return its predictions.
+    During band selection process, parameters of SVM are fixed in order to reduce computation burden.
 
     :param data: Hyperspectral data block.
-    :param test_labels: Indexes of test labels.
+    :param test_labels: Test labels.
     :param test_samples: Indexes of test samples.
-    :param train_labels: Indexes of train labels.
+    :param train_labels: Train labels.
     :param train_samples: Indexes of train samples.
     :return: Prediction which is used to create new reference map.
     """
-    model = svm.SVC(kernel='rbf', C=1024, gamma=2, decision_function_shape='ovo',
-                    probability=True, class_weight='balanced')
+    model = svm.SVC(kernel="rbf", C=1024, gamma=2)
     model.fit(get_data_by_indexes(train_samples, data), train_labels)
     prediction = model.predict(get_data_by_indexes(test_samples, data))
-    print('Fitness score: {0:5.2f}%'.format(model.score(get_data_by_indexes(test_samples, data), test_labels) * 100.0))
+    print("SVM fitness score {0:5.2f}%".format(
+        model.score(get_data_by_indexes(test_samples, data), test_labels) * float(100)))
     return prediction
 
 
-def generate_pseudo_ground_truth_map(args, save_map=False):
+def generate_pseudo_ground_truth_map(args: argparse.Namespace):
     """
-    Generate and save pseudo ground thruth map that is used in the band selection process.
+    Generate and save pseudoground truth map which is used in the band selection process.
 
     :param args: Parsed arguments.
     """
     data, ref_map = load_data(data_path=args.data_path, ref_map_path=args.ref_map_path)
+    data = min_max_normalize_data(data=data)
     guided_image = get_guided_image(data=data)
     train_samples, train_labels, test_samples, test_labels = prepare_datasets(ref_map=ref_map,
                                                                               training_patch=args.training_patch)
 
-    prediction = train_svm(data, test_labels, test_samples, train_labels, train_samples)
+    prediction = train_svm(data=data, test_labels=test_labels, test_samples=test_samples,
+                           train_labels=train_labels, train_samples=train_samples)
 
-    updated_ref_map = construct_new_ref_map(np.concatenate((train_labels, prediction)),
-                                            train_samples + test_samples, ref_map.shape)
-    one_hot_ref_map = one_hot_map(updated_ref_map)
+    updated_ref_map = construct_new_ref_map(labels=np.concatenate((train_labels, prediction)),
+                                            samples=train_samples + test_samples,
+                                            ref_map_shape=ref_map.shape)
+
+    one_hot_ref_map = one_hot_map(ref_map=updated_ref_map)
+
+    print("SVM classification map similarity score according to GT map {0:5.2f}%".format(
+        ((ref_map == updated_ref_map).sum() / ref_map.size) * float(100)))
+
     pseudo_ground_truth_map = edge_preserving_filter(ref_map=one_hot_ref_map, neighborhood_size=args.r,
                                                      guided_image=guided_image)
-    if save_map:
-        np.save(os.path.join(args.dest_path, 'pseudo_ground_truth_map_{}'.format(str(args.bands_num))),
-                pseudo_ground_truth_map)
-    return pseudo_ground_truth_map.astype(int)
+
+    np.save(os.path.join(args.dest_path, "pseudo_ground_truth_map_{}".format(str(args.bands_num))),
+            pseudo_ground_truth_map)

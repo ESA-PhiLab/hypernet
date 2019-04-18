@@ -36,8 +36,7 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--epochs",
                         dest="epochs",
                         type=int,
-                        help="Number of epochs.",
-                        default=999999)
+                        help="Number of epochs.")
     parser.add_argument("--modules",
                         dest="modules",
                         type=int,

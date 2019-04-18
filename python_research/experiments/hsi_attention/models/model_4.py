@@ -8,7 +8,7 @@ from python_research.experiments.hsi_attention.models.util import build_convolut
 
 class Model4(torch.nn.Module):
 
-    def __init__(self, num_of_classes, input_dimension, uses_attention: bool = False):
+    def __init__(self, num_of_classes: int, input_dimension: int, uses_attention: bool = False):
         super(Model4, self).__init__()
         self._conv_block_1 = build_convolutional_block(1, 96)
         self._conv_block_2 = build_convolutional_block(96, 54)
@@ -24,7 +24,7 @@ class Model4(torch.nn.Module):
         self.loss = torch.nn.CrossEntropyLoss()
         self.uses_attention = uses_attention
 
-    def forward(self, x, y, infer):
+    def forward(self, x: torch.Tensor, y: torch.Tensor, infer: bool):
         global first_module_prediction, second_module_prediction, \
             third_module_prediction, fourth_module_prediction
         z = self._conv_block_1(x)
@@ -46,7 +46,7 @@ class Model4(torch.nn.Module):
                    third_module_prediction + fourth_module_prediction
         return prediction
 
-    def get_heatmaps(self, input_size):
+    def get_heatmaps(self, input_size: int):
         return np.mean([self._attention_block_1.get_heatmaps(input_size).squeeze(),
                         self._attention_block_2.get_heatmaps(input_size).squeeze(),
                         self._attention_block_3.get_heatmaps(input_size).squeeze(),
