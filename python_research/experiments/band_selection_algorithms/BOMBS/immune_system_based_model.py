@@ -7,7 +7,7 @@ import numpy as np
 
 from python_research.experiments.band_selection_algorithms.BOMBS.antibody_individual import Antibody
 from python_research.experiments.band_selection_algorithms.BOMBS.utils import load_data, calculate_crowding_distances
-from python_research.experiments.band_selection_algorithms.BS_IC.utils import CONST_SPECTRAL_AXIS
+from python_research.experiments.band_selection_algorithms.utils import SPECTRAL_AXIS
 
 
 class AntibodyPopulation(object):
@@ -243,7 +243,7 @@ class AntibodyPopulation(object):
         """
         population = []
         data = load_data(self.args.data_path, self.args.ref_map_path)
-        self.u_max = data.shape[CONST_SPECTRAL_AXIS]
+        self.u_max = data.shape[SPECTRAL_AXIS]
         bands_number = args.bands_per_antibody
         for i in range(args.P_init_size):
             chosen_bands = np.random.choice(a=self.u_max, size=bands_number, replace=False)

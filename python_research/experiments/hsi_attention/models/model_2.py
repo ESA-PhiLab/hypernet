@@ -1,4 +1,6 @@
+import numpy as np
 import torch
+import torch.nn.functional as f
 
 from python_research.experiments.hsi_attention.models.util import build_convolutional_block, AttentionBlock, \
     build_classifier_block, \
@@ -7,32 +9,36 @@ from python_research.experiments.hsi_attention.models.util import build_convolut
 
 class Model2(torch.nn.Module):
 
-    def __init__(self, num_of_classes, input_dimension, uses_attention: bool = False):
-        super(Model2, self).__init__()
+    def __init__(self, num_of_classes: int, input_dimension: int, uses_attention: bool = False):
+        super().__init__()
         self._conv_block_1 = build_convolutional_block(1, 96)
         self._conv_block_2 = build_convolutional_block(96, 54)
-        self._attention_block_1 = AttentionBlock(96, int(input_dimension / 2), num_of_classes)
-        self._attention_block_2 = AttentionBlock(54, int(input_dimension / 4), num_of_classes)
+        assert int(input_dimension / 4) > 0, "The spectral size is to small."
         self._classifier = build_classifier_block(54 * int(input_dimension / 4), num_of_classes)
-        self._classifier_confidence = build_classifier_confidence(54 * int(input_dimension / 4))
-        self._optimizer = torch.optim.Adam(self.parameters(), lr=0.0001)
-        self._loss = torch.nn.CrossEntropyLoss()
-        self._uses_attention = uses_attention
+        if uses_attention:
+            print("Model with 2 attention modules.")
+            self._attention_block_1 = AttentionBlock(96, int(input_dimension / 2), num_of_classes)
+            self._attention_block_2 = AttentionBlock(54, int(input_dimension / 4), num_of_classes)
+            self._classifier_confidence = build_classifier_confidence(54 * int(input_dimension / 4))
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.0001)
+        self.loss = torch.nn.BCELoss()
+        self.uses_attention = uses_attention
 
-    def with_attention(self, on):
-        self._uses_attention = on
-
-    def forward(self, x):
+    def forward(self, x: torch.Tensor, y: torch.Tensor, infer: bool) -> torch.Tensor:
+        global first_module_prediction, second_module_prediction
         z = self._conv_block_1(x)
-        if self._uses_attention:
-            heatmap_1 = self._attention_block_1(z)
+        if self.uses_attention:
+            first_module_prediction = self._attention_block_1(z, y, infer)
         z = self._conv_block_2(z)
-        if self._uses_attention:
-            heatmap_2 = self._attention_block_2(z)
-        prediction = self._classifier(z.view(z.shape[0], -1)) * self._classifier_confidence(z.view(z.shape[0], -1))
-        if self._uses_attention:
-            return prediction + heatmap_1 + heatmap_2
-        return prediction
+        if self.uses_attention:
+            second_module_prediction = self._attention_block_2(z, y, infer)
+        prediction = self._classifier(z.view(z.shape[0], -1))
+        if self.uses_attention:
+            prediction *= self._classifier_confidence(z.view(z.shape[0], -1))
+        if self.uses_attention:
+            return f.softmax(prediction + first_module_prediction + second_module_prediction, dim=1)
+        return f.softmax(prediction, dim=1)
 
-    def get_heatmaps(self, input_size):
-        return [self._attention_block_1.get_heatmaps(input_size), self._attention_block_2.get_heatmaps(input_size)]
+    def get_heatmaps(self, input_size: int) -> np.ndarray:
+        return np.mean([self._attention_block_1.get_heatmaps(input_size).squeeze(),
+                        self._attention_block_2.get_heatmaps(input_size).squeeze()], axis=0).squeeze()

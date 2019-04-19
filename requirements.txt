@@ -1,3 +1,8 @@
+osr
+gdal
+scipy
+tqdm
+scikit-image
 ipyleaflet
 imageio
 tensorboardX

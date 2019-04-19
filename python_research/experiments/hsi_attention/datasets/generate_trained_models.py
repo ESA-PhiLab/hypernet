@@ -1,31 +1,37 @@
-from python_research.experiments.band_selection_algorithms.BS_IC.utils import *
+import numpy as np
+from scipy.io import loadmat
 
 
-def create_sample_label_pairs(samples_by_class):
+def create_sample_label_pairs(samples_by_class: list) -> tuple:
+    """
+    Return samples with labels.
+
+    :param samples_by_class: List of samples divided by classes.
+    :return: Prepared samples with labels.
+    """
     all_sample_label_pairs = []
     for idx, class_ in enumerate(samples_by_class):
         for sample in class_:
-            all_sample_label_pairs.append((sample, idx))
+            labels = np.zeros((len(samples_by_class)))
+            labels[idx] = 1
+            all_sample_label_pairs.append((sample, labels))
     np.random.shuffle(all_sample_label_pairs)
     samples, labels = zip(*all_sample_label_pairs)
     return np.array(samples), np.array(labels)
 
 
-def create_class_label_pairs(samples_by_class):
-    all_pairs = []
-    for idx, class_ in enumerate(samples_by_class):
-        small_pairs = []
-        for sample in class_:
-            labels = np.zeros((1, len(samples_by_class)))
-            labels[0][idx] = 1
-            small_pairs.append((sample, labels.reshape((1, len(samples_by_class)))))
-        all_pairs.append(small_pairs)
-    return all_pairs
+def produce_splits(samples: list, labels: np.ndarray, validation_size: float, test_size: float) -> tuple:
+    """
+    Divide data on sets based on passed validation and test sizes.
 
-
-def produce_splits(X, Y, validation_size, test_size):
-    samples_per_class = [[] for _ in range(Y.max() + 1)]
-    for x, y in zip(X, Y):
+    :param samples: List of samples.
+    :param labels: Array of labels.
+    :param validation_size: Size of validation batch.
+    :param test_size: Size of test batch.
+    :return: Tuple of prepared samples with labels.
+    """
+    samples_per_class = [[] for _ in range(labels.max() + 1)]
+    for x, y in zip(samples, labels):
         samples_per_class[y].append(x)
     lowest_class_population = len(samples_per_class[0])
     for class_ in samples_per_class:
@@ -60,55 +66,43 @@ def produce_splits(X, Y, validation_size, test_size):
            create_sample_label_pairs(test_set)
 
 
-def get_loader_function(data_path, ref_map_path):
+def get_loader_function(data_path: str, ref_map_path: str) -> tuple:
     """
-    Load data method.
+    Load data and perform min-max feature scaling.
 
     :param data_path: Path to data.
     :param ref_map_path: Path to labels.
-    :return: Prepared data.
+    :return: Prepared data as a tuple.
     """
     data = None
     ref_map = None
     if data_path.endswith(".npy"):
         data = np.load(data_path)
-    elif data_path.endswith(".mat"):
+    if data_path.endswith(".mat"):
         mat = loadmat(data_path)
         for key in mat.keys():
             if "__" not in key:
                 data = mat[key]
                 break
-    else:
-        raise ValueError("This file type is not supported.")
     if ref_map_path.endswith(".npy"):
         ref_map = np.load(ref_map_path)
-    elif ref_map_path.endswith(".mat"):
+    if ref_map_path.endswith(".mat"):
         mat = loadmat(ref_map_path)
         for key in mat.keys():
             if "__" not in key:
                 ref_map = mat[key]
                 break
-    else:
-        raise ValueError("This file type is not supported.")
-    assert data is not None and ref_map_path is not None, 'There is no data to be loaded.'
+    assert data is not None and ref_map is not None, "The specified path or format of file is incorrect."
     data = data.astype(float)
-    min_ = np.amin(data)
-    max_ = np.amax(data)
-    data = (data - min_) / (max_ - min_)
+    for band_id in range(data.shape[-1]):
+        max_ = np.amax(data[..., band_id])
+        min_ = np.amin(data[..., band_id])
+        data[..., band_id] = (data[..., band_id] - min_) / (max_ - min_)
     non_zeros = np.nonzero(ref_map)
     prepared_data = []
-    for i in range(data.shape[CONST_SPECTRAL_AXIS]):
+    for i in range(data.shape[-1]):
         band = data[..., i][non_zeros]
         prepared_data.append(band)
-    ref_map = ref_map[non_zeros]
-    ref_map -= 1
+    ref_map = ref_map[non_zeros] - 1
     prepared_data = np.asarray(prepared_data).T
     return prepared_data, ref_map
-
-
-def split_by_batchsize(dataset, batch_size):
-    for i in range(0, len(dataset), batch_size):
-        if i + batch_size > len(dataset):
-            yield dataset[i:]
-        else:
-            yield dataset[i:i + batch_size]
