@@ -252,6 +252,12 @@ def eval_heatmaps(args: argparse.Namespace) -> np.ndarray:
 
 
 def str2bool(string_arg):
+    """
+    Parse string argument to bool.
+
+    :param string_arg: Argument indicating whether to use attention mechanism.
+    :return: Parsed boolean.
+    """
     if string_arg.lower() in ("yes", "true", "t", "y", "1"):
         return True
     elif string_arg.lower() in ("no", "false", "f", "n", "0"):

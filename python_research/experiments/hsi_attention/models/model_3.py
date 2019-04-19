@@ -10,7 +10,7 @@ from python_research.experiments.hsi_attention.models.util import build_convolut
 class Model3(torch.nn.Module):
 
     def __init__(self, num_of_classes: int, input_dimension: int, uses_attention: bool = False):
-        super(Model3, self).__init__()
+        super().__init__()
         self._conv_block_1 = build_convolutional_block(1, 96)
         self._conv_block_2 = build_convolutional_block(96, 54)
         self._conv_block_3 = build_convolutional_block(54, 36)
