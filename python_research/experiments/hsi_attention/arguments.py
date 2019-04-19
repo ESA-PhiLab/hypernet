@@ -58,7 +58,7 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--attn",
                         dest="attn",
                         type=str,
-                        help="Set ""true"" when using attention, ""false"" otherwise.")
+                        help="Set \"true\" when using attention, \"false\" otherwise.")
     parser.add_argument("--run_idx",
                         dest="run_idx",
                         type=str,

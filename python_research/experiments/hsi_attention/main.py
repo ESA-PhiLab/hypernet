@@ -53,13 +53,14 @@ def train_network(x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y
 
         for x, y in tqdm(zip(x_train_list, y_train_list), total=len(x_train_list)):
             x = torch.from_numpy(x.astype("float32")).unsqueeze(1).type(torch.cuda.FloatTensor)
-            y = torch.from_numpy(y.astype("int32")).type(torch.cuda.LongTensor)
+            y = torch.from_numpy(y.astype("float32")).type(torch.cuda.FloatTensor)
             model.zero_grad()
             model.optimizer.zero_grad()
             out = model(x, y, infer=False)
             loss = model.loss(out, y)
             losses.append(loss.clone().detach().cpu().numpy())
-            accuracy = (torch.argmax(out, dim=1) == y).sum().type(torch.cuda.DoubleTensor) / y.shape[0]
+            accuracy = (torch.argmax(out, dim=1) == torch.argmax(y, dim=1)).sum().type(torch.cuda.DoubleTensor) / \
+                       y.shape[0]
             training_accuracies.append(accuracy.cpu().numpy())
             loss.backward()
             model.optimizer.step()
@@ -82,8 +83,8 @@ def train_network(x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y
         for x, y in tqdm(zip(x_val_list, y_val_list), total=len(x_val_list)):
             x = torch.from_numpy(x.astype("float32")).unsqueeze(1).type(torch.cuda.FloatTensor)
             y = torch.from_numpy(y.astype("int32")).type(torch.cuda.LongTensor)
-            accuracy = (torch.argmax(model(x, y, infer=False), dim=1) == y).sum().type(torch.cuda.DoubleTensor) / \
-                       y.shape[0]
+            accuracy = (torch.argmax(model(x, y, infer=False), dim=1) == torch.argmax(y, dim=1)).sum().type(
+                torch.cuda.DoubleTensor) / y.shape[0]
             validation_accuracies.append(accuracy.cpu().numpy())
 
         validation_time.append(time.time() - begin)
@@ -140,45 +141,44 @@ def infer_network(x_test: np.ndarray, y_test: np.ndarray, args: argparse.Namespa
     for x, y in tqdm(zip(x_test_list, y_test_list), total=len(x_test_list)):
         x = torch.from_numpy(x.astype("float32")).unsqueeze(1).type(torch.cuda.FloatTensor)
         y = torch.from_numpy(y.astype("int32")).type(torch.cuda.LongTensor)
-        accuracy = (torch.argmax(model(x, y, infer=True), dim=1) == y).sum().type(torch.cuda.DoubleTensor) / y.shape[0]
+        accuracy = (torch.argmax(model(x, y, infer=True), dim=1) == torch.argmax(y, dim=1)).sum().type(
+            torch.cuda.DoubleTensor) / y.shape[0]
         testing_accuracies.append(accuracy.cpu().numpy())
 
     testing_time = time.time() - begin
     testing_accuracy = [np.mean(testing_accuracies)]
     print("\tTesting accuracy: {}% ".format(testing_accuracy[0]))
-
-    heatmaps_per_class = model.get_heatmaps(input_size=input_size)
+    if model.uses_attention:
+        heatmaps_per_class = model.get_heatmaps(input_size=input_size)
+        pickle.dump(heatmaps_per_class,
+                    open(os.path.join(args.output_dir, args.run_idx + "_attention_bands.pkl"), "wb"))
 
     pickle.dump(testing_accuracy,
                 open(os.path.join(args.output_dir, args.run_idx + "_testing_accuracy.pkl"), "wb"))
     pickle.dump(testing_time, open(os.path.join(args.output_dir, args.run_idx + "_time_testing.pkl"), "wb"))
-    pickle.dump(heatmaps_per_class,
-                open(os.path.join(args.output_dir, args.run_idx + "_attention_bands.pkl"), "wb"))
 
 
-def load_model(n_attention_modules: int, n_classes: int, input_dimension: int):
+def load_model(n_attention_modules: int, n_classes: int, input_dimension: int, uses_attention: bool):
     """
     Load attention-based model architectures.
     :param n_attention_modules: Number of attention modules = {2, 3, 4}.
     :param n_classes: Number of classes for the problem.
     :param input_dimension: Size of the spectrum channel.
+    :param uses_attention: Boolean indicating whether to use attention.
     :return: Instance of the model.
     """
-
     if n_attention_modules == 2:
-        print("Model with 2 attention modules.")
-        return Model2(n_classes, input_dimension)
+        return Model2(num_of_classes=n_classes, input_dimension=input_dimension, uses_attention=uses_attention)
     if n_attention_modules == 3:
-        print("Model with 3 attention modules.")
-        return Model3(n_classes, input_dimension)
+        return Model3(num_of_classes=n_classes, input_dimension=input_dimension, uses_attention=uses_attention)
     if n_attention_modules == 4:
-        print("Model with 4 attention modules.")
-        return Model4(n_classes, input_dimension)
+        return Model4(num_of_classes=n_classes, input_dimension=input_dimension, uses_attention=uses_attention)
 
 
 def run(args: argparse.Namespace, selected_bands: np.ndarray = None) -> None:
     """
     Method for running the experiments.
+
     :param args: Parsed arguments.
     :param selected_bands: Bands selected by the outlier detection algorithm.
     :return: None.
@@ -189,7 +189,7 @@ def run(args: argparse.Namespace, selected_bands: np.ndarray = None) -> None:
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
     if not os.path.exists(args.output_dir):
         os.makedirs(args.output_dir)
-    print("Training attention model for dataset: {}".format(os.path.basename(os.path.normpath(args.dataset_path))))
+    print("Training model for dataset: {}".format(os.path.basename(os.path.normpath(args.dataset_path))))
     samples, labels = get_loader_function(data_path=args.dataset_path, ref_map_path=args.labels_path)
     if selected_bands is not None:
         print("Selecting bands...")
@@ -200,53 +200,84 @@ def run(args: argparse.Namespace, selected_bands: np.ndarray = None) -> None:
                                                                           validation_size=args.validation,
                                                                           test_size=args.test)
     model = load_model(n_attention_modules=args.modules,
-                       n_classes=int(y_train.max() + 1),
-                       input_dimension=x_train.shape[-1])
+                       n_classes=int(labels.max() + 1),
+                       input_dimension=x_train.shape[-1],
+                       uses_attention=str2bool(args.attn))
     model.to(device)
-    if args.attn == "true":
-        model.uses_attention = True
-    if args.attn == "false":
-        model.uses_attention = False
     train_network(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val, model=model, args=args)
     infer_network(x_test=x_test, y_test=y_test, args=args, input_size=x_train.shape[-1])
 
 
-def plot_heatmaps(heatmaps: np.ndarray, args: argparse.Namespace):
+def plot_heatmaps(heatmaps: np.ndarray, args: argparse.Namespace, show_fig: bool) -> None:
+    """
+    Plot heatmaps for each class.
+
+    :param heatmaps: Array containing attention scores for all classes.
+    :param args: Arguments.
+    :param show_fig: Boolean indicating whether to show the selected bands heatmap.
+    :return: None
+    """
     fig, axis = plt.subplots()
     heatmap = axis.pcolor(heatmaps)
-    axis.set_yticklabels([str(class_ + 1) for class_ in range(heatmaps.shape[0])], minor=False)
+    axis.set_yticklabels(list(range(heatmaps.shape[0])), minor=True)
     plt.colorbar(heatmap)
     fig.set_size_inches(12, 4)
     plt.title("Attention heatmaps scores")
-    plt.ylabel("Class index")
-    plt.xlabel("Band index")
+    plt.ylabel("Class")
+    plt.xlabel("Band")
     plt.savefig(os.path.join(args.output_dir, args.run_idx + "_attention_map.pdf"))
+    if show_fig:
+        plt.show()
 
 
 def eval_heatmaps(args: argparse.Namespace) -> np.ndarray:
     """
-    Detect outliers in the collected heatmaps.
+    Detect outliers in the collected heatmaps over all classes.
 
     :param args: Parsed arguments.
     :return: Array containing selected bands.
     """
     heatmaps = pickle.load(open(os.path.join(args.output_dir, args.run_idx + "_attention_bands.pkl"), "rb"))
-    plot_heatmaps(heatmaps, args)
+    plot_heatmaps(heatmaps=heatmaps, args=args, show_fig=True)
     clf = EllipticEnvelope(contamination=float(args.cont))
     outliers = np.asarray(
         [(clf.fit(np.expand_dims(map_, axis=1))).predict(np.expand_dims(map_, axis=1)) for map_ in heatmaps])
     outliers[outliers == 1] = 0
-    nonzero = np.asarray([np.nonzero(outlier) for outlier in outliers]).squeeze()
+    nonzero = np.asarray(
+        [np.nonzero(outlier) for outlier in outliers if np.asarray(np.nonzero(outlier)).size > 0]).ravel()
     selected_bands = np.unique(nonzero)
     print("Selected bands: {0}".format(selected_bands))
+    np.savetxt(os.path.join(args.output_dir, args.run_idx + "_selected_bands"), selected_bands, delimiter="\n",
+               fmt="%d")
     return selected_bands
 
 
-def main():
+def str2bool(string_arg):
+    if string_arg.lower() in ("yes", "true", "t", "y", "1"):
+        return True
+    elif string_arg.lower() in ("no", "false", "f", "n", "0"):
+        return False
+    else:
+        raise argparse.ArgumentTypeError("Boolean value expected.")
+
+
+def main() -> None:
+    """
+    Run band selection and then train model on selected bands.
+
+    :return: None
+    """
     args = arguments()
+    if not str2bool(args.attn):
+        args.run_idx += "_no_attention"
     run(args)
-    selected_bands = eval_heatmaps(args)
-    run(args, selected_bands)
+    if str2bool(args.attn):
+        # If model was using attention, select bands from obtained heatmap.
+        selected_bands = eval_heatmaps(args)
+        # After selection train new model without attention on reduced data:
+        args.attn = "false"
+        args.run_idx += "_no_attention"
+        run(args, selected_bands)
 
 
 if __name__ == "__main__":

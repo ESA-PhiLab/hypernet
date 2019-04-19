@@ -8,13 +8,12 @@ SPECTRAL_AXIS = -1
 CLASS_LABEL = 1
 
 
-def load_data(data_path: str, ref_map_path: str):
+def load_data(data_path: str, ref_map_path: str) -> tuple:
     """
     Load data method.
 
     :param data_path: Path to data.
     :param ref_map_path: Path to labels.
-    :param get_ref_map: True if return ground truth map.
     :return: Prepared data.
     """
     data = None
