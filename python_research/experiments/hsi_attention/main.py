@@ -240,11 +240,10 @@ def eval_heatmaps(args: argparse.Namespace) -> np.ndarray:
     heatmaps = pickle.load(open(os.path.join(args.output_dir, args.run_idx + "_attention_bands.pkl"), "rb"))
     plot_heatmaps(heatmaps=heatmaps, args=args, show_fig=True)
     clf = EllipticEnvelope(contamination=float(args.cont))
-    outliers = np.asarray(
-        [(clf.fit(np.expand_dims(map_, axis=1))).predict(np.expand_dims(map_, axis=1)) for map_ in heatmaps])
+    heatmaps = np.expand_dims(np.mean(heatmaps, axis=0), axis=1)
+    outliers = clf.fit(heatmaps).predict(heatmaps)
     outliers[outliers == 1] = 0
-    nonzero = np.asarray(
-        [np.nonzero(outlier) for outlier in outliers if np.asarray(np.nonzero(outlier)).size > 0]).ravel()
+    nonzero = np.nonzero(outliers)
     selected_bands = np.unique(nonzero)
     print("Selected bands: {0}".format(selected_bands))
     np.savetxt(os.path.join(args.output_dir, args.run_idx + "_selected_bands"), selected_bands, delimiter="\n",
