@@ -26,7 +26,7 @@ def get_images(data_name: str, path: str, bands_txt: str, dest_path: str, do_shu
 
     :param data_name: Name of the data.
     :param path: Path to data.
-    :param bands_txt: Path to txt file containing selected bands.
+    :param bands_txt: Path to .txt file containing selected bands.
     :param dest_path: Path to destination directory.
     :param do_shuffle: Boolean indicating whether to shuffle spectral bands.
     :return: None.
@@ -53,9 +53,3 @@ def get_images(data_name: str, path: str, bands_txt: str, dest_path: str, do_shu
         dst_ds.GetRasterBand(2).WriteArray(image[..., 1])
         dst_ds.GetRasterBand(3).WriteArray(image[..., 2])
         dst_ds.FlushCache()
-
-
-if __name__ == '__main__':
-    get_images('salinas', r"C:\Users\ltulczyjew\Desktop\hypernet-data\Salinas.mat",
-               r"C:\Users\ltulczyjew\Desktop\band_selection_results\ic\salinas\38_bands\selected_bands_38",
-               r"C:\Users\ltulczyjew\Desktop\d", do_shuffle=True)

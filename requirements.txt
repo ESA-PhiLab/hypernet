@@ -1,3 +1,5 @@
+osr
+gdal
 scipy
 tqdm
 scikit-image
