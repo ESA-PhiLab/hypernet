@@ -128,12 +128,9 @@ def generate_pseudo_ground_truth_map(args: argparse.Namespace):
     print("SVM classification map similarity score according to GT map {0:5.2f}%".format(
         ((ref_map == updated_ref_map).sum() / ref_map.size) * float(100)))
 
-    improved_class_map = edge_preserving_filter(ref_map=one_hot_ref_map, neighborhood_size=args.r,
+    improved_class_map = edge_preserving_filter(ref_map=one_hot_ref_map,
+                                                window_size=2 * (args.radius_size - 1) + 1,
                                                 guided_image=guided_image)
-
-    # TODO delete:
-    print("SVM classification \"improved\" map similarity score according to GT map {0:5.2f}%".format(
-        ((improved_class_map == ref_map).sum() / ref_map.size) * float(100)))
 
     np.save(os.path.join(args.dest_path, "improved_classification_map_{}".format(str(args.bands_num))),
             improved_class_map)
