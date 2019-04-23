@@ -34,7 +34,8 @@ def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
     yi = np.empty(shape=ref_map.shape)
     print("Calculating new \"improved\" reference map")
     for i in tqdm(range(ref_map.shape[SPECTRAL_AXIS]), total=ref_map.shape[SPECTRAL_AXIS]):
-        for row_index, col_index in product(range(ref_map.shape[ROW_AXIS]), range(ref_map.shape[COLUMNS_AXIS])):
+        for row_index, col_index in product(range(ref_map.shape[ROW_AXIS]),
+                                            range(ref_map.shape[COLUMNS_AXIS])):
             a_k_sum, b_k_sum = 0, 0
             row_sub_indexes, col_sub_indexes = \
                 list(range(row_index - neighborhood_size + 1, row_index + neighborhood_size)), \
