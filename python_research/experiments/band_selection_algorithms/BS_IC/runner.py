@@ -23,8 +23,8 @@ def arg_parser() -> argparse.Namespace:
 
 def main():
     arguments = arg_parser()
-    generated_map = generate_pseudo_ground_truth_map(args=arguments)
-    select_bands(pseudoground_truth_map=generated_map, args=arguments)
+    generate_pseudo_ground_truth_map(args=arguments)
+    select_bands(args=arguments)
 
 
 if __name__ == "__main__":

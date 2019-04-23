@@ -46,17 +46,21 @@ def train_classifiers(br, train_samples: list, train_labels: list,
     return band_scores
 
 
-def select_bands(pseudoground_truth_map: np.ndarray, args: argparse.Namespace):
+def select_bands(args: argparse.Namespace, improved_classification_map: np.ndarray = None):
     """
     Select, save and show selected bands.
 
-    :param pseudoground_truth_map: Reference map.
+    :param improved_classification_map: Reference map.
     :param args: Arguments passed.
     """
+    if improved_classification_map is None:
+        improved_classification_map = np.load(os.path.join(args.dest_path,
+                                                           "improved_classification_map_{}.npy".format(
+                                                               str(args.bands_num))))
     selected_bands = []
-    data = load_data(data_path=args.data_path, ref_map_path=args.ref_map_path, get_ref_map=False)
+    data = load_data(data_path=args.data_path, ref_map_path=args.ref_map_path)[0]
     bs, br = [], data
-    train_samples, train_labels, test_samples, test_labels = prepare_datasets(pseudoground_truth_map,
+    train_samples, train_labels, test_samples, test_labels = prepare_datasets(improved_classification_map,
                                                                               args.training_patch)
     while selected_bands.__len__() < args.bands_num:
         if selected_bands.__len__() == 0:

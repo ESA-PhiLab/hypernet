@@ -2,7 +2,6 @@ import argparse
 import os
 
 import matplotlib.pyplot as plt
-from python_research.experiments.band_selection_algorithms.MI.mutual_information import *
 from sklearn.preprocessing import MinMaxScaler
 
 from python_research.experiments.band_selection_algorithms.MI.spectral_band import SpectralBand
@@ -103,7 +102,6 @@ class MutualInformation(object):
         self.ref_map_hist = np.histogram(self.ref_map.flatten(),
                                          (self.ref_map.max() - 1))[0] / self.ref_map.size
         min_max_scaler = MinMaxScaler(feature_range=(0, 255))
-        self.bands_ids = list(range(data.shape[SPECTRAL_AXIS]))
         for i in range(data.shape[SPECTRAL_AXIS]):
             band = np.asarray(min_max_scaler.fit_transform(data[..., i])).astype(int)
             band = band[non_zeros]
@@ -123,15 +121,16 @@ def arg_parser():
     :return: Parsed arguments.
     """
     parser = argparse.ArgumentParser(description="Arguments for mutual information band selection.")
-    parser.add_argument("--data_path", dest="data_path", type=str)
-    parser.add_argument("--ref_map_path", dest="ref_map_path", type=str)
+    parser.add_argument("--data_path", dest="data_path", type=str, help="Path to data.")
+    parser.add_argument("--ref_map_path", dest="ref_map_path", type=str, help="Path to ground truth.")
     parser.add_argument("--dest_path", dest="dest_path", type=str, help="Destination path for selected bands.")
-    parser.add_argument("--X", dest="X", type=int, default=20)
+    parser.add_argument("--X", dest="X", type=int, help="Number of bands to select.")
     parser.add_argument("--b", dest="b", type=int, default=3,
                         help="This parameter referred in the paper as: \"rejection bandwidth\" is dataset dependent."
                              "For Pavia University can be 3 and for Salinas Valley 5.")
     parser.add_argument("--eta", dest="eta", type=float, default=0.007,
-                        help="This parameter referred in the paper as: \"complementary threshold\" is dataset dependent.")
+                        help="This parameter referred in the paper as: \"complementary threshold\" "
+                             "is dataset dependent.")
     return parser.parse_args()
 
 

@@ -1,6 +1,12 @@
 class SpectralBand(object):
     def __init__(self, histogram, joint_histogram, band_index):
-        pass
+        """
+        Spectral band class initializer.
+
+        :param histogram:
+        :param joint_histogram:
+        :param band_index:
+        """
         self.histogram = histogram
         self.joint_histogram = joint_histogram
         self.band_index = band_index

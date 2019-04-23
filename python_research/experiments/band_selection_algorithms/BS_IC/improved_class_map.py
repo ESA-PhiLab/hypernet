@@ -50,8 +50,9 @@ def one_hot_map(ref_map: np.ndarray) -> np.ndarray:
     :param ref_map: Passed reference map.
     :return: One - hot encoded reference map.
     """
-    max_ = (ref_map.max() + abs(BG_CLASS)).astype(int)
-    one_hot_ref_map = np.zeros(shape=[ref_map.shape[ROW_AXIS], ref_map.shape[COLUMNS_AXIS], max_])
+    ref_map += abs(BG_CLASS)
+    one_hot_ref_map = np.zeros(shape=[ref_map.shape[ROW_AXIS], ref_map.shape[COLUMNS_AXIS],
+                                      ref_map.max() + abs(BG_CLASS)])
     rows, columns = list(range(ref_map.shape[ROW_AXIS])), list(range((ref_map.shape[COLUMNS_AXIS])))
     for i, j in product(rows, columns):
         one_hot_ref_map[i, j, ref_map[i, j].astype(int)] = CLASS_LABEL
@@ -122,13 +123,17 @@ def generate_pseudo_ground_truth_map(args: argparse.Namespace):
                                             samples=train_samples + test_samples,
                                             ref_map_shape=ref_map.shape)
 
-    one_hot_ref_map = one_hot_map(ref_map=updated_ref_map)
+    one_hot_ref_map = one_hot_map(ref_map=updated_ref_map.copy())
 
     print("SVM classification map similarity score according to GT map {0:5.2f}%".format(
         ((ref_map == updated_ref_map).sum() / ref_map.size) * float(100)))
 
-    pseudo_ground_truth_map = edge_preserving_filter(ref_map=one_hot_ref_map, neighborhood_size=args.r,
-                                                     guided_image=guided_image)
+    improved_class_map = edge_preserving_filter(ref_map=one_hot_ref_map, neighborhood_size=args.r,
+                                                guided_image=guided_image)
 
-    np.save(os.path.join(args.dest_path, "pseudo_ground_truth_map_{}".format(str(args.bands_num))),
-            pseudo_ground_truth_map)
+    # TODO delete:
+    print("SVM classification \"improved\" map similarity score according to GT map {0:5.2f}%".format(
+        ((improved_class_map == ref_map).sum() / ref_map.size) * float(100)))
+
+    np.save(os.path.join(args.dest_path, "improved_classification_map_{}".format(str(args.bands_num))),
+            improved_class_map)
