@@ -8,47 +8,52 @@ from python_research.experiments.band_selection_algorithms.BS_IC.improved_class_
 from python_research.experiments.band_selection_algorithms.utils import *
 
 
-def train_classifiers(br, train_samples: list, train_labels: list,
-                      test_samples: list, test_labels: list, bs=None):
+def train_classifiers(br: list, bs: np.ndarray, train_samples: list, train_labels: list,
+                      test_samples: list, test_labels: list) -> list:
     """
     Train SVMs on each band and obtain accuracies.
 
     :param br: Set of bands.
+    :param bs: Set of selected bands.
     :param train_samples: Indexed training data.
     :param train_labels: Indexed training labels.
     :param test_samples: Indexed test data.
     :param test_labels: Indexed test labels.
-    :param bs: Set of selected bands.
-    :return:
+    :return: List of accuracy scores for all combined bands.
     """
     band_scores = []
     model = svm.SVC(kernel='rbf', C=1024, gamma=2, decision_function_shape='ovo',
                     probability=True, class_weight='balanced')
     if bs is not None:
-        temp_br = []
-        for i in range(br.shape[SPECTRAL_AXIS]):
-            temp_br.append(np.concatenate((np.expand_dims(br[..., i], -1), bs), axis=-1))
-        for i in range(temp_br.__len__()):
-            print('Band index: {}'.format(str(i)))
-            model.fit(get_data_by_indexes(train_samples, temp_br[i]), train_labels)
-            score = model.score(get_data_by_indexes(test_samples, temp_br[i]), test_labels)
-            print('Score: ', score)
+        for i in range(br.__len__()):
+            if br[i] is not None:
+                if bs.shape.__len__() == 2:
+                    bs = np.expand_dims(bs, axis=-1)
+                br[i] = np.concatenate((np.expand_dims(br[i], axis=-1),
+                                        bs), axis=-1)
+
+    for i in range(br.__len__()):
+        if br[i] is not None:
+            print("Band index: {}".format(str(i)))
+            if bs is None:
+                train_data, test_data = np.expand_dims(get_data_by_indexes(train_samples, br[i]), axis=-1), \
+                                        np.expand_dims(get_data_by_indexes(test_samples, br[i]), axis=-1)
+            else:
+                print('Combined band depth: {}'.format(br[i].shape[-1]))
+                train_data, test_data = get_data_by_indexes(train_samples, br[i]), \
+                                        get_data_by_indexes(test_samples, br[i])
+            model.fit(train_data, train_labels)
+            score = model.score(test_data, test_labels)
             band_scores.append(score)
-    else:
-        temp_br = br.copy()
-        for i in range(temp_br.shape[SPECTRAL_AXIS]):
-            print('Band index: {}'.format(str(i)))
-            model.fit(np.expand_dims(get_data_by_indexes(train_samples, temp_br[..., i]), axis=-1), train_labels)
-            score = model.score(np.expand_dims(get_data_by_indexes(test_samples, temp_br[..., i]), axis=-1),
-                                test_labels)
-            band_scores.append(score)
             print('Score: ', score)
+        else:
+            band_scores.append(-1)
     return band_scores
 
 
 def select_bands(args: argparse.Namespace, improved_classification_map: np.ndarray = None):
     """
-    Select, save and show selected bands.
+    Select, save and show selected bands using ICM algorithm.
 
     :param improved_classification_map: Reference map.
     :param args: Arguments passed.
@@ -59,21 +64,22 @@ def select_bands(args: argparse.Namespace, improved_classification_map: np.ndarr
                                                                str(args.bands_num))))
     selected_bands = []
     data = load_data(data_path=args.data_path, ref_map_path=args.ref_map_path)[0]
-    bs, br = [], data
+    data = min_max_normalize_data(data=data)
+    bs, br = None, [data[..., i] for i in range(data.shape[SPECTRAL_AXIS])]
     train_samples, train_labels, test_samples, test_labels = prepare_datasets(improved_classification_map,
                                                                               args.training_patch)
     while selected_bands.__len__() < args.bands_num:
-        if selected_bands.__len__() == 0:
-            band_scores = train_classifiers(br, train_samples, train_labels, test_samples, test_labels)
-        else:
-            band_scores = train_classifiers(br, train_samples, train_labels, test_samples, test_labels,
-                                            np.moveaxis(bs, 0, -1))
-        for i in selected_bands:
-            band_scores[i] = -1
+        band_scores = train_classifiers(br.copy(), bs, train_samples,
+                                        train_labels, test_samples, test_labels)
         band_id = np.argmax(band_scores).astype(int)
         selected_bands.append(band_id)
-        bs.append(br[..., band_id])
-        print('Len: ', selected_bands.__len__())
+        if bs is None:
+            bs = br[band_id]
+        else:
+            if bs.shape.__len__() == 2:
+                bs = np.expand_dims(bs, axis=-1)
+            bs = np.concatenate((np.expand_dims(br[band_id], axis=-1), bs), axis=-1)
+        br[band_id] = None
 
     np.savetxt(fname=os.path.join(args.dest_path, "selected_bands_{}".format(str(args.bands_num))),
                X=np.sort(np.asarray(selected_bands)), fmt="%d")
