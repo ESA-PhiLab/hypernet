@@ -84,3 +84,4 @@ def select_bands(args: argparse.Namespace, improved_classification_map: np.ndarr
     np.savetxt(fname=os.path.join(args.dest_path, "selected_bands_{}".format(str(args.bands_num))),
                X=np.sort(np.asarray(selected_bands)), fmt="%d")
     print("Selected bands: {}".format(np.sort(np.asarray(selected_bands))))
+    print("Number of selected bands: {}".format(np.unique(selected_bands).size))

@@ -151,10 +151,7 @@ def load_data(path, ref_map_path, drop_bg=False):
     else:
         raise ValueError("This file type is not supported.")
     assert data is not None and ref_map_path is not None, 'There is no data to be loaded.'
-    data = data.astype(float)
-    min_ = np.amin(data)
-    max_ = np.amax(data)
-    data = (data - min_) / (max_ - min_)
+    data = min_max_normalize_data(data=data.astype(float))
     if drop_bg:
         non_zeros = np.nonzero(ref_map)
         prepared_data = []

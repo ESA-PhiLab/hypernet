@@ -27,7 +27,7 @@ def main():
     arguments = arg_parser()
     if not os.path.exists(arguments.dest_path):
         os.makedirs(arguments.dest_path)
-    # generate_pseudo_ground_truth_map(args=arguments)
+    generate_pseudo_ground_truth_map(args=arguments)
     select_bands(args=arguments)
 
 
