@@ -16,9 +16,7 @@ def arguments():
     parser.add_argument('--TD_size', dest='TD_size', type=int, help='Initial size of dominant population.', default=110)
     parser.add_argument('--P_init_size', dest='P_init_size', type=int,
                         help='Initial size of population P.', default=200)
-    parser.add_argument('--bands_per_antibody', dest='bands_per_antibody', type=int, help='Number of bands per antibody'
-                                                                                          'PaviaU: 20'
-                                                                                          'Salinas: 21')
+    parser.add_argument('--bands_per_antibody', dest='bands_per_antibody', type=int, help='Number of selected bands.')
     parser.add_argument('--data_path', dest='data_path', type=str)
     parser.add_argument('--ref_map_path', dest='ref_map_path', type=str)
     parser.add_argument('--dest_path', dest='dest_path', type=str, help='Destination path for selected bands.')
@@ -50,61 +48,38 @@ def calculate_crowding_distances(list_of_antibodies: list) -> np.ndarray:
     antibodies_entropy, antibodies_distance = get_fitness(
         list_of_antibodies=list_of_antibodies)
     crowding_distances = []
-    for antibody_index in range(len(list_of_antibodies)):
-        zeta_entropy = calculate_zeta_entropy(
-            antibody_index=antibody_index,
-            antibodies_entropy=antibodies_entropy,
-            list_of_antibodies=list_of_antibodies) / (max(antibodies_entropy) - min(antibodies_entropy))
-        zeta_distance = calculate_zeta_distance(
-            antibody_index=antibody_index,
-            antibodies_distance=antibodies_distance,
-            list_of_antibodies=list_of_antibodies) / (max(antibodies_distance) - min(antibodies_distance))
+    arg_sorted_entropy, arg_sorted_distance = np.argsort(antibodies_entropy).tolist(), \
+                                              np.argsort(antibodies_distance).tolist()
+    for antibody_index in range(list_of_antibodies.__len__()):
+        if list_of_antibodies[antibody_index].L < list_of_antibodies[antibody_index].K:
+            crowding_distances.append(0)
+            continue
+        if antibody_index == arg_sorted_entropy[0] or antibody_index == arg_sorted_entropy[-1]:
+            zeta_entropy = antibodies_entropy[arg_sorted_entropy[-1]] / (
+                    antibodies_entropy[arg_sorted_entropy[-1]] -
+                    antibodies_entropy[arg_sorted_entropy[0]])
+        else:
+            d_prime_prime = arg_sorted_entropy[arg_sorted_entropy.index(antibody_index) - 1]
+            d_prime = arg_sorted_entropy[arg_sorted_entropy.index(antibody_index) + 1]
+            min_diff = antibodies_entropy[d_prime] - antibodies_entropy[d_prime_prime]
+            assert min_diff >= 0
+            zeta_entropy = min_diff / (antibodies_entropy[arg_sorted_entropy[-1]] -
+                                       antibodies_entropy[arg_sorted_entropy[0]])
+
+        if antibody_index == arg_sorted_distance[0] or antibody_index == arg_sorted_distance[-1]:
+            zeta_distance = antibodies_distance[arg_sorted_distance[-1]] / (
+                    antibodies_distance[arg_sorted_distance[-1]] -
+                    antibodies_distance[arg_sorted_distance[0]])
+        else:
+            d_prime_prime = arg_sorted_distance[arg_sorted_distance.index(antibody_index) - 1]
+            d_prime = arg_sorted_distance[arg_sorted_distance.index(antibody_index) + 1]
+            min_diff = antibodies_distance[d_prime] - antibodies_distance[d_prime_prime]
+            assert min_diff >= 0
+            zeta_distance = min_diff / (antibodies_distance[arg_sorted_distance[-1]] -
+                                        antibodies_distance[arg_sorted_distance[0]])
+
         crowding_distances.append(zeta_entropy + zeta_distance)
     return np.asarray(crowding_distances)
-
-
-def calculate_zeta_entropy(antibody_index: int, antibodies_entropy: list, list_of_antibodies: list):
-    """
-    Helper method for calculating neighborhood entropy.
-
-    :param antibody_index: Index of antibody.
-    :param antibodies_entropy: Entropy of each antibody.
-    :param list_of_antibodies: All individuals stored in list.
-    :return: neighborhood entropy.
-    """
-    p_sorted_by_entropy = list(np.argsort(a=antibodies_entropy))
-    if list_of_antibodies[antibody_index].L < list_of_antibodies[antibody_index].K:
-        return 0
-    if antibody_index == p_sorted_by_entropy[0] or antibody_index == p_sorted_by_entropy[-1]:
-        return max(antibodies_entropy)
-    else:
-        left_antigen_index, right_antigen_index = \
-            p_sorted_by_entropy[(p_sorted_by_entropy.index(antibody_index) - 1)], \
-            p_sorted_by_entropy[(p_sorted_by_entropy.index(antibody_index) + 1)]
-        return list_of_antibodies[right_antigen_index].entropy_fitness - \
-               list_of_antibodies[left_antigen_index].entropy_fitness
-
-
-def calculate_zeta_distance(antibody_index: int, antibodies_distance: list, list_of_antibodies: list):
-    """
-    Helper method for calculating neighborhood distance.
-
-    :param antibody_index: Index of antibody.
-    :param antibodies_distance: Distance of each antibody.
-    :param list_of_antibodies: All individuals stored in list.
-    :return: neighborhood distance.
-    """
-    p_sorted_by_distance = list(np.argsort(a=antibodies_distance))
-    if list_of_antibodies[antibody_index].L < list_of_antibodies[antibody_index].K:
-        return 0
-    if antibody_index == p_sorted_by_distance[0] or antibody_index == p_sorted_by_distance[-1]:
-        return max(antibodies_distance)
-    else:
-        left_antigen_index, right_antigen_index = \
-            p_sorted_by_distance[(p_sorted_by_distance.index(antibody_index) - 1)], \
-            p_sorted_by_distance[(p_sorted_by_distance.index(antibody_index) + 1)]
-        return list_of_antibodies[right_antigen_index].distance_fitness - \
-               list_of_antibodies[left_antigen_index].distance_fitness
 
 
 def get_fitness(list_of_antibodies: list) -> list:

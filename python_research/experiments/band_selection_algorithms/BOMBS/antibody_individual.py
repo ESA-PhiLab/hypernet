@@ -98,7 +98,7 @@ class Antibody(object):
         """
         entropy_sum = 0
         for i in range(len(self.grey_scale_hist)):
-            entropy_sum += -np.sum(np.dot(self.grey_scale_hist[i], np.ma.log2(self.grey_scale_hist[i])))
+            entropy_sum += -np.sum(self.grey_scale_hist[i] * np.ma.log2(self.grey_scale_hist[i]))
         return entropy_sum / self.K
 
     def calculate_distance(self):
@@ -106,11 +106,11 @@ class Antibody(object):
         Cross Entropy is adopted as the distance criterion between selected bands in the antibody.
         """
         distances = 0
-        for i in range(len(self.grey_scale_hist)):
-            for j in range((i + 1), len(self.grey_scale_hist)):
-                distances += -np.sum(np.dot(self.grey_scale_hist[i], np.ma.log2(self.grey_scale_hist[j]))) + \
-                             -np.sum(np.dot(self.grey_scale_hist[j], np.ma.log2(self.grey_scale_hist[i])))
-        distances = distances / (self.K * (self.K - 1))
+        for i in range(self.grey_scale_hist.__len__()):
+            for j in range(i + 1, self.grey_scale_hist.__len__()):
+                distances += -np.sum(self.grey_scale_hist[i] * np.ma.log2(self.grey_scale_hist[j])) + \
+                             -np.sum(self.grey_scale_hist[j] * np.ma.log2(self.grey_scale_hist[i]))
+        distances = (2 / (self.K * (self.K - 1))) * distances
         return distances
 
     def clear_individual(self):

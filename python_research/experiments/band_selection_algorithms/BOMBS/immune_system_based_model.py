@@ -1,4 +1,3 @@
-import copy
 import math
 import os
 import random
@@ -31,7 +30,7 @@ class AntibodyPopulation(object):
     def initialization(self):
         """
         Step 1. Initialization.
-        Generate an initial antibody population P_zero, with a size Nd.
+        Generate an initial antibody population P_zero, with a size of Nd.
         """
         bands = self.randomize_bands(args=self.args)
         [self.P.append(Antibody(selected_bands=selected_bands, bands_ids=bands_ids, data_path=self.args.data_path,
@@ -40,7 +39,7 @@ class AntibodyPopulation(object):
     def update_dominant_population(self):
         """
         Step 2. Update Dominant Population.
-        Calculate fitness for all antigens in the population P.
+        Calculate fitness for all antibodies in the population P.
 
         Identify all dominant antibodies in P by NONDOMINATED SORTING.
         Select the dominant antibodies into a temporary dominant population TD.
@@ -48,12 +47,13 @@ class AntibodyPopulation(object):
         If size of temporary population is greater then size of dominant population
         perform crowding distance procedure and select antibodies.
         """
-        for antigen in self.P:
-            antigen.calculate_fitness()
-        if len(self.P) == self.args.Nd:
+        for antibody in self.P:
+            antibody.calculate_fitness()
+        self.P = self.nondominated_sort()
+        if self.P.__len__() == self.args.Nd:
             self.D = self.P
-        if len(self.P) > self.args.Nd:
-            self.TD = self.nondominated_sort()[:self.args.TD_size]
+        else:
+            self.TD = self.P[:self.args.TD_size]
             if self.args.TD_size > self.args.Nd:
                 chosen_antibodies = calculate_crowding_distances(list_of_antibodies=self.TD)
                 chosen_antibodies = np.argsort(-chosen_antibodies).tolist()[:self.args.Nd]
@@ -74,23 +74,17 @@ class AntibodyPopulation(object):
         else:
             self.A = self.D
 
-    def _copy(self, bands_ids: list, deep=None) -> Antibody:
+    def _copy(self, bands_ids: list) -> Antibody:
         """
-        Copy selected bands from given antibody and create its clone.
+        Copy selected bands from given antibody and create its clone based on the selected bands set.
 
-        :param bands_ids: Passed list of selected bands.
-        :param deep: Flag determining the kind of copy procedure.
+        :param bands_ids: List of selected bands.
         :return: Cloned antibody.
         """
-        antibody_copy = Antibody(selected_bands=load_data(self.args.data_path,
-                                                          self.args.ref_map_path)[..., np.unique(bands_ids)],
-                                 bands_ids=bands_ids,
-                                 data_path=self.args.data_path, ref_map_path=self.args.ref_map_path)
-        if deep is not None:
-            antibody_copy.entropy_fitness = copy.deepcopy(deep.entropy_fitness)
-            antibody_copy.distance_fitness = copy.deepcopy(deep.distance_fitness)
-            antibody_copy.dominant_fitness = copy.deepcopy(deep.dominant_fitness)
-        return antibody_copy
+        return Antibody(selected_bands=load_data(self.args.data_path,
+                                                 self.args.ref_map_path)[..., np.unique(bands_ids)],
+                        bands_ids=bands_ids,
+                        data_path=self.args.data_path, ref_map_path=self.args.ref_map_path)
 
     def clone_crossover_mutation(self, generation_idx: int):
         """
@@ -175,9 +169,8 @@ class AntibodyPopulation(object):
         return (int(c_ri) - self.u_min) / (self.u_max - self.u_min)
 
     def delta_tz(self, z, generation_idx, alpha):
-        t_prime = (1 - (generation_idx / self.args.Gmax)) ** self.b
-        t = (1 - alpha * t_prime)
-        delta_tz = int(z * t)
+        t = (1 - (generation_idx / self.args.Gmax)) ** self.b
+        delta_tz = int(z * (1 - alpha * t))
         return delta_tz
 
     def serialize_individuals(self):
@@ -195,7 +188,6 @@ class AntibodyPopulation(object):
     def nondominated_sort(self) -> list:
         """
         Fast - non - dominated - sort.
-        https://www.iitk.ac.in/kangal/Deb_NSGA-II.pdf
         """
         non_dominated_frotns = []
         selected_fronts = []

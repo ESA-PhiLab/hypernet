@@ -1,8 +1,12 @@
+import os
+
 from python_research.experiments.band_selection_algorithms.BOMBS.immune_system_based_model import AntibodyPopulation
 from python_research.experiments.band_selection_algorithms.BOMBS.utils import arguments
 
 
 def main(args):
+    if not os.path.exists(args.dest_path):
+        os.makedirs(args.dest_path)
     model = AntibodyPopulation(args=args)
     model.initialization()
     for g in range(args.G):
