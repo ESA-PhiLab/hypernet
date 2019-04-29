@@ -3,33 +3,34 @@ from python_research.experiments.band_selection_algorithms.utils import *
 
 
 class Antibody(object):
-    def __init__(self, selected_bands: np.ndarray, bands_ids: list, data_path: str, ref_map_path: str):
+    def __init__(self, selected_bands: np.ndarray, band_indexes: list, data_path: str, ref_map_path: str):
         """
         Initialize all instance variables of the antibody.
 
         :param selected_bands: Numpy array containing selected bands.
-        :param bands_ids: List of selected bands.
+        :param band_indexes: List of selected bands.
         :param data_path: Path to the data file.
-        :param ref_map_path: Path to the reference map file.
+        :param ref_map_path: Path to the reference map.
         """
-        self.grey_scale_hist = prep_bands(selected_bands=selected_bands)
-        self.bands_ids = bands_ids
+        self.grey_level_histograms = prep_bands(selected_bands=selected_bands)
+        self.band_indexes = band_indexes
         self.entropy_fitness = None
         self.distance_fitness = None
         self.dominant_fitness = None
-        self.K = selected_bands.shape[SPECTRAL_AXIS]
+        self.designed_band_size = selected_bands.shape[SPECTRAL_AXIS]
         self.dominant_fitness_check = lambda: np.max([self.entropy_fitness, self.distance_fitness])
         self.data_path = data_path
         self.ref_map_path = ref_map_path
-        self.Sp = []
-        self.L = len(np.unique(self.bands_ids).tolist())
+        self.sp_antibody_set = []
+        self.n_sorting_index = None
+        self.unique_band_size = len(np.unique(self.band_indexes).tolist())
 
     def __add__(self, other):
         """
         Add method used in "whole arithmetic crossover".
 
         :param other: Antibody individual.
-        :return: Returns antibody individual.
+        :return: Antibody individual.
         """
         if isinstance(other, int):
             if other == 0:
@@ -40,7 +41,7 @@ class Antibody(object):
         Add method used in "whole arithmetic crossover".
 
         :param other: Antibody individual.
-        :return: Returns antibody individual.
+        :return: Antibody individual.
         """
         if isinstance(other, int):
             if other == 0:
@@ -50,13 +51,13 @@ class Antibody(object):
         """
         Multiplication method used in "whole arithmetic crossover."
 
-        :param other: Integer value in range [0;1]
+        :param other: Integer value in range [0;1].
         :return: Antibody object or zero.
         """
         if isinstance(other, int):
             if other == 0:
                 return 0
-            if other == 1:
+            else:
                 return self
 
     def __rmul__(self, other):
@@ -69,21 +70,21 @@ class Antibody(object):
         if isinstance(other, int):
             if other == 0:
                 return 0
-            if other == 1:
+            else:
                 return self
 
-    def refresh_bands(self, data):
+    def refresh_bands(self, data: np.ndarray):
         """
-        Set unique bands for each antigen - it will lower the value
-        of objective functions for individuals which have repeating bands ids.
+        Set unique bands for each antibody, this process will lower the value
+        of objective functions for individuals, which have repeating bands indexes.
         """
-        selected_bands = data[..., np.unique(self.bands_ids)]
-        self.grey_scale_hist = prep_bands(selected_bands=selected_bands)
-        self.L = len(np.unique(self.bands_ids).tolist())
+        selected_bands = data[..., np.unique(self.band_indexes)]
+        self.grey_level_histograms = prep_bands(selected_bands=selected_bands)
+        self.unique_band_size = len(np.unique(self.band_indexes).tolist())
 
-    def calculate_fitness(self):
+    def calculate_objective_functions(self):
         """
-        Calculate fitness of the antibody.
+        Calculate values of objective functions of the antibodies.
         """
         self.entropy_fitness = self.calculate_entropy()
         self.distance_fitness = self.calculate_distance()
@@ -91,26 +92,26 @@ class Antibody(object):
 
     def calculate_entropy(self):
         """
-        For measuring the information or uncertainty of selected bands a Entropy function is used.
-        High entropy means that a random variable is informative and uncertain. Low entropy indicates,
+        For measuring the information or uncertainty of selected bands a entropy - based objective function is used.
+        High entropy means that a random variable is informative and uncertain, whereas low entropy indicates,
         that a random variable is not that random and not that informative.
         (Zero probabilities are not taken into consideration.)
         """
         entropy_sum = 0
-        for i in range(len(self.grey_scale_hist)):
-            entropy_sum += -np.sum(self.grey_scale_hist[i] * np.ma.log2(self.grey_scale_hist[i]))
-        return entropy_sum / self.K
+        for i in range(len(self.grey_level_histograms)):
+            entropy_sum += -np.sum(self.grey_level_histograms[i] * np.ma.log2(self.grey_level_histograms[i]))
+        return entropy_sum / self.designed_band_size
 
     def calculate_distance(self):
         """
         Cross Entropy is adopted as the distance criterion between selected bands in the antibody.
         """
         distances = 0
-        for i in range(self.grey_scale_hist.__len__()):
-            for j in range(i + 1, self.grey_scale_hist.__len__()):
-                distances += -np.sum(self.grey_scale_hist[i] * np.ma.log2(self.grey_scale_hist[j])) + \
-                             -np.sum(self.grey_scale_hist[j] * np.ma.log2(self.grey_scale_hist[i]))
-        distances = (2 / (self.K * (self.K - 1))) * distances
+        for i in range(self.grey_level_histograms.__len__()):
+            for j in range(i + 1, self.grey_level_histograms.__len__()):
+                distances += -np.sum(self.grey_level_histograms[i] * np.ma.log2(self.grey_level_histograms[j])) + \
+                             -np.sum(self.grey_level_histograms[j] * np.ma.log2(self.grey_level_histograms[i]))
+        distances = (2 / (self.designed_band_size * (self.designed_band_size - 1))) * distances
         return distances
 
     def clear_individual(self):
@@ -120,4 +121,4 @@ class Antibody(object):
         self.entropy_fitness = None
         self.distance_fitness = None
         self.dominant_fitness = None
-        self.Sp = []
+        self.sp_antibody_set = []

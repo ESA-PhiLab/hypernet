@@ -3,29 +3,33 @@ import argparse
 from python_research.experiments.band_selection_algorithms.utils import *
 
 
-def arguments():
+def arguments() -> argparse.Namespace:
     """
-    Arguments for running BOMBS selection algorithm. The default values are taken from the paper itself.
+    Arguments for running BOMBS selection algorithm.
+    The default values are taken from the paper.
     """
-    parser = argparse.ArgumentParser(description='Arguments for runner.')
-    parser.add_argument('--G', dest='G', type=int, help='Number of generations.', default=99999999)
-    parser.add_argument('--Gmax', dest='Gmax', type=int, help='Max. number of generations.', default=100)
-    parser.add_argument('--Na', dest='Na', type=int, help='Max. size of active population.', default=20)
-    parser.add_argument('--Nd', dest='Nd', type=int, help='Max. size of dominant population.', default=100)
-    parser.add_argument('--Nc', dest='Nc', type=int, help='Max. size of clone population.', default=100)
-    parser.add_argument('--TD_size', dest='TD_size', type=int, help='Initial size of dominant population.', default=110)
-    parser.add_argument('--P_init_size', dest='P_init_size', type=int,
-                        help='Initial size of population P.', default=200)
-    parser.add_argument('--bands_per_antibody', dest='bands_per_antibody', type=int, help='Number of selected bands.')
-    parser.add_argument('--data_path', dest='data_path', type=str)
-    parser.add_argument('--ref_map_path', dest='ref_map_path', type=str)
-    parser.add_argument('--dest_path', dest='dest_path', type=str, help='Destination path for selected bands.')
+    parser = argparse.ArgumentParser(description="Arguments for runner.")
+    parser.add_argument("--G", dest="G", type=int, help="Total number of generations.", default=99999999)
+    parser.add_argument("--Gmax", dest="Gmax", type=int, help="Maximum number of generations.", default=100)
+    parser.add_argument("--Na", dest="Na", type=int, help="Maximum size of active population.", default=20)
+    parser.add_argument("--Nd", dest="Nd", type=int, help="Maximum size of dominant population.", default=100)
+    parser.add_argument("--Nc", dest="Nc", type=int, help="Maximum size of clone population.", default=100)
+    parser.add_argument("--TD_size", dest="TD_size", type=int, help="Initial size of temporary dominant population.",
+                        default=110)
+    parser.add_argument("--P_init_size", dest="P_init_size", type=int,
+                        help="Initial size of population P.", default=200)
+    parser.add_argument("--bands_per_antibody", dest="bands_per_antibody",
+                        type=int,
+                        help="Number of selected bands.")
+    parser.add_argument("--data_path", dest="data_path", type=str)
+    parser.add_argument("--ref_map_path", dest="ref_map_path", type=str)
+    parser.add_argument("--dest_path", dest="dest_path", type=str, help="Destination path for selected bands.")
     return parser.parse_args()
 
 
 def prep_bands(selected_bands: np.ndarray) -> list:
     """
-    Gvien hyperspectral data block, prepare histograms.
+    Prepare normalized gray-level histograms.
 
     :param selected_bands: Array containing selected bands.
     :return: List of all histograms.
@@ -40,7 +44,7 @@ def prep_bands(selected_bands: np.ndarray) -> list:
 
 def calculate_crowding_distances(list_of_antibodies: list) -> np.ndarray:
     """
-    Calculate crowding distanced of each antibody.
+    Calculate crowding distances of each antibody.
 
     :param list_of_antibodies: List of individuals.
     :return: List of all crowding distances.
@@ -51,7 +55,7 @@ def calculate_crowding_distances(list_of_antibodies: list) -> np.ndarray:
     arg_sorted_entropy, arg_sorted_distance = np.argsort(antibodies_entropy).tolist(), \
                                               np.argsort(antibodies_distance).tolist()
     for antibody_index in range(list_of_antibodies.__len__()):
-        if list_of_antibodies[antibody_index].L < list_of_antibodies[antibody_index].K:
+        if list_of_antibodies[antibody_index].unique_band_size < list_of_antibodies[antibody_index].designed_band_size:
             crowding_distances.append(0)
             continue
         if antibody_index == arg_sorted_entropy[0] or antibody_index == arg_sorted_entropy[-1]:
