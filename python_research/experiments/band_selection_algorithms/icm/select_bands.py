@@ -3,7 +3,7 @@ import os
 
 from sklearn import svm
 
-from python_research.experiments.band_selection_algorithms.BS_IC.improved_class_map import prepare_datasets, \
+from python_research.experiments.band_selection_algorithms.icm.improved_class_map import prepare_datasets, \
     get_data_by_indexes
 from python_research.experiments.band_selection_algorithms.utils import *
 

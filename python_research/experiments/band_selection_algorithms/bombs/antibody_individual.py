@@ -1,4 +1,4 @@
-from python_research.experiments.band_selection_algorithms.BOMBS.utils import prep_bands
+from python_research.experiments.band_selection_algorithms.bombs.utils import prep_bands
 from python_research.experiments.band_selection_algorithms.utils import *
 
 

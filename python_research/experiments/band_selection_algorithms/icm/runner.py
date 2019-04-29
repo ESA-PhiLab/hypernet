@@ -1,9 +1,9 @@
 import argparse
 import os
 
-from python_research.experiments.band_selection_algorithms.BS_IC.improved_class_map import \
+from python_research.experiments.band_selection_algorithms.icm.improved_class_map import \
     generate_pseudo_ground_truth_map
-from python_research.experiments.band_selection_algorithms.BS_IC.select_bands import select_bands
+from python_research.experiments.band_selection_algorithms.icm.select_bands import select_bands
 
 
 def arg_parser() -> argparse.Namespace:

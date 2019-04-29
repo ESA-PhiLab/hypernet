@@ -4,7 +4,7 @@ from itertools import product
 
 from sklearn import svm
 
-from python_research.experiments.band_selection_algorithms.BS_IC.guided_filter import edge_preserving_filter
+from python_research.experiments.band_selection_algorithms.icm.guided_filter import edge_preserving_filter
 from python_research.experiments.band_selection_algorithms.utils import *
 
 

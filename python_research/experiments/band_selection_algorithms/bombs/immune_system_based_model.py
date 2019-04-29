@@ -5,8 +5,8 @@ from math import pow
 
 import numpy as np
 
-from python_research.experiments.band_selection_algorithms.BOMBS.antibody_individual import Antibody
-from python_research.experiments.band_selection_algorithms.BOMBS.utils import load_data, calculate_crowding_distances
+from python_research.experiments.band_selection_algorithms.bombs.antibody_individual import Antibody
+from python_research.experiments.band_selection_algorithms.bombs.utils import load_data, calculate_crowding_distances
 from python_research.experiments.band_selection_algorithms.utils import SPECTRAL_AXIS
 
 

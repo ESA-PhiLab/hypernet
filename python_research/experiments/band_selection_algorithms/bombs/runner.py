@@ -2,8 +2,8 @@ import os
 
 from tqdm import tqdm
 
-from python_research.experiments.band_selection_algorithms.BOMBS.immune_system_based_model import AntibodyPopulation
-from python_research.experiments.band_selection_algorithms.BOMBS.utils import arguments
+from python_research.experiments.band_selection_algorithms.bombs.immune_system_based_model import AntibodyPopulation
+from python_research.experiments.band_selection_algorithms.bombs.utils import arguments
 
 
 def main(args):

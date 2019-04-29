@@ -5,7 +5,7 @@ from python_research.experiments.band_selection_algorithms.utils import *
 
 def arguments() -> argparse.Namespace:
     """
-    Arguments for running BOMBS selection algorithm.
+    Arguments for running bombs selection algorithm.
     The default values are taken from the paper.
     """
     parser = argparse.ArgumentParser(description="Arguments for runner.")

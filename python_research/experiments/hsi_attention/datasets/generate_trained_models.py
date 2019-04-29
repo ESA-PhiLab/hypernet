@@ -1,6 +1,8 @@
 import numpy as np
 from scipy.io import loadmat
 
+from python_research.experiments.band_selection_algorithms.utils import min_max_normalize_data
+
 
 def create_sample_label_pairs(samples_by_class: list) -> tuple:
     """
@@ -93,11 +95,7 @@ def get_loader_function(data_path: str, ref_map_path: str) -> tuple:
                 ref_map = mat[key]
                 break
     assert data is not None and ref_map is not None, "The specified path or format of file is incorrect."
-    data = data.astype(float)
-    for band_id in range(data.shape[-1]):
-        max_ = np.amax(data[..., band_id])
-        min_ = np.amin(data[..., band_id])
-        data[..., band_id] = (data[..., band_id] - min_) / (max_ - min_)
+    data = min_max_normalize_data(data=data.astype(float))
     non_zeros = np.nonzero(ref_map)
     prepared_data = []
     for i in range(data.shape[-1]):

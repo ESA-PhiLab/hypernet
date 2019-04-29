@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
 
-from python_research.experiments.band_selection_algorithms.MI.spectral_band import SpectralBand
+from python_research.experiments.band_selection_algorithms.mi.spectral_band import SpectralBand
 from python_research.experiments.band_selection_algorithms.utils import *
 
 
@@ -76,7 +76,7 @@ class MutualInformation(object):
         """
         Calculate mutual information between the ground truth and each band in the hyperspectral data block.
 
-        :param dest_path: Destination path for MI plot.
+        :param dest_path: Destination path for mi plot.
         """
         h_b = -np.sum(np.dot(self.ref_map_hist, np.ma.log2(self.ref_map_hist)))
         for i in range(len(self.set_of_remaining_bands)):
