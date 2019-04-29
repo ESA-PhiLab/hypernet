@@ -90,7 +90,7 @@ class Antibody(object):
         self.distance_fitness = self.calculate_distance()
         self.dominant_fitness = self.dominant_fitness_check()
 
-    def calculate_entropy(self):
+    def calculate_entropy(self) -> float:
         """
         For measuring the information or uncertainty of selected bands a entropy - based objective function is used.
         High entropy means that a random variable is informative and uncertain, whereas low entropy indicates,
@@ -100,9 +100,9 @@ class Antibody(object):
         entropy_sum = 0
         for i in range(len(self.grey_level_histograms)):
             entropy_sum += -np.sum(self.grey_level_histograms[i] * np.ma.log2(self.grey_level_histograms[i]))
-        return entropy_sum / self.designed_band_size
+        return float(entropy_sum / self.designed_band_size)
 
-    def calculate_distance(self):
+    def calculate_distance(self) -> float:
         """
         Cross Entropy is adopted as the distance criterion between selected bands in the antibody.
         """
@@ -111,8 +111,7 @@ class Antibody(object):
             for j in range(i + 1, self.grey_level_histograms.__len__()):
                 distances += -np.sum(self.grey_level_histograms[i] * np.ma.log2(self.grey_level_histograms[j])) + \
                              -np.sum(self.grey_level_histograms[j] * np.ma.log2(self.grey_level_histograms[i]))
-        distances = (2 / (self.designed_band_size * (self.designed_band_size - 1))) * distances
-        return distances
+        return float((2 / (self.designed_band_size * (self.designed_band_size - 1))) * distances)
 
     def clear_individual(self):
         """

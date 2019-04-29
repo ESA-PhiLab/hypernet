@@ -8,7 +8,7 @@ from python_research.experiments.band_selection_algorithms.utils import *
 
 
 def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
-                           window_size: int, epsilon: float = 1e-10):
+                           window_size: int, epsilon: float = 1e-10) -> np.ndarray:
     """
     Perform edge - preserving filtering on the newly created reference map.
 
@@ -16,7 +16,7 @@ def edge_preserving_filter(ref_map: np.ndarray, guided_image: np.ndarray,
     :param guided_image: Guided image as a mean over all bands from hyperspectral data.
     :param window_size: Size of the convolving window.
     :param epsilon: Regularizer constant.
-    :return:
+    :return: Improved classification map.
     """
     print("Window size = {}".format(window_size))
     col_indexes, row_indexes = \

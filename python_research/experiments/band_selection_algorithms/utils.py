@@ -40,6 +40,12 @@ def load_data(data_path: str, ref_map_path: str) -> tuple:
 
 
 def min_max_normalize_data(data: np.ndarray) -> np.ndarray:
+    """
+    Min-max data normalization method.
+
+    :param data: Data cube.
+    :return: Normalized data.
+    """
     for band_id in range(data.shape[SPECTRAL_AXIS]):
         max_ = np.amax(data[..., band_id])
         min_ = np.amin(data[..., band_id])
@@ -48,6 +54,12 @@ def min_max_normalize_data(data: np.ndarray) -> np.ndarray:
 
 
 def mean_normalize_data(data: np.ndarray) -> np.ndarray:
+    """
+    Mean normalization method.
+
+    :param data: Data cube.
+    :return: Normalized data.
+    """
     for band_id in range(data.shape[SPECTRAL_AXIS]):
         max_ = np.amax(data[..., band_id])
         min_ = np.amin(data[..., band_id])
@@ -57,6 +69,12 @@ def mean_normalize_data(data: np.ndarray) -> np.ndarray:
 
 
 def standardize_data(data: np.ndarray) -> np.ndarray:
+    """
+    Data standardization method.
+
+    :param data: Data cube.
+    :return: Standardized data.
+    """
     for band_id in range(data.shape[SPECTRAL_AXIS]):
         mean = np.mean(data[..., band_id])
         std = np.std(data[..., band_id])

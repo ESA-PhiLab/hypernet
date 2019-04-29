@@ -98,14 +98,14 @@ def get_fitness(list_of_antibodies: list) -> list:
     return [antibodies_entropy, antibodies_distance]
 
 
-def load_data(path, ref_map_path, drop_bg=False):
+def load_data(path, ref_map_path, drop_bg=False) -> np.ndarray:
     """
     Load data method.
 
     :param path: Path to data.
     :param ref_map_path: Path to labels.
     :param drop_bg: True if background drop is intended.
-    :return: Prepared data.
+    :return: Prepared data cube.
     """
     data = None
     ref_map = None

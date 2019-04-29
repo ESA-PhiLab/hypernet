@@ -22,30 +22,30 @@ def train_classifiers(br: list, bs: np.ndarray, train_samples: list, train_label
     :return: List of accuracy scores for all combined bands.
     """
     band_scores = []
-    model = svm.SVC(kernel='rbf', C=1024, gamma=2, decision_function_shape='ovo',
-                    probability=True, class_weight='balanced')
+    model = svm.SVC(kernel="rbf", C=1024, gamma=2, decision_function_shape="ovo",
+                    probability=True, class_weight="balanced")
     if bs is not None:
         for i in range(br.__len__()):
             if br[i] is not None:
                 if bs.shape.__len__() == 2:
-                    bs = np.expand_dims(bs, axis=-1)
-                br[i] = np.concatenate((np.expand_dims(br[i], axis=-1),
-                                        bs), axis=-1)
+                    bs = np.expand_dims(bs, axis=SPECTRAL_AXIS)
+                br[i] = np.concatenate((np.expand_dims(br[i], axis=SPECTRAL_AXIS),
+                                        bs), axis=SPECTRAL_AXIS)
 
     for i in range(br.__len__()):
         if br[i] is not None:
             print("Band index: {}".format(str(i)))
             if bs is None:
-                train_data, test_data = np.expand_dims(get_data_by_indexes(train_samples, br[i]), axis=-1), \
-                                        np.expand_dims(get_data_by_indexes(test_samples, br[i]), axis=-1)
+                train_data, test_data = np.expand_dims(get_data_by_indexes(train_samples, br[i]), axis=SPECTRAL_AXIS), \
+                                        np.expand_dims(get_data_by_indexes(test_samples, br[i]), axis=SPECTRAL_AXIS)
             else:
-                print('Combined band depth: {}'.format(br[i].shape[-1]))
+                print("Combined band depth: {}".format(br[i].shape[SPECTRAL_AXIS]))
                 train_data, test_data = get_data_by_indexes(train_samples, br[i]), \
                                         get_data_by_indexes(test_samples, br[i])
             model.fit(train_data, train_labels)
             score = model.score(test_data, test_labels)
             band_scores.append(score)
-            print('Score: ', score)
+            print("Score: {}".format(score))
         else:
             band_scores.append(-1)
     return band_scores
@@ -77,8 +77,8 @@ def select_bands(args: argparse.Namespace, improved_classification_map: np.ndarr
             bs = br[band_id]
         else:
             if bs.shape.__len__() == 2:
-                bs = np.expand_dims(bs, axis=-1)
-            bs = np.concatenate((np.expand_dims(br[band_id], axis=-1), bs), axis=-1)
+                bs = np.expand_dims(bs, axis=SPECTRAL_AXIS)
+            bs = np.concatenate((np.expand_dims(br[band_id], axis=SPECTRAL_AXIS), bs), axis=SPECTRAL_AXIS)
         br[band_id] = None
 
     np.savetxt(fname=os.path.join(args.dest_path, "selected_bands_{}".format(str(args.bands_num))),

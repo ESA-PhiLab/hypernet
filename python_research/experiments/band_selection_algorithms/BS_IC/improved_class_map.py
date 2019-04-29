@@ -10,10 +10,10 @@ from python_research.experiments.band_selection_algorithms.utils import *
 
 def prepare_datasets(ref_map: np.ndarray, training_patch: float) -> tuple:
     """
-    Prepare data for SVMs training.
+    Prepare data for band selection.
 
-    :param ref_map: Reference map for labels.
-    :param training_patch: Patch for training data, concern the lowest population class.
+    :param ref_map: Reference map containing labels.
+    :param training_patch: Patch containing training data.
     :return: Returns prepared data in tuple.
     """
     samples_by_classes = [[] for _ in range(int(ref_map.max()) + abs(BG_CLASS))]
@@ -45,10 +45,10 @@ def get_data_by_indexes(indexes: list, data: np.ndarray) -> np.ndarray:
 
 def one_hot_map(ref_map: np.ndarray) -> np.ndarray:
     """
-    Perform one - hot encoding over new reference map.
+    Perform one-hot encoding over new reference map.
 
     :param ref_map: Passed reference map.
-    :return: One - hot encoded reference map.
+    :return: One-hot encoded reference map.
     """
     ref_map += abs(BG_CLASS)
     one_hot_ref_map = np.zeros(shape=[ref_map.shape[ROW_AXIS], ref_map.shape[COLUMNS_AXIS],

@@ -167,7 +167,7 @@ class AntibodyPopulation(object):
 
     def end_generation(self):
         """
-        Clear memory after each generation is over.
+        Clear memory after each generation.
         """
         self.A.clear(), self.D.clear(), self.TD.clear(), self.C.clear(), self.C_prime.clear()
         map(lambda obj: obj.clear_individual, self.P)

@@ -17,13 +17,18 @@ def arg_parser() -> argparse.Namespace:
     parser.add_argument("--ref_map_path", dest="ref_map_path", type=str, help="Path to ground truth map.")
     parser.add_argument("--dest_path", dest="dest_path", type=str, help="Destination path.")
     parser.add_argument("--radius_size", dest="radius_size", type=int, default=5, help="Radius of the square window.")
-    parser.add_argument("--training_patch", dest="training_patch", type=float,
+    parser.add_argument("--training_patch", dest="training_patch", type=float, default=0.1,
                         help="Size of the training patch for SVM classifier.")
     parser.add_argument("--bands_num", dest="bands_num", type=int, help="Number of bands to select.")
     return parser.parse_args()
 
 
 def main():
+    """
+    Main method designed for running the ICM band selection algorithm.
+
+    :return: None.
+    """
     arguments = arg_parser()
     if not os.path.exists(arguments.dest_path):
         os.makedirs(arguments.dest_path)
