@@ -8,49 +8,58 @@ from python_research.experiments.sota_models.utils.models_runner import run_mode
 from python_research.experiments.sota_models.utils.monte_carlo import prep_monte_carlo
 
 
-def arguments():
+def arguments() -> argparse.Namespace:
     """
-    Arguments for running the experiments on 3D convolutional neural network.
+    Arguments for running the 3D convolutional neural network.
 
     :return: Parsed arguments.
     """
-    parser = argparse.ArgumentParser(description='Arguments for runner.')
-    parser.add_argument('--run_idx', dest='run_idx', help='Run index.')
-    parser.add_argument('--dtype', dest='dtype', help='Data type used by the model.')
-    parser.add_argument('--cont', dest='cont', help='Path to file containing indexes of selected bands.', type=str)
-    parser.add_argument('--epochs', dest='epochs', help='Number of epochs.', type=int)
-    parser.add_argument('--data_path', dest='data_path', help='Path to the data set.')
-    parser.add_argument('--data_name', dest='data_name', help='Name of the data set.')
-    parser.add_argument('--neighborhood_size', dest='neighborhood_size', help='Spatial size of the patch.', type=int)
-    parser.add_argument('--labels_path', dest='labels_path', help='Path to labels.')
-    parser.add_argument('--batch', dest='batch', help='Batch size.', type=int)
-    parser.add_argument('--patience', dest='patience', help='Number of epochs without improvement.')
-    parser.add_argument('--dest_path', dest='dest_path', help='Destination to the the artifacts folder.')
-    parser.add_argument('--classes', dest='classes', help='Number of classes.', type=int)
-    parser.add_argument('--test_size', dest='test_size', help='Test size.', type=float)
-    parser.add_argument('--val_size', dest='val_size', help='Validation size.', type=float)
-    parser.add_argument('--channels', dest='channels', nargs='+',
-                        help='List of channels. Format: --channels 1 2 3',
+    parser = argparse.ArgumentParser(description="Arguments for running 3D convolution.")
+    parser.add_argument("--run_idx", dest="run_idx", help="Index of run.", type=int)
+    parser.add_argument("--cont", dest="cont",
+                        help="Path to file containing indexes of selected bands. (Optional argument).",
+                        type=str)
+    parser.add_argument("--epochs", dest="epochs", help="Total number of epochs.", type=int)
+    parser.add_argument("--data_path", dest="data_path", help="Path to the dataset.", type=str)
+    parser.add_argument("--data_name", dest="data_name", help="Name of the dataset.", type=str)
+    parser.add_argument("--neighborhood_size", dest="neighborhood_size", help="Spatial size of the patch.", type=int)
+    parser.add_argument("--labels_path", dest="labels_path", help="Path to labels.", type=str)
+    parser.add_argument("--batch", dest="batch", help="Size of the batch.", type=int)
+    parser.add_argument("--patience", dest="patience", help="Number of epochs without improvement.", type=int)
+    parser.add_argument("--dest_path", dest="dest_path", help="Destination to the the artifacts folder.", type=str)
+    parser.add_argument("--classes", dest="classes", help="Number of classes.", type=int)
+    parser.add_argument("--test_size", dest="test_size", help="Size of the test subset.", type=float)
+    parser.add_argument("--val_size", dest="val_size", help="Size of the validation subset.", type=float)
+    parser.add_argument("--channels", dest="channels", nargs="+",
+                        help="List of following channels."
+                             "Example: \"--channels 1 2 3\"",
                         required=True)
-    parser.add_argument('--input_dim', dest='input_dim', nargs='+',
-                        help='Input dimensionality. Format: --channels spectral_dim_size 7 7',
+    parser.add_argument("--input_dim", dest="input_dim", nargs="+",
+                        help="Input sample dimensionality."
+                             "Format: \"--input_dim (number_of_channels) 7 7\"",
                         required=True)
     return parser.parse_args()
 
 
-def main(args):
+def main(args: argparse.Namespace):
     """
-    Create model.
+    Main method used for running the 3D convolution.
 
     :param args: Parsed arguments.
     """
+    device = torch.device("cpu")
+    dtype = "torch.FloatTensor"
+    if torch.cuda.is_available():
+        device = torch.device("cuda:0")
+        torch.set_default_tensor_type("torch.cuda.FloatTensor")
+        dtype = "torch.cuda.FloatTensor"
     model = conv_3D.ConvNet3D(classes=args.classes, channels=list(map(int, args.channels)),
                               input_dim=np.asarray(list(map(int, args.input_dim))),
-                              batch_size=args.batch, dtype=args.dtype)
+                              batch_size=args.batch, dtype=dtype).to(device=device)
     if torch.cuda.is_available():
         model = model.cuda()
     run_model(args=args, model=model, data_prep_function=prep_monte_carlo)
 
 
-if __name__ == '__main__':
-    main(arguments())
+if __name__ == "__main__":
+    main(args=arguments())

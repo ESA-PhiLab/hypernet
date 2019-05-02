@@ -10,7 +10,7 @@ from sklearn.covariance import EllipticEnvelope
 from tqdm import tqdm
 
 from python_research.experiments.hsi_attention.arguments import arguments
-from python_research.experiments.hsi_attention.datasets.generate_trained_models import get_loader_function, \
+from python_research.experiments.hsi_attention.datasets.generate_datasets import get_loader_function, \
     produce_splits
 from python_research.experiments.hsi_attention.models.model_2 import Model2
 from python_research.experiments.hsi_attention.models.model_3 import Model3
@@ -28,7 +28,7 @@ def train_network(x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y
     :param y_val: Labels for evaluation.
     :param model: Model designed for training.
     :param args: Parsed arguments.
-    :return:
+    :return: None.
     """
     training_history = []
     validation_history = []
@@ -114,7 +114,7 @@ def train_network(x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y
                 break
 
 
-def infer_network(x_test: np.ndarray, y_test: np.ndarray, args: argparse.Namespace, input_size: int) -> None:
+def infer_network(x_test: np.ndarray, y_test: np.ndarray, args: argparse.Namespace, input_size: int):
     """
     Conduct inference on the trained model.
 
@@ -158,7 +158,7 @@ def infer_network(x_test: np.ndarray, y_test: np.ndarray, args: argparse.Namespa
     pickle.dump(testing_time, open(os.path.join(args.output_dir, args.run_idx + "_time_testing.pkl"), "wb"))
 
 
-def load_model(n_attention_modules: int, n_classes: int, input_dimension: int, uses_attention: bool):
+def load_model(n_attention_modules: int, n_classes: int, input_dimension: int, uses_attention: bool) -> torch.nn.Module:
     """
     Load attention-based model architectures.
     :param n_attention_modules: Number of attention modules = {2, 3, 4}.
@@ -187,8 +187,7 @@ def run(args: argparse.Namespace, selected_bands: np.ndarray = None) -> None:
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+    os.makedirs(args.output_dir, exist_ok=True)
     print("Training model for dataset: {}".format(os.path.basename(os.path.normpath(args.dataset_path))))
     samples, labels = get_loader_function(data_path=args.dataset_path, ref_map_path=args.labels_path)
     if selected_bands is not None:
@@ -266,24 +265,23 @@ def str2bool(string_arg):
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
-def main() -> None:
+def main(args: argparse.Namespace) -> None:
     """
     Run band selection and then train model on selected bands.
 
     :return: None
     """
-    args = arguments()
     if not str2bool(args.attn):
         args.run_idx += "_no_attention"
     run(args)
     if str2bool(args.attn):
         # If model was using attention, select bands from obtained heatmap.
         selected_bands = eval_heatmaps(args)
-        # After selection train new model without attention on reduced data:
+        # After selection train new model without attention on reduced data.
         args.attn = "false"
         args.run_idx += "_no_attention"
         run(args, selected_bands)
 
 
 if __name__ == "__main__":
-    main()
+    main(args=arguments())

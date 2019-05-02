@@ -8,12 +8,11 @@ def prep_sets_by_sizes(args) -> tuple:
     Create sets grouped by the number of samples per class.
 
     args.train_size is the number of samples designed for training per each class.
-    args.val_size is the number of samples designed for validation for each class.
+    args.val_size is the number of samples designed for validation per each class.
     Testing set will contain lowest_class_population - (args.train_size + args.val_size) samples per each class.
-
-    :param args: Parsed arguments containing sizes of data sets.
+    :param args: Parsed arguments containing sizes of datasets.
     """
-    print('Balanced data preparation:')
+    print("Balanced data preparation:")
     samples = generate_samples(args=args)
     samples_by_classes = [[] for _ in range(args.classes)]
 

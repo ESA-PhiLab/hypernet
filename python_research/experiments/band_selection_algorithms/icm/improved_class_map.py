@@ -84,7 +84,8 @@ def construct_new_ref_map(labels: np.ndarray, samples: list, ref_map_shape: list
     return new_ref_map.astype(int)
 
 
-def train_svm(data: np.ndarray, test_labels: list, test_samples: list, train_labels: list, train_samples: list):
+def train_svm(data: np.ndarray, test_labels: list, test_samples: list, train_labels: list,
+              train_samples: list) -> np.ndarray:
     """
     Train SVM on input data and return its predictions.
     During band selection process, parameters of SVM are fixed in order to reduce computation burden.
@@ -128,8 +129,10 @@ def generate_pseudo_ground_truth_map(args: argparse.Namespace):
     print("SVM classification map similarity score according to GT map {0:5.2f}%".format(
         ((ref_map == updated_ref_map).sum() / ref_map.size) * float(100)))
 
+    window_size = 2 * (args.radius_size - 1) + 1
+
     improved_class_map = edge_preserving_filter(ref_map=one_hot_ref_map,
-                                                window_size=2 * (args.radius_size - 1) + 1,
+                                                window_size=window_size,
                                                 guided_image=guided_image)
 
     np.save(os.path.join(args.dest_path, "improved_classification_map_{}".format(str(args.bands_num))),

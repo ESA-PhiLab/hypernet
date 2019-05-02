@@ -7,7 +7,7 @@ import osr
 from scipy.io import loadmat
 
 
-def load_data(path):
+def load_data(path: str) -> np.ndarray:
     data = None
     if path.endswith(".npy"):
         data = np.load(path)
@@ -37,14 +37,14 @@ def get_images(data_name: str, path: str, bands_txt: str, dest_path: str, do_shu
     data = load_data(path)
     with open(bands_txt) as f:
         content = f.readlines()
-        content = np.asarray([x.rstrip('\n') for x in content], dtype=int)
+        content = np.asarray([x.rstrip("\n") for x in content], dtype=int)
     if do_shuffle:
         shuffle(content)
     data *= (255.0 / data.max())
     for i in range(0, len(content) - 2):
         image = data[..., content[slice(i, i + 3)]]
         x, y, z = image.shape
-        dst_ds = gdal.GetDriverByName('GTiff').Create('{0}_{1}_.tif'.format(
+        dst_ds = gdal.GetDriverByName("GTiff").Create("{0}_{1}_.tif".format(
             data_name, content[slice(i, i + 3)]), y, x, z, gdal.GDT_Byte)
         srs = osr.SpatialReference()
         srs.ImportFromEPSG(0)

@@ -10,7 +10,7 @@ def arguments() -> argparse.Namespace:
     """
     parser = argparse.ArgumentParser(description="Arguments for runner.")
     parser.add_argument("--G", dest="G", type=int, help="Total number of generations.", default=99999999)
-    parser.add_argument("--Gmax", dest="Gmax", type=int, help="Maximum number of generations.", default=100)
+    parser.add_argument("--Gmax", dest="Gmax", type=int, help="Maximum number of generations.", default=2)
     parser.add_argument("--Na", dest="Na", type=int, help="Maximum size of active population.", default=20)
     parser.add_argument("--Nd", dest="Nd", type=int, help="Maximum size of dominant population.", default=100)
     parser.add_argument("--Nc", dest="Nc", type=int, help="Maximum size of clone population.", default=100)
@@ -129,7 +129,7 @@ def load_data(path, ref_map_path, drop_bg=False) -> np.ndarray:
                 break
     else:
         raise ValueError("This file type is not supported.")
-    assert data is not None and ref_map_path is not None, 'There is no data to be loaded.'
+    assert data is not None and ref_map_path is not None, "There is no data to be loaded."
     data = min_max_normalize_data(data=data.astype(float))
     if drop_bg:
         non_zeros = np.nonzero(ref_map)

@@ -1,23 +1,21 @@
+import argparse
 import os
-
-from tqdm import tqdm
 
 from python_research.experiments.band_selection_algorithms.bombs.immune_system_based_model import AntibodyPopulation
 from python_research.experiments.band_selection_algorithms.bombs.utils import arguments
 
 
-def main(args):
+def main(args: argparse.Namespace):
     """
-    Main method for running the band selection algorithm.
+    Main method for running the BOMBS band selection algorithm.
 
     :param args: Object containing passed arguments.
     :return: None.
     """
-    if not os.path.exists(args.dest_path):
-        os.makedirs(args.dest_path)
+    os.makedirs(args.dest_path, exist_ok=True)
     model = AntibodyPopulation(args=args)
     model.initialization()
-    for iteration in tqdm(range(args.G), total=args.Gmax):
+    for iteration in range(args.G):
         model.update_dominant_population()
         model.serialize_individuals()
         if model.stop_condition(current_generation=iteration):
@@ -35,4 +33,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main(arguments())
+    main(args=arguments())

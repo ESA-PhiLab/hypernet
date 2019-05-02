@@ -135,12 +135,13 @@ def arg_parser() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main(args):
+def main(args: argparse.Namespace):
     """
     Main method containing all steps of the mutual information-based band selection algorithm.
 
     :param args: Parsed arguments.
     """
+    os.makedirs(args.dest_path, exist_ok=True)
     data, ref_map = load_data(data_path=args.data_path, ref_map_path=args.ref_map_path)
     mutual_info_band_selector = MutualInformation(designed_band_size=args.X, bandwidth=args.b, eta=args.eta)
     mutual_info_band_selector.prep_bands(data=data, ref_map=ref_map)

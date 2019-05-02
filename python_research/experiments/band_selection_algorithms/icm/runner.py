@@ -23,18 +23,17 @@ def arg_parser() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def main():
+def main(args: argparse.Namespace):
     """
     Main method designed for running the ICM band selection algorithm.
 
+    :param args Parsed arguments.
     :return: None.
     """
-    arguments = arg_parser()
-    if not os.path.exists(arguments.dest_path):
-        os.makedirs(arguments.dest_path)
-    generate_pseudo_ground_truth_map(args=arguments)
-    select_bands(args=arguments)
+    os.makedirs(args.dest_path, exist_ok=True)
+    generate_pseudo_ground_truth_map(args=args)
+    select_bands(args=args)
 
 
 if __name__ == "__main__":
-    main()
+    main(args=arg_parser())

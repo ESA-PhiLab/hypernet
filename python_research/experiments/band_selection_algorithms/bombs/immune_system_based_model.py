@@ -198,12 +198,12 @@ class AntibodyPopulation(object):
         Save artifacts of the best individual from the population.
         """
         max_i = np.argmax([i.dominant_fitness for i in self.D]).astype(int)
-        np.savetxt(os.path.join(self.args.dest_path, 'best_individual_bands'),
-                   np.sort(np.unique(self.D[max_i].band_indexes)), fmt='%d')
-        np.savetxt(os.path.join(self.args.dest_path, 'best_individual_entropy'),
-                   np.sort(np.unique(self.D[max_i].entropy_fitness)), fmt='%5.5f')
-        np.savetxt(os.path.join(self.args.dest_path, 'best_individual_distance'),
-                   np.sort(np.unique(self.D[max_i].distance_fitness)), fmt='%5.5f')
+        np.savetxt(os.path.join(self.args.dest_path, "best_individual_bands"),
+                   np.sort(np.unique(self.D[max_i].band_indexes)), fmt="%d")
+        np.savetxt(os.path.join(self.args.dest_path, "best_individual_entropy"),
+                   np.sort(np.unique(self.D[max_i].entropy_fitness)), fmt="%5.5f")
+        np.savetxt(os.path.join(self.args.dest_path, "best_individual_distance"),
+                   np.sort(np.unique(self.D[max_i].distance_fitness)), fmt="%5.5f")
 
     def nondominated_sort(self) -> list:
         """
