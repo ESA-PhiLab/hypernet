@@ -1,5 +1,6 @@
 import argparse
 import os
+from typing import NamedTuple
 
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import MinMaxScaler
@@ -55,8 +56,8 @@ class MutualInformation(object):
             self.set_of_remaining_bands.pop(self.set_of_remaining_bands.index(selected_band))
         self.set_of_selected_bands.append(selected_band.band_index)
         assert self.set_of_remaining_bands.__len__() >= \
-               neighbor_set.__len__(), "Error, either \"rejection bandwidth\"" \
-                                       " parameter or \"complementary threshold\"" \
+               neighbor_set.__len__(), "Error, either \"rejection bandwidth\" - \"--b\"" \
+                                       " parameter or \"complementary threshold\" - \"--eta\"" \
                                        " was set to high," \
                                        " those parameters are dataset dependent.\n" \
                                        "Please, check those parameters and set them correctly."
@@ -117,7 +118,19 @@ class MutualInformation(object):
                                                             band_index=int(i)))
 
 
-def arg_parser() -> argparse.Namespace:
+class Arguments(NamedTuple):
+    """
+    Container for MI-based band selection algorithm runner.
+    """
+    data_path: str
+    ref_map_path: str
+    dest_path: str
+    X: int
+    b: int
+    eta: float
+
+
+def arguments() -> Arguments:
     """
     Arguments for running the mutual information based band selection algorithm.
 
@@ -132,10 +145,10 @@ def arg_parser() -> argparse.Namespace:
                         help="Parameter referred in the paper as: \"rejection bandwidth\" is dataset dependent.")
     parser.add_argument("--eta", dest="eta", type=float, default=0.005,
                         help="Parameter referred in the paper as: \"complementary threshold\" is dataset dependent.")
-    return parser.parse_args()
+    return Arguments(**vars(parser.parse_args()))
 
 
-def main(args: argparse.Namespace):
+def main(args: Arguments):
     """
     Main method containing all steps of the mutual information-based band selection algorithm.
 
@@ -154,4 +167,5 @@ def main(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-    main(args=arg_parser())
+    parsed_args = arguments()
+    main(args=parsed_args)

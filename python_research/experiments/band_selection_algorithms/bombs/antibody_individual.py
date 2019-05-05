@@ -10,7 +10,7 @@ class Antibody(object):
         :param selected_bands: Numpy array containing selected bands.
         :param band_indexes: List of selected bands.
         :param data_path: Path to the data file.
-        :param ref_map_path: Path to the reference map.
+        :param ref_map_path: Path to the ground truth map.
         """
         self.grey_level_histograms = prep_bands(selected_bands=selected_bands)
         self.band_indexes = band_indexes
@@ -25,50 +25,50 @@ class Antibody(object):
         self.n_sorting_index = None
         self.unique_band_size = len(np.unique(self.band_indexes).tolist())
 
-    def __add__(self, other):
+    def __add__(self, antibody):
         """
-        Add method used in "whole arithmetic crossover".
+        Add method used in "whole arithmetic crossover" step.
 
-        :param other: Antibody individual.
+        :param antibody: Antibody individual.
         :return: Antibody individual.
         """
-        if isinstance(other, int):
-            if other == 0:
+        if isinstance(antibody, int):
+            if antibody == 0:
                 return self
 
-    def __radd__(self, other):
+    def __radd__(self, antibody):
         """
-        Add method used in "whole arithmetic crossover".
+        Add method used in "whole arithmetic crossover" step.
 
-        :param other: Antibody individual.
+        :param antibody: Antibody individual.
         :return: Antibody individual.
         """
-        if isinstance(other, int):
-            if other == 0:
+        if isinstance(antibody, int):
+            if antibody == 0:
                 return self
 
-    def __mul__(self, other):
+    def __mul__(self, antibody):
         """
-        Multiplication method used in "whole arithmetic crossover."
+        Multiplication method used in "whole arithmetic crossover" step.
 
-        :param other: Integer value in range [0;1].
+        :param antibody: Integer value in range [0;1].
         :return: Antibody object or zero.
         """
-        if isinstance(other, int):
-            if other == 0:
+        if isinstance(antibody, int):
+            if antibody == 0:
                 return 0
             else:
                 return self
 
-    def __rmul__(self, other):
+    def __rmul__(self, antibody):
         """
-         Multiplication method used in "whole arithmetic crossover."
+         Multiplication method used in "whole arithmetic crossover" step.
 
-         :param other: Integer value in range [0;1]
+         :param antibody: Integer value in range [0;1]
          :return: Antibody object or zero.
          """
-        if isinstance(other, int):
-            if other == 0:
+        if isinstance(antibody, int):
+            if antibody == 0:
                 return 0
             else:
                 return self

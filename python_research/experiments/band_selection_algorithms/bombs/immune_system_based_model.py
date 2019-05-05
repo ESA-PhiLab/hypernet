@@ -6,12 +6,13 @@ from math import pow
 import numpy as np
 
 from python_research.experiments.band_selection_algorithms.bombs.antibody_individual import Antibody
-from python_research.experiments.band_selection_algorithms.bombs.utils import load_data, calculate_crowding_distances
+from python_research.experiments.band_selection_algorithms.bombs.utils import load_data, calculate_crowding_distances, \
+    Arguments
 from python_research.experiments.band_selection_algorithms.utils import SPECTRAL_AXIS
 
 
 class AntibodyPopulation(object):
-    def __init__(self, args):
+    def __init__(self, args: Arguments):
         """
         Initialize all fields of the class.
         """

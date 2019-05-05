@@ -1,12 +1,25 @@
 import argparse
 import os
+from typing import NamedTuple
 
 from python_research.experiments.band_selection_algorithms.icm.improved_class_map import \
     generate_pseudo_ground_truth_map
 from python_research.experiments.band_selection_algorithms.icm.select_bands import select_bands
 
 
-def arg_parser() -> argparse.Namespace:
+class Arguments(NamedTuple):
+    """
+    Container for ICM band selection algorithm runner.
+    """
+    data_path: str
+    ref_map_path: str
+    dest_path: str
+    radius_size: int
+    training_patch: float
+    bands_num: int
+
+
+def arguments() -> Arguments:
     """
     Parse arguments for ICM band selection algorithm.
 
@@ -20,10 +33,10 @@ def arg_parser() -> argparse.Namespace:
     parser.add_argument("--training_patch", dest="training_patch", type=float, default=0.1,
                         help="Size of the training patch for SVM classifier.")
     parser.add_argument("--bands_num", dest="bands_num", type=int, help="Number of bands to select.")
-    return parser.parse_args()
+    return Arguments(**vars(parser.parse_args()))
 
 
-def main(args: argparse.Namespace):
+def main(args: Arguments):
     """
     Main method designed for running the ICM band selection algorithm.
 
@@ -36,4 +49,5 @@ def main(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-    main(args=arg_parser())
+    parsed_args = arguments()
+    main(args=parsed_args)

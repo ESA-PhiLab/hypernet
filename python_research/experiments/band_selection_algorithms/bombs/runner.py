@@ -1,15 +1,14 @@
-import argparse
 import os
 
 from python_research.experiments.band_selection_algorithms.bombs.immune_system_based_model import AntibodyPopulation
-from python_research.experiments.band_selection_algorithms.bombs.utils import arguments
+from python_research.experiments.band_selection_algorithms.bombs.utils import arguments, Arguments
 
 
-def main(args: argparse.Namespace):
+def main(args: Arguments):
     """
     Main method for running the BOMBS band selection algorithm.
 
-    :param args: Object containing passed arguments.
+    :param args: Parsed arguments.
     :return: None.
     """
     os.makedirs(args.dest_path, exist_ok=True)
@@ -33,4 +32,5 @@ def main(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-    main(args=arguments())
+    parsed_args = arguments()
+    main(args=parsed_args)

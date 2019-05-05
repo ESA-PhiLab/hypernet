@@ -1,16 +1,34 @@
 import argparse
+from typing import NamedTuple
 
 from python_research.experiments.band_selection_algorithms.utils import *
 
 
-def arguments() -> argparse.Namespace:
+class Arguments(NamedTuple):
+    """
+    Container for BOMBS band selection algorithm.
+    """
+    G: int
+    Gmax: int
+    Na: int
+    Nd: int
+    Nc: int
+    TD_size: int
+    P_init_size: int
+    bands_per_antibody: int
+    data_path: str
+    ref_map_path: str
+    dest_path: str
+
+
+def arguments() -> Arguments:
     """
     Arguments for running bombs selection algorithm.
     The default values are taken from the paper.
     """
     parser = argparse.ArgumentParser(description="Arguments for runner.")
     parser.add_argument("--G", dest="G", type=int, help="Total number of generations.", default=99999999)
-    parser.add_argument("--Gmax", dest="Gmax", type=int, help="Maximum number of generations.", default=2)
+    parser.add_argument("--Gmax", dest="Gmax", type=int, help="Maximum number of generations.", default=100)
     parser.add_argument("--Na", dest="Na", type=int, help="Maximum size of active population.", default=20)
     parser.add_argument("--Nd", dest="Nd", type=int, help="Maximum size of dominant population.", default=100)
     parser.add_argument("--Nc", dest="Nc", type=int, help="Maximum size of clone population.", default=100)
@@ -23,8 +41,8 @@ def arguments() -> argparse.Namespace:
                         help="Number of selected bands.")
     parser.add_argument("--data_path", dest="data_path", type=str)
     parser.add_argument("--ref_map_path", dest="ref_map_path", type=str)
-    parser.add_argument("--dest_path", dest="dest_path", type=str, help="Destination path for selected bands.")
-    return parser.parse_args()
+    parser.add_argument("--dest_path", dest="dest_path", type=str, help="Destination path for selected bands file.")
+    return Arguments(**vars(parser.parse_args()))
 
 
 def prep_bands(selected_bands: np.ndarray) -> list:
@@ -98,7 +116,7 @@ def get_fitness(list_of_antibodies: list) -> list:
     return [antibodies_entropy, antibodies_distance]
 
 
-def load_data(path, ref_map_path, drop_bg=False) -> np.ndarray:
+def load_data(path: str, ref_map_path: str, drop_bg: bool = False) -> np.ndarray:
     """
     Load data method.
 

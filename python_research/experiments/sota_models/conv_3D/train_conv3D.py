@@ -1,4 +1,5 @@
 import argparse
+from typing import NamedTuple
 
 import numpy as np
 import torch
@@ -8,9 +9,30 @@ from python_research.experiments.sota_models.utils.models_runner import run_mode
 from python_research.experiments.sota_models.utils.monte_carlo import prep_monte_carlo
 
 
-def arguments() -> argparse.Namespace:
+class Arguments(NamedTuple):
     """
-    Arguments for running the 3D convolutional neural network.
+    Container for 3D Convolution runner arguments.
+    """
+    run_idx: str
+    cont: str
+    epochs: int
+    data_path: str
+    data_name: str
+    neighborhood_size: int
+    labels_path: str
+    batch: int
+    patience: int
+    dest_path: str
+    classes: int
+    test_size: float
+    val_size: float
+    channels: list
+    input_dim: int
+
+
+def arguments() -> Arguments:
+    """
+    Collect arguments for running the 3D convolutional neural network.
 
     :return: Parsed arguments.
     """
@@ -38,10 +60,10 @@ def arguments() -> argparse.Namespace:
                         help="Input sample dimensionality."
                              "Format: \"--input_dim (number_of_channels) 7 7\"",
                         required=True)
-    return parser.parse_args()
+    return Arguments(**vars(parser.parse_args()))
 
 
-def main(args: argparse.Namespace):
+def main(args: Arguments):
     """
     Main method used for running the 3D convolution.
 
@@ -62,4 +84,5 @@ def main(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-    main(args=arguments())
+    parsed_args = arguments()
+    main(args=parsed_args)

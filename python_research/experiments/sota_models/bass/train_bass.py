@@ -1,4 +1,5 @@
 import argparse
+from typing import NamedTuple
 
 import torch
 
@@ -7,17 +8,39 @@ from python_research.experiments.sota_models.utils.models_runner import run_mode
 from python_research.experiments.sota_models.utils.sets_by_sizes import prep_sets_by_sizes
 
 
-def arguments() -> argparse.Namespace:
+class Arguments(NamedTuple):
     """
-    Arguments for BASS model.
+    Container for BASS runner arguments.
+    """
+    run_idx: str
+    cont: str
+    epochs: int
+    data_path: str
+    data_name: str
+    neighborhood_size: int
+    batch: int
+    train_size: int
+    val_size: int
+    patience: int
+    nb: int
+    in_channels: int
+    out_channels: int
+    labels_path: str
+    dest_path: str
+    classes: int
+
+
+def arguments() -> Arguments:
+    """
+    Collect arguments for BASS model.
 
     :return: Parsed arguments.
     """
     parser = argparse.ArgumentParser(description="Input arguments for runner.")
+    parser.add_argument("--run_idx", dest="run_idx", help="Index of the run.", type=int)
     parser.add_argument("--cont", dest="cont",
                         help="Path to file containing indexes of selected bands. (Optional argument).",
                         type=str)
-    parser.add_argument("--run_idx", dest="run_idx", help="Index of the run.", type=int)
     parser.add_argument("--epochs", dest="epochs", help="Total number of epochs.", type=int)
     parser.add_argument("--data_path", dest="data_path", help="Path to the dataset.", type=str)
     parser.add_argument("--data_name", dest="data_name", help="Name of the data set.", type=str)
@@ -38,10 +61,10 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--labels_path", dest="labels_path", help="Path to the file with labels.", type=str)
     parser.add_argument("--dest_path", dest="dest_path", help="Path to destination folder.", type=str)
     parser.add_argument("--classes", dest="classes", help="Number of classes for the model.", type=int)
-    return parser.parse_args()
+    return Arguments(**vars(parser.parse_args()))
 
 
-def main(args: argparse.Namespace):
+def main(args: Arguments):
     """
     Main method used for running the model.
 
@@ -61,4 +84,5 @@ def main(args: argparse.Namespace):
 
 
 if __name__ == "__main__":
-    main(args=arguments())
+    parsed_args = arguments()
+    main(args=parsed_args)
