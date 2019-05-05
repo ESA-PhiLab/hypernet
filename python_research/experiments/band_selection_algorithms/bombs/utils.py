@@ -3,12 +3,13 @@ from typing import NamedTuple
 
 from python_research.experiments.band_selection_algorithms.utils import *
 
+ITER_RANGE = int(1e10)
+
 
 class Arguments(NamedTuple):
     """
     Container for BOMBS band selection algorithm.
     """
-    G: int
     Gmax: int
     Na: int
     Nd: int
@@ -27,7 +28,6 @@ def arguments() -> Arguments:
     The default values are taken from the paper.
     """
     parser = argparse.ArgumentParser(description="Arguments for runner.")
-    parser.add_argument("--G", dest="G", type=int, help="Total number of generations.", default=99999999)
     parser.add_argument("--Gmax", dest="Gmax", type=int, help="Maximum number of generations.", default=100)
     parser.add_argument("--Na", dest="Na", type=int, help="Maximum size of active population.", default=20)
     parser.add_argument("--Nd", dest="Nd", type=int, help="Maximum size of dominant population.", default=100)

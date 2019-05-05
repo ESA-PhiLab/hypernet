@@ -55,7 +55,7 @@ class MutualInformation(object):
         else:
             self.set_of_remaining_bands.pop(self.set_of_remaining_bands.index(selected_band))
         self.set_of_selected_bands.append(selected_band.band_index)
-        assert self.set_of_remaining_bands.__len__() >= \
+        assert self.set_of_remaining_bands.__len__() > \
                neighbor_set.__len__(), "Error, either \"rejection bandwidth\" - \"--b\"" \
                                        " parameter or \"complementary threshold\" - \"--eta\"" \
                                        " was set to high," \

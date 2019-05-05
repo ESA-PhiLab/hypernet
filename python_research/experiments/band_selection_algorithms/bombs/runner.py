@@ -1,7 +1,7 @@
 import os
 
 from python_research.experiments.band_selection_algorithms.bombs.immune_system_based_model import AntibodyPopulation
-from python_research.experiments.band_selection_algorithms.bombs.utils import arguments, Arguments
+from python_research.experiments.band_selection_algorithms.bombs.utils import arguments, Arguments, ITER_RANGE
 
 
 def main(args: Arguments):
@@ -14,7 +14,7 @@ def main(args: Arguments):
     os.makedirs(args.dest_path, exist_ok=True)
     model = AntibodyPopulation(args=args)
     model.initialization()
-    for iteration in range(args.G):
+    for iteration in range(ITER_RANGE):
         model.update_dominant_population()
         model.serialize_individuals()
         if model.stop_condition(current_generation=iteration):
