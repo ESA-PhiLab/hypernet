@@ -162,10 +162,11 @@ def infer_network(x_test: np.ndarray, y_test: np.ndarray, args: Arguments, input
 def load_model(n_attention_modules: int, n_classes: int, input_dimension: int, uses_attention: bool) -> torch.nn.Module:
     """
     Load attention-based model architectures.
-    :param n_attention_modules: Number of attention modules = {2, 3, 4}.
-    :param n_classes: Number of classes for the problem.
+
+    :param n_attention_modules: Number of attention modules, i.e. {2, 3, 4}.
+    :param n_classes: Number of classes.
     :param input_dimension: Size of the spectrum channel.
-    :param uses_attention: Boolean indicating whether to use attention.
+    :param uses_attention: Boolean variable indicating whether to use attention.
     :return: Instance of the model.
     """
     if n_attention_modules == 2:
@@ -246,7 +247,10 @@ def eval_heatmaps(args: Arguments) -> np.ndarray:
     nonzero = np.nonzero(outliers)
     selected_bands = np.unique(nonzero)
     print("Selected bands: {0}".format(selected_bands))
-    np.savetxt(os.path.join(args.output_dir, args.run_idx + "_selected_bands"), selected_bands, delimiter="\n",
+    np.savetxt(os.path.join(args.output_dir,
+                            args.run_idx + "_selected_bands"),
+               selected_bands,
+               delimiter="\n",
                fmt="%d")
     return selected_bands
 
@@ -256,7 +260,7 @@ def str2bool(string_arg: str) -> bool:
     Parse string argument to bool.
 
     :param string_arg: Argument indicating whether to use attention mechanism.
-    :return: Parsed boolean.
+    :return: Parsed boolean value indicating whether to use attention.
     """
     if string_arg.lower() in ("yes", "true", "t", "y", "1"):
         return True
@@ -268,13 +272,14 @@ def str2bool(string_arg: str) -> bool:
 
 def main(args: Arguments):
     """
-    Run band selection and then train model on selected bands.
+    Run band selection algorithm and then train model on selected bands.
 
     :param args: Parsed arguments.
     :return: None.
     """
     try:
         if not str2bool(args.attn):
+            # If model was not using attention, train and evaluate on data without selecting bands.
             args = args._replace(run_idx=args.run_idx + "_no_attention")
     except argparse.ArgumentTypeError as e:
         print(e)
