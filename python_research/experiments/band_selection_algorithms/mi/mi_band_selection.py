@@ -56,7 +56,7 @@ class MutualInformation(object):
             self.set_of_remaining_bands.pop(self.set_of_remaining_bands.index(selected_band))
         self.set_of_selected_bands.append(selected_band.band_index)
         assert self.set_of_remaining_bands.__len__() > \
-               neighbor_set.__len__(), "Error, either \"rejection bandwidth\" - \"--b\"" \
+               neighbor_set.__len__(), "Error, either \"rejection bandwidth\" - \"--bandwidth\"" \
                                        " parameter or \"complementary threshold\" - \"--eta\"" \
                                        " was set to high," \
                                        " those parameters are dataset dependent.\n" \
@@ -125,8 +125,8 @@ class Arguments(NamedTuple):
     data_path: str
     ref_map_path: str
     dest_path: str
-    X: int
-    b: int
+    bands_num: int
+    bandwidth: int
     eta: float
 
 
@@ -140,10 +140,10 @@ def arguments() -> Arguments:
     parser.add_argument("--data_path", dest="data_path", type=str, help="Path to data.")
     parser.add_argument("--ref_map_path", dest="ref_map_path", type=str, help="Path to ground truth.")
     parser.add_argument("--dest_path", dest="dest_path", type=str, help="Destination path for selected bands.")
-    parser.add_argument("--X", dest="X", type=int, help="Number of bands to select.")
-    parser.add_argument("--b", dest="b", type=int, default=3,
+    parser.add_argument("--bands_num", dest="bands_num", type=int, help="Number of bands to select.")
+    parser.add_argument("--bandwidth", dest="bandwidth", type=int,
                         help="Parameter referred in the paper as: \"rejection bandwidth\" is dataset dependent.")
-    parser.add_argument("--eta", dest="eta", type=float, default=0.005,
+    parser.add_argument("--eta", dest="eta", type=float,
                         help="Parameter referred in the paper as: \"complementary threshold\" is dataset dependent.")
     return Arguments(**vars(parser.parse_args()))
 
@@ -156,7 +156,9 @@ def main(args: Arguments):
     """
     os.makedirs(args.dest_path, exist_ok=True)
     data, ref_map = load_data(data_path=args.data_path, ref_map_path=args.ref_map_path)
-    mutual_info_band_selector = MutualInformation(designed_band_size=args.X, bandwidth=args.b, eta=args.eta)
+    mutual_info_band_selector = MutualInformation(designed_band_size=args.bands_num,
+                                                  bandwidth=args.bandwidth,
+                                                  eta=args.eta)
     mutual_info_band_selector.prep_bands(data=data, ref_map=ref_map)
     mutual_info_band_selector.calculate_mi(dest_path=args.dest_path)
     mutual_info_band_selector.perform_search()

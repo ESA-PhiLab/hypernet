@@ -21,7 +21,7 @@ class Model3(torch.nn.Module):
         self._conv_block_1 = build_convolutional_block(1, 96)
         self._conv_block_2 = build_convolutional_block(96, 54)
         self._conv_block_3 = build_convolutional_block(54, 36)
-        assert int(input_dimension / 8) > 0, "The spectral size is to small."
+        assert int(input_dimension / 8) > 0, "The spectral size is to small for model with three attention modules."
         self._classifier = build_classifier_block(36 * int(input_dimension / 8), num_of_classes)
         if uses_attention:
             print("Model with 3 attention modules.")

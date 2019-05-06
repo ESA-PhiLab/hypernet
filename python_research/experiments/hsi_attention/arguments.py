@@ -17,7 +17,7 @@ class Arguments(NamedTuple):
     output_dir: str
     batch_size: int
     attn: str
-    run_idx: int
+    run_idx: str
     cont: str
 
 
