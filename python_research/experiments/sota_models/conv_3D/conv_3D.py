@@ -18,8 +18,8 @@ class ConvNet3D(BaseModule):
         :param classes: Number of classes.
         """
         super(ConvNet3D, self).__init__(classes=classes)
-        assert classes > 0, 'Incorrect number of classes or batch size.'
-        assert batch_size > 0, 'The batch size: {} is incorrect.'.format(batch_size)
+        assert classes > 0, "Incorrect number of classes or batch size."
+        assert batch_size > 0, "The batch size: {} is incorrect.".format(batch_size)
         self.dtype = self.__class__.check_dtype(dtype=dtype)
         self.batch_size = batch_size
         self._block1 = conv_block_3d(channels=channels, dtype=self.dtype[0])
@@ -34,8 +34,8 @@ class ConvNet3D(BaseModule):
 
         :param x: Input sample.
         :param y: Target
-        :param val: Set to True during validation process.
-        :param test: Set to False during inference process.
+        :param val: Set to "True" during validation process.
+        :param test: Set to "False" during inference process.
         :return: Loss of the model over given set of samples.
         """
         x = torch.unsqueeze(x, dim=1)

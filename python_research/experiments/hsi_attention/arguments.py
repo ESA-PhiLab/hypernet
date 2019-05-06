@@ -1,7 +1,27 @@
 import argparse
+from typing import NamedTuple
 
 
-def arguments() -> argparse.Namespace:
+class Arguments(NamedTuple):
+    """
+    Container for 3D Convolution runner arguments.
+    """
+    dataset_path: str
+    labels_path: str
+    selected_bands: str
+    validation: float
+    test: float
+    epochs: int
+    modules: int
+    patience: int
+    output_dir: str
+    batch_size: int
+    attn: str
+    run_idx: str
+    cont: str
+
+
+def arguments() -> Arguments:
     """
     Argument parser method.
 
@@ -44,8 +64,7 @@ def arguments() -> argparse.Namespace:
     parser.add_argument("--patience",
                         dest="patience",
                         type=int,
-                        help="Patience stopping condition.",
-                        default=6)
+                        help="Patience stopping condition.")
     parser.add_argument("--output_dir",
                         dest="output_dir",
                         type=str,
@@ -67,4 +86,4 @@ def arguments() -> argparse.Namespace:
                         dest="cont",
                         type=float,
                         help="Contamination parameter for outlier detector.")
-    return parser.parse_args()
+    return Arguments(**vars(parser.parse_args()))

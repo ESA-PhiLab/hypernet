@@ -108,10 +108,11 @@ class AttentionBlock(torch.nn.Module):
 
     def get_heatmaps(self, input_size: int) -> np.ndarray:
         """
-        Return heatmaps given spectral size.
+        Return heatmaps given initial spectral size.
+        The heatmaps are interpolated to specified spectral size.
 
         :param input_size: Designed spectral size.
-        :return: Array containing averaged heatmaps.
+        :return: Array containing heatmaps collected by the attention module.
         """
         for i in range(self._attention_heatmaps.__len__()):
             for j in range(self._attention_heatmaps[i].__len__()):

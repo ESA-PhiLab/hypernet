@@ -3,7 +3,7 @@ from torch.utils.data.dataset import Dataset
 
 class ListDataset(Dataset):
     """
-    Class that represents data sets as lists of numpy arrays.
+    Class that represents datasets as lists of numpy arrays.
     """
 
     def __init__(self, samples: list, labels: list):
@@ -27,7 +27,7 @@ class ListDataset(Dataset):
 
     def __len__(self) -> int:
         """
-        Return the length of th data set.
+        Return length of the data set.
 
         :return: Length of the data set.
         """

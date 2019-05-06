@@ -1,3 +1,4 @@
+import argparse
 from random import shuffle
 from typing import List
 
@@ -7,29 +8,28 @@ from python_research.experiments.sota_models.utils.list_dataset import ListDatas
 from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
 
 
-def attention_selection(data, args) -> List:
+def attention_selection(data: np.ndarray, args: argparse.Namespace) -> List:
     """
      Select bands chosen by the attention mechanism.
 
     :param data: Hyperspectral data block.
     :param args: Parsed arguments containing path to the file which stores selected bands ids.
     """
-    content = None
     with open(args.cont) as f:
         content = f.readlines()
-        content = [int(x.rstrip('\n')) for x in content]
+        content = [int(x.rstrip("\n")) for x in content]
         content.sort()
         content = np.asarray(content, dtype=int)
     if content is not None:
-        print('Reducing bands from: {}'.format(args.cont))
+        print("Reducing bands from: {}".format(args.cont))
         data = [x[..., content] for x in data]
         print(content)
     return data
 
 
-def generate_samples(args) -> List:
+def generate_samples(args: argparse.Namespace) -> List:
     """
-    Given paths to data and labels generate samples and normalize them.
+    Generate samples and normalize them.
 
     :param args: Parsed arguments.
     :return: List of samples
@@ -48,7 +48,7 @@ def generate_samples(args) -> List:
 
 def prep_dataset(train_set: List, val_set: List, test_set: List) -> tuple:
     """
-    Stores data sets as objects of type ListDataset.
+    Stores datasets as objects of type ListDataset.
 
     :param train_set: Samples designed for training.
     :param val_set: Samples designed for validation.

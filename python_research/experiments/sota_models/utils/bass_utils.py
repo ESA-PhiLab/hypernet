@@ -1,7 +1,7 @@
 import torch
 
 
-def build_block1(in_channels, out_channels, dtype):
+def build_block1(in_channels: int, out_channels: int, dtype: torch.Tensor) -> torch.nn.Sequential:
     """
     Applies a spatial convolution with receptive filed of (1 x 1) over an input signal.
     Each filter extends throughout the entire spectral axis of the input volume.
@@ -17,10 +17,10 @@ def build_block1(in_channels, out_channels, dtype):
     ).type(dtype)
 
 
-def build_block2(dtype, neighborhood_size):
+def build_block2(dtype: torch.Tensor, neighborhood_size: int) -> torch.nn.Sequential:
     """
     Architectural design of the second block of configuration 4.
-    Applies a spectral - wise 1D convolution over an input signal.
+    Applies a spectral-wise 1D convolution over an input signal.
 
     :param dtype: Data type used by the model.
     :param neighborhood_size: Spatial size of the sample.
@@ -38,9 +38,9 @@ def build_block2(dtype, neighborhood_size):
     ).type(dtype)
 
 
-def build_block3(entries, num_of_classes, dtype):
+def build_block3(entries: int, num_of_classes: int, dtype: torch.Tensor) -> torch.nn.Sequential:
     """
-    Produce logits for each class respectively.
+    Return classifier sequential block to produce logits for each class respectively.
 
     :param entries: Number of entries into the dense layer.
     :param num_of_classes: Number of output neural activations.

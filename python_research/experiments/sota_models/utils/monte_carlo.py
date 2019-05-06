@@ -12,14 +12,13 @@ def prep_monte_carlo(args) -> tuple:
 
     - Training set takes (1 - (args.val_size + args.test_size) * lowest_class_population) samples.
     - Validation set takes (args.val_size * lowest_class_population) samples.
-    args.val_size is the fraction of samples designed for validation.
+    args.val_size is the fraction of samples designed for validation set.
     - Testing set takes (args.test_size * lowest_class_population) samples.
-    args.test_size is the fraction of samples designed for testing.
-
+    args.test_size is the fraction of samples designed for testing set.
     :param args: Parsed arguments.
     :return: Training, Validation and Testing objects.
     """
-    print('Monte Carlo data prep:')
+    print("Monte Carlo data prep:")
     samples = generate_samples(args=args)
     samples_by_classes = [[] for _ in range(args.classes)]
     for x in samples:
@@ -58,7 +57,5 @@ def prep_monte_carlo(args) -> tuple:
         for index in chosen_indexes:
             train_set[idx].append([class_[index], idx])
         samples_by_classes[idx] = np.delete(np.asarray(class_), [chosen_indexes], axis=0)
-
     train_set, val_set, test_set = unravel_dataset(train_set=train_set, val_set=val_set, test_set=test_set)
-
     return prep_dataset(train_set=train_set, val_set=val_set, test_set=test_set)

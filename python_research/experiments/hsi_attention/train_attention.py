@@ -1,6 +1,7 @@
 import argparse
 import os
 import pickle
+import sys
 import time
 
 import matplotlib.pyplot as plt
@@ -9,8 +10,8 @@ import torch
 from sklearn.covariance import EllipticEnvelope
 from tqdm import tqdm
 
-from python_research.experiments.hsi_attention.arguments import arguments
-from python_research.experiments.hsi_attention.datasets.generate_trained_models import get_loader_function, \
+from python_research.experiments.hsi_attention.arguments import arguments, Arguments
+from python_research.experiments.hsi_attention.datasets.generate_datasets import get_loader_function, \
     produce_splits
 from python_research.experiments.hsi_attention.models.model_2 import Model2
 from python_research.experiments.hsi_attention.models.model_3 import Model3
@@ -18,7 +19,7 @@ from python_research.experiments.hsi_attention.models.model_4 import Model4
 
 
 def train_network(x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y_val: np.ndarray, model,
-                  args: argparse.Namespace):
+                  args: Arguments):
     """
     Train and validate model.
 
@@ -28,7 +29,7 @@ def train_network(x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y
     :param y_val: Labels for evaluation.
     :param model: Model designed for training.
     :param args: Parsed arguments.
-    :return:
+    :return: None.
     """
     training_history = []
     validation_history = []
@@ -114,7 +115,7 @@ def train_network(x_train: np.ndarray, y_train: np.ndarray, x_val: np.ndarray, y
                 break
 
 
-def infer_network(x_test: np.ndarray, y_test: np.ndarray, args: argparse.Namespace, input_size: int) -> None:
+def infer_network(x_test: np.ndarray, y_test: np.ndarray, args: Arguments, input_size: int):
     """
     Conduct inference on the trained model.
 
@@ -158,13 +159,14 @@ def infer_network(x_test: np.ndarray, y_test: np.ndarray, args: argparse.Namespa
     pickle.dump(testing_time, open(os.path.join(args.output_dir, args.run_idx + "_time_testing.pkl"), "wb"))
 
 
-def load_model(n_attention_modules: int, n_classes: int, input_dimension: int, uses_attention: bool):
+def load_model(n_attention_modules: int, n_classes: int, input_dimension: int, uses_attention: bool) -> torch.nn.Module:
     """
     Load attention-based model architectures.
-    :param n_attention_modules: Number of attention modules = {2, 3, 4}.
-    :param n_classes: Number of classes for the problem.
+
+    :param n_attention_modules: Number of attention modules, i.e. {2, 3, 4}.
+    :param n_classes: Number of classes.
     :param input_dimension: Size of the spectrum channel.
-    :param uses_attention: Boolean indicating whether to use attention.
+    :param uses_attention: Boolean variable indicating whether to use attention.
     :return: Instance of the model.
     """
     if n_attention_modules == 2:
@@ -175,7 +177,7 @@ def load_model(n_attention_modules: int, n_classes: int, input_dimension: int, u
         return Model4(num_of_classes=n_classes, input_dimension=input_dimension, uses_attention=uses_attention)
 
 
-def run(args: argparse.Namespace, selected_bands: np.ndarray = None) -> None:
+def run(args: Arguments, selected_bands: np.ndarray = None) -> None:
     """
     Method for running the experiments.
 
@@ -187,8 +189,7 @@ def run(args: argparse.Namespace, selected_bands: np.ndarray = None) -> None:
     if torch.cuda.is_available():
         device = torch.device("cuda:0")
         torch.set_default_tensor_type("torch.cuda.FloatTensor")
-    if not os.path.exists(args.output_dir):
-        os.makedirs(args.output_dir)
+    os.makedirs(args.output_dir, exist_ok=True)
     print("Training model for dataset: {}".format(os.path.basename(os.path.normpath(args.dataset_path))))
     samples, labels = get_loader_function(data_path=args.dataset_path, ref_map_path=args.labels_path)
     if selected_bands is not None:
@@ -208,7 +209,7 @@ def run(args: argparse.Namespace, selected_bands: np.ndarray = None) -> None:
     infer_network(x_test=x_test, y_test=y_test, args=args, input_size=x_train.shape[-1])
 
 
-def plot_heatmaps(heatmaps: np.ndarray, args: argparse.Namespace, show_fig: bool) -> None:
+def plot_heatmaps(heatmaps: np.ndarray, args: Arguments, show_fig: bool) -> None:
     """
     Plot heatmaps for each class.
 
@@ -230,7 +231,7 @@ def plot_heatmaps(heatmaps: np.ndarray, args: argparse.Namespace, show_fig: bool
         plt.show()
 
 
-def eval_heatmaps(args: argparse.Namespace) -> np.ndarray:
+def eval_heatmaps(args: Arguments) -> np.ndarray:
     """
     Detect outliers in the collected heatmaps over all classes.
 
@@ -246,17 +247,20 @@ def eval_heatmaps(args: argparse.Namespace) -> np.ndarray:
     nonzero = np.nonzero(outliers)
     selected_bands = np.unique(nonzero)
     print("Selected bands: {0}".format(selected_bands))
-    np.savetxt(os.path.join(args.output_dir, args.run_idx + "_selected_bands"), selected_bands, delimiter="\n",
+    np.savetxt(os.path.join(args.output_dir,
+                            args.run_idx + "_selected_bands"),
+               selected_bands,
+               delimiter="\n",
                fmt="%d")
     return selected_bands
 
 
-def str2bool(string_arg):
+def str2bool(string_arg: str) -> bool:
     """
     Parse string argument to bool.
 
     :param string_arg: Argument indicating whether to use attention mechanism.
-    :return: Parsed boolean.
+    :return: Parsed boolean value indicating whether to use attention.
     """
     if string_arg.lower() in ("yes", "true", "t", "y", "1"):
         return True
@@ -266,24 +270,34 @@ def str2bool(string_arg):
         raise argparse.ArgumentTypeError("Boolean value expected.")
 
 
-def main() -> None:
+def main(args: Arguments):
     """
-    Run band selection and then train model on selected bands.
+    Run band selection algorithm and then train model on selected bands.
 
-    :return: None
+    :param args: Parsed arguments.
+    :return: None.
     """
-    args = arguments()
-    if not str2bool(args.attn):
-        args.run_idx += "_no_attention"
+    try:
+        if not str2bool(args.attn):
+            # If model was not using attention, train and evaluate on data without selecting bands.
+            args = args._replace(run_idx=args.run_idx + "_no_attention")
+    except argparse.ArgumentTypeError as e:
+        print(e)
+        sys.exit("Incorrect arguments specification.")
     run(args)
-    if str2bool(args.attn):
-        # If model was using attention, select bands from obtained heatmap.
-        selected_bands = eval_heatmaps(args)
-        # After selection train new model without attention on reduced data:
-        args.attn = "false"
-        args.run_idx += "_no_attention"
-        run(args, selected_bands)
+    try:
+        if str2bool(args.attn):
+            # If model was using attention, select bands from obtained heatmap.
+            selected_bands = eval_heatmaps(args)
+            # After selection train new model without attention on reduced data.
+            args = args._replace(attn="false")
+            args = args._replace(run_idx=args.run_idx + "_no_attention")
+            run(args, selected_bands)
+    except argparse.ArgumentTypeError as e:
+        print(e)
+        sys.exit("Incorrect arguments specification.")
 
 
 if __name__ == "__main__":
-    main()
+    parsed_args = arguments()
+    main(args=parsed_args)

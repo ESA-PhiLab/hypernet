@@ -4,7 +4,7 @@ import torch
 
 class BaseModule(torch.nn.Module):
     """
-    Base class for models which implements several helper methods concerning artifacts.
+    Base class for models, which implements several helper methods concerning artifacts.
     """
 
     def __init__(self, classes):
@@ -32,25 +32,21 @@ class BaseModule(torch.nn.Module):
 
         self.acc_per_class = [[] for _ in range(classes)]
 
-    def forward(self, *input):
+    def forward(self, *x) -> torch.Tensor:
         pass
 
     @staticmethod
-    def check_dtype(dtype: str):
+    def check_dtype(dtype: str) -> list:
         """
         Check and evaluate tpe of data on which the model will operate.
 
         :param dtype: Data type.
-        :return: Adjusted data type.
+        :return: Adjusted data types in list.
         """
-        if dtype == 'torch.cuda.FloatTensor':
-            return torch.cuda.FloatTensor, torch.cuda.LongTensor
-        elif dtype == 'torch.FloatTensor':
-            return torch.FloatTensor, torch.LongTensor
-        elif dtype == 'torch.cuda.DoubleTensor':
-            return torch.cuda.DoubleTensor, torch.cuda.LongTensor
-        elif dtype == 'torch.DoubleTensor':
-            return torch.DoubleTensor, torch.LongTensor
+        if dtype == "torch.cuda.FloatTensor":
+            return [torch.cuda.FloatTensor, torch.cuda.LongTensor]
+        elif dtype == "torch.FloatTensor":
+            return [torch.FloatTensor, torch.LongTensor]
 
     def get_train_results(self) -> tuple:
         """

@@ -10,12 +10,19 @@ from python_research.experiments.hsi_attention.models.util import build_convolut
 class Model4(torch.nn.Module):
 
     def __init__(self, num_of_classes: int, input_dimension: int, uses_attention: bool = False):
+        """
+        Initializer of model with four attention modules.
+
+        :param num_of_classes: Number of classes.
+        :param input_dimension: Input spectral size.
+        :param uses_attention: Boolean variable indicating weather the model uses attention mechanism or not.
+        """
         super().__init__()
         self._conv_block_1 = build_convolutional_block(1, 96)
         self._conv_block_2 = build_convolutional_block(96, 54)
         self._conv_block_3 = build_convolutional_block(54, 36)
         self._conv_block_4 = build_convolutional_block(36, 24)
-        assert int(input_dimension / 16) > 0, "The spectral size is to small."
+        assert int(input_dimension / 16) > 0, "The spectral size is to small for model with four attention modules."
         self._classifier = build_classifier_block(24 * int(input_dimension / 16), num_of_classes)
         if uses_attention:
             print("Model with 4 attention modules.")
@@ -29,6 +36,15 @@ class Model4(torch.nn.Module):
         self.uses_attention = uses_attention
 
     def forward(self, x: torch.Tensor, y: torch.Tensor, infer: bool) -> torch.Tensor:
+        """
+        Feed forward method for model with four attention modules.
+
+        :param x: Input tensor.
+        :param y: Labels.
+        :param infer: Boolean variable indicating whether to save attention heatmap which is later used in the
+                      band selection process.
+        :return: Weighted classifier hypothesis.
+        """
         global first_module_prediction, second_module_prediction, \
             third_module_prediction, fourth_module_prediction
         z = self._conv_block_1(x)
@@ -52,6 +68,12 @@ class Model4(torch.nn.Module):
         return f.softmax(prediction, dim=1)
 
     def get_heatmaps(self, input_size: int) -> np.ndarray:
+        """
+       Return averaged heatmaps for model with four attention modules.
+
+       :param input_size: Designed spectral size.
+       :return: Array containing averaged scores for interpolated heatmaps.
+       """
         return np.mean([self._attention_block_1.get_heatmaps(input_size).squeeze(),
                         self._attention_block_2.get_heatmaps(input_size).squeeze(),
                         self._attention_block_3.get_heatmaps(input_size).squeeze(),

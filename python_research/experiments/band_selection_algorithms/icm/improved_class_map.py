@@ -4,16 +4,16 @@ from itertools import product
 
 from sklearn import svm
 
-from python_research.experiments.band_selection_algorithms.BS_IC.guided_filter import edge_preserving_filter
+from python_research.experiments.band_selection_algorithms.icm.guided_filter import edge_preserving_filter
 from python_research.experiments.band_selection_algorithms.utils import *
 
 
 def prepare_datasets(ref_map: np.ndarray, training_patch: float) -> tuple:
     """
-    Prepare data for SVMs training.
+    Prepare data for band selection.
 
-    :param ref_map: Reference map for labels.
-    :param training_patch: Patch for training data, concern the lowest population class.
+    :param ref_map: Reference map containing labels.
+    :param training_patch: Patch containing training data.
     :return: Returns prepared data in tuple.
     """
     samples_by_classes = [[] for _ in range(int(ref_map.max()) + abs(BG_CLASS))]
@@ -45,13 +45,14 @@ def get_data_by_indexes(indexes: list, data: np.ndarray) -> np.ndarray:
 
 def one_hot_map(ref_map: np.ndarray) -> np.ndarray:
     """
-    Perform one - hot encoding over new reference map.
+    Perform one-hot encoding over new reference map.
 
     :param ref_map: Passed reference map.
-    :return: One - hot encoded reference map.
+    :return: One-hot encoded reference map.
     """
-    max_ = (ref_map.max() + abs(BG_CLASS)).astype(int)
-    one_hot_ref_map = np.zeros(shape=[ref_map.shape[ROW_AXIS], ref_map.shape[COLUMNS_AXIS], max_])
+    ref_map += abs(BG_CLASS)
+    one_hot_ref_map = np.zeros(shape=[ref_map.shape[ROW_AXIS], ref_map.shape[COLUMNS_AXIS],
+                                      ref_map.max() + abs(BG_CLASS)])
     rows, columns = list(range(ref_map.shape[ROW_AXIS])), list(range((ref_map.shape[COLUMNS_AXIS])))
     for i, j in product(rows, columns):
         one_hot_ref_map[i, j, ref_map[i, j].astype(int)] = CLASS_LABEL
@@ -83,7 +84,8 @@ def construct_new_ref_map(labels: np.ndarray, samples: list, ref_map_shape: list
     return new_ref_map.astype(int)
 
 
-def train_svm(data: np.ndarray, test_labels: list, test_samples: list, train_labels: list, train_samples: list):
+def train_svm(data: np.ndarray, test_labels: list, test_samples: list, train_labels: list,
+              train_samples: list) -> np.ndarray:
     """
     Train SVM on input data and return its predictions.
     During band selection process, parameters of SVM are fixed in order to reduce computation burden.
@@ -122,13 +124,16 @@ def generate_pseudo_ground_truth_map(args: argparse.Namespace):
                                             samples=train_samples + test_samples,
                                             ref_map_shape=ref_map.shape)
 
-    one_hot_ref_map = one_hot_map(ref_map=updated_ref_map)
+    one_hot_ref_map = one_hot_map(ref_map=updated_ref_map.copy())
 
     print("SVM classification map similarity score according to GT map {0:5.2f}%".format(
         ((ref_map == updated_ref_map).sum() / ref_map.size) * float(100)))
 
-    pseudo_ground_truth_map = edge_preserving_filter(ref_map=one_hot_ref_map, neighborhood_size=args.r,
-                                                     guided_image=guided_image)
+    window_size = 2 * (args.radius_size - 1) + 1
 
-    np.save(os.path.join(args.dest_path, "pseudo_ground_truth_map_{}".format(str(args.bands_num))),
-            pseudo_ground_truth_map)
+    improved_class_map = edge_preserving_filter(ref_map=one_hot_ref_map,
+                                                window_size=window_size,
+                                                guided_image=guided_image)
+
+    np.save(os.path.join(args.dest_path, "improved_classification_map_{}".format(str(args.bands_num))),
+            improved_class_map)
