@@ -177,7 +177,7 @@ def load_model(n_attention_modules: int, n_classes: int, input_dimension: int, u
         return Model4(num_of_classes=n_classes, input_dimension=input_dimension, uses_attention=uses_attention)
 
 
-def run(args: Arguments, selected_bands: np.ndarray = None) -> None:
+def run(args: Arguments, selected_bands: np.ndarray = None):
     """
     Method for running the experiments.
 
@@ -192,9 +192,11 @@ def run(args: Arguments, selected_bands: np.ndarray = None) -> None:
     os.makedirs(args.output_dir, exist_ok=True)
     print("Training model for dataset: {}".format(os.path.basename(os.path.normpath(args.dataset_path))))
     samples, labels = get_loader_function(data_path=args.dataset_path, ref_map_path=args.labels_path)
+    if args.selected_bands is not None:
+        selected_bands = np.loadtxt(fname=args.selected_bands).astype(int)
     if selected_bands is not None:
-        print("Selecting bands...")
         samples = samples[..., selected_bands]
+        print("Selected bands: {}".format(selected_bands))
         print("Number of selected bands: {}".format(samples.shape[-1]))
     (x_train, y_train), (x_val, y_val), (x_test, y_test) = produce_splits(samples=samples,
                                                                           labels=labels,
@@ -209,14 +211,14 @@ def run(args: Arguments, selected_bands: np.ndarray = None) -> None:
     infer_network(x_test=x_test, y_test=y_test, args=args, input_size=x_train.shape[-1])
 
 
-def plot_heatmaps(heatmaps: np.ndarray, args: Arguments, show_fig: bool) -> None:
+def plot_heatmaps(heatmaps: np.ndarray, args: Arguments, show_fig: bool):
     """
     Plot heatmaps for each class.
 
     :param heatmaps: Array containing attention scores for all classes.
     :param args: Arguments.
     :param show_fig: Boolean indicating whether to show the selected bands heatmap.
-    :return: None
+    :return: None.
     """
     fig, axis = plt.subplots()
     heatmap = axis.pcolor(heatmaps)
@@ -281,7 +283,11 @@ def main(args: Arguments):
         if not str2bool(args.attn):
             # If model was not using attention, train and evaluate on data without selecting bands.
             args = args._replace(run_idx=args.run_idx + "_no_attention")
-    except argparse.ArgumentTypeError as e:
+        if args.selected_bands is not None and str2bool(args.attn):
+            # Assert that there will be no band selection on the reduced dataset.
+            raise argparse.ArgumentError(argument=None,
+                                         message="Cannot perform band selection on the reduced dataset.")
+    except (argparse.ArgumentTypeError, argparse.ArgumentError) as e:
         print(e)
         sys.exit("Incorrect arguments specification.")
     run(args)
