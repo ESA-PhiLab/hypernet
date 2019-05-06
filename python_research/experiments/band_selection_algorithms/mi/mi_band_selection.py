@@ -142,9 +142,11 @@ def arguments() -> Arguments:
     parser.add_argument("--dest_path", dest="dest_path", type=str, help="Destination path for selected bands.")
     parser.add_argument("--bands_num", dest="bands_num", type=int, help="Number of bands to select.")
     parser.add_argument("--bandwidth", dest="bandwidth", type=int,
-                        help="Parameter referred in the paper as: \"rejection bandwidth\" is dataset dependent.")
+                        help="Parameter referred in the paper as \"rejection bandwidth\"."
+                             "This argument is dataset dependent.")
     parser.add_argument("--eta", dest="eta", type=float,
-                        help="Parameter referred in the paper as: \"complementary threshold\" is dataset dependent.")
+                        help="Parameter referred in the paper as \"complementary threshold\"."
+                             "This argument is dataset dependent.")
     return Arguments(**vars(parser.parse_args()))
 
 
