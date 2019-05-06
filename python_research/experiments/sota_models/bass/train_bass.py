@@ -52,8 +52,8 @@ def arguments() -> Arguments:
     parser.add_argument("--patience", dest="patience", help="Number of epochs without improvement.", type=int,
                         default=60)
     parser.add_argument("--nb", dest="nb", type=int,
-                        help="Number of convolutional blocks in block 2, i.e. 14 and 5 for \"Salinas Valley\" "
-                             "and \"Pavia University\" respectively.")
+                        help="Number of convolutional blocks in the second block of the network,"
+                             "i.e. 14 and 5 for \"Salinas Valley\" and \"Pavia University\" respectively.")
     parser.add_argument("--in_channels", type=int, dest="in_channels",
                         help="Number of input channels for first block of the network.")
     parser.add_argument("--out_channels", type=int, dest="out_channels",

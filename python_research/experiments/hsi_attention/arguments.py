@@ -64,8 +64,7 @@ def arguments() -> Arguments:
     parser.add_argument("--patience",
                         dest="patience",
                         type=int,
-                        help="Patience stopping condition.",
-                        default=6)
+                        help="Patience stopping condition.")
     parser.add_argument("--output_dir",
                         dest="output_dir",
                         type=str,

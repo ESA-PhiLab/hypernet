@@ -29,9 +29,10 @@ def arguments() -> Arguments:
     parser.add_argument("--data_path", dest="data_path", type=str, help="Path to data.")
     parser.add_argument("--ref_map_path", dest="ref_map_path", type=str, help="Path to ground truth map.")
     parser.add_argument("--dest_path", dest="dest_path", type=str, help="Destination path.")
-    parser.add_argument("--radius_size", dest="radius_size", type=int, default=5, help="Radius of the square window.")
+    parser.add_argument("--radius_size", dest="radius_size", type=int, default=5,
+                        help="Radius of the square window used for \"edge-preserving filtering\".")
     parser.add_argument("--training_patch", dest="training_patch", type=float, default=0.1,
-                        help="Size of the training patch for SVM classifier.")
+                        help="Size of the patch designed for training the SVM classifier.")
     parser.add_argument("--bands_num", dest="bands_num", type=int, help="Number of bands to select.")
     return Arguments(**vars(parser.parse_args()))
 

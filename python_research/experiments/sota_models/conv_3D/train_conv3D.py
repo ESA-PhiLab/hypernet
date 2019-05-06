@@ -53,12 +53,10 @@ def arguments() -> Arguments:
     parser.add_argument("--test_size", dest="test_size", help="Size of the test subset.", type=float)
     parser.add_argument("--val_size", dest="val_size", help="Size of the validation subset.", type=float)
     parser.add_argument("--channels", dest="channels", nargs="+",
-                        help="List of following channels."
-                             "Example: \"--channels 1 2 3\"",
+                        help="List of channels in each convolutional layer, e.g. \"--channels 1 2 3\"",
                         required=True)
     parser.add_argument("--input_dim", dest="input_dim", nargs="+",
-                        help="Input sample dimensionality."
-                             "Format: \"--input_dim (number_of_channels) 7 7\"",
+                        help="Dimensionality of the input sample, e.g. \"--input_dim (number_of_channels) 7 7\"",
                         required=True)
     return Arguments(**vars(parser.parse_args()))
 
