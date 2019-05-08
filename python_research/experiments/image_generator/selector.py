@@ -8,6 +8,12 @@ from scipy.io import loadmat
 
 
 def load_data(path: str) -> np.ndarray:
+    """
+    Load data for image generation.
+
+    :param path: Path to the dataset.
+    :return: Loaded dataset.
+    """
     data = None
     if path.endswith(".npy"):
         data = np.load(path)
