@@ -171,10 +171,14 @@ def load_model(n_attention_modules: int, n_classes: int, input_dimension: int, u
     """
     if n_attention_modules == 2:
         return Model2(num_of_classes=n_classes, input_dimension=input_dimension, uses_attention=uses_attention)
-    if n_attention_modules == 3:
+    elif n_attention_modules == 3:
         return Model3(num_of_classes=n_classes, input_dimension=input_dimension, uses_attention=uses_attention)
-    if n_attention_modules == 4:
+    elif n_attention_modules == 4:
         return Model4(num_of_classes=n_classes, input_dimension=input_dimension, uses_attention=uses_attention)
+    raise argparse.ArgumentError(argument=None,
+                                 message="Incorrect number of attention modules.\n"
+                                         "Possible choices: [2, 3, 4]\n"
+                                         "Passed argument: {}".format(n_attention_modules))
 
 
 def run(args: Arguments, selected_bands: np.ndarray = None):
@@ -202,10 +206,14 @@ def run(args: Arguments, selected_bands: np.ndarray = None):
                                                                           labels=labels,
                                                                           validation_size=args.validation,
                                                                           test_size=args.test)
-    model = load_model(n_attention_modules=args.modules,
-                       n_classes=int(labels.max() + 1),
-                       input_dimension=x_train.shape[-1],
-                       uses_attention=str2bool(args.attn))
+    try:
+        model = load_model(n_attention_modules=args.modules,
+                           n_classes=int(labels.max() + 1),
+                           input_dimension=x_train.shape[-1],
+                           uses_attention=str2bool(args.attn))
+    except argparse.ArgumentError as e:
+        print(e)
+        sys.exit("Incorrect arguments specification.")
     model.to(device)
     train_network(x_train=x_train, y_train=y_train, x_val=x_val, y_val=y_val, model=model, args=args)
     infer_network(x_test=x_test, y_test=y_test, args=args, input_size=x_train.shape[-1])
