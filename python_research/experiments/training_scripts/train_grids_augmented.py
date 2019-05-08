@@ -5,17 +5,17 @@ using already extracted patches (grids).
 
 import os.path
 import argparse
-import numpy as np
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
+from sklearn.metrics import cohen_kappa_score
 
-from python_research.augmentation.offlineaugmenter import OfflineAugmenter
-from python_research.augmentation.transformations import PCATransformation
-from python_research.experiments.utils.keras_custom_callbacks import TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset
-from python_research.experiments.multiple_feature_learning.builders.keras_builders import build_1d_model, build_3d_model, build_settings_for_dataset
+from python_research.augmentation.offlin_eaugmenter import OfflineAugmenter
+from python_research.augmentation.transformations import *
+from python_research.keras_custom_callbacks import TimeHistory
+from python_research.dataset_structures import BalancedSubset
+from python_research.keras_models import build_1d_model, build_3d_model, build_settings_for_dataset
 from utils import calculate_class_accuracy, load_patches
-from python_research.experiments.utils.io import save_to_csv
+from python_research.io import save_to_csv
 
 
 def parse_args():
@@ -88,10 +88,7 @@ def main(args):
     test_data.normalize_min_max(min_=min_, max_=max_)
 
     # Augment data
-    transformation = PCATransformation(low=0.9,
-                                       high=1.1,
-                                       n_components=train_data.shape[-1])
-    transformation.fit(train_data.get_data())
+    transformation = UpScaleTransform()
     augmenter = OfflineAugmenter(transformation, sampling_mode="max_twice")
     augmented_data, augmented_labels = augmenter.augment(train_data,
                                                          transformations=1)
@@ -145,13 +142,15 @@ def main(args):
     time = times[-1]
     avg_epoch_time = np.average(np.array(timer.average))
     epochs = len(history.epoch)
-
+    kappa = cohen_kappa_score(predictions, test_data.get_labels())
     # Save metrics
     metrics_path = os.path.join(args.artifacts_path, "metrics.csv")
+    kappa_path = os.path.join(args.artifacts_path, "kappa.csv")
     save_to_csv(metrics_path, [train_score, val_score,
                                test_score[1], time, epochs, avg_epoch_time])
     class_accuracy_path = os.path.join(args.artifacts_path, "class_accuracy.csv")
     save_to_csv(class_accuracy_path, class_accuracy)
+    save_to_csv(kappa_path, [kappa])
     np.savetxt(os.path.join(args.artifacts_path, args.output_file) +
                "_times.csv", times, fmt="%1.4f")
 

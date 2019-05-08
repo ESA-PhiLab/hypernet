@@ -1,10 +1,14 @@
-from typing import Tuple
+from typing import Tuple, NamedTuple
 import numpy as np
 from keras.models import Model, Sequential
 from keras.optimizers import Adam
 from keras.layers import MaxPooling2D, Flatten, Conv2D, Softmax, Input, \
     concatenate, Conv1D, MaxPooling1D, Dense, BatchNormalization
-from python_research.experiments.utils.data_types import ModelSettings
+
+
+class ModelSettings(NamedTuple):
+    input_neighbourhood: Tuple[int, int]
+    first_conv_kernel_size: Tuple[int, int]
 
 
 def build_layers(input_shape, kernel_size):
@@ -98,19 +102,60 @@ def build_3d_model(settings: ModelSettings,
     return model
 
 
-def build_1d_model(input_shape, filters, kernel_size, classes_count):
-    optimizer = Adam()
+def build_1d_model(input_shape, filters, kernel_size, classes_count, blocks=1):
+    optimizer = Adam(lr=0.0001)
+
+    def add_block(model):
+        model.add(
+            Conv1D(filters, kernel_size, padding="valid", activation='relu'))
+        model.add(BatchNormalization())
+        model.add(MaxPooling1D(pool_size=2))
+        return model
 
     model = Sequential()
     model.add(Conv1D(filters, kernel_size, input_shape=input_shape, padding="valid", activation='relu'))
     model.add(BatchNormalization())
     model.add(MaxPooling1D(pool_size=2))
+    if blocks > 1:
+        for block in range(blocks - 1):
+            model = add_block(model)
     model.add(Flatten())
     model.add(Dense(units=512, activation='relu'))
     model.add(Dense(units=128, activation='relu'))
     model.add(Dense(units=classes_count, activation='softmax'))
     model.compile(optimizer=optimizer,
                   metrics=['accuracy'],
+                  loss='categorical_crossentropy')
+    return model
+
+
+def build_1d_model_2(input_shape, kernel_size, classes_count, blocks=1):
+
+    def add_second_block(model):
+        model.add(Conv1D(filters=10, kernel_size=30, activation='relu'))
+        model.add(BatchNormalization())
+        return model
+
+    def add_third_block(model):
+        model.add(Conv1D(filters=10, kernel_size=10, activation='relu'))
+        model.add(BatchNormalization())
+        return model
+
+    optimizer = Adam(lr=0.0001)
+
+    model = Sequential()
+    model.add(Conv1D(kernel_size=kernel_size, filters=20, input_shape=input_shape, padding="valid", activation='relu'))
+    model.add(BatchNormalization())
+    if blocks > 1:
+        model = add_second_block(model)
+    if blocks > 2:
+        model = add_third_block(model)
+
+    model.add(Flatten())
+    model.add(Dense(units=20, activation='relu'))
+    model.add(Dense(units=20, activation='relu'))
+    model.add(Dense(units=classes_count, activation='softmax'))
+    model.compile(optimizer=optimizer, metrics=['accuracy'],
                   loss='categorical_crossentropy')
     return model
 
@@ -124,4 +169,3 @@ def build_settings_for_dataset(input_shape: Tuple):
         raise ValueError("All values in the input shape must be equal, were: {}".format(input_shape))
     kernel_size = tuple(np.subtract(input_shape, (3, 3)))
     return ModelSettings(tuple(input_shape), kernel_size)
-

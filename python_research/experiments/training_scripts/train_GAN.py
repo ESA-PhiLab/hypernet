@@ -11,8 +11,8 @@ from python_research.augmentation.GAN.discriminator import Discriminator
 from python_research.augmentation.GAN.generator import Generator
 from python_research.augmentation.GAN.classifier import Classifier
 from python_research.augmentation.GAN.WGAN import WGAN
-from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
-from python_research.experiments.utils.datasets.data_loader import OrderedDataLoader
+from python_research.dataset_structures import HyperspectralDataset
+from python_research.dataset_structures import OrderedDataLoader
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--dataset_path', type=str, help='Path to the dataset in .npy format')

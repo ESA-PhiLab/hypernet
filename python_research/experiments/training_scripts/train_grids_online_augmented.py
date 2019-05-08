@@ -8,11 +8,11 @@ import argparse
 import numpy as np
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
-from python_research.experiments.utils.keras_custom_callbacks import TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset
-from python_research.experiments.multiple_feature_learning.builders.keras_builders import build_1d_model, build_3d_model, build_settings_for_dataset
+from python_research.keras_custom_callbacks import TimeHistory
+from python_research.dataset_structures import BalancedSubset
+from python_research.keras_models import build_1d_model, build_3d_model, build_settings_for_dataset
 from utils import load_patches
-from python_research.experiments.utils.io import save_to_csv
+from python_research.io import save_to_csv
 from python_research.augmentation.online_augmenter import OnlineAugmenter
 from python_research.augmentation.transformations import PCATransformation
 

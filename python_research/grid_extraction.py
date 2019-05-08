@@ -1,10 +1,6 @@
-import os
 from typing import Tuple
 import numpy as np
 from random import shuffle, randint
-
-
-os.makedirs('grids', exist_ok=True)
 
 
 class WindowSize(object):

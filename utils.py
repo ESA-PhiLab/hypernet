@@ -13,8 +13,8 @@ from ipyleaflet import Map, ImageOverlay
 from matplotlib import pyplot as plt
 from matplotlib.patches import Rectangle
 from sklearn.metrics import confusion_matrix
-from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
-from python_research.experiments.utils.datasets.concat_dataset import ConcatDataset
+from python_research.dataset_structures import HyperspectralDataset
+from python_research.dataset_structures import ConcatDataset
 
 
 def normalize_to_zero_one(image_data: np.ndarray) -> np.ndarray:

@@ -1,8 +1,8 @@
 import numpy as np
 from collections import OrderedDict
-from typing import List, Dict
+from typing import List, Dict, Tuple
 
-from python_research.experiments.utils.datasets.hyperspectral_dataset import Dataset
+from python_research.dataset_structures import Dataset
 from python_research.augmentation.transformations import ITransformation
 from keras.models import Model
 
@@ -12,11 +12,12 @@ CORRECT_COUNT = 1
 
 class OnlineAugmenter:
     """
-    Class for evaluating and predicting class labels using augmentation. Each
-    sample is augmented according to the provided Transformation, then each
-    augmentation of a given sample is classified by the model as one of the
-    classes. Then 'voting' is performed, where class of such a sample is
-    concluded as the most occurring class withing those returned by the model.
+    Class for evaluating and predicting class labels using online
+    augmentation. Each sample is augmented according to the provided
+    Transformation, then each augmentation of a given sample is classified by
+    the model as one of the classes. Afterwards, 'voting' is performed where
+    the final prediction is concluded as the most occurring class withing those
+    returned by the model.
     """
     def __init__(self):
         self.class_accuracy = None
@@ -30,6 +31,8 @@ class OnlineAugmenter:
         :param dataset: Dataset for which the accuracies should be calculated
         :param transformation: Transformation to be used as an augmentation
                                method
+        :param transformations: Number of transformations to perform on each
+                                sample
         :return: float, np.ndarray: Overall accuracy and a list of accuracies
                                     for each class
         """
@@ -54,6 +57,35 @@ class OnlineAugmenter:
         class_accuracies = self._calculate_class_accuracies(class_counts)
         return accuracy, class_accuracies
 
+    def predict(self, model: Model, dataset: Dataset,
+                transformation: ITransformation, transformations: int=4) -> \
+            List[int]:
+        """
+        Predict labels for given dataset
+        :param model: Keras model for predicting labels
+        :param dataset: Dataset for which the labels should be predicted
+        :param transformation: Transformation t obe used as an augmentation
+                               method
+        :param transformations: Number of transformations to perform on each
+                                sample
+        :return: List with predicted labels
+        """
+        samples_count = len(dataset)
+        predicted_labels = []
+        for sample_index in range(samples_count):
+            sample, label = dataset[sample_index]
+            augmented_samples = transformation.transform(sample,
+                                                         transformations)
+            augmented_samples = np.expand_dims(augmented_samples, axis=-1)
+            sample = np.expand_dims(sample, axis=-1)
+            sample = np.expand_dims(sample, axis=0)
+            to_predict = np.vstack([sample, augmented_samples])
+            predictions = model.predict(x=to_predict)
+            predictions = np.argmax(predictions, axis=1)
+            predicted_label = self._vote(predictions)
+            predicted_labels.append(predicted_label)
+        return predicted_labels
+
     @staticmethod
     def _vote(predictions: np.ndarray) -> int:
         """
@@ -66,7 +98,7 @@ class OnlineAugmenter:
         return unique[max_index]
 
     @staticmethod
-    def _calculate_class_accuracies(class_counts: Dict[int, [int, int]]) \
+    def _calculate_class_accuracies(class_counts: Dict[int, Tuple]) \
             -> List:
         """
         Calculate accuracy for each class separately
@@ -81,7 +113,7 @@ class OnlineAugmenter:
         return np.array(accuracies)
 
     @staticmethod
-    def _calculate_overall_accuracy(class_counts: Dict[int, [int, int]]) \
+    def _calculate_overall_accuracy(class_counts: Dict[int, Tuple]) \
             -> int:
         """
         Calculate overall accuracy (percentage of correctly predicted samples)

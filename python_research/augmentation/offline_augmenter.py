@@ -2,12 +2,12 @@ from random import shuffle
 
 import numpy as np
 from python_research.augmentation.transformations import ITransformation
-from python_research.experiments.utils.datasets.hyperspectral_dataset import \
+from python_research.dataset_structures import \
     Dataset
-from typing import Dict
+from utils import calculate_augmented_count_per_class
 
 
-class Augmenter:
+class OfflineAugmenter:
     """
     Class responsible for augmenting the provided dataset. Augmentation process
     is based on the provided transformation.
@@ -21,16 +21,24 @@ class Augmenter:
         then the count will be doubled, if it does, the number of generated samples
         can be calculated as a difference between most numerous class count and
         number of samples in given class.
-        'twice' double the number of samples for each
-        class
+        'twice': double the number of samples for each class
         """
         self.transformation = transformation
         self.sampling_mode = sampling_mode
 
-    def augment(self, dataset: Dataset, transformations: int=4):
+    def augment(self, dataset: Dataset, transformations: int=1)-> \
+            [np.ndarray, np.ndarray]:
+        """
+        Perform the augmentation
+        :param dataset: Dataset to augment
+        :param transformations: Number of transformations to perform on each
+        sample
+        :return: Augmented samples as well as their respective labels
+        """
         labels, class_counts = np.unique(dataset.get_labels(), return_counts=True)
         class_counts = dict(zip(labels, class_counts))
-        augmented_count = self._calculate_augmented_count_per_class(class_counts)
+        augmented_count = calculate_augmented_count_per_class(class_counts,
+                                                              self.sampling_mode)
         indices_to_augment = []
         augmented_labels = []
         for label in augmented_count.keys():
@@ -42,19 +50,3 @@ class Augmenter:
         to_augment = dataset.get_data()[indices_to_augment, ...]
         return self.transformation.transform(to_augment, transformations), \
                np.array(augmented_labels)
-
-    def _calculate_augmented_count_per_class(self, class_counts: Dict[int, int]):
-        augmented_count = dict.fromkeys(class_counts.keys())
-        if self.sampling_mode == 'max_twice':
-            most_numerous_class = max(class_counts.values())
-            for label in class_counts.keys():
-                if class_counts[label] * 2 < most_numerous_class:
-                    augmented_count[label] = class_counts[label]
-                else:
-                    augmented_count[label] = most_numerous_class - \
-                                             class_counts[label]
-            return augmented_count
-        elif self.sampling_mode == 'twice':
-            for label in class_counts.keys():
-                augmented_count[label] = class_counts[label]
-            return augmented_count

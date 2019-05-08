@@ -5,16 +5,15 @@ has the same number of samples) or unbalanced (samples drawn randomly)
 """
 import os.path
 import argparse
-import numpy as np
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
-from python_research.experiments.utils.keras_custom_callbacks import TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset, ImbalancedSubset, CustomSizeSubset
-from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
-from python_research.experiments.multiple_feature_learning.builders.keras_builders import build_1d_model, build_3d_model, build_settings_for_dataset
-from python_research.experiments.utils.io import save_to_csv
+from python_research.keras_custom_callbacks import TimeHistory
+from python_research.dataset_structures import BalancedSubset, ImbalancedSubset, CustomSizeSubset
+from python_research.dataset_structures import HyperspectralDataset
+from python_research.keras_models import build_1d_model, build_3d_model, build_settings_for_dataset
+from python_research.io import save_to_csv
 from python_research.augmentation.online_augmenter import OnlineAugmenter
-from python_research.augmentation.transformations import StdDevNoiseTransformation, PCATransformation
+from python_research.augmentation.transformations import *
 
 
 def parse_args():
@@ -83,9 +82,14 @@ def main(args):
     if args.balanced:
         train_data = BalancedSubset(test_data, args.train_samples)
         val_data = BalancedSubset(train_data, args.val_set_part)
-    else:
+    elif args.balanced == 0:
         train_data = ImbalancedSubset(test_data, args.train_samples)
         val_data = ImbalancedSubset(train_data, args.val_set_part)
+    elif args.balanced == 2:  # Case for balanced indiana
+        train_data = CustomSizeSubset(test_data, [30, 250, 250, 150, 250, 250,
+                                                  20, 250, 15, 250, 250, 250,
+                                                  150, 250, 50, 50])
+        val_data = BalancedSubset(train_data, args.val_set_part)
     # Callbacks
     early = EarlyStopping(patience=args.patience)
     logger = CSVLogger(os.path.join(args.artifacts_path, args.output_file) + ".csv")
@@ -99,6 +103,11 @@ def main(args):
     train_data.normalize_min_max(min_=min_, max_=max_)
     val_data.normalize_min_max(min_=min_, max_=max_)
     test_data.normalize_min_max(min_=min_, max_=max_)
+
+    if args.pixel_neighbourhood == 1:
+        test_data.expand_dims(axis=-1)
+        train_data.expand_dims(axis=-1)
+        val_data.expand_dims(axis=-1)
 
     if args.classes_count == 0:
         args.classes_count = len(np.unique(test_data.get_labels()))
@@ -127,27 +136,30 @@ def main(args):
     # Remove last dimension
     train_data.data = train_data.get_data()[:, :, 0]
     test_data.data = test_data.get_data()[:, :, 0]
-
-    transformation = PCATransformation(n_components=train_data.shape[-1],
-                                       low=0.9, high=1.1)
+    from time import time
+    transformation = OnlineLightenTransform(scaling=[0.05, 0.1])
+    start_online = time()
     transformation.fit(train_data.get_data())
     augmenter = OnlineAugmenter()
     test_score, class_accuracy = augmenter.evaluate(model, test_data,
                                                     transformation)
+    online_time = time() - start_online
     # Collect metrics
     train_score = max(history.history['acc'])
     val_score = max(history.history['val_acc'])
     times = timer.times
-    time = times[-1]
+    time_ = times[-1]
     avg_epoch_time = np.average(np.array(timer.average))
     epochs = len(history.epoch)
 
     # Save metrics
     metrics_path = os.path.join(args.artifacts_path, "metrics.csv")
+    time_path = os.path.join(args.artifacts_path, "inference_time.csv")
     save_to_csv(metrics_path, [train_score, val_score,
-                               test_score, time, epochs, avg_epoch_time])
+                               test_score, time_, epochs, avg_epoch_time])
     class_accuracy_path = os.path.join(args.artifacts_path, "class_accuracy.csv")
     save_to_csv(class_accuracy_path, class_accuracy)
+    save_to_csv(time_path, [online_time])
     np.savetxt(os.path.join(args.artifacts_path, args.output_file) +
                "_times.csv", times, fmt="%1.4f")
 

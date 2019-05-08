@@ -5,12 +5,14 @@ SAMPLES = 0
 
 class BandMapper:
     """
-    Class implementing bands mapping to specified number. Bands can be mapped
+    Class implementing bands mapping to a specified number. Bands can be mapped
     in different ways (specified as method parameter):
     - average - values of pixels are average across a chunk of bands which size
     is dependent on resulting number of bands.
     - min - min value of pixel across a chunk of bands is taken.
     - max - max value of pixel across a chunk of bands is taken.
+    Chunks of bands to merge are calculated with numpy.array_split (please
+    refer to Numpy documentation for more details).
     """
     def map(self, data: np.ndarray, resulting_bands_count: int,
             method="average") -> np.ndarray:
