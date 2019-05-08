@@ -8,13 +8,17 @@ import argparse
 import numpy as np
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
-from python_research.experiments.utils.keras_custom_callbacks import TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset, ImbalancedSubset
-from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
-from python_research.experiments.multiple_feature_learning.builders.keras_builders import build_1d_model, build_3d_model, build_settings_for_dataset
-from python_research.preprocessing.band_mapper import BandMapper
+from sklearn.metrics import cohen_kappa_score
+
+from python_research.keras_custom_callbacks import TimeHistory
+from python_research.dataset_structures import BalancedSubset, \
+    ImbalancedSubset, CustomSizeSubset
+from python_research.dataset_structures import HyperspectralDataset
+from python_research.keras_models import \
+    build_3d_model, build_settings_for_dataset, \
+    build_1d_model
 from utils import calculate_class_accuracy
-from python_research.experiments.utils.io import save_to_csv
+from python_research.io import save_to_csv
 
 
 def parse_args():
@@ -60,6 +64,11 @@ def parse_args():
                         help='Number of epochs without improvement on '
                              'validation score before '
                              'stopping the learning')
+    parser.add_argument('--blocks', type=int, default=1,
+                        help="Size of a kernel in first convolution layer "
+                             "(only for 1D model)")
+    parser.add_argument('--bands', type=int, default=100,
+                        help="Number of bands after mapping")
     parser.add_argument('--kernels', type=int, default=200,
                         help='Number of kernels in first convolution layer '
                              '(only for 1D model)')
@@ -76,17 +85,20 @@ def main(args):
     # Init data
     test_data = HyperspectralDataset(args.dataset_path, args.gt_path,
                                      neighborhood_size=args.pixel_neighborhood)
-    mapper = BandMapper()
-    test_data.data = mapper.map(test_data.get_data(), 50)
     test_data.normalize_labels()
     if args.pixel_neighborhood == 1:
         test_data.expand_dims(axis=-1)
-    if args.balanced:
+    if args.balanced == 1:
         train_data = BalancedSubset(test_data, args.train_samples)
         val_data = BalancedSubset(train_data, args.val_set_part)
-    else:
+    elif args.balanced == 0:
         train_data = ImbalancedSubset(test_data, args.train_samples)
         val_data = ImbalancedSubset(train_data, args.val_set_part)
+    elif args.balanced == 2:  # Case for balanced indiana
+        train_data = CustomSizeSubset(test_data, [30, 250, 250, 150, 250, 250,
+                                                  20, 250, 15, 250, 250, 250,
+                                                  150, 250, 50, 50])
+        val_data = BalancedSubset(train_data, args.val_set_part)
     # Callbacks
     early = EarlyStopping(patience=args.patience)
     logger = CSVLogger(os.path.join(args.artifacts_path, args.output_file) + ".csv")
@@ -112,7 +124,7 @@ def main(args):
         settings = build_settings_for_dataset((args.pixel_neighborhood,
                                                args.pixel_neighborhood))
         model = build_3d_model(settings, args.classes_count, test_data.shape[-1])
-
+    print(model.summary())
     # Train model
     history = model.fit(x=train_data.get_data(),
                         y=train_data.get_one_hot_labels(args.classes_count),
@@ -129,7 +141,6 @@ def main(args):
     # Calculate test set score
     test_score = model.evaluate(x=test_data.get_data(),
                                 y=test_data.get_one_hot_labels(args.classes_count))
-
     # Calculate accuracy for each class
     predictions = model.predict(x=test_data.get_data())
     predictions = np.argmax(predictions, axis=1)
@@ -140,16 +151,19 @@ def main(args):
     train_score = max(history.history['acc'])
     val_score = max(history.history['val_acc'])
     times = timer.times
-    time = times[-1]
+    training_time = times[-1]
     avg_epoch_time = np.average(np.array(timer.average))
     epochs = len(history.epoch)
+    kappa = cohen_kappa_score(predictions, test_data.get_labels())
 
     # Save metrics
     metrics_path = os.path.join(args.artifacts_path, "metrics.csv")
+    kappa_path = os.path.join(args.artifacts_path, "kappa.csv")
     save_to_csv(metrics_path, [train_score, val_score,
-                               test_score[1], time, epochs, avg_epoch_time])
+                               test_score[1], training_time, epochs, avg_epoch_time])
     class_accuracy_path = os.path.join(args.artifacts_path, "class_accuracy.csv")
     save_to_csv(class_accuracy_path, class_accuracy)
+    save_to_csv(kappa_path, [kappa])
     np.savetxt(os.path.join(args.artifacts_path, args.output_file) +
                "_times.csv", times, fmt="%1.4f")
 

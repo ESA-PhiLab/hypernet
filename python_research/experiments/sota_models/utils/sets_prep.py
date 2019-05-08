@@ -5,7 +5,7 @@ from typing import List
 import numpy as np
 
 from python_research.experiments.sota_models.utils.list_dataset import ListDataset
-from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
+from python_research.dataset_structures import HyperspectralDataset
 
 
 def attention_selection(data: np.ndarray, args: argparse.Namespace) -> List:

@@ -9,19 +9,19 @@ from tensorboardX import SummaryWriter
 from torch.utils.data import DataLoader
 from keras.callbacks import EarlyStopping, CSVLogger, ModelCheckpoint
 
+from python_research.augmentation.GAN.samples_generator import SamplesGenerator
 from utils import calculate_class_accuracy, load_patches
-from python_research.experiments.utils.io import save_to_csv
-from python_research.experiments.multiple_feature_learning.builders.keras_builders import \
+from python_research.io import save_to_csv
+from python_research.keras_models import \
     build_1d_model
-from python_research.experiments.utils.keras_custom_callbacks import \
+from python_research.keras_custom_callbacks import \
     TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset
-from python_research.experiments.utils.datasets.data_loader import OrderedDataLoader
+from python_research.dataset_structures import BalancedSubset
+from python_research.dataset_structures import OrderedDataLoader
 from python_research.augmentation.GAN.classifier import Classifier
 from python_research.augmentation.GAN.discriminator import Discriminator
 from python_research.augmentation.GAN.generator import Generator
 from python_research.augmentation.GAN.WGAN import WGAN
-from python_research.augmentation.augmentation import generate_samples
 
 
 def parse_args():
@@ -150,11 +150,14 @@ def main(args):
     generator_path = os.path.join(args.artifacts_path, args.output_file + "_generator_model")
     generator.load_state_dict(torch.load(generator_path))
 
+    if cuda:
+        generator = generator.cuda()
     train_data.convert_to_numpy()
-    samples_per_class = get_samples_per_class_count(train_data.get_labels())
-    generated_x, generated_y = generate_samples(generator, samples_per_class,
-                                                bands_count, args.classes_count)
 
+    device = 'gpu' if cuda is True else 'cpu'
+    samples_generator = SamplesGenerator(device=device)
+    generated_x, generated_y = samples_generator.generate(train_data,
+                                                          generator)
     generated_x = np.reshape(generated_x.detach().numpy(),
                              generated_x.shape + (1, ))
 

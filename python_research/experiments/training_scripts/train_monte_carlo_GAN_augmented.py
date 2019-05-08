@@ -10,19 +10,19 @@ from torch.utils.data import DataLoader
 from keras.callbacks import EarlyStopping, CSVLogger, ModelCheckpoint
 
 from utils import calculate_class_accuracy
-from python_research.experiments.utils.io import save_to_csv
-from python_research.experiments.multiple_feature_learning.builders.keras_builders import \
+from python_research.io import save_to_csv
+from python_research.keras_models import \
     build_1d_model
-from python_research.experiments.utils.keras_custom_callbacks import \
+from python_research.keras_custom_callbacks import \
     TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset, ImbalancedSubset
-from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
-from python_research.experiments.utils.datasets.data_loader import OrderedDataLoader
+from python_research.dataset_structures import BalancedSubset, \
+    ImbalancedSubset, CustomSizeSubset
+from python_research.dataset_structures import HyperspectralDataset
+from python_research.dataset_structures import OrderedDataLoader
 from python_research.augmentation.GAN.classifier import Classifier
 from python_research.augmentation.GAN.discriminator import Discriminator
 from python_research.augmentation.GAN.generator import Generator
 from python_research.augmentation.GAN.WGAN import WGAN
-from python_research.augmentation.augmentation import generate_samples
 from python_research.augmentation.GAN.samples_generator import SamplesGenerator
 
 def parse_args():
@@ -110,15 +110,21 @@ def get_samples_per_class_count(y):
 
 def main(args):
     os.makedirs(os.path.join(args.artifacts_path), exist_ok=True)
-    test_data = HyperspectralDataset(args.dataset_path, args.gt_path)
+    # Init data
+    test_data = HyperspectralDataset(args.dataset_path, args.gt_path,
+                                     neighbourhood_size=args.pixel_neighbourhood)
     test_data.normalize_labels()
-    if args.balanced:
+    if args.balanced == 1:
         train_data = BalancedSubset(test_data, args.train_samples)
         val_data = BalancedSubset(train_data, args.val_set_part)
-    else:
+    elif args.balanced == 0:
         train_data = ImbalancedSubset(test_data, args.train_samples)
         val_data = ImbalancedSubset(train_data, args.val_set_part)
-
+    elif args.balanced == 2:  # Case for balanced indiana
+        train_data = CustomSizeSubset(test_data, [30, 250, 250, 150, 250, 250,
+                                                  20, 250, 15, 250, 250, 250,
+                                                  150, 250, 50, 50])
+        val_data = BalancedSubset(train_data, args.val_set_part)
     # Normalize data
     max_ = train_data.max if train_data.max > val_data.max else val_data.max
     min_ = train_data.min if train_data.min < val_data.min else val_data.min

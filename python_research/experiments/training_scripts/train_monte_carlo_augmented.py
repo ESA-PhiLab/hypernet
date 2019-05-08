@@ -5,16 +5,15 @@ has the same number of samples) or unbalanced (samples drawn randomly)
 """
 import os.path
 import argparse
-import numpy as np
 from keras.models import load_model
 from keras.callbacks import ModelCheckpoint, EarlyStopping, CSVLogger
-from python_research.experiments.utils.keras_custom_callbacks import TimeHistory
-from python_research.experiments.utils.datasets.subset import BalancedSubset, ImbalancedSubset, CustomSizeSubset
-from python_research.experiments.utils.datasets.hyperspectral_dataset import HyperspectralDataset
-from python_research.experiments.multiple_feature_learning.builders.keras_builders import build_1d_model, build_3d_model, build_settings_for_dataset
-from python_research.experiments.utils.io import save_to_csv
-from python_research.augmentation.transformations import PCATransformation
-from python_research.augmentation.offlineaugmenter import OfflineAugmenter
+from python_research.keras_custom_callbacks import TimeHistory
+from python_research.dataset_structures import BalancedSubset, ImbalancedSubset, CustomSizeSubset
+from python_research.dataset_structures import HyperspectralDataset
+from python_research.keras_models import build_1d_model, build_3d_model, build_settings_for_dataset
+from python_research.io import save_to_csv
+from python_research.augmentation.transformations import *
+from python_research.augmentation.offlin_eaugmenter import OfflineAugmenter
 
 from utils import calculate_class_accuracy
 
@@ -107,9 +106,7 @@ def main(args):
     test_data.normalize_min_max(min_=min_, max_=max_)
 
     # Augment data
-    transformation = PCATransformation(low=0.9,
-                                       high=1.1,
-                                       n_components=train_data.shape[-1])
+    transformation = DarkenTransform()
     transformation.fit(train_data.get_data())
     augmenter = OfflineAugmenter(transformation, sampling_mode=args.sampling_mode)
     augmented_data, augmented_labels = augmenter.augment(train_data,

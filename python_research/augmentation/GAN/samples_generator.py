@@ -4,7 +4,7 @@ from keras.utils import to_categorical
 from typing import List
 
 from python_research.augmentation.GAN.generator import Generator
-from python_research.experiments.utils.datasets.hyperspectral_dataset import \
+from python_research.dataset_structures import \
     Dataset
 from utils import calculate_augmented_count_per_class
 
