@@ -11,6 +11,7 @@ def prep_sets_by_sizes(args) -> tuple:
     args.val_size is the number of samples designed for validation per each class.
     Testing set will contain lowest_class_population - (args.train_size + args.val_size) samples per each class.
     :param args: Parsed arguments containing sizes of datasets.
+    :return: Training, Validation and Testing objects.
     """
     print("Balanced data preparation:")
     samples = generate_samples(args=args)
