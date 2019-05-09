@@ -44,7 +44,9 @@ def arguments() -> Arguments:
     parser.add_argument("--epochs", dest="epochs", help="Total number of epochs.", type=int)
     parser.add_argument("--data_path", dest="data_path", help="Path to the dataset.", type=str)
     parser.add_argument("--data_name", dest="data_name", help="Name of the dataset.", type=str)
-    parser.add_argument("--neighborhood_size", dest="neighborhood_size", help="Spatial size of the patch.", type=int)
+    parser.add_argument("--neighborhood_size", dest="neighborhood_size", help="Spatial size of the patch."
+                                                                              "Due to the number of layers,"
+                                                                              "the minimal size is 7.", type=int)
     parser.add_argument("--labels_path", dest="labels_path", help="Path to labels.", type=str)
     parser.add_argument("--batch", dest="batch", help="Size of the batch.", type=int)
     parser.add_argument("--patience", dest="patience", help="Number of epochs without improvement.", type=int)
