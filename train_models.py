@@ -21,15 +21,16 @@ def train(model_path: str, data_path: str, batch_size: int,
     :param epochs: Number of epochs for model to train.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
     :param shuffle: Boolean indicating whether to shuffle dataset
-    before each epoch.
-    :param
+        before each epoch.
+    :param patience: Number of epochs without improvement in order to
+        stop the training phase.
     """
     data = load_data(data_path)
     model = tf.keras.models.load_model(model_path, compile=False)
 
     callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                 patience=patience)
-    # Set up model for training:
+
     model.compile('adam', 'categorical_crossentropy', metrics=['acc'])
     model.summary()
 
