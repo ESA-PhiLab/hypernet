@@ -1,6 +1,7 @@
 import tensorflow as tf
 import utils
 import clize
+import os
 
 
 @utils.check_types(str)
@@ -41,9 +42,11 @@ def train(model_path: str, data_path: str, batch_size: int,
               shuffle=shuffle,
               validation_data=data[utils.data[utils.Dataset.VAL]],
               callbacks=callback)
+
+    model.save(filepath=os.path.join(os.path.dirname(model_path),
+                                     'trained_model'))
     print('Passed...')
 
 
 if __name__ == '__main__':
-    # Mocked args:
     clize.run(train)
