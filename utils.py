@@ -1,3 +1,12 @@
+from enum import Enum
+
+
+class Dataset(Enum):
+    TRAIN = 'train'
+    VAL = 'val'
+    TEST = 'test'
+
+
 def check_types(*types):
     def function_wrapper(function):
         assert len(types) == function.__code__.co_argcount, \
