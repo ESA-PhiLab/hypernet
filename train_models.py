@@ -4,11 +4,6 @@ import clize
 import os
 
 
-@utils.check_types(str)
-def load_data(data_path: str):
-    pass
-
-
 @utils.check_types(str, str, int, int, int, bool, int)
 def train(model_path: str, data_path: str, batch_size: int,
           epochs: int, verbose: int, shuffle: bool, patience: int):
@@ -26,26 +21,28 @@ def train(model_path: str, data_path: str, batch_size: int,
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
     """
-    data = load_data(data_path)
+    train_data, val_data = utils.load_data(data_path,
+                                           utils.Dataset.TRAIN,
+                                           utils.Dataset.VAL)
+
     model = tf.keras.models.load_model(model_path, compile=False)
 
     callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                 patience=patience)
 
     model.compile('adam', 'categorical_crossentropy', metrics=['acc'])
-    model.summary()
+    print(model.summary())
 
-    model.fit(x=data[utils.Dataset.TRAIN],
+    model.fit(x=train_data,
               batch_size=batch_size,
               epochs=epochs,
               verbose=verbose,
               shuffle=shuffle,
-              validation_data=data[utils.data[utils.Dataset.VAL]],
+              validation_data=val_data,
               callbacks=callback)
 
     model.save(filepath=os.path.join(os.path.dirname(model_path),
-                                     'trained_model'))
-    print('Passed...')
+                                     utils.Model.TRAINED_MODEL))
 
 
 if __name__ == '__main__':

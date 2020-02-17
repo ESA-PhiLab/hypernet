@@ -1,4 +1,5 @@
 import aenum
+import inspect
 
 
 class Dataset(aenum.Constant):
@@ -6,10 +7,17 @@ class Dataset(aenum.Constant):
     VAL = 'val'
     TEST = 'test'
 
+    DATA = 'data'
+    LABELS = 'labels'
+
+
+class Model(aenum.Constant):
+    TRAINED_MODEL = 'trained_model'
+
 
 def check_types(*types):
     def function_wrapper(function):
-        assert len(types) == function.__code__.co_argcount, \
+        assert len(types) == len(inspect.signature(function).parameters), \
             'Number of arguments must match the number of possible types.'
 
         def validate_types(*args, **kwargs):
@@ -20,3 +28,14 @@ def check_types(*types):
             return function(*args, **kwargs)
         return validate_types
     return function_wrapper
+
+
+@check_types(str, (list, str))
+def load_data(data_path: str, *keys: str):
+    """
+    Function for loading datasets.
+
+    :param data_path: Path to the data file.
+    :param keys: Keys for each dataset.
+    """
+    print(keys)
