@@ -1,6 +1,7 @@
 import clize
-import utils
 import tensorflow as tf
+
+import utils
 
 
 @utils.check_types(str, str, int, int)
