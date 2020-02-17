@@ -1,7 +1,7 @@
-from enum import Enum
+import aenum
 
 
-class Dataset(Enum):
+class Dataset(aenum.Constant):
     TRAIN = 'train'
     VAL = 'val'
     TEST = 'test'
