@@ -3,6 +3,7 @@ import typing
 
 import aenum
 import h5py
+import numpy as np
 import tensorflow as tf
 
 
@@ -34,7 +35,7 @@ def check_types(*types):
     return function_wrapper
 
 
-@check_types(str, tuple)
+@check_types(str, str)
 def load_data(data_path: str, *keys: str) -> typing.List[tf.data.Dataset]:
     """
     Function for loading datasets.
@@ -42,8 +43,11 @@ def load_data(data_path: str, *keys: str) -> typing.List[tf.data.Dataset]:
     :param data_path: Path to the data file.
     :param keys: Keys for each dataset.
     """
-    data = h5py.File(data_path, 'r')
+    raw_data = h5py.File(data_path, 'r')
     datasets = []
-    for key in keys:
-        datasets.append(tf.data.Dataset.from_tensor_slices(data[key]))
+    for dataset_key in keys:
+        datasets.append(tf.data.Dataset.from_tensor_slices((
+            np.asarray(raw_data[dataset_key][Dataset.DATA]),
+            np.asarray(raw_data[dataset_key][Dataset.LABELS]))
+        ))
     return datasets
