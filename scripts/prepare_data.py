@@ -1,7 +1,7 @@
 """
-Load the data, reformat it to have right dimensions, split it into train, test 
-and val sets and save them in .h5 file with 'train', 'val' and 'test' goups,
-each having 'data' and 'labels' keys.
+Load the data, reformat it to have [SAMPLES, ....] dimensions,
+split it into train, test and val sets and save them in .h5 file with
+'train', 'val' and 'test' goups, each having 'data' and 'labels' keys.
 """
 
 import os
@@ -28,8 +28,7 @@ def main(*,
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the data file.
     :param output_path: Path under in which the output .h5 file will be stored
-    :type output_dir: Directory in which the prepared .h5 file will be stored
-    :param train_size: If float, should be between 0.0 and 1.0, if balanced = True, it represents percentage of each class to be extracted, 
+    :param train_size: If float, should be between 0.0 and 1.0, if balanced = True, it represents percentage of each class to be extracted,
                        If float and balanced = False, it represents percetange of the whole dataset to be extracted with samples drawn randomly. 
                        If int and balanced = True, it represents number of samples to be drawn from each class. 
                        If int and balanced = False, it represents overall number of samples to be drawn, randomly. 
@@ -39,7 +38,7 @@ def main(*,
                      to be extracted as a validation set, defaults to 0.1
     :param balanced: Indicated whether the extracted training set should be balanced, defaults to True
     :param background_label: Label indicating the background in GT file
-    :param channels_idx: Index specifing the dimensions of channels
+    :param channels_idx: Index specifying the channels position in the provided data
     :raises TypeError: When provided data or labels file is not supported
     """
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
