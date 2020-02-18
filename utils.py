@@ -67,7 +67,8 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     return train_x, train_y, val_x, val_y, data, labels
 
 
-def _get_set_indices(labels: np.ndarray, size: float = 0.8, balanced: bool = True) -> np.ndarray:
+def _get_set_indices(labels: np.ndarray, size: float = 0.8,
+                     balanced: bool = True) -> np.ndarray:
     """
     Extract indices of a subset of specified data according to size and
     balanced parameters.
@@ -75,7 +76,7 @@ def _get_set_indices(labels: np.ndarray, size: float = 0.8, balanced: bool = Tru
     :param labels: Vector with corresponding labels
     :param size: If float, should be between 0.0 and 1.0, if balanced = True, it represents percentage of each class to be extracted, 
                        If float and balanced = False, it represents percetange of the whole dataset to be extracted with samples drawn randomly, 
-                            regardlesss of their class. 
+                            regardless of their class.
                        If int and balanced = True, it represents number of samples to be drawn from each class. 
                        If int and balanced = False, it represents overall number of samples to be drawn regardless of their class, randomly. 
                        Defaults to 0.8
@@ -92,12 +93,31 @@ def _get_set_indices(labels: np.ndarray, size: float = 0.8, balanced: bool = Tru
         train_indices = np.concatenate(label_indices, axis=0)
     elif 0.0 < size < 1.0 and balanced is False:
         train_indices = np.arange(int(len(labels) * size))
-    elif size > 1 and balanced is True:
+    elif size >= 1 and balanced is True:
         for label in range(len(unique_labels)):
             label_indices[label] = label_indices[label][:size]
         train_indices = np.concatenate(label_indices, axis=0)
-    elif size > 1 and balanced is False:
+    elif size >= 1 and balanced is False:
         train_indices = np.arange(size)
     else:
         raise TypeError("Wrong type of size argument passed")
     return train_indices
+
+
+def reshape_to_1d_samples(data: np.ndarray,
+                          labels: np.ndarray,
+                          channels_idx: int = 0) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL, CHANNELS],
+    so it fits the 1D Conv models
+    :param data: Data to reshape.
+    :param labels: Corresponding labels.
+    :param channels_idx: Index at which the channels are located in the
+                         provided data file
+    :return: Reshape data and labels
+    :rtype: tuple with reshaped data and labels
+    """
+    data = data.reshape(data.shape[channels_idx], -1)
+    data = np.moveaxis(data, -1, 0)
+    labels = labels.reshape(-1)
+    return data, labels

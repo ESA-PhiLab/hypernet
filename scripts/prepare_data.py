@@ -1,6 +1,7 @@
 """
 Load the data, reformat it to have right dimensions, split it into train, test 
-and val and sets and save them in .h5 file with 'train', 'val' and 'test' keys.
+and val sets and save them in .h5 file with 'train', 'val' and 'test' goups,
+each having 'data' and 'labels' keys.
 """
 
 import os
@@ -9,8 +10,7 @@ import h5py
 import clize
 
 from input_output import load_npy
-from transformations import reshape_to_1D_samples
-from utils import Dataset, train_val_test_split
+from utils import Dataset, train_val_test_split, reshape_to_1d_samples
 
 EXTENSION = 1
 
@@ -18,7 +18,7 @@ EXTENSION = 1
 def main(*,
          data_file_path: str,
          ground_truth_path: str,
-         output_dir: str,
+         output_path: str,
          train_size: float = 0.8,
          val_size: float = 0.1,
          balanced: bool = True,
@@ -27,7 +27,7 @@ def main(*,
     """
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the data file.
-    :param output_dir: Directory in which the output .h5 file will be stored
+    :param output_path: Path under in which the output .h5 file will be stored
     :type output_dir: Directory in which the prepared .h5 file will be stored
     :param train_size: If float, should be between 0.0 and 1.0, if balanced = True, it represents percentage of each class to be extracted, 
                        If float and balanced = False, it represents percetange of the whole dataset to be extracted with samples drawn randomly. 
@@ -48,11 +48,11 @@ def main(*,
         raise TypeError("The following data file type is not supported: {}".format(
             os.path.splitext(data_file_path)[EXTENSION]))
 
-    data, labels = reshape_to_1D_samples(data, labels, channels_idx)
+    data, labels = reshape_to_1d_samples(data, labels, channels_idx)
     train_x, train_y, val_x, val_y, test_x, test_y = train_val_test_split(
         data, labels, train_size, val_size, balanced, background_label)
     
-    data_file = h5py.File(os.path.join(output_dir, 'pavia.h5'), 'w')
+    data_file = h5py.File(output_path, 'w')
     train_group = data_file.create_group(Dataset.TRAIN)
     train_group.create_dataset(Dataset.DATA, data=train_x)
     train_group.create_dataset(Dataset.LABELS, data=train_y)
