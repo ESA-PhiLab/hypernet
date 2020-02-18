@@ -4,10 +4,10 @@ import typing
 import aenum
 import h5py
 import numpy as np
-import tensorflow as tf
 
 
 class Dataset(aenum.Constant):
+    SAMPLES_DIM = 0
     TRAIN = 'train'
     VAL = 'val'
     TEST = 'test'
@@ -36,18 +36,19 @@ def check_types(*types):
 
 
 @check_types(str, str)
-def load_data(data_path: str, *keys: str) -> typing.List[tf.data.Dataset]:
+def load_data(data_path, *keys: str) -> typing.List[typing.Dict]:
     """
-    Function for loading datasets.
+    Function for loading datasets as list of dictionaries.
 
-    :param data_path: Path to the data file.
+    :param data_path: Path to the dataset.
     :param keys: Keys for each dataset.
     """
     raw_data = h5py.File(data_path, 'r')
     datasets = []
     for dataset_key in keys:
-        datasets.append(tf.data.Dataset.from_tensor_slices((
-            np.asarray(raw_data[dataset_key][Dataset.DATA]),
-            np.asarray(raw_data[dataset_key][Dataset.LABELS]))
-        ))
+        datasets.append({
+            Dataset.DATA: np.asarray(raw_data[dataset_key][Dataset.DATA]),
+            Dataset.LABELS: np.asarray(
+                raw_data[dataset_key][Dataset.LABELS])
+        })
     return datasets
