@@ -1,7 +1,7 @@
 """
 Load the data, reformat it to have [SAMPLES, ....] dimensions,
 split it into train, test and val sets and save them in .h5 file with
-'train', 'val' and 'test' goups, each having 'data' and 'labels' keys.
+'train', 'val' and 'test' groups, each having 'data' and 'labels' keys.
 """
 
 import os

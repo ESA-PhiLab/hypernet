@@ -1,8 +1,10 @@
 import aenum
 from typing import Tuple, List, Union
+import warnings
 
-import tensorflow as tf
 import numpy as np
+warnings.simplefilter(action='ignore', category=FutureWarning)
+import tensorflow as tf
 
 
 class Dataset(aenum.Constant):
