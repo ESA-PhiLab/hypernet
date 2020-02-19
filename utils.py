@@ -31,28 +31,38 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                          train_size: Union[int, float] = 0.8,
                          val_size: float = 0.1,
                          balanced: bool = True,
-                         background_label: int = 0) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+                         background_label: int = 0) -> Tuple[
+    np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split the data into train, val and test sets. The size of the training set 
-    is set by the train_size paramter. All the remaining samples will be treated
-    as a test set
+    is set by the train_size parameter. All the remaining samples will be
+    treated as a test set
 
     :param data: Data with the [SAMPLES, ...] dimensions
     :param labels: Vector with corresponding labels
-    :param train_size: If float, should be between 0.0 and 1.0, if balanced = True, it represents percentage of each class to be extracted, 
-                       If float and balanced = False, it represents percetange of the whole dataset to be extracted with samples drawn randomly, 
-                            regardlesss of their class. 
-                       If int and balanced = True, it represents number of samples to be drawn from each class. 
-                       If int and balanced = False, it represents overall number of samples to be drawn regardless of their class, randomly. 
-                       Defaults to 0.8
-    :param val_size: Should be between 0.0 and 1.0. Represents the percentage of each class from the training set 
-                     to be extracted as a validation set, defaults to 0.1
-    :param balanced: Indicated whether the extracted training set should be balanced, defaults to True
+    :param train_size: If float, should be between 0.0 and 1.0,
+                        if balanced = True, it represents percentage of each
+                        class to be extracted,
+                 If float and balanced = False, it represents percentage of the
+                    whole dataset to be extracted with samples drawn randomly,
+                    regardless of their class.
+                 If int and balanced = True, it represents number of samples
+                    to be drawn from each class.
+                 If int and balanced = False, it represents overall number of
+                    samples to be drawn regardless of their class, randomly.
+                 Defaults to 0.8
+    :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
+                     each class from the training set to be extracted as a
+                     validation set, defaults to 0.1
+    :param balanced: Indicated whether the extracted training set should be
+                     balanced, defaults to True
+    :param background_label: Label indicating the background in the ground truth
     :return: Three tuples: (train_x, train_y), (val_x, val_y), (test_x, test_y)
     :raises TypeError: When wrong type is passed as train_size
     """
     data = data[labels != background_label]
     labels = labels[labels != background_label]
+    labels = normalize_labels(labels)
     shuffle_arrays_together([data, labels])
     train_indices = _get_set_indices(labels, train_size, balanced)
     train_x = data[train_indices]
@@ -74,13 +84,18 @@ def _get_set_indices(labels: np.ndarray, size: float = 0.8,
     balanced parameters.
 
     :param labels: Vector with corresponding labels
-    :param size: If float, should be between 0.0 and 1.0, if balanced = True, it represents percentage of each class to be extracted, 
-                       If float and balanced = False, it represents percetange of the whole dataset to be extracted with samples drawn randomly, 
-                            regardless of their class.
-                       If int and balanced = True, it represents number of samples to be drawn from each class. 
-                       If int and balanced = False, it represents overall number of samples to be drawn regardless of their class, randomly. 
-                       Defaults to 0.8
-    :param balanced: Indicated whether the extracted training set should be balanced, defaults to True
+    :param size: If float, should be between 0.0 and 1.0, if balanced = True, it
+                    represents percentage of each class to be extracted,
+                 If float and balanced = False, it represents percentage of the
+                    whole dataset to be extracted with samples drawn randomly,
+                    regardless of their class.
+                 If int and balanced = True, it represents number of samples
+                    to be drawn from each class.
+                 If int and balanced = False, it represents overall number of
+                    samples to be drawn regardless of their class, randomly.
+                 Defaults to 0.8
+    :param balanced: Indicated whether the extracted training set should be
+                     balanced, defaults to True
     :return: Indexes of the train set
     :raises TypeError: When wrong type is passed as size
     """
@@ -104,11 +119,23 @@ def _get_set_indices(labels: np.ndarray, size: float = 0.8,
     return train_indices
 
 
+def normalize_labels(labels: np.ndarray) -> np.ndarray:
+    """
+    Normalize labels so that they always start from 0
+    :param labels: labels to normalize
+    :return: Normalized labels
+    """
+    min_label = np.amin(labels)
+    return labels - min_label
+
+
 def reshape_to_1d_samples(data: np.ndarray,
                           labels: np.ndarray,
-                          channels_idx: int = 0) -> Tuple[np.ndarray, np.ndarray]:
+                          channels_idx: int = 0) -> Tuple[
+    np.ndarray, np.ndarray]:
     """
-    Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL, CHANNELS],
+    Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL,
+    CHANNELS],
     so it fits the 1D Conv models
     :param data: Data to reshape.
     :param labels: Corresponding labels.
