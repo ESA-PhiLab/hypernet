@@ -4,6 +4,7 @@ import typing
 import clize
 import tensorflow as tf
 
+import transform
 import utils
 
 
@@ -40,17 +41,14 @@ def train(model_path: str, data_path: str, batch_size: int,
     val_dataset = tf.data.Dataset.from_tensor_slices(
         (val_dict[utils.Dataset.DATA], val_dict[utils.Dataset.LABELS]))
 
-    @utils.check_types(tf.Tensor, tf.Tensor)
-    def preprocess(sample: tf.Tensor,
-                   label: tf.Tensor) -> typing.List[tf.Tensor]:
-        return [tf.reshape(tf.cast(sample, tf.float32), (sample_size, 1)),
-                tf.one_hot(tf.cast(label, tf.uint8), (n_classes))]
+    transformations = transform.Transform1D(sample_size=sample_size,
+                                            n_classes=n_classes)
 
-    train_dataset = train_dataset.map(preprocess)\
+    train_dataset = train_dataset.map(transformations)\
         .batch(batch_size=batch_size, drop_remainder=False)\
         .repeat().prefetch(tf.contrib.data.AUTOTUNE)
 
-    val_dataset = val_dataset.map(preprocess)\
+    val_dataset = val_dataset.map(transformations)\
         .batch(batch_size=batch_size, drop_remainder=False)\
         .repeat().prefetch(tf.contrib.data.AUTOTUNE)
 

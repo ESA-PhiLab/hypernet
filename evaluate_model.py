@@ -1,8 +1,7 @@
-import typing
-
 import clize
 import tensorflow as tf
 
+import transform
 import utils
 
 
@@ -27,13 +26,10 @@ def evaluate(model_path: str, data_path: str,
     test_dataset = tf.data.Dataset.from_tensor_slices(
         (test_dict[utils.Dataset.DATA], test_dict[utils.Dataset.LABELS]))
 
-    @utils.check_types(tf.Tensor, tf.Tensor)
-    def preprocess(sample: tf.Tensor,
-                   label: tf.Tensor) -> typing.List[tf.Tensor]:
-        return [tf.reshape(tf.cast(sample, tf.float32), (sample_size, 1)),
-                tf.one_hot(tf.cast(label, tf.uint8), (n_classes))]
+    transormations = transform.Transform1D(sample_size=sample_size,
+                                           n_classes=n_classes)
 
-    test_dataset = test_dataset.map(preprocess)\
+    test_dataset = test_dataset.map(transormations)\
         .batch(batch_size=batch_size, drop_remainder=False)\
         .repeat().prefetch(tf.contrib.data.AUTOTUNE)
 
