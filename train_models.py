@@ -78,7 +78,8 @@ def _extract_trainable_datasets(data_path: str,
     N_VAL = val_dict[utils.Dataset.DATA].shape[utils.Dataset.SAMPLES_DIM]
 
     train_dataset = tf.data.Dataset.from_tensor_slices(
-        (train_dict[utils.Dataset.DATA], train_dict[utils.Dataset.LABELS]))
+        (train_dict[utils.Dataset.DATA], train_dict[utils.Dataset.LABELS]))\
+        .shuffle(N_TRAIN)
     val_dataset = tf.data.Dataset.from_tensor_slices(
         (val_dict[utils.Dataset.DATA], val_dict[utils.Dataset.LABELS]))
 

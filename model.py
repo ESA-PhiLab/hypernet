@@ -22,7 +22,7 @@ def build_1d_model(input_shape: tuple, filters: int,
         for block in range(blocks - 1):
             model = add_block(model)
     model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(units=368, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=200, activation='relu'))
     model.add(tf.keras.layers.Dense(units=128, activation='relu'))
     model.add(tf.keras.layers.Dense(units=classes_count, activation='softmax'))
     model.compile(optimizer=optimizer,
@@ -32,6 +32,4 @@ def build_1d_model(input_shape: tuple, filters: int,
 
 
 if __name__ == '__main__':
-    model = build_1d_model((103, 1), 16, 4, 9, 2)
-    model.summary()
-    model.save('model')
+    build_1d_model((103, 1), 4, 3, 9, 1).save('model')

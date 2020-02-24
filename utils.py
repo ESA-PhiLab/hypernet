@@ -74,7 +74,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                          train_size: typing.Union[int, float] = 0.8,
                          val_size: float = 0.1,
                          balanced: bool = True,
-                         background_label: int = 0) -> Tuple[
+                         background_label: int = 0) -> typing.Tuple[
         np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split the data into train, val and test sets. The size of the training set 
@@ -174,7 +174,7 @@ def normalize_labels(labels: np.ndarray) -> np.ndarray:
 
 def reshape_to_1d_samples(data: np.ndarray,
                           labels: np.ndarray,
-                          channels_idx: int = 0) -> Tuple[
+                          channels_idx: int = 0) -> typing.Tuple[
         np.ndarray, np.ndarray]:
     """
     Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL,
