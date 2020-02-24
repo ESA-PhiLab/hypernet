@@ -1,6 +1,8 @@
-import pytest
-import train_models
 import os
+
+import pytest
+
+import train_models
 import utils
 
 

@@ -37,7 +37,7 @@ def check_types(*types):
 
 
 @check_types(str, str)
-def load_data(data_path, *keys: str) -> typing.List[typing.Dict]:
+def load_data(data_path: str, *keys: str) -> typing.List[typing.Dict]:
     """
     Function for loading datasets as list of dictionaries.
 
