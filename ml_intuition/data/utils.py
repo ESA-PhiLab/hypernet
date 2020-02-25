@@ -30,7 +30,7 @@ def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
 def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                          train_size: Union[int, float] = 0.8,
                          val_size: float = 0.1,
-                         balanced: bool = True,
+                         stratified: bool = True,
                          background_label: int = 0) -> Tuple[
     np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
@@ -41,81 +41,75 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     :param data: Data with the [SAMPLES, ...] dimensions
     :param labels: Vector with corresponding labels
     :param train_size: If float, should be between 0.0 and 1.0,
-                        if balanced = True, it represents percentage of each
+                        if stratified = True, it represents percentage of each
                         class to be extracted,
-                 If float and balanced = False, it represents percentage of the
+                 If float and stratified = False, it represents percentage of the
                     whole dataset to be extracted with samples drawn randomly,
                     regardless of their class.
-                 If int and balanced = True, it represents number of samples
+                 If int and stratified = True, it represents number of samples
                     to be drawn from each class.
-                 If int and balanced = False, it represents overall number of
+                 If int and stratified = False, it represents overall number of
                     samples to be drawn regardless of their class, randomly.
                  Defaults to 0.8
     :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
                      each class from the training set to be extracted as a
                      validation set, defaults to 0.1
-    :param balanced: Indicated whether the extracted training set should be
-                     balanced, defaults to True
+    :param stratified: Indicated whether the extracted training set should be
+                     stratified, defaults to True
     :param background_label: Label indicating the background in the ground truth
-    :return: Three tuples: (train_x, train_y), (val_x, val_y), (test_x, test_y)
+    :return: train_x, train_y, val_x, val_y, test_x, test_y
     :raises TypeError: When wrong type is passed as train_size
     """
     data = data[labels != background_label]
     labels = labels[labels != background_label]
     labels = normalize_labels(labels)
     shuffle_arrays_together([data, labels])
-    train_indices = _get_set_indices(labels, train_size, balanced)
-    train_x = data[train_indices]
-    train_y = labels[train_indices]
-    val_indices = _get_set_indices(train_y, val_size)
-    val_x = train_x[val_indices]
-    val_y = train_y[val_indices]
-    train_x = np.delete(train_x, val_indices, axis=0)
-    train_y = np.delete(train_y, val_indices)
-    data = np.delete(data, train_indices, axis=0)
-    labels = np.delete(labels, train_indices)
-    return train_x, train_y, val_x, val_y, data, labels
+    train_indices = _get_set_indices(labels, train_size, stratified)
+    val_indices = _get_set_indices(labels[train_indices], val_size)
+    test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
+    train_indices = np.setdiff1d(train_indices, val_indices)
+    return data[train_indices], labels[train_indices], data[val_indices], \
+           labels[val_indices], data[test_indices], labels[test_indices]
 
 
 def _get_set_indices(labels: np.ndarray, size: float = 0.8,
-                     balanced: bool = True) -> np.ndarray:
+                     stratified: bool = True) -> np.ndarray:
     """
     Extract indices of a subset of specified data according to size and
-    balanced parameters.
+    stratified parameters.
 
     :param labels: Vector with corresponding labels
-    :param size: If float, should be between 0.0 and 1.0, if balanced = True, it
+    :param size: If float, should be between 0.0 and 1.0, if stratified = True, it
                     represents percentage of each class to be extracted,
-                 If float and balanced = False, it represents percentage of the
+                 If float and stratified = False, it represents percentage of the
                     whole dataset to be extracted with samples drawn randomly,
                     regardless of their class.
-                 If int and balanced = True, it represents number of samples
+                 If int and stratified = True, it represents number of samples
                     to be drawn from each class.
-                 If int and balanced = False, it represents overall number of
+                 If int and stratified = False, it represents overall number of
                     samples to be drawn regardless of their class, randomly.
                  Defaults to 0.8
-    :param balanced: Indicated whether the extracted training set should be
-                     balanced, defaults to True
+    :param stratified: Indicated whether the extracted training set should be
+                     stratified, defaults to True
     :return: Indexes of the train set
     :raises TypeError: When wrong type is passed as size
     """
     unique_labels = np.unique(labels)
     label_indices = [np.where(labels == label)[0] for label in unique_labels]
-    if 0.0 < size < 1.0 and balanced is True:
+    assert size > 0, "Size argument must be greater than zero"
+    if 0.0 < size < 1.0 and stratified is True:
         for idx in range(len(unique_labels)):
             samples_per_label = int(len(label_indices[idx]) * size)
             label_indices[idx] = label_indices[idx][:samples_per_label]
         train_indices = np.concatenate(label_indices, axis=0)
-    elif 0.0 < size < 1.0 and balanced is False:
+    elif 0.0 < size < 1.0 and stratified is False:
         train_indices = np.arange(int(len(labels) * size))
-    elif size >= 1 and balanced is True:
+    elif size >= 1 and stratified is True:
         for label in range(len(unique_labels)):
             label_indices[label] = label_indices[label][:size]
         train_indices = np.concatenate(label_indices, axis=0)
-    elif size >= 1 and balanced is False:
+    elif size >= 1 and stratified is False:
         train_indices = np.arange(size)
-    else:
-        raise TypeError("Wrong type of size argument passed")
     return train_indices
 
 
