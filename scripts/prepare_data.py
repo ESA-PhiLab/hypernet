@@ -9,8 +9,8 @@ import h5py
 
 import clize
 
-from input_output import load_npy
-from utils import Dataset, train_val_test_split, reshape_to_1d_samples
+from ml_intuition.data.io import load_npy
+from ml_intuition.data.utils import Dataset, train_val_test_split, reshape_to_1d_samples
 
 EXTENSION = 1
 
@@ -21,24 +21,33 @@ def main(*,
          output_path: str,
          train_size: float = 0.8,
          val_size: float = 0.1,
-         balanced: bool = True,
+         stratified: bool = True,
          background_label: int = 0,
          channels_idx: int = 0):
     """
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the data file.
     :param output_path: Path under in which the output .h5 file will be stored
-    :param train_size: If float, should be between 0.0 and 1.0, if balanced = True, it represents percentage of each class to be extracted,
-                       If float and balanced = False, it represents percetange of the whole dataset to be extracted with samples drawn randomly. 
-                       If int and balanced = True, it represents number of samples to be drawn from each class. 
-                       If int and balanced = False, it represents overall number of samples to be drawn, randomly. 
-                       Defaults to 0.8
+    :param train_size: If float, should be between 0.0 and 1.0,
+                        if stratified = True, it represents percentage of each
+                        class to be extracted,
+                 If float and stratified = False, it represents percentage of the
+                    whole dataset to be extracted with samples drawn randomly,
+                    regardless of their class.
+                 If int and stratified = True, it represents number of samples
+                    to be drawn from each class.
+                 If int and stratified = False, it represents overall number of
+                    samples to be drawn regardless of their class, randomly.
+                 Defaults to 0.8
     :type train_size: float or int
-    :param val_size: Should be between 0.0 and 1.0. Represents the percentage of each class from the training set 
-                     to be extracted as a validation set, defaults to 0.1
-    :param balanced: Indicated whether the extracted training set should be balanced, defaults to True
+    :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
+                     each class from the training set to be extracted as a
+                     validation set, defaults to 0.1
+    :param stratified: Indicated whether the extracted training set should be
+                     stratified, defaults to True
     :param background_label: Label indicating the background in GT file
-    :param channels_idx: Index specifying the channels position in the provided data
+    :param channels_idx: Index specifying the channels position in the provided
+                         data
     :raises TypeError: When provided data or labels file is not supported
     """
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
@@ -49,7 +58,7 @@ def main(*,
 
     data, labels = reshape_to_1d_samples(data, labels, channels_idx)
     train_x, train_y, val_x, val_y, test_x, test_y = train_val_test_split(
-        data, labels, train_size, val_size, balanced, background_label)
+        data, labels, train_size, val_size, stratified, background_label)
     
     data_file = h5py.File(output_path, 'w')
     train_group = data_file.create_group(Dataset.TRAIN)
