@@ -6,9 +6,8 @@ import warnings
 import json
 import clize
 
-
 warnings.simplefilter(action='ignore', category=FutureWarning)
-from utils import freeze_session
+from ml_intuition.data.utils import freeze_session
 import tensorflow as tf
 from tensorflow import keras
 
