@@ -4,7 +4,7 @@ import tensorflow as tf
 class Transform1D(object):
     def __init__(self, sample_size: int, n_classes: int):
         """
-
+        Transform 1D samples.
         """
         super().__init__()
         self.sample_size = sample_size

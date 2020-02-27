@@ -1,4 +1,5 @@
 import os
+import typing
 
 import clize
 import tensorflow as tf
@@ -8,9 +9,16 @@ import utils
 
 
 @utils.check_types(str, str, int, int, int, bool, int, int, int)
-def train(model_path: str, data_path: str, batch_size: int,
-          epochs: int, verbose: int, shuffle: bool, patience: int,
-          sample_size: int, n_classes: int):
+def train(*,
+          model_path: str,
+          data_path: str,
+          batch_size: int,
+          epochs: int,
+          verbose: int,
+          shuffle: bool,
+          patience: int,
+          sample_size: int,
+          n_classes: int):
     """
     Function for training tensorflow models given datasets.
 
@@ -41,34 +49,33 @@ def train(model_path: str, data_path: str, batch_size: int,
     model.compile('adam', 'categorical_crossentropy', metrics=['acc'])
     model.summary()
 
-    artifacts = model.fit(x=train_dataset.make_one_shot_iterator(),
-                          epochs=epochs,
-                          verbose=verbose,
-                          shuffle=shuffle,
-                          validation_data=val_dataset.make_one_shot_iterator(),
-                          callbacks=[callback],
-                          steps_per_epoch=N_TRAIN // batch_size,
-                          validation_steps=N_VAL // batch_size)
+    model.fit(x=train_dataset.make_one_shot_iterator(),
+              epochs=epochs,
+              verbose=verbose,
+              shuffle=shuffle,
+              validation_data=val_dataset.make_one_shot_iterator(),
+              callbacks=[callback],
+              steps_per_epoch=N_TRAIN // batch_size,
+              validation_steps=N_VAL // batch_size)
 
     model.save(filepath=os.path.join(os.path.dirname(model_path),
                                      utils.Model.TRAINED_MODEL))
-    print(artifacts)
 
 
 @utils.check_types(str, int, int, int)
 def _extract_trainable_datasets(data_path: str,
                                 batch_size: int,
                                 sample_size: int,
-                                n_classes: int) -> tuple:
+                                n_classes: int) -> typing.Tuple:
     """
-    Function for creating trainable datasets.
+    Create datasets that are used in the training and validation phases.
 
     :param data_path: Path to the input data. Frist dimension of the
         dataset should be the number of samples.
     :param batch_size: Size of the batch used in training phase,
         it is the size of samples per gradient step.
     :param sample_size: Size of the input sample.
-    :param n_classes: Number of classes.
+    :param n_classes: Number of classes in the dataset.
     """
     train_dict, val_dict = utils.load_data(data_path,
                                            utils.Dataset.TRAIN,
