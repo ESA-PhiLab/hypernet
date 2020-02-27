@@ -3,8 +3,7 @@ import os
 import clize
 import tensorflow as tf
 
-import transform
-import utils
+from ml_intuition.data import transform, utils
 
 
 @utils.check_types(str, str, int, int, int, bool, int, int, int)
