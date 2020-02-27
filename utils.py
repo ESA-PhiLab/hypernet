@@ -4,6 +4,7 @@ import typing
 import aenum
 import h5py
 import numpy as np
+import tensorflow as tf
 
 
 class Dataset(aenum.Constant):
@@ -36,8 +37,38 @@ def check_types(*types):
     return function_wrapper
 
 
+@check_types(str, int, int, int, str, list)
+def _extract_trainable_datasets(data_path: str,
+                                batch_size: int,
+                                sample_size: int,
+                                n_classes: int,
+                                dataset_key: str,
+                                transforms: list) -> tuple:
+    """
+    Create datasets that are used in the training and validation phases.
+
+    :param data_path: Path to the input data. Frist dimension of the
+        dataset should be the number of samples.
+    :param batch_size: Size of the batch used in training phase,
+        it is the size of samples per gradient step.
+    :param sample_size: Size of the input sample.
+    :param n_classes: Number of classes in the dataset.
+    :param dataset_key: Key which specifies which dataset to load.
+    :param transforms: List of all transformations. 
+    """
+    dataset = load_data(data_path, dataset_key)
+    N_SAMPLES = dataset[Dataset.DATA].shape[Dataset.SAMPLES_DIM]
+    dataset = tf.data.Dataset.from_tensor_slices(
+        (dataset[Dataset.DATA], dataset[Dataset.LABELS]))
+    for transform in transforms:
+        dataset = dataset.map(transform)
+    return dataset.batch(batch_size=batch_size, drop_remainder=False)\
+        .repeat()\
+        .prefetch(tf.contrib.data.AUTOTUNE), N_SAMPLES
+
+
 @check_types(str, str)
-def load_data(data_path: str, *keys: str) -> typing.List[typing.Dict]:
+def load_data(data_path: str, dataset_key: str) -> dict:
     """
     Function for loading datasets as list of dictionaries.
 
@@ -45,14 +76,12 @@ def load_data(data_path: str, *keys: str) -> typing.List[typing.Dict]:
     :param keys: Keys for each dataset.
     """
     raw_data = h5py.File(data_path, 'r')
-    datasets = []
-    for dataset_key in keys:
-        datasets.append({
-            Dataset.DATA: np.asarray(raw_data[dataset_key][Dataset.DATA]),
-            Dataset.LABELS: np.asarray(
-                raw_data[dataset_key][Dataset.LABELS])
-        })
-    return datasets
+    dataset = {
+        Dataset.DATA: np.asarray(raw_data[dataset_key][Dataset.DATA]),
+        Dataset.LABELS: np.asarray(
+            raw_data[dataset_key][Dataset.LABELS])
+    }
+    return dataset
 
 
 def shuffle_arrays_together(arrays: typing.List[np.ndarray], seed: int = 0):
