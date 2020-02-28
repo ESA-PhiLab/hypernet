@@ -21,7 +21,7 @@ def main(*, model_path: str, output_dir: str):
     keras.backend.set_learning_phase(0)
     loaded_model = keras.models.load_model(model_path)
 
-    input_names = [out.op.name for out in loaded_model.inputs]
+    input_names = [inp.op.name for inp in loaded_model.inputs]
     output_names = [out.op.name for out in loaded_model.outputs]
 
     nodes = {'input_node': input_names[0],

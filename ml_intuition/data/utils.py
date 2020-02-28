@@ -145,8 +145,10 @@ def reshape_to_1d_samples(data: np.ndarray,
     return data, labels
 
 
-def freeze_session(session, keep_var_names=None, output_names=None,
-                   clear_devices=True):
+def freeze_session(session: tf.Session,
+                   keep_var_names: List[str] = None,
+                   output_names: List[str] = None,
+                   clear_devices: bool = True) -> tf.GraphDef:
     """
     Freezes the state of a session into a pruned computation graph.
     Creates a new computation graph where variable nodes are replaced by
