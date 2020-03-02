@@ -10,7 +10,7 @@ import h5py
 import clize
 
 from ml_intuition.data.io import load_npy
-from ml_intuition.data.utils import Dataset, train_val_test_split, reshape_to_1d_samples
+from ml_intuition.data.utils import Dataset, train_val_test_split, reshape_to_2d_samples
 
 EXTENSION = 1
 
@@ -56,7 +56,7 @@ def main(*,
         raise TypeError("The following data file type is not supported: {}".format(
             os.path.splitext(data_file_path)[EXTENSION]))
 
-    data, labels = reshape_to_1d_samples(data, labels, channels_idx)
+    data, labels = reshape_to_2d_samples(data, labels, channels_idx)
     train_x, train_y, val_x, val_y, test_x, test_y = train_val_test_split(
         data, labels, train_size, val_size, stratified, background_label)
     

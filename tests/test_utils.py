@@ -110,15 +110,15 @@ class TestReshapeTo1DSamples:
 
     @pytest.mark.parametrize(
         "input_shape, output_shape, labels_shape, channels_idx", [
-            ((10, 10, 3), (100, 3), (10, 10), 2),
-            ((3, 5, 5), (25, 3), (5, 5), 0),
-            ((5, 3, 1), (15, 1), (5, 3), 2)
+            ((10, 10, 3), (100, 3, 1), (10, 10), 2),
+            ((3, 5, 5), (25, 3, 1), (5, 5), 0),
+            ((5, 3, 1), (15, 1, 1), (5, 3), 2)
         ])
     def test_if_reshapes_correctly(self, input_shape, output_shape,
                                    labels_shape, channels_idx):
         data = np.zeros(input_shape)
         labels = np.zeros(labels_shape)
-        reshaped_data, _ = utils.reshape_to_1d_samples(data, labels,
+        reshaped_data, _ = utils.reshape_to_2d_samples(data, labels,
                                                        channels_idx)
         assert np.all(np.equal(reshaped_data.shape, output_shape))
 
@@ -128,9 +128,7 @@ class TestReshapeTo1DSamples:
     ])
     def test_if_data_matches_labels_after_reshape(self, data, channels_idx):
         labels = np.arange(25).reshape((5, 5))
-        reshaped_data, reshaped_labels = utils.reshape_to_1d_samples(data,
+        reshaped_data, reshaped_labels = utils.reshape_to_2d_samples(data,
                                                                      labels,
                                                                      channels_idx=channels_idx)
-        assert np.all(np.equal(reshaped_data[:, 0], reshaped_labels))
-
-    
+        assert np.all(np.equal(reshaped_data[:, 0, 0], reshaped_labels))
