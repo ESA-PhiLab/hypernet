@@ -58,7 +58,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                      stratified, defaults to True
     :param background_label: Label indicating the background in the ground truth
     :return: train_x, train_y, val_x, val_y, test_x, test_y
-    :raises TypeError: When wrong type is passed as train_size
+    :raises AssertionError: When wrong type is passed as train_size
     """
     data = data[labels != background_label]
     labels = labels[labels != background_label]
