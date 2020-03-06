@@ -4,8 +4,6 @@ from typing import Tuple
 import cv2
 import numpy as np
 
-NORMALIZE_VALUE = 2
-
 
 def normalize_labels(labels: np.ndarray) -> np.ndarray:
     """

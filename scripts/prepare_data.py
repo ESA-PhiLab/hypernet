@@ -11,7 +11,7 @@ import numpy as np
 import clize
 
 import ml_intuition.data.preprocessing as preprocessing
-from ml_intuition.data.io import load_npy, load_satellite_h5, load_tiff
+import ml_intuition.data.io as io
 import ml_intuition.data.utils as utils
 
 EXTENSION = 1
@@ -53,12 +53,12 @@ def main(*,
     :raises TypeError: When provided data or labels file is not supported
     """
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
-        data, labels = load_npy(data_file_path, ground_truth_path)
+        data, labels = io.load_npy(data_file_path, ground_truth_path)
         data, labels = preprocessing.reshape_cube_to_2d_samples(
             data, labels, channels_idx)
     elif data_file_path.endswith('.h5') and ground_truth_path.endswith('.tiff'):
-        data, gt_transform_mat = load_satellite_h5(data_file_path)
-        labels = load_tiff(ground_truth_path)
+        data, gt_transform_mat = io.load_satellite_h5(data_file_path)
+        labels = io.load_tiff(ground_truth_path)
         data_2d_shape = data.shape[1:]
         labels = preprocessing.align_ground_truth(data_2d_shape, labels,
                                                   gt_transform_mat)
