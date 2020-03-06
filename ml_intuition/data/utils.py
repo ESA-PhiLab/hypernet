@@ -1,6 +1,10 @@
+"""
+All data handling methods.
+"""
+
 import inspect
 import sys
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Tuple, Type, Union
 
 import aenum
 import h5py
@@ -24,24 +28,24 @@ class Dataset(aenum.Constant):
 
 def extract_dataset(batch_size: int,
                     dataset: np.ndarray,
-                    transforms: List[BaseTransform]) -> Tuple[tf.data.Dataset, int]:
+                    transforms: List[Type[BaseTransform]]) -> Tuple[tf.data.Dataset, int]:
     """
-    Create datasets that are used in the training, validaton or testing phases.
+    Create and transform datasets that are used in the training, validaton or testing phases.
 
     :param batch_size: Size of the batch used in either phase,
         it is the size of samples per gradient step.
     :param dataset: Passed dataset as a design matrix numpy array, 
         where the first dimension is the number of samples.
     :param transforms: List of all transformations. 
+    :return: Transformed dataset with its size.
     """
     n_samples = dataset[Dataset.DATA].shape[SAMPLES_DIM]
     dataset = tf.data.Dataset.from_tensor_slices(
         (dataset[Dataset.DATA], dataset[Dataset.LABELS]))
-    for function in transforms:
-        dataset = dataset.map(function)
+    for f_transform in transforms:
+        dataset = dataset.map(f_transform)
     return dataset.batch(batch_size=batch_size, drop_remainder=False)\
-        .repeat()\
-        .prefetch(tf.contrib.data.AUTOTUNE), n_samples
+        .repeat().prefetch(tf.contrib.data.AUTOTUNE), n_samples
 
 
 def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):

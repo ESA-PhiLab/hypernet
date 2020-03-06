@@ -1,3 +1,7 @@
+"""
+Perform the inference of the model on the testing dataset.
+"""
+
 import json
 import os
 
@@ -31,13 +35,16 @@ def evaluate(*,
                                                            n_classes)])
 
     model = tf.keras.models.load_model(model_path, compile=True)
-    y_pred = model.predict(x=test_dataset.make_one_shot_iterator(),
-                           verbose=verbose,
-                           steps=n_test // 1)
+    model.predict = metrics.Metrics.timeit(model.predict)
+    y_pred, inference_time = model.predict(x=test_dataset.make_one_shot_iterator(),
+                                           verbose=verbose,
+                                           steps=n_test // 1)
+
     y_pred = tf.Session().run(tf.argmax(y_pred, axis=-1))
     y_true = test_dict[utils.Dataset.LABELS]
-    metrics.Metrics().compute_metrics(y_true=y_true, y_pred=y_pred).save_metrics(
-        os.path.dirname(model_path))
+    metrics.Metrics().compute_metrics(y_true=y_true, y_pred=y_pred,
+                                      inference_time=inference_time)\
+        .save_metrics(dest_path=os.path.dirname(model_path))
 
 
 if __name__ == '__main__':

@@ -1,3 +1,7 @@
+"""
+Perform the training and validation of the model on the training and validation datasets.
+"""
+
 import csv
 import json
 import os
@@ -73,19 +77,21 @@ def train(*,
                              n_kernels=n_kernels, n_layers=n_layers,
                              input_size=sample_size, n_classes=n_classes, lr=lr)
     model.summary()
-    model.compile('adam', 'categorical_crossentropy',
-                  metrics=['accuracy'])
+    model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
 
-    history = model.fit(x=train_dataset.make_one_shot_iterator(),
-                        epochs=epochs,
-                        verbose=verbose,
-                        shuffle=shuffle,
-                        validation_data=val_dataset.make_one_shot_iterator(),
-                        callbacks=[callback],
-                        steps_per_epoch=n_train // batch_size,
-                        validation_steps=n_val // batch_size)
+    model.fit = metrics.Metrics.timeit(model.fit)
+    history, training_time = model.fit(x=train_dataset.make_one_shot_iterator(),
+                                       epochs=epochs,
+                                       verbose=verbose,
+                                       shuffle=shuffle,
+                                       validation_data=val_dataset.make_one_shot_iterator(),
+                                       callbacks=[callback],
+                                       steps_per_epoch=n_train // batch_size,
+                                       validation_steps=n_val // batch_size)
     model.save(filepath=os.path.join(dest_path, model_name))
 
+    history.history['training_time'] = [training_time] + \
+        [None] * (int(len(history.history['acc'])) - 1)
     with open(os.path.join(dest_path, 'training_metrics.csv'), 'w') as file:
         write = csv.writer(file)
         write.writerow(history.history.keys())
