@@ -1,14 +1,18 @@
 import inspect
-from typing import List, Tuple, Union
+import sys
+from typing import Dict, List, Tuple, Union
 
 import aenum
 import h5py
 import numpy as np
 import tensorflow as tf
 
+from ml_intuition.data.transforms import BaseTransform
+
+SAMPLES_DIM = 0
+
 
 class Dataset(aenum.Constant):
-    SAMPLES_DIM = 0
 
     TRAIN = 'train'
     VAL = 'val'
@@ -18,70 +22,26 @@ class Dataset(aenum.Constant):
     LABELS = 'labels'
 
 
-class Model(aenum.Constant):
-    TRAINED_MODEL = 'trained_model'
-
-
-def check_types(*types):
-    def function_wrapper(function):
-        assert len(types) == len(inspect.signature(function).parameters), \
-            'Number of arguments must match the number of possible types.'
-
-        def validate_types(*args, **kwargs):
-            for (obj, type_) in zip(args, types):
-                assert isinstance(obj, type_), \
-                    'Object {0} does not match {1} type.'.format(obj, type_)
-            # If all objects are consistent return function:
-            return function(*args, **kwargs)
-        return validate_types
-    return function_wrapper
-
-
-@check_types(str, int, int, int, str, list)
-def _extract_trainable_datasets(data_path: str,
-                                batch_size: int,
-                                sample_size: int,
-                                n_classes: int,
-                                dataset_key: str,
-                                transforms: list) -> tuple:
+def extract_dataset(batch_size: int,
+                    dataset: np.ndarray,
+                    transforms: List[BaseTransform]) -> Tuple[tf.data.Dataset, int]:
     """
-    Create datasets that are used in the training and validation phases.
+    Create datasets that are used in the training, validaton or testing phases.
 
-    :param data_path: Path to the input data. Frist dimension of the
-        dataset should be the number of samples.
-    :param batch_size: Size of the batch used in training phase,
+    :param batch_size: Size of the batch used in either phase,
         it is the size of samples per gradient step.
-    :param sample_size: Size of the input sample.
-    :param n_classes: Number of classes in the dataset.
-    :param dataset_key: Key which specifies which dataset to load.
+    :param dataset: Passed dataset as a design matrix numpy array, 
+        where the first dimension is the number of samples.
     :param transforms: List of all transformations. 
     """
-    dataset = load_data(data_path, dataset_key)
-    N_SAMPLES = dataset[Dataset.DATA].shape[Dataset.SAMPLES_DIM]
+    n_samples = dataset[Dataset.DATA].shape[SAMPLES_DIM]
     dataset = tf.data.Dataset.from_tensor_slices(
         (dataset[Dataset.DATA], dataset[Dataset.LABELS]))
-    for transform in transforms:
-        dataset = dataset.map(transform)
+    for function in transforms:
+        dataset = dataset.map(function)
     return dataset.batch(batch_size=batch_size, drop_remainder=False)\
         .repeat()\
-        .prefetch(tf.contrib.data.AUTOTUNE), N_SAMPLES
-
-
-@check_types(str, str)
-def load_data(data_path: str, dataset_key: str) -> dict:
-    """
-    Function for loading datasets as list of dictionaries.
-
-    :param data_path: Path to the dataset.
-    :param keys: Keys for each dataset.
-    """
-    raw_data = h5py.File(data_path, 'r')
-    dataset = {
-        Dataset.DATA: np.asarray(raw_data[dataset_key][Dataset.DATA]),
-        Dataset.LABELS: np.asarray(
-            raw_data[dataset_key][Dataset.LABELS])
-    }
-    return dataset
+        .prefetch(tf.contrib.data.AUTOTUNE), n_samples
 
 
 def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):

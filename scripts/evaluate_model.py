@@ -1,14 +1,16 @@
+import json
+import os
+
 import clize
 import tensorflow as tf
+from scripts import metrics
 
-from ml_intuition.data import transform, utils
+from ml_intuition.data import io, transforms, utils
 
 
-@utils.check_types(str, str, int, int, int, int)
 def evaluate(*,
              model_path: str,
              data_path: str,
-             batch_size: int,
              verbose: int,
              sample_size: int,
              n_classes: int):
@@ -17,24 +19,25 @@ def evaluate(*,
 
     :param model_path: Path to the model.
     :param data_path: Path to the input data.
-    :param batch_size: Size of the batch used in evaluation step.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
     :param sample_size: Size of the input sample.
     :param n_classes: Number of classes.
     """
-    test_dataset, N_TEST =\
-        utils._extract_trainable_datasets(data_path,
-                                          batch_size,
-                                          sample_size,
-                                          n_classes,
-                                          utils.Dataset.TEST,
-                                          [transform.Transform1D(sample_size,
-                                                                 n_classes)])
+    test_dict = io.load_data(data_path, utils.Dataset.TEST)
+    test_dataset, n_test =\
+        utils.extract_dataset(1,
+                              test_dict,
+                              [transforms.SpectralTranform(sample_size,
+                                                           n_classes)])
+
     model = tf.keras.models.load_model(model_path, compile=True)
-    artifacts = model.evaluate(x=test_dataset.make_one_shot_iterator(),
-                               verbose=verbose,
-                               steps=N_TEST//batch_size)
-    print(artifacts)
+    y_pred = model.predict(x=test_dataset.make_one_shot_iterator(),
+                           verbose=verbose,
+                           steps=n_test // 1)
+    y_pred = tf.Session().run(tf.argmax(y_pred, axis=-1))
+    y_true = test_dict[utils.Dataset.LABELS]
+    metrics.Metrics().compute_metrics(y_true=y_true, y_pred=y_pred).save_metrics(
+        os.path.dirname(model_path))
 
 
 if __name__ == '__main__':

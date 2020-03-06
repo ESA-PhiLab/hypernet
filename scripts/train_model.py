@@ -1,28 +1,45 @@
+import csv
+import json
 import os
 
 import clize
 import tensorflow as tf
+from scripts import metrics, models
+from sklearn.metrics import cohen_kappa_score
 
-from ml_intuition.data import transform, utils
+from ml_intuition.data import io, transforms, utils
 
 
-@utils.check_types(str, str, int, int, int, bool, int, int, int)
 def train(*,
-          model_path: str,
+          model_name: str,
+          kernel_size: int,
+          n_kernels: int,
+          n_layers: int,
+          dest_path: str,
           data_path: str,
-          batch_size: int,
-          epochs: int,
-          verbose: int,
-          shuffle: bool,
-          patience: int,
           sample_size: int,
-          n_classes: int):
+          n_classes: int,
+          lr: float = 0.005,
+          batch_size: int = 150,
+          epochs: int = 10,
+          verbose: int = 1,
+          shuffle: bool = True,
+          patience: int = 3):
     """
-    Function for training tensorflow models given datasets.
+    Function for training tensorflow models given a dataset.
 
-    :param model_path: Path to the model.
-    :param data_path: Path to the input data. Frist dimension of the
+    :param model_name: Name of the model, it serves as a key in the
+        dictionary holding all functions returning models.
+    :param kernel_size: Size of ech kernel in each layer.
+    :param n_kernels: Number of kernels in each layer.
+    :param n_layers: Number of layers in the model.
+    :param dest_path: Path to where to save the model under the name "model_name".
+    :param data_path: Path to the input data. First dimension of the
         dataset should be the number of samples.
+    :param sample_size: Size of the input sample.
+    :param n_classes: Number of classes.
+    :param lr: Learning rate for the model, i.e., regulates the size of the step
+        in the gradient descent process.
     :param batch_size: Size of the batch used in training phase,
         it is the size of samples per gradient step.
     :param epochs: Number of epochs for model to train.
@@ -31,46 +48,48 @@ def train(*,
      dataset_key each epoch.
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
-    :param sample_size: Size of the input sample.
-    :param n_classes: Number of classes.
+
     """
-    train_dataset, N_TRAIN =\
-        utils._extract_trainable_datasets(data_path,
-                                          batch_size,
-                                          sample_size,
-                                          n_classes,
-                                          utils.Dataset.TRAIN,
-                                          [transform.Transform1D(sample_size,
-                                                                 n_classes)])
-    val_dataset, N_VAL =\
-        utils._extract_trainable_datasets(data_path,
-                                          batch_size,
-                                          sample_size,
-                                          n_classes,
-                                          utils.Dataset.VAL,
-                                          [transform.Transform1D(sample_size,
-                                                                 n_classes)])
+    train_dataset, n_train =\
+        utils.extract_dataset(batch_size,
+                              io.load_data(
+                                  data_path, utils.Dataset.TRAIN),
+                              [transforms.SpectralTranform(sample_size,
+                                                           n_classes)])
+
+    val_dataset, n_val =\
+        utils.extract_dataset(batch_size,
+                              io.load_data(
+                                  data_path, utils.Dataset.VAL),
+                              [transforms.SpectralTranform(sample_size,
+                                                           n_classes)])
     if shuffle:
-        train_dataset = train_dataset.shuffle(N_TRAIN)
+        train_dataset = train_dataset.shuffle(n_train)
 
     callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                 patience=patience)
 
-    model = tf.keras.models.load_model(model_path, compile=False)
-    model.compile('adam', 'categorical_crossentropy', metrics=['acc'])
+    model = models.get_model(model_key=model_name, kernel_size=kernel_size,
+                             n_kernels=n_kernels, n_layers=n_layers,
+                             input_size=sample_size, n_classes=n_classes, lr=lr)
     model.summary()
+    model.compile('adam', 'categorical_crossentropy',
+                  metrics=['accuracy'])
 
-    model.fit(x=train_dataset.make_one_shot_iterator(),
-              epochs=epochs,
-              verbose=verbose,
-              shuffle=shuffle,
-              validation_data=val_dataset.make_one_shot_iterator(),
-              callbacks=[callback],
-              steps_per_epoch=N_TRAIN // batch_size,
-              validation_steps=N_VAL // batch_size)
+    history = model.fit(x=train_dataset.make_one_shot_iterator(),
+                        epochs=epochs,
+                        verbose=verbose,
+                        shuffle=shuffle,
+                        validation_data=val_dataset.make_one_shot_iterator(),
+                        callbacks=[callback],
+                        steps_per_epoch=n_train // batch_size,
+                        validation_steps=n_val // batch_size)
+    model.save(filepath=os.path.join(dest_path, model_name))
 
-    model.save(filepath=os.path.join(os.path.dirname(model_path),
-                                     utils.Model.TRAINED_MODEL))
+    with open(os.path.join(dest_path, 'training_metrics.csv'), 'w') as file:
+        write = csv.writer(file)
+        write.writerow(history.history.keys())
+        write.writerows(zip(*history.history.values()))
 
 
 if __name__ == '__main__':
