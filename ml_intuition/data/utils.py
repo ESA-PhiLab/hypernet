@@ -19,11 +19,6 @@ class SatelliteH5Keys(aenum.Constant):
     GT_TRANSFORM_MAT = 'to_earth_transform'
 
 
-class Coordinates(aenum.Constant):
-    X = 0
-    Y = 1
-
-
 class DataStats(aenum.Constant):
     MIN = 'min'
     MAX = 'max'

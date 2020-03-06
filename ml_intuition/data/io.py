@@ -25,14 +25,14 @@ def load_npy(data_file_path: str, gt_input_path: str) -> Tuple[
 
 def load_satellite_h5(data_file_path: str) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Load hyperspectral cube and ground-truth transformation matrix from .h5 file
+    Load hyperspectral cube and ground truth transformation matrix from .h5 file
     :param data_file_path: Path to the .h5 file
     :return: Hyperspectral cube and transformation matrix, both as np.ndarray
     """
     with h5py.File(data_file_path, 'r') as file:
         cube = file[SatelliteH5Keys.CUBE][()]
-        gt_transform_mat = file[SatelliteH5Keys.GT_TRANSFORM_MAT][()]
-    return cube, gt_transform_mat
+        cube_to_gt_transform = file[SatelliteH5Keys.GT_TRANSFORM_MAT][()]
+    return cube, cube_to_gt_transform
 
 
 def load_tiff(file_path: str) -> np.ndarray:

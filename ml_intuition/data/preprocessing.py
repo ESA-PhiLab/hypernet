@@ -1,12 +1,10 @@
 from itertools import product
 from typing import Tuple
 
+import cv2
 import numpy as np
 
-from ml_intuition.data.utils import Coordinates
-
 NORMALIZE_VALUE = 2
-import cv2
 
 
 def normalize_labels(labels: np.ndarray) -> np.ndarray:
@@ -40,20 +38,18 @@ def reshape_cube_to_2d_samples(data: np.ndarray,
     return data, labels
 
 
-def align_ground_truth(cube_2d_shape: Tuple[int, int], labels: np.ndarray,
-                       chan_to_gt_transform: np.ndarray) -> np.ndarray:
+def align_ground_truth(cube_2d_shape: Tuple[int, int], ground_truth: np.ndarray,
+                       cube_to_gt_transform: np.ndarray) -> np.ndarray:
     """
     Align original labels to match the satellite hyperspectral cube using
     transformation matrix
     :param cube_2d_shape: Shape of the hyperspectral data cube
-    :param labels: Original labels as 2D array
-    :param chan_to_gt_transform: Ground truth transformation matrix used to
-                          transform coordinates from hyperspectral cube to
-                          corresponding label coordinates
-    :return: Aligned labels
+    :param ground_truth: Original labels as 2D array
+    :param cube_to_gt_transform: Cube to ground truth transformation matrix
+    :return: Transformed ground truth
     """
-    gt_to_chan_transform = np.linalg.inv(chan_to_gt_transform)
-    gt_transformed = cv2.warpPerspective(labels, gt_to_chan_transform,
+    gt_to_chan_transform = np.linalg.inv(cube_to_gt_transform)
+    gt_transformed = cv2.warpPerspective(ground_truth, gt_to_chan_transform,
                                          cube_2d_shape, flags=cv2.INTER_NEAREST)
     return gt_transformed
 
