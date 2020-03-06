@@ -12,6 +12,23 @@ class Dataset(aenum.Constant):
     LABELS = 'labels'
 
 
+class SatelliteH5Keys(aenum.Constant):
+    CHANNELS = 'channels'
+    CUBE = 'mean'
+    COV = 'cov'
+    GT_TRANSFORM_MAT = 'to_earth_transform'
+
+
+class Coordinates(aenum.Constant):
+    X = 0
+    Y = 1
+
+
+class DataStats(aenum.Constant):
+    MIN = 'min'
+    MAX = 'max'
+
+
 def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
     """
     Shuffle arbitrary number of arrays together, in-place
@@ -30,8 +47,7 @@ def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
 def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                          train_size: Union[int, float] = 0.8,
                          val_size: float = 0.1,
-                         stratified: bool = True,
-                         background_label: int = 0) -> Tuple[
+                         stratified: bool = True) -> Tuple[
     np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split the data into train, val and test sets. The size of the training set 
@@ -56,13 +72,9 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                      validation set, defaults to 0.1
     :param stratified: Indicated whether the extracted training set should be
                      stratified, defaults to True
-    :param background_label: Label indicating the background in the ground truth
     :return: train_x, train_y, val_x, val_y, test_x, test_y
     :raises TypeError: When wrong type is passed as train_size
     """
-    data = data[labels != background_label]
-    labels = labels[labels != background_label]
-    labels = normalize_labels(labels)
     shuffle_arrays_together([data, labels])
     train_indices = _get_set_indices(labels, train_size, stratified)
     val_indices = _get_set_indices(labels[train_indices], val_size)
@@ -111,34 +123,3 @@ def _get_set_indices(labels: np.ndarray, size: float = 0.8,
     elif size >= 1 and stratified is False:
         train_indices = np.arange(size)
     return train_indices
-
-
-def normalize_labels(labels: np.ndarray) -> np.ndarray:
-    """
-    Normalize labels so that they always start from 0
-    :param labels: labels to normalize
-    :return: Normalized labels
-    """
-    min_label = np.amin(labels)
-    return labels - min_label
-
-
-def reshape_to_2d_samples(data: np.ndarray,
-                          labels: np.ndarray,
-                          channels_idx: int = 0) -> Tuple[
-    np.ndarray, np.ndarray]:
-    """
-    Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL,
-    CHANNELS, 1], so it fits the 2D Conv models
-    :param data: Data to reshape.
-    :param labels: Corresponding labels.
-    :param channels_idx: Index at which the channels are located in the
-                         provided data file
-    :return: Reshape data and labels
-    :rtype: tuple with reshaped data and labels
-    """
-    data = data.reshape(data.shape[channels_idx], -1)
-    data = np.moveaxis(data, -1, 0)
-    data = np.expand_dims(data, -1)
-    labels = labels.reshape(-1)
-    return data, labels
