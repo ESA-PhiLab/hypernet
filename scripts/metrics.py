@@ -1,3 +1,6 @@
+"""
+All metrics that are calculated on the model's output.
+"""
 import csv
 import os
 from typing import Dict, Union
@@ -20,6 +23,12 @@ class Metrics:
         self.mean_per_class_accuracy = None
 
     def compute_metrics(self, y_true: np.ndarray, y_pred: np.ndarray):
+        """
+        Compute all metrics on predicted labels.
+
+        :param y_true: Labels as a one-dimensional numpy array.
+        :param y_pred: Model's predictions as a one-dimensional numpy array.
+        """
         self.results = {metric_function.__name__: metric_function(
             y_true, y_pred) for metric_function in self.METRICS}
         self.confusion_matrix = metrics.confusion_matrix(y_true, y_pred)
@@ -29,6 +38,11 @@ class Metrics:
         return self
 
     def save_metrics(self, dest_path: str):
+        """
+        Save all metrics calculated on model's predictions.
+
+        :param dest_path: Destination path to save the metrics. 
+        """
         with open(os.path.join(dest_path, 'metrics.csv'), 'w') as file:
             writer = csv.DictWriter(file, self.results.keys())
             writer.writeheader()
