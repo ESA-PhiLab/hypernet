@@ -30,6 +30,7 @@ def calibrate_2d_input(iter: int) -> Dict[str, np.ndarray]:
         train_data = file[utils.Dataset.TRAIN][utils.Dataset.DATA][()]
         train_data = train_data[batch_start:batch_end]
         train_data = np.expand_dims(train_data, axis=-1)
-        train_min, train_max = file.attrs['min'], file.attrs['max']
+        train_min, train_max = file.attrs[utils.DataStats.MIN], \
+                               file.attrs[utils.DataStats.MAX]
     train_data = (train_data - train_min) / (train_max - train_min)
     return {input_node_name: train_data}
