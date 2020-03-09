@@ -74,7 +74,7 @@ class TestTrainValTestSplit:
     labels = np.concatenate([np.zeros(10), np.ones(10), np.repeat(2, 10)])
 
     @pytest.mark.parametrize("data, labels, train_size, result", [
-        (data, labels, 0.5, (10, 0, 10)),
+        (data, labels, 0.5, (15, 0, 15)),
         (np.ones((40, 1)), np.concatenate(
             [np.ones(5), np.repeat(2, 15), np.repeat(3, 18), np.repeat(4, 2)]),
          0.8, (29, 2, 9))
@@ -106,31 +106,3 @@ class TestTrainValTestSplit:
         assert not np.any(np.equal(train_x, test_x))
 
 
-class TestReshapeTo1DSamples:
-
-    @pytest.mark.parametrize(
-        "input_shape, output_shape, labels_shape, channels_idx", [
-            ((10, 10, 3), (100, 3), (10, 10), 2),
-            ((3, 5, 5), (25, 3), (5, 5), 0),
-            ((5, 3, 1), (15, 1), (5, 3), 2)
-        ])
-    def test_if_reshapes_correctly(self, input_shape, output_shape,
-                                   labels_shape, channels_idx):
-        data = np.zeros(input_shape)
-        labels = np.zeros(labels_shape)
-        reshaped_data, _ = utils.reshape_to_1d_samples(data, labels,
-                                                       channels_idx)
-        assert np.all(np.equal(reshaped_data.shape, output_shape))
-
-    @pytest.mark.parametrize("data, channels_idx", [
-        (np.arange(25).reshape((5, 5, 1)), 2),
-        (np.arange(25).reshape((1, 5, 5)), 0)
-    ])
-    def test_if_data_matches_labels_after_reshape(self, data, channels_idx):
-        labels = np.arange(25).reshape((5, 5))
-        reshaped_data, reshaped_labels = utils.reshape_to_1d_samples(data,
-                                                                     labels,
-                                                                     channels_idx=channels_idx)
-        assert np.all(np.equal(reshaped_data[:, 0], reshaped_labels))
-
-    
