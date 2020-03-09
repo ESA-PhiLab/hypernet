@@ -17,9 +17,9 @@ export DATA_PATH=$3
 
 decent_q quantize \
  --input_frozen_graph "$2" \
- --input_nodes "$INPUT_NODE_NAME" \
+ --input_nodes conv2d_input \
  --input_shapes "$4" \
- --output_nodes "$OUTPUT_NODE_NAME" \
+ --output_nodes dense_2/Softmax \
  --input_fn "$5" \
  --method 1 \
  --gpu 0 \
