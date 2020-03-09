@@ -13,6 +13,7 @@ import clize
 import ml_intuition.data.preprocessing as preprocessing
 import ml_intuition.data.io as io
 import ml_intuition.data.utils as utils
+import ml_intuition.enums as enums
 
 EXTENSION = 1
 
@@ -66,7 +67,7 @@ def main(*,
                                                                 channels_idx)
         data, labels = preprocessing.remove_nan_samples(data, labels)
     else:
-        raise TypeError(
+        raise ValueError(
             "The following data file type is not supported: {}".format(
                 os.path.splitext(data_file_path)[EXTENSION]))
 
@@ -80,20 +81,20 @@ def main(*,
     data_file = h5py.File(output_path, 'w')
 
     train_min, train_max = np.amin(train_x), np.amax(train_x)
-    data_file.attrs.create(utils.DataStats.MIN, train_min)
-    data_file.attrs.create(utils.DataStats.MAX, train_max)
+    data_file.attrs.create(enums.DataStats.MIN, train_min)
+    data_file.attrs.create(enums.DataStats.MAX, train_max)
 
-    train_group = data_file.create_group(utils.Dataset.TRAIN)
-    train_group.create_dataset(utils.Dataset.DATA, data=train_x)
-    train_group.create_dataset(utils.Dataset.LABELS, data=train_y)
+    train_group = data_file.create_group(enums.Dataset.TRAIN)
+    train_group.create_dataset(enums.Dataset.DATA, data=train_x)
+    train_group.create_dataset(enums.Dataset.LABELS, data=train_y)
 
-    val_group = data_file.create_group(utils.Dataset.VAL)
-    val_group.create_dataset(utils.Dataset.DATA, data=val_x)
-    val_group.create_dataset(utils.Dataset.LABELS, data=val_y)
+    val_group = data_file.create_group(enums.Dataset.VAL)
+    val_group.create_dataset(enums.Dataset.DATA, data=val_x)
+    val_group.create_dataset(enums.Dataset.LABELS, data=val_y)
 
-    test_group = data_file.create_group(utils.Dataset.TEST)
-    test_group.create_dataset(utils.Dataset.DATA, data=test_x)
-    test_group.create_dataset(utils.Dataset.LABELS, data=test_y)
+    test_group = data_file.create_group(enums.Dataset.TEST)
+    test_group.create_dataset(enums.Dataset.DATA, data=test_x)
+    test_group.create_dataset(enums.Dataset.LABELS, data=test_y)
     data_file.close()
 
 

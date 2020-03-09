@@ -8,7 +8,7 @@ import numpy as np
 
 from libtiff import TIFF
 
-from ml_intuition.data.utils import SatelliteH5Keys
+import ml_intuition.enums as enums
 
 
 def load_npy(data_file_path: str, gt_input_path: str) -> Tuple[
@@ -30,8 +30,8 @@ def load_satellite_h5(data_file_path: str) -> Tuple[np.ndarray, np.ndarray]:
     :return: Hyperspectral cube and transformation matrix, both as np.ndarray
     """
     with h5py.File(data_file_path, 'r') as file:
-        cube = file[SatelliteH5Keys.CUBE][()]
-        cube_to_gt_transform = file[SatelliteH5Keys.GT_TRANSFORM_MAT][()]
+        cube = file[enums.SatelliteH5Keys.CUBE][:]
+        cube_to_gt_transform = file[enums.SatelliteH5Keys.GT_TRANSFORM_MAT][:]
     return cube, cube_to_gt_transform
 
 
