@@ -1,5 +1,5 @@
 """
-Perform the training and validation of the model on the training and validation datasets.
+Perform the training and validation of the model.
 """
 
 import csv
@@ -58,17 +58,15 @@ def train(*,
         utils.extract_dataset(batch_size,
                               io.load_data(
                                   data_path, utils.Dataset.TRAIN),
-                              [transforms.SpectralTranform(sample_size,
-                                                           n_classes)])
+                              [transforms.SpectralTranform(n_classes)])
 
     val_dataset, n_val =\
         utils.extract_dataset(batch_size,
                               io.load_data(
                                   data_path, utils.Dataset.VAL),
-                              [transforms.SpectralTranform(sample_size,
-                                                           n_classes)])
+                              [transforms.SpectralTranform(n_classes)])
     if shuffle:
-        train_dataset = train_dataset.shuffle(n_train)
+        train_dataset = train_dataset.shuffle(batch_size)
 
     callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                 patience=patience)
@@ -79,19 +77,18 @@ def train(*,
     model.summary()
     model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
 
-    model.fit = metrics.Metrics.timeit(model.fit)
-    history, training_time = model.fit(x=train_dataset.make_one_shot_iterator(),
-                                       epochs=epochs,
-                                       verbose=verbose,
-                                       shuffle=shuffle,
-                                       validation_data=val_dataset.make_one_shot_iterator(),
-                                       callbacks=[callback],
-                                       steps_per_epoch=n_train // batch_size,
-                                       validation_steps=n_val // batch_size)
+    time_history = metrics.TimeHistory()
+    history = model.fit(x=train_dataset.make_one_shot_iterator(),
+                        epochs=epochs,
+                        verbose=verbose,
+                        shuffle=shuffle,
+                        validation_data=val_dataset.make_one_shot_iterator(),
+                        callbacks=[callback, time_history],
+                        steps_per_epoch=n_train // batch_size,
+                        validation_steps=n_val // batch_size)
     model.save(filepath=os.path.join(dest_path, model_name))
 
-    history.history['training_time'] = [training_time] + \
-        [None] * (int(len(history.history['acc'])) - 1)
+    history.history[metrics.TimeHistory.__name__] = time_history.average
     with open(os.path.join(dest_path, 'training_metrics.csv'), 'w') as file:
         write = csv.writer(file)
         write.writerow(history.history.keys())

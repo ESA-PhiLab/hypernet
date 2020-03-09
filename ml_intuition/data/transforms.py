@@ -21,15 +21,13 @@ class BaseTransform(abc.ABC):
 
 
 class SpectralTranform(BaseTransform):
-    def __init__(self, sample_size: int, n_classes: int):
+    def __init__(self, n_classes: int):
         """
         Initializer of the transorm class.
 
-        :param sample_size: Spectral size of the sample.
         :param n_classes: Number of classes.
         """
         super().__init__()
-        self.sample_size = sample_size
         self.n_classes = n_classes
 
     def __call__(self, sample: tf.Tensor, label: tf.Tensor) -> List[tf.Tensor]:
@@ -41,5 +39,5 @@ class SpectralTranform(BaseTransform):
         :param label: Class value for each sample that will undergo one-hot-encoding.
         :return: List containing the transformed sample and the class label.
         """
-        return [tf.reshape(tf.cast(sample, tf.float32), (self.sample_size, 1)),
+        return [tf.expand_dims(tf.cast(sample, tf.float32), -1),
                 tf.one_hot(tf.cast(label, tf.uint8), self.n_classes)]
