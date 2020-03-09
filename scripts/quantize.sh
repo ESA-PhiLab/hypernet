@@ -7,21 +7,23 @@
 #   3: Path to the .md5 test data file
 #   4: Input shape of the data
 #   5: Input function for calibrating network data input
-#   6: Output directory
+#   6: Batch size
+#   7: Output directory
 
-INPUT_NODE_NAME=$(jq '.input_node' "$1")
-OUTPUT_NODE_NAME=$(jq '.output_node' "$1")
+INPUT_NODE_NAME=$(jq -r '.input_node' "$1")
+OUTPUT_NODE_NAME=$(jq -r '.output_node' "$1")
 
 export INPUT_NODE_NAME
 export DATA_PATH=$3
+export BATCH_SIZE=$6
 
 decent_q quantize \
  --input_frozen_graph "$2" \
- --input_nodes conv2d_input \
+ --input_nodes "$INPUT_NODE_NAME" \
  --input_shapes "$4" \
- --output_nodes dense_2/Softmax \
+ --output_nodes "$OUTPUT_NODE_NAME" \
  --input_fn "$5" \
  --method 1 \
  --gpu 0 \
  --calib_iter 10 \
- --output_dir "$6" \
+ --output_dir "$7" \
