@@ -4,26 +4,15 @@ All data handling methods.
 
 import inspect
 import sys
-from typing import Dict, List, Tuple, Type, Union
+from typing import List, Tuple, Type, Union
 
 import aenum
 import h5py
 import numpy as np
 import tensorflow as tf
 
+from ml_intuition import enums
 from ml_intuition.data.transforms import BaseTransform
-
-SAMPLES_DIM = 0
-
-
-class Dataset(aenum.Constant):
-
-    TRAIN = 'train'
-    VAL = 'val'
-    TEST = 'test'
-
-    DATA = 'data'
-    LABELS = 'labels'
 
 
 def extract_dataset(batch_size: int,
@@ -39,9 +28,9 @@ def extract_dataset(batch_size: int,
     :param transforms: List of all transformations. 
     :return: Transformed dataset with its size.
     """
-    n_samples = dataset[Dataset.DATA].shape[SAMPLES_DIM]
+    n_samples = dataset[enums.Dataset.DATA].shape[enums.SAMPLES_DIM]
     dataset = tf.data.Dataset.from_tensor_slices(
-        (dataset[Dataset.DATA], dataset[Dataset.LABELS]))
+        (dataset[enums.Dataset.DATA], dataset[enums.Dataset.LABELS]))
     for f_transform in transforms:
         dataset = dataset.map(f_transform)
     return dataset.batch(batch_size=batch_size, drop_remainder=False)\
@@ -66,8 +55,7 @@ def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
 def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                          train_size: Union[int, float] = 0.8,
                          val_size: float = 0.1,
-                         stratified: bool = True,
-                         background_label: int = 0) -> Tuple[
+                         stratified: bool = True) -> Tuple[
         np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split the data into train, val and test sets. The size of the training set 
@@ -92,13 +80,9 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                      validation set, defaults to 0.1
     :param stratified: Indicated whether the extracted training set should be
                      stratified, defaults to True
-    :param background_label: Label indicating the background in the ground truth
     :return: train_x, train_y, val_x, val_y, test_x, test_y
     :raises TypeError: When wrong type is passed as train_size
     """
-    data = data[labels != background_label]
-    labels = labels[labels != background_label]
-    labels = normalize_labels(labels)
     shuffle_arrays_together([data, labels])
     train_indices = _get_set_indices(labels, train_size, stratified)
     val_indices = _get_set_indices(labels[train_indices], val_size)
@@ -149,32 +133,35 @@ def _get_set_indices(labels: np.ndarray, size: float = 0.8,
     return train_indices
 
 
-def normalize_labels(labels: np.ndarray) -> np.ndarray:
+def freeze_session(session: tf.Session,
+                   keep_var_names: List[str] = None,
+                   output_names: List[str] = None,
+                   clear_devices: bool = True) -> tf.GraphDef:
     """
-    Normalize labels so that they always start from 0
-    :param labels: labels to normalize
-    :return: Normalized labels
+    Freezes the state of a session into a pruned computation graph.
+    Creates a new computation graph where variable nodes are replaced by
+    constants taking their current value in the session. The new graph will be
+    pruned so subgraphs that are not necessary to compute the requested
+    outputs are removed.
+    :param session: The TensorFlow session to be frozen.
+    :param keep_var_names: A list of variable names that should not be frozen,
+                          or None to freeze all the variables in the graph.
+    :param output_names: Names of the relevant graph outputs.
+    :param clear_devices: Remove the device directives from the graph for better
+                          portability.
+    :return The frozen graph definition.
     """
-    min_label = np.amin(labels)
-    return labels - min_label
-
-
-def reshape_to_1d_samples(data: np.ndarray,
-                          labels: np.ndarray,
-                          channels_idx: int = 0) -> Tuple[
-        np.ndarray, np.ndarray]:
-    """
-    Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL,
-    CHANNELS],
-    so it fits the 1D Conv models
-    :param data: Data to reshape.
-    :param labels: Corresponding labels.
-    :param channels_idx: Index at which the channels are located in the
-                         provided data file
-    :return: Reshape data and labels
-    :rtype: tuple with reshaped data and labels
-    """
-    data = data.reshape(data.shape[channels_idx], -1)
-    data = np.moveaxis(data, -1, 0)
-    labels = labels.reshape(-1)
-    return data, labels
+    graph = session.graph
+    with graph.as_default():
+        freeze_var_names = list(
+            set(v.op.name for v in tf.global_variables()).difference(
+                keep_var_names or []))
+        output_names = output_names or []
+        output_names += [v.op.name for v in tf.global_variables()]
+        input_graph_def = graph.as_graph_def()
+        if clear_devices:
+            for node in input_graph_def.node:
+                node.device = ""
+        frozen_graph = tf.graph_util.convert_variables_to_constants(
+            session, input_graph_def, output_names, freeze_var_names)
+    return frozen_graph

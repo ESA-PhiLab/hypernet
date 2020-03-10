@@ -11,6 +11,7 @@ import tensorflow as tf
 from scripts import models
 from sklearn.metrics import cohen_kappa_score
 
+from ml_intuition import enums
 from ml_intuition.data import io, transforms, utils
 from ml_intuition.evaluation import time_metrics
 
@@ -55,19 +56,21 @@ def train(*,
         stop the training phase.
 
     """
-    train_dict, min_, max_ = io.load_data(data_path, utils.Dataset.TRAIN)
+    train_dict = io.load_data(data_path, enums.Dataset.TRAIN)
     train_dataset, n_train =\
         utils.extract_dataset(batch_size,
                               train_dict,
                               [transforms.SpectralTranform(n_classes),
-                              transforms.MinMaxNormalize(_min=min_, _max=max_)])
-    val_dict, min_, max_ =  io.load_data(data_path, utils.Dataset.VAL)
+                               transforms.MinMaxNormalize(min_=train_dict[enums.DataStats.MIN],
+                                                          max_=train_dict[enums.DataStats.MAX])])
+    val_dict = io.load_data(data_path, enums.Dataset.VAL)
     val_dataset, n_val =\
         utils.extract_dataset(batch_size,
-                             val_dict,
+                              val_dict,
                               [transforms.SpectralTranform(n_classes),
-                              transforms.MinMaxNormalize(min_, max_)])
-                              
+                               transforms.MinMaxNormalize(min_=val_dict[enums.DataStats.MIN],
+                                                          max_=val_dict[enums.DataStats.MAX])])
+
     if shuffle:
         train_dataset = train_dataset.shuffle(batch_size)
 

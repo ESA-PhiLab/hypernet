@@ -6,11 +6,14 @@ split it into train, test and val sets and save them in .h5 file with
 
 import os
 import h5py
+import numpy as np
 
 import clize
 
-from ml_intuition.data.io import load_npy
-from ml_intuition.data.utils import Dataset, train_val_test_split, reshape_to_1d_samples
+import ml_intuition.data.preprocessing as preprocessing
+import ml_intuition.data.io as io
+import ml_intuition.data.utils as utils
+import ml_intuition.enums as enums
 
 EXTENSION = 1
 
@@ -51,27 +54,47 @@ def main(*,
     :raises TypeError: When provided data or labels file is not supported
     """
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
-        data, labels = load_npy(data_file_path, ground_truth_path)
+        data, labels = io.load_npy(data_file_path, ground_truth_path)
+        data, labels = preprocessing.reshape_cube_to_2d_samples(
+            data, labels, channels_idx)
+    elif data_file_path.endswith('.h5') and ground_truth_path.endswith('.tiff'):
+        data, gt_transform_mat = io.load_satellite_h5(data_file_path)
+        labels = io.load_tiff(ground_truth_path)
+        data_2d_shape = data.shape[1:]
+        labels = preprocessing.align_ground_truth(data_2d_shape, labels,
+                                                  gt_transform_mat)
+        data, labels = preprocessing.reshape_cube_to_2d_samples(data, labels,
+                                                                channels_idx)
+        data, labels = preprocessing.remove_nan_samples(data, labels)
     else:
-        raise TypeError("The following data file type is not supported: {}".format(
-            os.path.splitext(data_file_path)[EXTENSION]))
+        raise ValueError(
+            "The following data file type is not supported: {}".format(
+                os.path.splitext(data_file_path)[EXTENSION]))
 
-    data, labels = reshape_to_1d_samples(data, labels, channels_idx)
-    train_x, train_y, val_x, val_y, test_x, test_y = train_val_test_split(
-        data, labels, train_size, val_size, stratified, background_label)
-    
+    data = data[labels != background_label]
+    labels = labels[labels != background_label]
+    labels = preprocessing.normalize_labels(labels)
+
+    train_x, train_y, val_x, val_y, test_x, test_y = utils.train_val_test_split(
+        data, labels, train_size, val_size, stratified)
+
     data_file = h5py.File(output_path, 'w')
-    train_group = data_file.create_group(Dataset.TRAIN)
-    train_group.create_dataset(Dataset.DATA, data=train_x)
-    train_group.create_dataset(Dataset.LABELS, data=train_y)
 
-    val_group = data_file.create_group(Dataset.VAL)
-    val_group.create_dataset(Dataset.DATA, data=val_x)
-    val_group.create_dataset(Dataset.LABELS, data=val_y)
-    
-    test_group = data_file.create_group(Dataset.TEST)
-    test_group.create_dataset(Dataset.DATA, data=test_x)
-    test_group.create_dataset(Dataset.LABELS, data=test_y)
+    train_min, train_max = np.amin(train_x), np.amax(train_x)
+    data_file.attrs.create(enums.DataStats.MIN, train_min)
+    data_file.attrs.create(enums.DataStats.MAX, train_max)
+
+    train_group = data_file.create_group(enums.Dataset.TRAIN)
+    train_group.create_dataset(enums.Dataset.DATA, data=train_x)
+    train_group.create_dataset(enums.Dataset.LABELS, data=train_y)
+
+    val_group = data_file.create_group(enums.Dataset.VAL)
+    val_group.create_dataset(enums.Dataset.DATA, data=val_x)
+    val_group.create_dataset(enums.Dataset.LABELS, data=val_y)
+
+    test_group = data_file.create_group(enums.Dataset.TEST)
+    test_group.create_dataset(enums.Dataset.DATA, data=test_x)
+    test_group.create_dataset(enums.Dataset.LABELS, data=test_y)
     data_file.close()
 
 

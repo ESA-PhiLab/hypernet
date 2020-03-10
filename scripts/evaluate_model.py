@@ -10,6 +10,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn import metrics
 
+from ml_intuition import enums
 from ml_intuition.data import io, transforms, utils
 from ml_intuition.evaluation.performance_metrics import (
     compute_metrics, mean_per_class_accuracy)
@@ -29,11 +30,13 @@ def evaluate(*,
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
     :param n_classes: Number of classes.
     """
-    test_dict = io.load_data(data_path, utils.Dataset.TEST)
+    test_dict = io.load_data(data_path, enums.Dataset.TEST)
     test_dataset, n_test =\
         utils.extract_dataset(1,
                               test_dict,
-                              [transforms.SpectralTranform(n_classes)])
+                              [transforms.SpectralTranform(n_classes),
+                               transforms.MinMaxNormalize(min_=test_dict[enums.DataStats.MIN],
+                                                          max_=test_dict[enums.DataStats.MAX])])
 
     model = tf.keras.models.load_model(model_path, compile=True)
     model.predict = timeit(model.predict)
@@ -42,7 +45,7 @@ def evaluate(*,
                                            steps=n_test // 1)
 
     y_pred = tf.Session().run(tf.argmax(y_pred, axis=-1))
-    y_true = test_dict[utils.Dataset.LABELS]
+    y_true = test_dict[enums.Dataset.LABELS]
 
     custom_metrics = [
         metrics.accuracy_score,
