@@ -62,5 +62,5 @@ def remove_nan_samples(data: np.ndarray, labels: np.ndarray) -> Tuple[
     all_but_samples_axes = tuple(range(1, data.ndim))
     nan_samples_indexes = np.isnan(data).any(axis=all_but_samples_axes).ravel()
     labels = labels[~nan_samples_indexes]
-    data = data[~nan_samples_indexes, ...]
+    data = data[~nan_samples_indexes]
     return data, labels

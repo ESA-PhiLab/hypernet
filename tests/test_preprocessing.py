@@ -46,17 +46,36 @@ class TestReshapeTo2DSamples:
 
 class TestRemoveNanSamples:
 
-    def test_if_removes_correct_amount(self):
-        data = np.zeros((3, 3, 1))
-        labels = np.zeros(3)
-        data[0, 0] = np.nan
-        data[2, ...] = np.nan
+    @pytest.mark.parametrize("data, result", [([[np.nan, 0],
+                                                [0, 0]], 1),
+                                              ([[0, 0],
+                                                [np.nan, np.nan]], 1),
+                                              ([[0, 0],
+                                                [0, 0]], 2),
+                                              ([[np.nan, np.nan],
+                                                [np.nan, np.nan]], 0),
+                                              ])
+    def test_if_removes_correct_amount(self, data, result):
+        data = np.array(data)
+        labels = np.zeros(len(data))
         data, labels = preprocessing.remove_nan_samples(data, labels)
-        assert len(data) == 1 and len(labels) == 1
+        assert len(data) == result and len(labels) == result
 
-    def test_if_returns_same_shape(self):
-        data = np.zeros((3, 3, 5, 1))
-        labels = np.zeros(3)
-        data[0, ...] = np.nan
+    @pytest.mark.parametrize("shape", [(2, 2, 1, 2), (5, 3, 1, 2), (1, 1, 1, 1),
+                                       (3, 5), (5), (2, 3, 1)])
+    def test_if_returns_self_for_no_nans(self, shape):
+        data = np.zeros(shape)
+        labels = np.zeros(len(data))
+        data_nan, labels_nan = preprocessing.remove_nan_samples(data, labels)
+        assert np.all(np.equal(data, data_nan)) and np.all(np.equal(labels,
+                                                                    labels_nan))
+
+    @pytest.mark.parametrize("data", [([[np.nan, 0], [0, 0]]),
+                                      ([[0, 0], [np.nan, np.nan]]),
+                                      ([[0, 0], [0, 0]])])
+    def test_if_returns_same_shape(self, data):
+        data = np.array(data)
+        data = np.expand_dims(data, -1)
+        labels = np.zeros(len(data))
         data_n, labels_n = preprocessing.remove_nan_samples(data, labels)
         assert np.all(np.equal(data.shape[1:], data_n.shape[1:]))
