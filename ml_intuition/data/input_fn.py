@@ -8,7 +8,7 @@ from typing import Dict
 import h5py
 import numpy as np
 
-import ml_intuition.data.utils as utils
+import ml_intuition.enums as enums
 
 dataset = os.environ.get('DATA_PATH')
 input_node_name = os.environ.get('INPUT_NODE_NAME')
@@ -27,10 +27,10 @@ def calibrate_2d_input(iter: int) -> Dict[str, np.ndarray]:
     batch_start = iter * batch_size
     batch_end = iter * batch_size + batch_size
     with h5py.File(dataset, 'r') as file:
-        samples = file[utils.Dataset.TRAIN][utils.Dataset.DATA][()]
+        samples = file[enums.Dataset.TRAIN][enums.Dataset.DATA][()]
         samples = samples[batch_start:batch_end]
         samples = np.expand_dims(samples, axis=-1)
-        min_value, max_value = file.attrs[utils.DataStats.MIN], \
-                               file.attrs[utils.DataStats.MAX]
+        min_value, max_value = file.attrs[enums.DataStats.MIN], \
+                               file.attrs[enums.DataStats.MAX]
     samples = (samples - min_value) / (max_value - min_value)
     return {input_node_name: samples}
