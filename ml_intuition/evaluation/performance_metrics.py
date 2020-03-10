@@ -2,6 +2,8 @@
 All metrics that are calculated on the model's output.
 """
 
+from typing import Dict, List
+
 import numpy as np
 from sklearn.metrics import confusion_matrix
 
@@ -17,7 +19,7 @@ def mean_per_class_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarra
     return conf_matrix.diagonal() / conf_matrix.sum(axis=1)
 
 
-def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, metrics: list) -> dict:
+def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, metrics: list) -> Dict[str, List[np.ndarray]]:
     """
     Compute all metrics on predicted labels and labels.
 

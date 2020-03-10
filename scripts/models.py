@@ -10,9 +10,9 @@ import tensorflow as tf
 def model_2d(kernel_size: int,
              n_kernels: int,
              n_layers: int,
-             input_size: tuple,
+             input_size: int,
              n_classes: int,
-             lr: float = 0.001):
+             lr: float = 0.001) -> tf.keras.Sequential:
     """
     2D model which consists of 2D convolutional blocks, max pooling and batch normalization.
 
