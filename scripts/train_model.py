@@ -55,17 +55,19 @@ def train(*,
         stop the training phase.
 
     """
+    train_dict, min_, max_ = io.load_data(data_path, utils.Dataset.TRAIN)
     train_dataset, n_train =\
         utils.extract_dataset(batch_size,
-                              io.load_data(
-                                  data_path, utils.Dataset.TRAIN),
-                              [transforms.SpectralTranform(n_classes)])
-
+                              train_dict,
+                              [transforms.SpectralTranform(n_classes),
+                              transforms.MinMaxNormalize(_min=min_, _max=max_)])
+    val_dict, min_, max_ =  io.load_data(data_path, utils.Dataset.VAL)
     val_dataset, n_val =\
         utils.extract_dataset(batch_size,
-                              io.load_data(
-                                  data_path, utils.Dataset.VAL),
-                              [transforms.SpectralTranform(n_classes)])
+                             val_dict,
+                              [transforms.SpectralTranform(n_classes),
+                              transforms.MinMaxNormalize(min_, max_)])
+                              
     if shuffle:
         train_dataset = train_dataset.shuffle(batch_size)
 

@@ -38,10 +38,12 @@ def load_data(data_path: str, dataset_key: str) -> Dict[np.ndarray, np.ndarray]:
         utils.Dataset.DATA: np.asarray(
             raw_data[dataset_key][utils.Dataset.DATA]),
         utils.Dataset.LABELS: np.asarray(
-            raw_data[dataset_key][utils.Dataset.LABELS])
+            raw_data[dataset_key][utils.Dataset.LABELS]),
     }
+    min_ = raw_data.attrs['min']
+    max_ = raw_data.attrs['max']
     raw_data.close()
-    return dataset
+    return dataset, min_, max_
 
 
 def load_npy(data_input_path: str, gt_input_path: str) -> Tuple[np.ndarray, np.ndarray]:

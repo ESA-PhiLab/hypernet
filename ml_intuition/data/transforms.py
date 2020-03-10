@@ -41,3 +41,21 @@ class SpectralTranform(BaseTransform):
         """
         return [tf.expand_dims(tf.cast(sample, tf.float32), -1),
                 tf.one_hot(tf.cast(label, tf.uint8), self.n_classes)]
+
+
+class MinMaxNormalize(BaseTransform):
+    def __init__(self, _min: int, _max: int):
+        """
+        Normalzie each sample.
+
+        :param _min: Minimum value of features.
+        :param _max: Maximum value of features.
+        """
+        super().__init__()
+        self._min = _min
+        self._max = _max
+
+    def __call__(self, sample: tf.Tensor, label: tf.Tensor) -> List[tf.Tensor]:
+        """
+        """
+        return [(sample - self._min) / (self._max - self._min), label]

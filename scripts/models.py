@@ -28,7 +28,7 @@ def model_2d(kernel_size: int,
                                          input_shape=(input_size, 1, 1),
                                          padding="valid",
                                          activation='relu'))
-        model.add(tf.keras.layers.BatchNormalization())
+        # model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 1)))
         return model
 
@@ -37,7 +37,7 @@ def model_2d(kernel_size: int,
                                      input_shape=(input_size, 1, 1),
                                      padding="valid",
                                      activation='relu'))
-    model.add(tf.keras.layers.BatchNormalization())
+    # model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 1)))
     if n_layers > 1:
         for _ in range(n_layers - 1):
