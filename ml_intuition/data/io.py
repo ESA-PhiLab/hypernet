@@ -2,12 +2,21 @@
 All I/O related functions
 """
 
+import csv
+import os
 from typing import Dict, Tuple
 
 import h5py
 import numpy as np
 
 from ml_intuition.data import utils
+
+
+def save_metrics(dest_path: str, metric_key: str, metrics: dict):
+    with open(os.path.join(dest_path, metric_key), 'w') as file:
+        write = csv.writer(file)
+        write.writerow(metrics.keys())
+        write.writerows(zip(*metrics.values()))
 
 
 def load_data(data_path: str, dataset_key: str) -> Dict[np.ndarray, np.ndarray]:

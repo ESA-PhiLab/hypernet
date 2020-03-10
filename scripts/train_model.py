@@ -8,10 +8,11 @@ import os
 
 import clize
 import tensorflow as tf
-from scripts import metrics, models
+from scripts import models
 from sklearn.metrics import cohen_kappa_score
 
 from ml_intuition.data import io, transforms, utils
+from ml_intuition.evaluation import time_metrics
 
 
 def train(*,
@@ -77,7 +78,7 @@ def train(*,
     model.summary()
     model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
 
-    time_history = metrics.TimeHistory()
+    time_history = time_metrics.TimeHistory()
     history = model.fit(x=train_dataset.make_one_shot_iterator(),
                         epochs=epochs,
                         verbose=verbose,
@@ -88,11 +89,10 @@ def train(*,
                         validation_steps=n_val // batch_size)
     model.save(filepath=os.path.join(dest_path, model_name))
 
-    history.history[metrics.TimeHistory.__name__] = time_history.average
-    with open(os.path.join(dest_path, 'training_metrics.csv'), 'w') as file:
-        write = csv.writer(file)
-        write.writerow(history.history.keys())
-        write.writerows(zip(*history.history.values()))
+    history.history[time_metrics.TimeHistory.__name__] = time_history.average
+    io.save_metrics(dest_path=dest_path,
+                    metric_key='training_metrics.csv',
+                    metrics=history.history)
 
 
 if __name__ == '__main__':

@@ -6,10 +6,14 @@ import json
 import os
 
 import clize
+import numpy as np
 import tensorflow as tf
-from scripts import metrics
+from sklearn import metrics
 
 from ml_intuition.data import io, transforms, utils
+from ml_intuition.evaluation.performance_metrics import (
+    compute_metrics, mean_per_class_accuracy)
+from ml_intuition.evaluation.time_metrics import timeit
 
 
 def evaluate(*,
@@ -32,17 +36,39 @@ def evaluate(*,
                               [transforms.SpectralTranform(n_classes)])
 
     model = tf.keras.models.load_model(model_path, compile=True)
-    model.predict = metrics.Metrics.timeit(model.predict)
+    model.predict = timeit(model.predict)
     y_pred, inference_time = model.predict(x=test_dataset.make_one_shot_iterator(),
                                            verbose=verbose,
                                            steps=n_test // 1)
 
     y_pred = tf.Session().run(tf.argmax(y_pred, axis=-1))
     y_true = test_dict[utils.Dataset.LABELS]
-    metrics.Metrics().compute_metrics(y_true=y_true,
-                                      y_pred=y_pred,
-                                      process_time=inference_time)\
-        .save_metrics(dest_path=os.path.dirname(model_path))
+
+    custom_metrics = [
+        metrics.accuracy_score,
+        metrics.balanced_accuracy_score,
+        metrics.cohen_kappa_score,
+        mean_per_class_accuracy,
+        metrics.confusion_matrix
+    ]
+    model_metrics = compute_metrics(y_true=y_true,
+                                    y_pred=y_pred,
+                                    metrics=custom_metrics)
+    model_metrics['inference_time'] = [inference_time]
+    per_class_acc = {'Class_' + str(i):
+                     [item] for i, item in enumerate(*model_metrics[mean_per_class_accuracy.__name__])}
+    model_metrics.update(per_class_acc)
+
+    np.savetxt(os.path.join(os.path.dirname(model_path),
+                            metrics.confusion_matrix.__name__ + '.csv'),
+               *model_metrics[metrics.confusion_matrix.__name__], delimiter=',', fmt='%d')
+
+    del model_metrics[mean_per_class_accuracy.__name__]
+    del model_metrics[metrics.confusion_matrix.__name__]
+
+    io.save_metrics(dest_path=os.path.dirname(model_path),
+                    metric_key='inference_metrics.csv',
+                    metrics=model_metrics)
 
 
 if __name__ == '__main__':
