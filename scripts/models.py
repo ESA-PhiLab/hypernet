@@ -1,3 +1,7 @@
+"""
+All models that are used for training.
+"""
+
 import sys
 
 import tensorflow as tf
@@ -48,6 +52,18 @@ def model_2d(kernel_size: int,
 def get_model(model_key: str, kernel_size: int, n_kernels: int,
               n_layers: int, input_size: int, n_classes: int,
               lr: float = 0.001):
+    """
+    Get a given instance of model specifed by mode_key.
+
+    :param model_key: Specifes which model to use.
+    :param kernel_size: Size of the convolutional kernel.
+    :param n_kernels: Number of kernels, i.e., the activation maps in each layer.
+    :param n_layers: Number of layers in the network.
+    :param input_size: Number of input channels, i.e., the number of spectral bands.
+    :param n_classes: Number of classes.
+    :param ls: Learning rate, it regulates the gradient size in the optimization step.
+    """
+    # Get the list of all model creating functions and their name as the key:
     all_ = {
         str(f): eval(f) for f in dir(sys.modules[__name__])
     }

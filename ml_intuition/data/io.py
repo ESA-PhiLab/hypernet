@@ -12,7 +12,14 @@ import numpy as np
 from ml_intuition.data import utils
 
 
-def save_metrics(dest_path: str, metric_key: str, metrics: dict):
+def save_metrics(dest_path: str, metric_key: str, metrics: Dict):
+    """
+    Save given dictionary of metrics.
+
+    :param dest_path: Destination path.
+    :param metric_key: Key to save the file.
+    :param metrics: Dictionary containing all metrics.
+    """
     with open(os.path.join(dest_path, metric_key), 'w') as file:
         write = csv.writer(file)
         write.writerow(metrics.keys())

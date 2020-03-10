@@ -1,3 +1,7 @@
+"""
+All metric utils regarding time measures.
+"""
+
 from time import time
 
 from tensorflow.keras.callbacks import Callback
