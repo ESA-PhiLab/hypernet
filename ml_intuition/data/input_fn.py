@@ -1,7 +1,8 @@
 """
 File containing functions which calibrate input for frozen graphs used for
-quantization. All arguments to such functions are passed through the shell
-environment, because they are executed through the internal decent tools.
+quantization in scripts/quantize.sh. All arguments to such functions are passed
+through the shell environment, because they are executed through the internal
+decent tools.
 """
 import os
 from typing import Dict
@@ -21,8 +22,8 @@ def calibrate_2d_input(iter: int) -> Dict[str, np.ndarray]:
     quantization calibration. One dimension and the end is added and the
     min max normalization is performed.
     :param iter: Int object indicating the calibration step
-    :return: Dict with name of the input node as key and training samples as
-             np.ndarray
+    :return: Dict with name of the input node as key and training samples in
+             np.ndarray as value
     """
     batch_start = iter * batch_size
     batch_end = iter * batch_size + batch_size
