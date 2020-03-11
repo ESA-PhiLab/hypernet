@@ -26,7 +26,8 @@ def main(*,
          val_size: float = 0.1,
          stratified: bool = True,
          background_label: int = 0,
-         channels_idx: int = 0):
+         channels_idx: int = 0,
+         seed: int = 0):
     """
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the data file.
@@ -51,6 +52,7 @@ def main(*,
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
                          data
+    :param seed: Seed used for data shuffling
     :raises TypeError: When provided data or labels file is not supported
     """
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
@@ -76,7 +78,7 @@ def main(*,
     labels = preprocessing.normalize_labels(labels)
 
     train_x, train_y, val_x, val_y, test_x, test_y = utils.train_val_test_split(
-        data, labels, train_size, val_size, stratified)
+        data, labels, train_size, val_size, stratified, seed=seed)
 
     data_file = h5py.File(output_path, 'w')
 

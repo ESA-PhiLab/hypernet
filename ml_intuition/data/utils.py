@@ -52,7 +52,8 @@ def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
 def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                          train_size: Union[int, float] = 0.8,
                          val_size: float = 0.1,
-                         stratified: bool = True) -> Tuple[
+                         stratified: bool = True,
+                         seed: int = 0) -> Tuple[
         np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split the data into train, val and test sets. The size of the training set 
@@ -77,10 +78,11 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                      validation set, defaults to 0.1
     :param stratified: Indicated whether the extracted training set should be
                      stratified, defaults to True
+    :param seed: Seed used for data shuffling
     :return: train_x, train_y, val_x, val_y, test_x, test_y
     :raises TypeError: When wrong type is passed as train_size
     """
-    shuffle_arrays_together([data, labels])
+    shuffle_arrays_together([data, labels], seed=seed)
     train_indices = _get_set_indices(labels, train_size, stratified)
     val_indices = _get_set_indices(labels[train_indices], val_size)
     test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
