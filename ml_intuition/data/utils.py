@@ -1,7 +1,37 @@
-from typing import Tuple, List, Union
+"""
+All data handling methods.
+"""
+
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 import tensorflow as tf
+
+from ml_intuition import enums
+from ml_intuition.data.transforms import BaseTransform
+
+SAMPLES_DIM = 0
+
+
+def create_tf_dataset(batch_size: int,
+                      dataset: Dict[str, np.ndarray],
+                      transforms: List[Type[BaseTransform]]) -> Tuple[tf.data.Dataset, int]:
+    """
+    Create and transform datasets that are used in the training, validaton or testing phases.
+
+    :param batch_size: Size of the batch used in either phase,
+        it is the size of samples per gradient step.
+    :param dataset: Passed dataset as a dictionary of samples and labels.
+    :param transforms: List of all transformations. 
+    :return: Transformed dataset with its size.
+    """
+    n_samples = dataset[enums.Dataset.DATA].shape[SAMPLES_DIM]
+    dataset = tf.data.Dataset.from_tensor_slices(
+        (dataset[enums.Dataset.DATA], dataset[enums.Dataset.LABELS]))
+    for f_transform in transforms:
+        dataset = dataset.map(f_transform)
+    return dataset.batch(batch_size=batch_size, drop_remainder=False)\
+        .repeat().prefetch(tf.contrib.data.AUTOTUNE), n_samples
 
 
 def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
@@ -23,7 +53,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                          train_size: Union[int, float] = 0.8,
                          val_size: float = 0.1,
                          stratified: bool = True) -> Tuple[
-    np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split the data into train, val and test sets. The size of the training set 
     is set by the train_size parameter. All the remaining samples will be
@@ -56,7 +86,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
     train_indices = np.setdiff1d(train_indices, val_indices)
     return data[train_indices], labels[train_indices], data[val_indices], \
-           labels[val_indices], data[test_indices], labels[test_indices]
+        labels[val_indices], data[test_indices], labels[test_indices]
 
 
 def _get_set_indices(labels: np.ndarray, size: float = 0.8,
