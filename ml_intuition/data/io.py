@@ -2,20 +2,57 @@
 All I/O related functions
 """
 
-import h5py
-from typing import Tuple
-import numpy as np
+import csv
+import os
+from typing import Dict, List, Tuple, Union
 
+import h5py
+import numpy as np
 from libtiff import TIFF
 
 import ml_intuition.enums as enums
 
 
+def save_metrics(dest_path: str, file_name: str, metrics: Dict[str, List]):
+    """
+    Save given dictionary of metrics.
+
+    :param dest_path: Destination path.
+    :param file_name: Name to save the file.
+    :param metrics: Dictionary containing all metrics.
+    """
+    with open(os.path.join(dest_path, file_name), 'w') as file:
+        write = csv.writer(file)
+        write.writerow(metrics.keys())
+        write.writerows(zip(*metrics.values()))
+
+
+def extract_set(data_path: str, dataset_key: str) -> Dict[str, Union[np.ndarray, float]]:
+    """
+    Function for loading a h5 format dataset as a dictionary
+        of samples, labels, min and max values.
+
+    :param data_path: Path to the dataset.
+    :param dataset_key: Key for dataset.
+    """
+    raw_data = h5py.File(data_path, 'r')
+    dataset = {
+        enums.Dataset.DATA: np.asarray(
+            raw_data[dataset_key][enums.Dataset.DATA]),
+        enums.Dataset.LABELS: np.asarray(
+            raw_data[dataset_key][enums.Dataset.LABELS]),
+        enums.DataStats.MIN: raw_data.attrs[enums.DataStats.MIN],
+        enums.DataStats.MAX: raw_data.attrs[enums.DataStats.MAX]
+    }
+    raw_data.close()
+    return dataset
+
+
 def load_npy(data_file_path: str, gt_input_path: str) -> Tuple[
-    np.ndarray, np.ndarray]:
+        np.ndarray, np.ndarray]:
     """
     Load .npy data and GT from specified paths
-    
+
     :param data_file_path: Path to the data .npy file
     :param gt_input_path: Path to the GT .npy file
     :return: Tuple with loaded data and GT
