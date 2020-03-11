@@ -25,6 +25,7 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, metrics: list) -> Di
 
     :param y_true: Labels as a one-dimensional numpy array.
     :param y_pred: Model's predictions as a one-dimensional numpy array.
+    :param metrics: List of metrics functions.
     """
     return {metric_function.__name__:
             [metric_function(y_true, y_pred)] for metric_function in metrics}

@@ -1,7 +1,5 @@
 import aenum
 
-SAMPLES_DIM = 0
-
 
 class Dataset(aenum.Constant):
     TRAIN = 'train'

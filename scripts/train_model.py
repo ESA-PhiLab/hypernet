@@ -2,25 +2,21 @@
 Perform the training and validation of the model.
 """
 
-import csv
-import json
 import os
 
 import clize
 import tensorflow as tf
-from scripts import models
-from sklearn.metrics import cohen_kappa_score
 
-from ml_intuition import enums
+from ml_intuition import enums, models
 from ml_intuition.data import io, transforms, utils
 from ml_intuition.evaluation import time_metrics
 
 
 def train(*,
           model_name: str,
-          kernel_size: int,
-          n_kernels: int,
-          n_layers: int,
+          kernel_size: int = 3,
+          n_kernels: int = 16,
+          n_layers: int = 1,
           dest_path: str,
           data_path: str,
           sample_size: int,
@@ -56,32 +52,33 @@ def train(*,
         stop the training phase.
 
     """
-    train_dict = io.load_data(data_path, enums.Dataset.TRAIN)
+    train_dict = io.extract_set(data_path, enums.Dataset.TRAIN)
+    val_dict = io.extract_set(data_path, enums.Dataset.VAL)
+
+    transformations = [transforms.SpectralTransform(),
+                       transforms.OneHotEncode(n_classes=n_classes),
+                       transforms.MinMaxNormalize(min_=train_dict[enums.DataStats.MIN],
+                                                  max_=train_dict[enums.DataStats.MAX])]
+
     train_dataset, n_train =\
-        utils.extract_dataset(batch_size,
-                              train_dict,
-                              [transforms.SpectralTranform(n_classes),
-                               transforms.MinMaxNormalize(min_=train_dict[enums.DataStats.MIN],
-                                                          max_=train_dict[enums.DataStats.MAX])])
-    val_dict = io.load_data(data_path, enums.Dataset.VAL)
+        utils.create_tf_dataset(batch_size,
+                                train_dict,
+                                transformations)
     val_dataset, n_val =\
-        utils.extract_dataset(batch_size,
-                              val_dict,
-                              [transforms.SpectralTranform(n_classes),
-                               transforms.MinMaxNormalize(min_=val_dict[enums.DataStats.MIN],
-                                                          max_=val_dict[enums.DataStats.MAX])])
+        utils.create_tf_dataset(batch_size,
+                                val_dict,
+                                transformations)
 
     if shuffle:
         train_dataset = train_dataset.shuffle(batch_size)
 
-    callback = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                patience=patience)
-
     model = models.get_model(model_key=model_name, kernel_size=kernel_size,
                              n_kernels=n_kernels, n_layers=n_layers,
-                             input_size=sample_size, n_classes=n_classes, lr=lr)
+                             input_size=sample_size, n_classes=n_classes)
     model.summary()
-    model.compile('adam', 'categorical_crossentropy', metrics=['accuracy'])
+    model.compile(tf.keras.optimizers.Adam(lr=lr),
+                  'categorical_crossentropy',
+                  metrics=['accuracy'])
 
     time_history = time_metrics.TimeHistory()
     history = model.fit(x=train_dataset.make_one_shot_iterator(),
@@ -89,14 +86,16 @@ def train(*,
                         verbose=verbose,
                         shuffle=shuffle,
                         validation_data=val_dataset.make_one_shot_iterator(),
-                        callbacks=[callback, time_history],
+                        callbacks=[
+                            tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                             patience=patience), time_history],
                         steps_per_epoch=n_train // batch_size,
                         validation_steps=n_val // batch_size)
     model.save(filepath=os.path.join(dest_path, model_name))
 
     history.history[time_metrics.TimeHistory.__name__] = time_history.average
     io.save_metrics(dest_path=dest_path,
-                    metric_key='training_metrics.csv',
+                    file_name='training_metrics.csv',
                     metrics=history.history)
 
 

@@ -2,7 +2,6 @@
 Perform the inference of the model on the testing dataset.
 """
 
-import json
 import os
 
 import clize
@@ -16,11 +15,13 @@ from ml_intuition.evaluation.performance_metrics import (
     compute_metrics, mean_per_class_accuracy)
 from ml_intuition.evaluation.time_metrics import timeit
 
+BATCH_SIZE = 1
+
 
 def evaluate(*,
              model_path: str,
              data_path: str,
-             verbose: int,
+             verbose: int = 1,
              n_classes: int):
     """
     Function for evaluating the trained model.
@@ -30,19 +31,20 @@ def evaluate(*,
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
     :param n_classes: Number of classes.
     """
-    test_dict = io.load_data(data_path, enums.Dataset.TEST)
+    test_dict = io.extract_set(data_path, enums.Dataset.TEST)
     test_dataset, n_test =\
-        utils.extract_dataset(1,
-                              test_dict,
-                              [transforms.SpectralTranform(n_classes),
-                               transforms.MinMaxNormalize(min_=test_dict[enums.DataStats.MIN],
-                                                          max_=test_dict[enums.DataStats.MAX])])
+        utils.create_tf_dataset(BATCH_SIZE,
+                                test_dict,
+                                [transforms.SpectralTransform(),
+                                 transforms.OneHotEncode(n_classes=n_classes),
+                                 transforms.MinMaxNormalize(min_=test_dict[enums.DataStats.MIN],
+                                                            max_=test_dict[enums.DataStats.MAX])])
 
     model = tf.keras.models.load_model(model_path, compile=True)
     model.predict = timeit(model.predict)
     y_pred, inference_time = model.predict(x=test_dataset.make_one_shot_iterator(),
                                            verbose=verbose,
-                                           steps=n_test // 1)
+                                           steps=n_test // BATCH_SIZE)
 
     y_pred = tf.Session().run(tf.argmax(y_pred, axis=-1))
     y_true = test_dict[enums.Dataset.LABELS]
@@ -70,7 +72,7 @@ def evaluate(*,
     del model_metrics[metrics.confusion_matrix.__name__]
 
     io.save_metrics(dest_path=os.path.dirname(model_path),
-                    metric_key='inference_metrics.csv',
+                    file_name='inference_metrics.csv',
                     metrics=model_metrics)
 
 

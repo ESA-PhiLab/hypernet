@@ -20,27 +20,44 @@ class BaseTransform(abc.ABC):
         pass
 
 
-class SpectralTranform(BaseTransform):
+class SpectralTransform(BaseTransform):
+    def __init__(self):
+        """
+        Initializer of the spectral transformation.
+        """
+        super().__init__()
+
+    def __call__(self, sample: tf.Tensor, label: tf.Tensor) -> List[tf.Tensor]:
+        """
+        Transform 1D samples along the spectral axis.
+        Only the spectral features are present for each sample in the dataset.
+
+        :param sample: Input sample that will undergo transformation.
+        :param label: Class value for each sample.
+        :return: List containing the transformed sample and the class label.
+        """
+        return [tf.expand_dims(tf.cast(sample, tf.float32), -1), label]
+
+
+class OneHotEncode(BaseTransform):
     def __init__(self, n_classes: int):
         """
-        Initializer of the transorm class.
+        Initializer of the one-hot encoding transformation.
 
         :param n_classes: Number of classes.
         """
         super().__init__()
         self.n_classes = n_classes
 
-    def __call__(self, sample: tf.Tensor, label: tf.Tensor) -> List[tf.Tensor]:
+    def __call__(self, sample: tf.Tensor, label: tf.Tensor):
         """
-        Transform 1D samples along the spectral axis.
-        Only the spectral features are present for each sample in the dataset.        
+        Perform one-hot encoding on incoming label.
 
-        :param sample: Input sample that will undergo transformation.
-        :param label: Class value for each sample that will undergo one-hot-encoding.
-        :return: List containing the transformed sample and the class label.
+        :param sample: Input sample.
+        :param label: Class value for each sample that will undergo one-hot encoding.
+        :return: List containing the sample and the one-hot encoded class label.
         """
-        return [tf.expand_dims(tf.cast(sample, tf.float32), -1),
-                tf.one_hot(tf.cast(label, tf.uint8), self.n_classes)]
+        return [sample, tf.one_hot(tf.cast(label, tf.uint8), self.n_classes)]
 
 
 class MinMaxNormalize(BaseTransform):
@@ -56,6 +73,11 @@ class MinMaxNormalize(BaseTransform):
         self.max_ = max_
 
     def __call__(self, sample: tf.Tensor, label: tf.Tensor) -> List[tf.Tensor]:
-        """
+        """"
+        Perform min-max normalization on incoming samples.
+
+        :param sample: Input sample that will undergo transformation.
+        :param label: Class value for each sample.
+        :return: List containing the normalized sample and the class label.
         """
         return [(sample - self.min_) / (self.max_ - self.min_), label]

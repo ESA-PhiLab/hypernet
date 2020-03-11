@@ -4,7 +4,7 @@ All I/O related functions
 
 import csv
 import os
-from typing import Dict, Tuple
+from typing import Dict, List, Tuple, Union
 
 import h5py
 import numpy as np
@@ -13,26 +13,27 @@ from libtiff import TIFF
 import ml_intuition.enums as enums
 
 
-def save_metrics(dest_path: str, metric_key: str, metrics: Dict):
+def save_metrics(dest_path: str, file_name: str, metrics: Dict[str, List]):
     """
     Save given dictionary of metrics.
 
     :param dest_path: Destination path.
-    :param metric_key: Key to save the file.
+    :param file_name: Name to save the file.
     :param metrics: Dictionary containing all metrics.
     """
-    with open(os.path.join(dest_path, metric_key), 'w') as file:
+    with open(os.path.join(dest_path, file_name), 'w') as file:
         write = csv.writer(file)
         write.writerow(metrics.keys())
         write.writerows(zip(*metrics.values()))
 
 
-def load_data(data_path: str, dataset_key: str) -> Dict[np.ndarray, np.ndarray]:
+def extract_set(data_path: str, dataset_key: str) -> Dict[str, Union[np.ndarray, float]]:
     """
-    Function for loading a h5 format dataset as a dictionary of samples and labels.
+    Function for loading a h5 format dataset as a dictionary
+        of samples, labels, min and max values.
 
     :param data_path: Path to the dataset.
-    :param keys: Key for dataset.
+    :param dataset_key: Key for dataset.
     """
     raw_data = h5py.File(data_path, 'r')
     dataset = {

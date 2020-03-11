@@ -2,33 +2,30 @@
 All data handling methods.
 """
 
-import inspect
-import sys
-from typing import List, Tuple, Type, Union
+from typing import Dict, List, Tuple, Type, Union
 
-import aenum
-import h5py
 import numpy as np
 import tensorflow as tf
 
 from ml_intuition import enums
 from ml_intuition.data.transforms import BaseTransform
 
+SAMPLES_DIM = 0
 
-def extract_dataset(batch_size: int,
-                    dataset: np.ndarray,
-                    transforms: List[Type[BaseTransform]]) -> Tuple[tf.data.Dataset, int]:
+
+def create_tf_dataset(batch_size: int,
+                      dataset: Dict[str, np.ndarray],
+                      transforms: List[Type[BaseTransform]]) -> Tuple[tf.data.Dataset, int]:
     """
     Create and transform datasets that are used in the training, validaton or testing phases.
 
     :param batch_size: Size of the batch used in either phase,
         it is the size of samples per gradient step.
-    :param dataset: Passed dataset as a design matrix numpy array, 
-        where the first dimension is the number of samples.
+    :param dataset: Passed dataset as a dictionary of samples and labels.
     :param transforms: List of all transformations. 
     :return: Transformed dataset with its size.
     """
-    n_samples = dataset[enums.Dataset.DATA].shape[enums.SAMPLES_DIM]
+    n_samples = dataset[enums.Dataset.DATA].shape[SAMPLES_DIM]
     dataset = tf.data.Dataset.from_tensor_slices(
         (dataset[enums.Dataset.DATA], dataset[enums.Dataset.LABELS]))
     for f_transform in transforms:

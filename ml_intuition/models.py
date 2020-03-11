@@ -11,8 +11,7 @@ def model_2d(kernel_size: int,
              n_kernels: int,
              n_layers: int,
              input_size: int,
-             n_classes: int,
-             lr: float = 0.001) -> tf.keras.Sequential:
+             n_classes: int) -> tf.keras.Sequential:
     """
     2D model which consists of 2D convolutional blocks, max pooling and batch normalization.
 
@@ -21,14 +20,12 @@ def model_2d(kernel_size: int,
     :param n_layers: Number of layers in the network.
     :param input_size: Number of input channels, i.e., the number of spectral bands.
     :param n_classes: Number of classes.
-    :param ls: Learning rate, it regulates the gradient size in the optimization step.
     """
     def add_layer(model):
         model.add(tf.keras.layers.Conv2D(n_kernels, (kernel_size, 1),
                                          input_shape=(input_size, 1, 1),
                                          padding="valid",
                                          activation='relu'))
-        # model.add(tf.keras.layers.BatchNormalization())
         model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 1)))
         return model
 
@@ -37,7 +34,6 @@ def model_2d(kernel_size: int,
                                      input_shape=(input_size, 1, 1),
                                      padding="valid",
                                      activation='relu'))
-    # model.add(tf.keras.layers.BatchNormalization())
     model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 1)))
     if n_layers > 1:
         for _ in range(n_layers - 1):
@@ -50,10 +46,9 @@ def model_2d(kernel_size: int,
 
 
 def get_model(model_key: str, kernel_size: int, n_kernels: int,
-              n_layers: int, input_size: int, n_classes: int,
-              lr: float = 0.001):
+              n_layers: int, input_size: int, n_classes: int):
     """
-    Get a given instance of model specifed by mode_key.
+    Get a given instance of model specified by mode_key.
 
     :param model_key: Specifes which model to use.
     :param kernel_size: Size of the convolutional kernel.
@@ -61,7 +56,6 @@ def get_model(model_key: str, kernel_size: int, n_kernels: int,
     :param n_layers: Number of layers in the network.
     :param input_size: Number of input channels, i.e., the number of spectral bands.
     :param n_classes: Number of classes.
-    :param ls: Learning rate, it regulates the gradient size in the optimization step.
     """
     # Get the list of all model creating functions and their name as the key:
     all_ = {
@@ -69,4 +63,4 @@ def get_model(model_key: str, kernel_size: int, n_kernels: int,
     }
     return all_[model_key](kernel_size=kernel_size,
                            n_kernels=n_kernels, n_layers=n_layers,
-                           input_size=input_size, n_classes=n_classes, lr=lr)
+                           input_size=input_size, n_classes=n_classes)
