@@ -61,7 +61,7 @@ class OneHotEncode(BaseTransform):
 
 
 class MinMaxNormalize(BaseTransform):
-    def __init__(self, min_: int, max_: int):
+    def __init__(self, min_: float, max_: float):
         """
         Normalize each sample.
 

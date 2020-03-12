@@ -16,7 +16,7 @@ MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
 
 def create_tf_dataset(batch_size: int,
                       dataset: Dict[str, np.ndarray],
-                      transforms: List[Type[BaseTransform]]) -> Tuple[
+                      transforms: List[BaseTransform]) -> Tuple[
     tf.data.Dataset, int]:
     """
     Create and transform datasets that are used in the training, validaton or testing phases.
