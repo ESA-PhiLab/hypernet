@@ -12,7 +12,7 @@ class BaseTransform(abc.ABC):
     @abc.abstractmethod
     def __call__(self, *args, **kwargs):
         """
-        Each subsclass should implement this method.
+        Each subclass should implement this method.
 
         :param args: Arbitrary list of arguments.
         :param kwargs: Arbitrary dictionary of arguments.
@@ -63,10 +63,10 @@ class OneHotEncode(BaseTransform):
 class MinMaxNormalize(BaseTransform):
     def __init__(self, min_: int, max_: int):
         """
-        Normalzie each sample.
+        Normalize each sample.
 
-        :param _min: Minimum value of features.
-        :param _max: Maximum value of features.
+        :param min_: Minimum value of features.
+        :param max_: Maximum value of features.
         """
         super().__init__()
         self.min_ = min_

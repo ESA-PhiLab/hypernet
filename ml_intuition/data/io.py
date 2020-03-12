@@ -38,10 +38,8 @@ def extract_set(data_path: str, dataset_key: str) -> Dict[str, Union[np.ndarray,
     """
     raw_data = h5py.File(data_path, 'r')
     dataset = {
-        enums.Dataset.DATA: np.asarray(
-            raw_data[dataset_key][enums.Dataset.DATA]),
-        enums.Dataset.LABELS: np.asarray(
-            raw_data[dataset_key][enums.Dataset.LABELS]),
+        enums.Dataset.DATA: raw_data[dataset_key][enums.Dataset.DATA][:],
+        enums.Dataset.LABELS: raw_data[dataset_key][enums.Dataset.LABELS][:],
         enums.DataStats.MIN: raw_data.attrs[enums.DataStats.MIN],
         enums.DataStats.MAX: raw_data.attrs[enums.DataStats.MAX]
     }

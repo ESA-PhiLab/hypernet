@@ -60,17 +60,15 @@ def evaluate(*,
                                     y_pred=y_pred,
                                     metrics=custom_metrics)
     model_metrics['inference_time'] = [inference_time]
-    per_class_acc = {'Class_' + str(i):
-                     [item] for i, item in enumerate(*model_metrics[mean_per_class_accuracy.__name__])}
-    model_metrics.update(per_class_acc)
 
     np.savetxt(os.path.join(os.path.dirname(model_path),
                             metrics.confusion_matrix.__name__ + '.csv'),
-               *model_metrics[metrics.confusion_matrix.__name__], delimiter=',', fmt='%d')
-
-    del model_metrics[mean_per_class_accuracy.__name__]
+               *model_metrics[metrics.confusion_matrix.__name__],
+               delimiter=',',
+               fmt='%d')
     del model_metrics[metrics.confusion_matrix.__name__]
 
+    model_metrics = utils.restructure_per_class_accuracy(model_metrics)
     io.save_metrics(dest_path=os.path.dirname(model_path),
                     file_name='inference_metrics.csv',
                     metrics=model_metrics)

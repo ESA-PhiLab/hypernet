@@ -1,26 +1,36 @@
+import os
 import clize
-import h5py
 import json
 import numpy as np
 
 import tensorflow as tf
 import tensorflow.contrib.decent_q
-from sklearn.metrics import accuracy_score
+from sklearn import metrics
 
-import ml_intuition.data.io as io
-import ml_intuition.enums as enums
+from ml_intuition.evaluation.performance_metrics import compute_metrics, \
+    mean_per_class_accuracy
+from ml_intuition.data import io, utils
+from ml_intuition import enums
+from ml_intuition.evaluation.time_metrics import timeit
+
+METRICS = [
+    metrics.accuracy_score,
+    metrics.balanced_accuracy_score,
+    metrics.cohen_kappa_score,
+    mean_per_class_accuracy,
+    metrics.confusion_matrix
+]
 
 
 def main(*, graph_path: str, node_names_path: str, dataset_path: str):
     graph = io.load_pb(graph_path)
+    test_dataset = io.extract_set(dataset_path, enums.Dataset.TEST)
 
-    with h5py.File(dataset_path, 'r') as file:
-        test_data = file[enums.Dataset.TEST][enums.Dataset.DATA][:]
-        test_labels = file[enums.Dataset.TEST][enums.Dataset.LABELS][:]
-        min_value, max_value = file.attrs[enums.DataStats.MIN], \
-                               file.attrs[enums.DataStats.MAX]
+    min_value, max_value = test_dataset[enums.DataStats.MIN], \
+                           test_dataset[enums.DataStats.MAX]
+    test_data = (test_dataset[enums.Dataset.DATA] - min_value) / \
+                (max_value - min_value)
 
-    test_data = (test_data - min_value) / (max_value - min_value)
     test_data = np.expand_dims(test_data, axis=-1)
 
     with open(node_names_path, 'r') as node_names_file:
@@ -32,11 +42,26 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str):
         node_names[enums.NodeNames.OUTPUT] + ':0')
 
     with tf.Session(graph=graph) as session:
-        predictions = session.run(output_node,
-                                  feed_dict={input_node: test_data})
+        predict = timeit(session.run)
+        predictions, inference_time = predict(output_node,
+                                              feed_dict={input_node: test_data})
         predictions = session.run(tf.argmax(predictions, axis=-1))
 
-    print('acc: {}'.format(accuracy_score(test_labels, predictions)))
+    graph_metrics = compute_metrics(test_dataset[enums.Dataset.LABELS],
+                                    predictions, METRICS)
+    graph_metrics['inference_time'] = [inference_time]
+
+    np.savetxt(os.path.join(os.path.dirname(graph_path),
+                            metrics.confusion_matrix.__name__ + '.csv'),
+               *graph_metrics[metrics.confusion_matrix.__name__],
+               delimiter=',',
+               fmt='%d')
+    del graph_metrics[metrics.confusion_matrix.__name__]
+
+    graph_metrics = utils.restructure_per_class_accuracy(graph_metrics)
+    io.save_metrics(dest_path=os.path.dirname(graph_path),
+                    file_name='inference_graph_metrics.csv',
+                    metrics=graph_metrics)
 
 
 if __name__ == '__main__':
