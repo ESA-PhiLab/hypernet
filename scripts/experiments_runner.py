@@ -7,8 +7,6 @@ import os
 import clize
 from scripts import evaluate_model, prepare_data, train_model
 
-PATH = '/home/lukasz/Desktop/artifacts'
-
 
 def run_experiments(*,
                     data_file_path: str,
