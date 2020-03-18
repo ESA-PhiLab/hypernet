@@ -13,7 +13,7 @@ def model_2d(kernel_size: int,
              input_size: int,
              n_classes: int) -> tf.keras.Sequential:
     """
-    2D model which consists of 2D convolutional blocks, max pooling and batch normalization.
+    2D model which consists of 2D convolutional blocks.
 
     :param kernel_size: Size of the convolutional kernel.
     :param n_kernels: Number of kernels, i.e., the activation maps in each layer.
@@ -26,18 +26,19 @@ def model_2d(kernel_size: int,
                                          input_shape=(input_size, 1, 1),
                                          padding="valid",
                                          activation='relu'))
-        model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 1)))
+        model.add(tf.keras.layers.Conv2D(n_kernels, (kernel_size, 1), strides=(2, 1),
+                                         input_shape=(input_size, 1, 1),
+                                         padding="valid",
+                                         activation='relu'))
+        model.add(tf.keras.layers.Conv2D(n_kernels, (kernel_size, 1), strides=(4, 1),
+                                         input_shape=(input_size, 1, 1),
+                                         padding="valid",
+                                         activation='relu'))
         return model
-
     model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Conv2D(n_kernels, (kernel_size, 1),
-                                     input_shape=(input_size, 1, 1),
-                                     padding="valid",
-                                     activation='relu'))
-    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 1)))
-    if n_layers > 1:
-        for _ in range(n_layers - 1):
-            model = add_layer(model)
+
+    for _ in range(n_layers):
+        model = add_layer(model)
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(units=200, activation='relu'))
     model.add(tf.keras.layers.Dense(units=128, activation='relu'))

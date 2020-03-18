@@ -5,6 +5,7 @@ Run experiments given set of hyperparameters.
 import os
 
 import clize
+import tensorflow as tf
 from scripts import evaluate_model, prepare_data, train_model
 
 
@@ -110,6 +111,8 @@ def run_experiments(*,
                                 data_path=data_dest_path,
                                 verbose=verbose,
                                 n_classes=n_classes)
+
+        tf.keras.backend.clear_session()
 
 
 if __name__ == '__main__':
