@@ -26,11 +26,15 @@ def model_2d(kernel_size: int,
                                          input_shape=(input_size, 1, 1),
                                          padding="valid",
                                          activation='relu'))
+        model.add(tf.keras.layers.Conv2D(n_kernels, (kernel_size, 1), strides=(3, 1),
+                                         input_shape=(input_size, 1, 1),
+                                         padding="valid",
+                                         activation='relu'))
         model.add(tf.keras.layers.Conv2D(n_kernels, (kernel_size, 1), strides=(2, 1),
                                          input_shape=(input_size, 1, 1),
                                          padding="valid",
                                          activation='relu'))
-        model.add(tf.keras.layers.Conv2D(n_kernels, (kernel_size, 1), strides=(4, 1),
+        model.add(tf.keras.layers.Conv2D(n_kernels, (kernel_size, 1), strides=(2, 1),
                                          input_shape=(input_size, 1, 1),
                                          padding="valid",
                                          activation='relu'))
