@@ -29,7 +29,13 @@ class TestPerformanceMetrics:
               metrics.accuracy_score,
               metrics.confusion_matrix,
               metrics.cohen_kappa_score],
-             10)
+             10),
+            (np.random.permutation(25), np.random.permutation(25),
+             [metrics.balanced_accuracy_score,
+              metrics.accuracy_score,
+              metrics.confusion_matrix,
+              metrics.cohen_kappa_score],
+             25)
         ]
     )
     def test_compute_metrics(self, y_true, y_pred,
