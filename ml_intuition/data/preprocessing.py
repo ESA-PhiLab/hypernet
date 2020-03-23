@@ -10,8 +10,9 @@ def normalize_labels(labels: np.ndarray) -> np.ndarray:
     :param labels: labels to normalize
     :return: Normalized labels
     """
-    min_label = np.amin(labels)
-    return labels - min_label
+    for label_index, label in enumerate(np.unique(labels)):
+        labels[labels == label] = label_index
+    return labels
 
 
 def reshape_cube_to_2d_samples(data: np.ndarray,
