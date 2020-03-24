@@ -3,6 +3,7 @@ Perform the inference of the model on the testing dataset.
 """
 
 import os
+from typing import Union, Dict
 
 import clize
 import numpy as np
@@ -20,31 +21,36 @@ BATCH_SIZE = 1
 
 def evaluate(*,
              model_path: str,
-             data_path: str,
+             data: Union[str, Dict],
              verbose: int = 1,
              n_classes: int):
     """
     Function for evaluating the trained model.
 
     :param model_path: Path to the model.
-    :param data_path: Path to the input data.
+    :param data: Either path to the input data or the data dict.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
     :param n_classes: Number of classes.
     """
-    test_dict = io.extract_set(data_path, enums.Dataset.TEST)
-    test_dataset, n_test =\
+    if type(data) is str:
+        test_dict = io.extract_set(data, enums.Dataset.TEST)
+    else:
+        test_dict = data[enums.Dataset.TEST]
+    test_dataset, n_test = \
         utils.create_tf_dataset(BATCH_SIZE,
                                 test_dict,
                                 [transforms.SpectralTransform(),
                                  transforms.OneHotEncode(n_classes=n_classes),
-                                 transforms.MinMaxNormalize(min_=test_dict[enums.DataStats.MIN],
-                                                            max_=test_dict[enums.DataStats.MAX])])
+                                 transforms.MinMaxNormalize(
+                                     min_=data[enums.DataStats.MIN],
+                                     max_=data[enums.DataStats.MAX])])
 
     model = tf.keras.models.load_model(model_path, compile=True)
     model.predict = timeit(model.predict)
-    y_pred, inference_time = model.predict(x=test_dataset.make_one_shot_iterator(),
-                                           verbose=verbose,
-                                           steps=n_test // BATCH_SIZE)
+    y_pred, inference_time = model.predict(
+        x=test_dataset.make_one_shot_iterator(),
+        verbose=verbose,
+        steps=n_test // BATCH_SIZE)
 
     y_pred = tf.Session().run(tf.argmax(y_pred, axis=-1))
     y_true = test_dict[enums.Dataset.LABELS]
@@ -61,12 +67,14 @@ def evaluate(*,
                                     metrics=custom_metrics)
     model_metrics['inference_time'] = [inference_time]
     per_class_acc = {'Class_' + str(i):
-                     [item] for i, item in enumerate(*model_metrics[mean_per_class_accuracy.__name__])}
+                         [item] for i, item in enumerate(
+        *model_metrics[mean_per_class_accuracy.__name__])}
     model_metrics.update(per_class_acc)
 
     np.savetxt(os.path.join(os.path.dirname(model_path),
                             metrics.confusion_matrix.__name__ + '.csv'),
-               *model_metrics[metrics.confusion_matrix.__name__], delimiter=',', fmt='%d')
+               *model_metrics[metrics.confusion_matrix.__name__], delimiter=',',
+               fmt='%d')
 
     del model_metrics[mean_per_class_accuracy.__name__]
     del model_metrics[metrics.confusion_matrix.__name__]
