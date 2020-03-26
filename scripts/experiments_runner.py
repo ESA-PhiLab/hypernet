@@ -8,6 +8,8 @@ import clize
 import tensorflow as tf
 from scripts import evaluate_model, prepare_data, train_model
 
+EXPERIMENT = 'experiment'
+
 
 def run_experiments(*,
                     data_file_path: str,
@@ -79,7 +81,7 @@ def run_experiments(*,
     """
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
-            dest_path, 'experiment_' + str(experiment_id))
+            dest_path, '{}_{}'.format(EXPERIMENT, str(experiment_id)))
         if save_data:
             data_source = os.path.join(experiment_dest_path, 'data.h5')
         else:
