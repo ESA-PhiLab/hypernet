@@ -21,17 +21,19 @@ EXTENSION = 1
 def main(*,
          data_file_path: str,
          ground_truth_path: str,
-         output_path: str,
+         output_path: str = None,
          train_size: float = 0.8,
          val_size: float = 0.1,
          stratified: bool = True,
          background_label: int = 0,
          channels_idx: int = 0,
+         save_data: bool = False,
          seed: int = 0):
     """
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the data file.
-    :param output_path: Path under in which the output .h5 file will be stored
+    :param output_path: Path under in which the output .h5 file will be stored.
+        Used only if the parameter save_data is set to True
     :param train_size: If float, should be between 0.0 and 1.0,
                         if stratified = True, it represents percentage of each
                         class to be extracted,
@@ -52,6 +54,7 @@ def main(*,
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
                          data
+    :param save_data: Whether to save data as .md5 or to return it as a dict
     :param seed: Seed used for data shuffling
     :raises TypeError: When provided data or labels file is not supported
     """
@@ -80,24 +83,12 @@ def main(*,
     train_x, train_y, val_x, val_y, test_x, test_y = utils.train_val_test_split(
         data, labels, train_size, val_size, stratified, seed=seed)
 
-    data_file = h5py.File(output_path, 'w')
-
-    train_min, train_max = np.amin(train_x), np.amax(train_x)
-    data_file.attrs.create(enums.DataStats.MIN, train_min)
-    data_file.attrs.create(enums.DataStats.MAX, train_max)
-
-    train_group = data_file.create_group(enums.Dataset.TRAIN)
-    train_group.create_dataset(enums.Dataset.DATA, data=train_x)
-    train_group.create_dataset(enums.Dataset.LABELS, data=train_y)
-
-    val_group = data_file.create_group(enums.Dataset.VAL)
-    val_group.create_dataset(enums.Dataset.DATA, data=val_x)
-    val_group.create_dataset(enums.Dataset.LABELS, data=val_y)
-
-    test_group = data_file.create_group(enums.Dataset.TEST)
-    test_group.create_dataset(enums.Dataset.DATA, data=test_x)
-    test_group.create_dataset(enums.Dataset.LABELS, data=test_y)
-    data_file.close()
+    if save_data:
+        io.save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y)
+        return None
+    else:
+        return utils.build_data_dict(train_x, train_y, val_x, val_y, test_x,
+                                     test_y)
 
 
 if __name__ == '__main__':

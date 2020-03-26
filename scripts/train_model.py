@@ -3,6 +3,7 @@ Perform the training and validation of the model.
 """
 
 import os
+from typing import Union, Dict
 
 import clize
 import tensorflow as tf
@@ -18,9 +19,9 @@ def train(*,
           n_kernels: int = 16,
           n_layers: int = 1,
           dest_path: str,
-          data_path: str,
           sample_size: int,
           n_classes: int,
+          data: Union[str, Dict],
           lr: float = 0.005,
           batch_size: int = 150,
           epochs: int = 10,
@@ -36,12 +37,12 @@ def train(*,
     :param n_kernels: Number of kernels in each layer.
     :param n_layers: Number of layers in the model.
     :param dest_path: Path to where to save the model under the name "model_name".
-    :param data_path: Path to the input data. First dimension of the
-        dataset should be the number of samples.
     :param sample_size: Size of the input sample.
     :param n_classes: Number of classes.
     :param lr: Learning rate for the model, i.e., regulates the size of the step
         in the gradient descent process.
+    :param data: Either path to the input data or the data dict itself.
+        First dimension of the dataset should be the number of samples.
     :param batch_size: Size of the batch used in training phase,
         it is the size of samples per gradient step.
     :param epochs: Number of epochs for model to train.
@@ -52,13 +53,17 @@ def train(*,
         stop the training phase.
 
     """
-    train_dict = io.extract_set(data_path, enums.Dataset.TRAIN)
-    val_dict = io.extract_set(data_path, enums.Dataset.VAL)
+    if type(data) is str:
+        train_dict = io.extract_set(data, enums.Dataset.TRAIN)
+        val_dict = io.extract_set(data, enums.Dataset.VAL)
+    else:
+        train_dict = data[enums.Dataset.TRAIN]
+        val_dict = data[enums.Dataset.VAL]
 
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
-                       transforms.MinMaxNormalize(min_=train_dict[enums.DataStats.MIN],
-                                                  max_=train_dict[enums.DataStats.MAX])]
+                       transforms.MinMaxNormalize(min_=data[enums.DataStats.MIN],
+                                                  max_=data[enums.DataStats.MAX])]
 
     train_dataset, n_train =\
         utils.create_tf_dataset(batch_size,

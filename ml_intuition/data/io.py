@@ -80,3 +80,35 @@ def load_tiff(file_path: str) -> np.ndarray:
     """
     tiff = TIFF.open(file_path)
     return tiff.read_image()
+
+
+def save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y):
+    """
+    Save provided data as .md5 file
+    :param output_path: Path to the filename
+    :param train_x: Train set
+    :param train_y: Train labels
+    :param val_x: Validation set
+    :param val_y: Validation labels
+    :param test_x: Test set
+    :param test_y: Test labels
+    :return:
+    """
+    data_file = h5py.File(output_path, 'w')
+
+    train_min, train_max = np.amin(train_x), np.amax(train_x)
+    data_file.attrs.create(enums.DataStats.MIN, train_min)
+    data_file.attrs.create(enums.DataStats.MAX, train_max)
+
+    train_group = data_file.create_group(enums.Dataset.TRAIN)
+    train_group.create_dataset(enums.Dataset.DATA, data=train_x)
+    train_group.create_dataset(enums.Dataset.LABELS, data=train_y)
+
+    val_group = data_file.create_group(enums.Dataset.VAL)
+    val_group.create_dataset(enums.Dataset.DATA, data=val_x)
+    val_group.create_dataset(enums.Dataset.LABELS, data=val_y)
+
+    test_group = data_file.create_group(enums.Dataset.TEST)
+    test_group.create_dataset(enums.Dataset.DATA, data=test_x)
+    test_group.create_dataset(enums.Dataset.LABELS, data=test_y)
+    data_file.close()
