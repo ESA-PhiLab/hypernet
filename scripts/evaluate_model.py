@@ -3,7 +3,7 @@ Perform the inference of the model on the testing dataset.
 """
 
 import os
-from typing import Union, Dict
+from typing import Dict, Union
 
 import clize
 import numpy as np
@@ -17,6 +17,7 @@ from ml_intuition.evaluation.performance_metrics import (
 from ml_intuition.evaluation.time_metrics import timeit
 
 BATCH_SIZE = 1
+INFERENCE_METRICS = 'inference_metrics.csv'
 
 
 def evaluate(*,
@@ -70,7 +71,7 @@ def evaluate(*,
                                     metrics=custom_metrics)
     model_metrics['inference_time'] = [inference_time]
     per_class_acc = {'Class_' + str(i):
-                         [item] for i, item in enumerate(
+                     [item] for i, item in enumerate(
         *model_metrics[mean_per_class_accuracy.__name__])}
     model_metrics.update(per_class_acc)
 
@@ -82,9 +83,8 @@ def evaluate(*,
     del model_metrics[mean_per_class_accuracy.__name__]
     del model_metrics[metrics.confusion_matrix.__name__]
 
-    io.save_metrics(dest_path=dest_path,
-                    file_name='inference_metrics.csv',
-                    metrics=model_metrics)
+    io.save_metrics(dest_path=os.path.dirname(model_path),
+                    file_name=INFERENCE_METRICS)
 
 
 if __name__ == '__main__':
