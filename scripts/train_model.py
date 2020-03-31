@@ -8,6 +8,7 @@ from typing import Union, Dict
 import clize
 import tensorflow as tf
 
+
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms, utils
 from ml_intuition.evaluation import time_metrics
@@ -86,17 +87,19 @@ def train(*,
                   metrics=['accuracy'])
 
     time_history = time_metrics.TimeHistory()
+    mcp_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(dest_path, model_name), save_best_only=True, monitor='val_loss', mode='min')
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                             patience=patience)
     history = model.fit(x=train_dataset.make_one_shot_iterator(),
                         epochs=epochs,
                         verbose=verbose,
                         shuffle=shuffle,
                         validation_data=val_dataset.make_one_shot_iterator(),
                         callbacks=[
-                            tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                             patience=patience), time_history],
+                            early_stopping, mcp_save, time_history],
                         steps_per_epoch=n_train // batch_size,
                         validation_steps=n_val // batch_size)
-    model.save(filepath=os.path.join(dest_path, model_name))
+    # model.save(filepath=os.path.join(dest_path, model_name))
 
     history.history[time_metrics.TimeHistory.__name__] = time_history.average
     io.save_metrics(dest_path=dest_path,

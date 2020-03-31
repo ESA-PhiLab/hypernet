@@ -5,12 +5,16 @@ Run experiments given set of hyperparameters.
 import os
 
 import clize
+from clize.parameters import multi
 import tensorflow as tf
-from scripts import evaluate_model, prepare_data, train_model
+
+import ml_intuition.enums as enums
+import ml_intuition.data.utils as utils
+from scripts import prepare_data, train_model
 
 
 def run_experiments(*,
-                    data_file_path: str,
+                    data_file_paths: ('d', multi(min=1)),
                     ground_truth_path: str,
                     train_size: float = 0.8,
                     val_size: float = 0.1,
@@ -34,7 +38,8 @@ def run_experiments(*,
                     patience: int = 3):
     """
     Function for running experiments given a set of hyperparameters.
-    :param data_file_path: Path to the data file. Supported types are: .npy
+    :param data_file_paths: Paths to the data files. Supported types are:
+    .npy and .h5
     :param ground_truth_path: Path to the ground-truth data file.
     :param train_size: If float, should be between 0.0 and 1.0,
                         if stratified = True, it represents percentage of each
@@ -86,17 +91,24 @@ def run_experiments(*,
             data_source = None
 
         os.makedirs(experiment_dest_path, exist_ok=True)
+        data_to_merge = []
+        for data_file_path in data_file_paths:
+            data = prepare_data.main(data_file_path=data_file_path,
+                                     ground_truth_path=ground_truth_path,
+                                     output_path=data_source,
+                                     train_size=train_size,
+                                     val_size=val_size,
+                                     stratified=stratified,
+                                     background_label=background_label,
+                                     channels_idx=channels_idx,
+                                     save_data=save_data,
+                                     seed=experiment_id)
+            del data[enums.Dataset.TEST]
+            data_to_merge.append(data)
 
-        data = prepare_data.main(data_file_path=data_file_path,
-                                 ground_truth_path=ground_truth_path,
-                                 output_path=data_source,
-                                 train_size=train_size,
-                                 val_size=val_size,
-                                 stratified=stratified,
-                                 background_label=background_label,
-                                 channels_idx=channels_idx,
-                                 save_data=save_data,
-                                 seed=experiment_id)
+        data = utils.merge_datasets(data_to_merge)
+        del data_to_merge
+
         if not save_data:
             data_source = data
 
@@ -114,13 +126,6 @@ def run_experiments(*,
                           verbose=verbose,
                           shuffle=shuffle,
                           patience=patience)
-
-        evaluate_model.evaluate(
-            model_path=os.path.join(experiment_dest_path, model_name),
-            data=data_source,
-            dest_path=experiment_dest_path,
-            verbose=verbose,
-            n_classes=n_classes)
 
         tf.keras.backend.clear_session()
 

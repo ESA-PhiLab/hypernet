@@ -22,6 +22,7 @@ BATCH_SIZE = 1
 def evaluate(*,
              model_path: str,
              data: Union[str, Dict],
+             dest_path: str,
              verbose: int = 1,
              n_classes: int):
     """
@@ -29,6 +30,7 @@ def evaluate(*,
 
     :param model_path: Path to the model.
     :param data: Either path to the input data or the data dict.
+    :param dest_path: Directory in which to store the calculated matrics
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
     :param n_classes: Number of classes.
     """
@@ -42,8 +44,9 @@ def evaluate(*,
                                 [transforms.SpectralTransform(),
                                  transforms.OneHotEncode(n_classes=n_classes),
                                  transforms.MinMaxNormalize(
-                                     min_=data[enums.DataStats.MIN],
-                                     max_=data[enums.DataStats.MAX])])
+                                 #     min_=data[enums.DataStats.MIN],
+                                 #     max_=data[enums.DataStats.MAX])])
+                                 min_=5.046588, max_=613.1012)])
 
     model = tf.keras.models.load_model(model_path, compile=True)
     model.predict = timeit(model.predict)
@@ -79,7 +82,7 @@ def evaluate(*,
     del model_metrics[mean_per_class_accuracy.__name__]
     del model_metrics[metrics.confusion_matrix.__name__]
 
-    io.save_metrics(dest_path=os.path.dirname(model_path),
+    io.save_metrics(dest_path=dest_path,
                     file_name='inference_metrics.csv',
                     metrics=model_metrics)
 
