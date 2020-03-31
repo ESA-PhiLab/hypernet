@@ -3,9 +3,10 @@ Perform the training and validation of the model.
 """
 
 import os
-from typing import Union, Dict
+from typing import Dict, Union
 
 import clize
+import numpy as np
 import tensorflow as tf
 
 from ml_intuition import enums, models
@@ -56,14 +57,17 @@ def train(*,
     if type(data) is str:
         train_dict = io.extract_set(data, enums.Dataset.TRAIN)
         val_dict = io.extract_set(data, enums.Dataset.VAL)
+        min_, max_ = train_dict[enums.DataStats.MIN], \
+            train_dict[enums.DataStats.MAX]
     else:
         train_dict = data[enums.Dataset.TRAIN]
         val_dict = data[enums.Dataset.VAL]
+        min_, max_ = data[enums.DataStats.MIN], \
+            data[enums.DataStats.MAX]
 
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
-                       transforms.MinMaxNormalize(min_=data[enums.DataStats.MIN],
-                                                  max_=data[enums.DataStats.MAX])]
+                       transforms.MinMaxNormalize(min_=min_, max_=max_)]
 
     train_dataset, n_train =\
         utils.create_tf_dataset(batch_size,
@@ -102,6 +106,9 @@ def train(*,
     io.save_metrics(dest_path=dest_path,
                     file_name='training_metrics.csv',
                     metrics=history.history)
+
+    np.savetxt(os.path.join(dest_path, 'min-max.csv'),
+               np.array([min_, max_]), delimiter=',', fmt='%f')
 
 
 if __name__ == '__main__':
