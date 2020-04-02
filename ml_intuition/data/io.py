@@ -112,3 +112,13 @@ def save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y):
     test_group.create_dataset(enums.Dataset.DATA, data=test_x)
     test_group.create_dataset(enums.Dataset.LABELS, data=test_y)
     data_file.close()
+
+
+def read_min_max(path: str) -> Tuple[float, float]:
+    """
+    Read min and max value from a .csv file
+    :param path:
+    :return: Tuple with min and max
+    """
+    min_, max_ = np.loadtxt(path)
+    return min_, max_

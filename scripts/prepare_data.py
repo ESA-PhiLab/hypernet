@@ -79,7 +79,6 @@ def main(*,
     data = data[labels != background_label]
     labels = labels[labels != background_label]
     labels = preprocessing.normalize_labels(labels)
-    a, b = np.unique(labels, return_counts=True)
     train_x, train_y, val_x, val_y, test_x, test_y = utils.train_val_test_split(
         data, labels, train_size, val_size, stratified, seed=seed)
 

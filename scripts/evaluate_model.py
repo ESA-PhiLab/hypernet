@@ -39,15 +39,20 @@ def evaluate(*,
         test_dict = io.extract_set(data, enums.Dataset.TEST)
     else:
         test_dict = data[enums.Dataset.TEST]
+    min_max_path = os.path.join(os.path.dirname(model_path), "min-max.csv")
+    if os.path.exists(min_max_path):
+        min_value, max_value = io.read_min_max(min_max_path)
+    else:
+        min_value, max_value = data[enums.DataStats.MIN], \
+                               data[enums.DataStats.MAX]
     test_dataset, n_test = \
         utils.create_tf_dataset(BATCH_SIZE,
                                 test_dict,
                                 [transforms.SpectralTransform(),
                                  transforms.OneHotEncode(n_classes=n_classes),
                                  transforms.MinMaxNormalize(
-                                 #     min_=data[enums.DataStats.MIN],
-                                 #     max_=data[enums.DataStats.MAX])])
-                                 min_=5.046588, max_=613.1012)])
+                                     min_=min_value,
+                                     max_=max_value)])
 
     model = tf.keras.models.load_model(model_path, compile=True)
     model.predict = timeit(model.predict)
@@ -83,8 +88,9 @@ def evaluate(*,
     del model_metrics[mean_per_class_accuracy.__name__]
     del model_metrics[metrics.confusion_matrix.__name__]
 
-    io.save_metrics(dest_path=os.path.dirname(model_path),
-                    file_name=INFERENCE_METRICS)
+    io.save_metrics(dest_path=os.path.dirname(dest_path),
+                    file_name=INFERENCE_METRICS,
+                    metrics=model_metrics)
 
 
 if __name__ == '__main__':

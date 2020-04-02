@@ -9,7 +9,6 @@ import clize
 import numpy as np
 import tensorflow as tf
 
-
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms, utils
 from ml_intuition.evaluation import time_metrics
@@ -59,22 +58,22 @@ def train(*,
         train_dict = io.extract_set(data, enums.Dataset.TRAIN)
         val_dict = io.extract_set(data, enums.Dataset.VAL)
         min_, max_ = train_dict[enums.DataStats.MIN], \
-            train_dict[enums.DataStats.MAX]
+                     train_dict[enums.DataStats.MAX]
     else:
         train_dict = data[enums.Dataset.TRAIN]
         val_dict = data[enums.Dataset.VAL]
         min_, max_ = data[enums.DataStats.MIN], \
-            data[enums.DataStats.MAX]
+                     data[enums.DataStats.MAX]
 
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_, max_=max_)]
 
-    train_dataset, n_train =\
+    train_dataset, n_train = \
         utils.create_tf_dataset(batch_size,
                                 train_dict,
                                 transformations)
-    val_dataset, n_val =\
+    val_dataset, n_val = \
         utils.create_tf_dataset(batch_size,
                                 val_dict,
                                 transformations)
@@ -91,9 +90,11 @@ def train(*,
                   metrics=['accuracy'])
 
     time_history = time_metrics.TimeHistory()
-    mcp_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(dest_path, model_name), save_best_only=True, monitor='val_loss', mode='min')
+    mcp_save = tf.keras.callbacks.ModelCheckpoint(
+        os.path.join(dest_path, model_name), save_best_only=True,
+        monitor='val_loss', mode='min')
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                             patience=patience)
+                                                      patience=patience)
     history = model.fit(x=train_dataset.make_one_shot_iterator(),
                         epochs=epochs,
                         verbose=verbose,
@@ -103,7 +104,6 @@ def train(*,
                             early_stopping, mcp_save, time_history],
                         steps_per_epoch=n_train // batch_size,
                         validation_steps=n_val // batch_size)
-    # model.save(filepath=os.path.join(dest_path, model_name))
 
     history.history[time_metrics.TimeHistory.__name__] = time_history.average
     io.save_metrics(dest_path=dest_path,
