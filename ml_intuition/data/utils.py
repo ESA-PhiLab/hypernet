@@ -30,10 +30,8 @@ def create_tf_dataset(batch_size: int,
         (dataset[enums.Dataset.DATA], dataset[enums.Dataset.LABELS]))
     for f_transform in transforms:
         dataset = dataset.map(f_transform)
-    # return dataset.batch(batch_size=batch_size, drop_remainder=False)\
-    #     .repeat().prefetch(tf.contrib.data.AUTOTUNE), n_samples
     return dataset.batch(batch_size=batch_size, drop_remainder=False) \
-               .repeat(), n_samples
+        .repeat(), n_samples
 
 
 def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
