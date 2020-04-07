@@ -3,14 +3,34 @@ All I/O related functions
 """
 
 import csv
+import glob
 import os
 from typing import Dict, List, Tuple, Union
 
 import h5py
 import numpy as np
 from libtiff import TIFF
+from scripts.evaluate_model import INFERENCE_METRICS
+from scripts.experiments_runner import EXPERIMENT
 
 import ml_intuition.enums as enums
+
+
+def load_metrics(experiments_path: str) -> Dict[List, List]:
+    """
+    Load metrics to a dictionary.
+
+    :param experiments_path: Path to the experiments directory.
+    :return: Dictionary containing all metric names and values from all experiments.
+    """
+    all_metrics = {'metric_keys': [], 'metric_values': []}
+    for experiment_dir in glob.glob(
+            os.path.join(experiments_path, '{}*'.format(EXPERIMENT))):
+        with open(os.path.join(experiment_dir, INFERENCE_METRICS)) as metric_file:
+            reader = csv.reader(metric_file, delimiter=',')
+            for row, key in zip(reader, all_metrics.keys()):
+                all_metrics[key].append(row)
+    return all_metrics
 
 
 def save_metrics(dest_path: str, file_name: str, metrics: Dict[str, List]):
@@ -34,6 +54,7 @@ def extract_set(data_path: str, dataset_key: str) -> Dict[str, Union[np.ndarray,
 
     :param data_path: Path to the dataset.
     :param dataset_key: Key for dataset.
+    :return: Dictionary containing labels, data, min and max values.
     """
     raw_data = h5py.File(data_path, 'r')
     dataset = {
