@@ -9,6 +9,7 @@ from typing import Dict, List, Tuple, Union
 
 import h5py
 import numpy as np
+import tensorflow as tf
 from libtiff import TIFF
 from scripts.evaluate_model import INFERENCE_METRICS
 from scripts.experiments_runner import EXPERIMENT
@@ -58,10 +59,8 @@ def extract_set(data_path: str, dataset_key: str) -> Dict[str, Union[np.ndarray,
     """
     raw_data = h5py.File(data_path, 'r')
     dataset = {
-        enums.Dataset.DATA: np.asarray(
-            raw_data[dataset_key][enums.Dataset.DATA]),
-        enums.Dataset.LABELS: np.asarray(
-            raw_data[dataset_key][enums.Dataset.LABELS]),
+        enums.Dataset.DATA: raw_data[dataset_key][enums.Dataset.DATA][:],
+        enums.Dataset.LABELS: raw_data[dataset_key][enums.Dataset.LABELS][:],
         enums.DataStats.MIN: raw_data.attrs[enums.DataStats.MIN],
         enums.DataStats.MAX: raw_data.attrs[enums.DataStats.MAX]
     }
@@ -143,3 +142,17 @@ def read_min_max(path: str) -> Tuple[float, float]:
     """
     min_, max_ = np.loadtxt(path)
     return min_, max_
+
+
+def load_pb(path_to_pb: str) -> tf.GraphDef:
+    """
+    Load .pb file as a graph
+    :param path_to_pb: Path to the .pb file
+    :return: Loaded graph
+    """
+    with tf.gfile.GFile(path_to_pb, "rb") as f:
+        graph_def = tf.GraphDef()
+        graph_def.ParseFromString(f.read())
+    with tf.Graph().as_default() as graph:
+        tf.import_graph_def(graph_def, name='')
+        return graph

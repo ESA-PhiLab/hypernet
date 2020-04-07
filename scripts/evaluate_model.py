@@ -85,8 +85,8 @@ def evaluate(*,
                *model_metrics[metrics.confusion_matrix.__name__], delimiter=',',
                fmt='%d')
 
-    del model_metrics[mean_per_class_accuracy.__name__]
     del model_metrics[metrics.confusion_matrix.__name__]
+    model_metrics = utils.restructure_per_class_accuracy(model_metrics)
 
     io.save_metrics(dest_path=dest_path,
                     file_name=INFERENCE_METRICS,

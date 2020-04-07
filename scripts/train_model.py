@@ -1,5 +1,5 @@
 """
-Perform the training and validation of the model.
+Perform the training of the model.
 """
 
 import os
@@ -16,13 +16,13 @@ from ml_intuition.evaluation import time_metrics
 
 def train(*,
           model_name: str,
-          kernel_size: int = 3,
-          n_kernels: int = 16,
-          n_layers: int = 1,
           dest_path: str,
           sample_size: int,
           n_classes: int,
           data: Union[str, Dict],
+          kernel_size: int = 3,
+          n_kernels: int = 16,
+          n_layers: int = 1,
           lr: float = 0.005,
           batch_size: int = 150,
           epochs: int = 10,

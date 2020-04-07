@@ -19,3 +19,8 @@ class SatelliteH5Keys(aenum.Constant):
 class DataStats(aenum.Constant):
     MIN = 'min'
     MAX = 'max'
+
+
+class NodeNames(aenum.Constant):
+    INPUT = 'input_node'
+    OUTPUT = 'output_node'
