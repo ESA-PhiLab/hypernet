@@ -21,6 +21,7 @@ def model_2d(kernel_size: int,
     :param input_size: Number of input channels, i.e., the number of spectral bands.
     :param n_classes: Number of classes.
     """
+
     def add_layer(model):
         model.add(tf.keras.layers.Conv2D(n_kernels, (kernel_size, 1),
                                          input_shape=(input_size, 1, 1),
@@ -55,7 +56,7 @@ def get_model(model_key: str, kernel_size: int, n_kernels: int,
     """
     Get a given instance of model specified by mode_key.
 
-    :param model_key: Specifes which model to use.
+    :param model_key: Specifies which model to use.
     :param kernel_size: Size of the convolutional kernel.
     :param n_kernels: Number of kernels, i.e., the activation maps in each layer.
     :param n_layers: Number of layers in the network.

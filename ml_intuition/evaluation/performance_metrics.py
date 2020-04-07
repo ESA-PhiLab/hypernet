@@ -8,7 +8,8 @@ import numpy as np
 from sklearn.metrics import confusion_matrix
 
 
-def mean_per_class_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
+def mean_per_class_accuracy(y_true: np.ndarray,
+                            y_pred: np.ndarray) -> np.ndarray:
     """
     Calculate mean per class accuracy based on the confusion matrix.
 
@@ -19,7 +20,8 @@ def mean_per_class_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarra
     return conf_matrix.diagonal() / conf_matrix.sum(axis=1)
 
 
-def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, metrics: list) -> Dict[str, List[np.ndarray]]:
+def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, metrics: list) -> \
+        Dict[str, List[float]]:
     """
     Compute all metrics on predicted labels and labels.
 
@@ -28,4 +30,5 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, metrics: list) -> Di
     :param metrics: List of metrics functions.
     """
     return {metric_function.__name__:
-            [metric_function(y_true, y_pred)] for metric_function in metrics}
+                [metric_function(y_true, y_pred)] for metric_function in
+            metrics}

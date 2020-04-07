@@ -8,6 +8,7 @@ import clize
 
 warnings.simplefilter(action='ignore', category=FutureWarning)
 from ml_intuition.data.utils import freeze_session
+import ml_intuition.enums as enums
 import tensorflow as tf
 from tensorflow import keras
 
@@ -24,8 +25,8 @@ def main(*, model_path: str, output_dir: str):
     input_names = [inp.op.name for inp in loaded_model.inputs]
     output_names = [out.op.name for out in loaded_model.outputs]
 
-    nodes = {'input_node': input_names[0],
-             'output_node': output_names[0]}
+    nodes = {enums.NodeNames.INPUT: input_names[0],
+             enums.NodeNames.OUTPUT: output_names[0]}
 
     nodes = json.dumps(nodes, indent=4, sort_keys=True)
 
