@@ -1,5 +1,5 @@
 """
-Perform the training and validation of the model.
+Perform the training of the model.
 """
 
 import os
@@ -14,13 +14,13 @@ from ml_intuition.evaluation import time_metrics
 
 def train(*,
           model_name: str,
-          kernel_size: int = 3,
-          n_kernels: int = 16,
-          n_layers: int = 1,
           dest_path: str,
           data_path: str,
           sample_size: int,
           n_classes: int,
+          kernel_size: int = 3,
+          n_kernels: int = 16,
+          n_layers: int = 1,
           lr: float = 0.005,
           batch_size: int = 150,
           epochs: int = 10,
@@ -57,14 +57,15 @@ def train(*,
 
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
-                       transforms.MinMaxNormalize(min_=train_dict[enums.DataStats.MIN],
-                                                  max_=train_dict[enums.DataStats.MAX])]
+                       transforms.MinMaxNormalize(
+                           min_=train_dict[enums.DataStats.MIN],
+                           max_=train_dict[enums.DataStats.MAX])]
 
-    train_dataset, n_train =\
+    train_dataset, n_train = \
         utils.create_tf_dataset(batch_size,
                                 train_dict,
                                 transformations)
-    val_dataset, n_val =\
+    val_dataset, n_val = \
         utils.create_tf_dataset(batch_size,
                                 val_dict,
                                 transformations)
@@ -81,14 +82,15 @@ def train(*,
                   metrics=['accuracy'])
 
     time_history = time_metrics.TimeHistory()
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
+                                                      patience=patience)
+
     history = model.fit(x=train_dataset.make_one_shot_iterator(),
                         epochs=epochs,
                         verbose=verbose,
                         shuffle=shuffle,
                         validation_data=val_dataset.make_one_shot_iterator(),
-                        callbacks=[
-                            tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                             patience=patience), time_history],
+                        callbacks=[early_stopping, time_history],
                         steps_per_epoch=n_train // batch_size,
                         validation_steps=n_val // batch_size)
     model.save(filepath=os.path.join(dest_path, model_name))

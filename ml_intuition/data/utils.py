@@ -11,11 +11,13 @@ from ml_intuition import enums
 from ml_intuition.data.transforms import BaseTransform
 
 SAMPLES_DIM = 0
+MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
 
 
 def create_tf_dataset(batch_size: int,
                       dataset: Dict[str, np.ndarray],
-                      transforms: List[Type[BaseTransform]]) -> Tuple[tf.data.Dataset, int]:
+                      transforms: List[BaseTransform]) -> Tuple[
+    tf.data.Dataset, int]:
     """
     Create and transform datasets that are used in the training, validaton or testing phases.
 
@@ -30,8 +32,8 @@ def create_tf_dataset(batch_size: int,
         (dataset[enums.Dataset.DATA], dataset[enums.Dataset.LABELS]))
     for f_transform in transforms:
         dataset = dataset.map(f_transform)
-    return dataset.batch(batch_size=batch_size, drop_remainder=False)\
-        .repeat().prefetch(tf.contrib.data.AUTOTUNE), n_samples
+    return dataset.batch(batch_size=batch_size, drop_remainder=False) \
+               .repeat().prefetch(tf.contrib.data.AUTOTUNE), n_samples
 
 
 def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
@@ -80,7 +82,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                      stratified, defaults to True
     :param seed: Seed used for data shuffling
     :return: train_x, train_y, val_x, val_y, test_x, test_y
-    :raises TypeError: When wrong type is passed as train_size
+    :raises AssertionError: When wrong type is passed as train_size
     """
     shuffle_arrays_together([data, labels], seed=seed)
     train_indices = _get_set_indices(labels, train_size, stratified)
@@ -88,7 +90,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
     train_indices = np.setdiff1d(train_indices, val_indices)
     return data[train_indices], labels[train_indices], data[val_indices], \
-        labels[val_indices], data[test_indices], labels[test_indices]
+           labels[val_indices], data[test_indices], labels[test_indices]
 
 
 def _get_set_indices(labels: np.ndarray, size: float = 0.8,
@@ -164,3 +166,21 @@ def freeze_session(session: tf.Session,
         frozen_graph = tf.graph_util.convert_variables_to_constants(
             session, input_graph_def, output_names, freeze_var_names)
     return frozen_graph
+
+
+def restructure_per_class_accuracy(metrics: Dict[str, List[float]]) -> Dict[
+        str, List[float]]:
+    """
+    Restructure mean accuracy values of each class under
+    'mean_per_class_accuracy' key, to where each class' accuracy value lays
+    under it's specific key
+    :param metrics: Dictionary with metric names and corresponding values
+    :return: Dictionary with modified per class accuracy
+    """
+    if MEAN_PER_CLASS_ACC in metrics.keys():
+        per_class_acc = {'Class_' + str(i):
+                             [item] for i, item in
+                         enumerate(*metrics[MEAN_PER_CLASS_ACC])}
+        metrics.update(per_class_acc)
+        del metrics[MEAN_PER_CLASS_ACC]
+    return metrics
