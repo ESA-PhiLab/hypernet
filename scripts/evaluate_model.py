@@ -17,7 +17,6 @@ from ml_intuition.evaluation.performance_metrics import (
 from ml_intuition.evaluation.time_metrics import timeit
 
 BATCH_SIZE = 1
-INFERENCE_METRICS = 'inference_metrics.csv'
 
 
 def evaluate(*,
@@ -44,7 +43,7 @@ def evaluate(*,
         min_value, max_value = io.read_min_max(min_max_path)
     else:
         min_value, max_value = data[enums.DataStats.MIN], \
-                               data[enums.DataStats.MAX]
+            data[enums.DataStats.MAX]
     test_dataset, n_test = \
         utils.create_tf_dataset(BATCH_SIZE,
                                 test_dict,
@@ -89,7 +88,7 @@ def evaluate(*,
     model_metrics = utils.restructure_per_class_accuracy(model_metrics)
 
     io.save_metrics(dest_path=dest_path,
-                    file_name=INFERENCE_METRICS,
+                    file_name=enums.Experiment.INFERENCE_METRICS,
                     metrics=model_metrics)
 
 

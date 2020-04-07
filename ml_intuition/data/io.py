@@ -11,8 +11,6 @@ import h5py
 import numpy as np
 import tensorflow as tf
 from libtiff import TIFF
-from scripts.evaluate_model import INFERENCE_METRICS
-from scripts.experiments_runner import EXPERIMENT
 
 import ml_intuition.enums as enums
 
@@ -26,8 +24,9 @@ def load_metrics(experiments_path: str) -> Dict[List, List]:
     """
     all_metrics = {'metric_keys': [], 'metric_values': []}
     for experiment_dir in glob.glob(
-            os.path.join(experiments_path, '{}*'.format(EXPERIMENT))):
-        with open(os.path.join(experiment_dir, INFERENCE_METRICS)) as metric_file:
+            os.path.join(experiments_path, '{}*'.format(enums.Experiment.EXPERIMENT))):
+        with open(os.path.join(experiment_dir,
+                               enums.Experiment.INFERENCE_METRICS)) as metric_file:
             reader = csv.reader(metric_file, delimiter=',')
             for row, key in zip(reader, all_metrics.keys()):
                 all_metrics[key].append(row)
