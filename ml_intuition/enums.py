@@ -1,6 +1,11 @@
 import aenum
 
 
+class Experiment(aenum.Constant):
+    INFERENCE_METRICS = 'inference_metrics.csv'
+    EXPERIMENT = 'experiment'
+
+
 class Dataset(aenum.Constant):
     TRAIN = 'train'
     VAL = 'val'

@@ -87,6 +87,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     shuffle_arrays_together([data, labels], seed=seed)
     train_indices = _get_set_indices(labels, train_size, stratified)
     val_indices = _get_set_indices(labels[train_indices], val_size)
+    val_indices = train_indices[val_indices]
     test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
     train_indices = np.setdiff1d(train_indices, val_indices)
     return data[train_indices], labels[train_indices], data[val_indices], \
@@ -127,7 +128,7 @@ def _get_set_indices(labels: np.ndarray, size: float = 0.8,
         train_indices = np.arange(int(len(labels) * size))
     elif size >= 1 and stratified is True:
         for label in range(len(unique_labels)):
-            label_indices[label] = label_indices[label][:size]
+            label_indices[label] = label_indices[label][:int(size)]
         train_indices = np.concatenate(label_indices, axis=0)
     elif size >= 1 and stratified is False:
         train_indices = np.arange(size)
@@ -166,6 +167,74 @@ def freeze_session(session: tf.Session,
         frozen_graph = tf.graph_util.convert_variables_to_constants(
             session, input_graph_def, output_names, freeze_var_names)
     return frozen_graph
+
+
+def build_data_dict(train_x, train_y, val_x, val_y, test_x, test_y) -> Dict:
+    """
+    Build data dictionary with following structure:
+    'train':
+        'data': np.ndarray
+        'labels': np.ndarray
+    'val':
+        'data': np.ndarray
+        'labels': np.ndarray
+    'test':
+        'data': np.ndarray
+        'labels' np.ndarray
+    'min': float
+    'max': float
+
+    :param train_x: Train set
+    :param train_y: Train labels
+    :param val_x: Validation set
+    :param val_y: Validation labels
+    :param test_x: Test set
+    :param test_y: Test labels
+    :return:
+    """
+    data_dict = {}
+    train_min, train_max = np.amin(train_x), np.amax(train_x)
+    data_dict[enums.DataStats.MIN] = train_min
+    data_dict[enums.DataStats.MAX] = train_max
+
+    data_dict[enums.Dataset.TRAIN] = {}
+    data_dict[enums.Dataset.TRAIN][enums.Dataset.DATA] = train_x
+    data_dict[enums.Dataset.TRAIN][enums.Dataset.LABELS] = train_y
+
+    data_dict[enums.Dataset.VAL] = {}
+    data_dict[enums.Dataset.VAL][enums.Dataset.DATA] = val_x
+    data_dict[enums.Dataset.VAL][enums.Dataset.LABELS] = val_y
+
+    data_dict[enums.Dataset.TEST] = {}
+    data_dict[enums.Dataset.TEST][enums.Dataset.DATA] = test_x
+    data_dict[enums.Dataset.TEST][enums.Dataset.LABELS] = test_y
+    return data_dict
+
+
+def merge_datasets(dataset: List[Dict]):
+    """
+    Merge datasets stored in a list by keys
+    :param dataset: List of dict datasets
+    :return: One dict with merged keys
+    """
+    merged_dataset = {enums.Dataset.TRAIN: {}, enums.Dataset.VAL: {}}
+    merged_dataset[enums.Dataset.TRAIN][enums.Dataset.DATA] = np.concatenate(
+        [dataset[enums.Dataset.TRAIN][enums.Dataset.DATA] for dataset in
+         dataset], axis=0)
+    merged_dataset[enums.Dataset.TRAIN][enums.Dataset.LABELS] = np.concatenate(
+        [dataset[enums.Dataset.TRAIN][enums.Dataset.LABELS] for dataset in
+         dataset], axis=0)
+    merged_dataset[enums.Dataset.VAL][enums.Dataset.DATA] = np.concatenate(
+        [dataset[enums.Dataset.VAL][enums.Dataset.DATA] for dataset in
+         dataset], axis=0)
+    merged_dataset[enums.Dataset.VAL][enums.Dataset.LABELS] = np.concatenate(
+        [dataset[enums.Dataset.VAL][enums.Dataset.LABELS] for dataset in
+         dataset], axis=0)
+    merged_dataset[enums.DataStats.MIN] = np.amin(
+        merged_dataset[enums.Dataset.TRAIN][enums.Dataset.DATA])
+    merged_dataset[enums.DataStats.MAX] = np.amax(
+        merged_dataset[enums.Dataset.TRAIN][enums.Dataset.DATA])
+    return merged_dataset
 
 
 def restructure_per_class_accuracy(metrics: Dict[str, List[float]]) -> Dict[

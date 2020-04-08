@@ -3,15 +3,34 @@ All I/O related functions
 """
 
 import csv
+import glob
 import os
 from typing import Dict, List, Tuple, Union
 
 import h5py
 import numpy as np
-from libtiff import TIFF
 import tensorflow as tf
+from libtiff import TIFF
 
 import ml_intuition.enums as enums
+
+
+def load_metrics(experiments_path: str) -> Dict[List, List]:
+    """
+    Load metrics to a dictionary.
+
+    :param experiments_path: Path to the experiments directory.
+    :return: Dictionary containing all metric names and values from all experiments.
+    """
+    all_metrics = {'metric_keys': [], 'metric_values': []}
+    for experiment_dir in glob.glob(
+            os.path.join(experiments_path, '{}*'.format(enums.Experiment.EXPERIMENT))):
+        with open(os.path.join(experiment_dir,
+                               enums.Experiment.INFERENCE_METRICS)) as metric_file:
+            reader = csv.reader(metric_file, delimiter=',')
+            for row, key in zip(reader, all_metrics.keys()):
+                all_metrics[key].append(row)
+    return all_metrics
 
 
 def save_metrics(dest_path: str, file_name: str, metrics: Dict[str, List]):
@@ -35,6 +54,7 @@ def extract_set(data_path: str, dataset_key: str) -> Dict[str, Union[np.ndarray,
 
     :param data_path: Path to the dataset.
     :param dataset_key: Key for dataset.
+    :return: Dictionary containing labels, data, min and max values.
     """
     raw_data = h5py.File(data_path, 'r')
     dataset = {
@@ -79,6 +99,48 @@ def load_tiff(file_path: str) -> np.ndarray:
     """
     tiff = TIFF.open(file_path)
     return tiff.read_image()
+
+
+def save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y):
+    """
+    Save provided data as .md5 file
+    :param output_path: Path to the filename
+    :param train_x: Train set
+    :param train_y: Train labels
+    :param val_x: Validation set
+    :param val_y: Validation labels
+    :param test_x: Test set
+    :param test_y: Test labels
+    :return:
+    """
+    data_file = h5py.File(output_path, 'w')
+
+    train_min, train_max = np.amin(train_x), np.amax(train_x)
+    data_file.attrs.create(enums.DataStats.MIN, train_min)
+    data_file.attrs.create(enums.DataStats.MAX, train_max)
+
+    train_group = data_file.create_group(enums.Dataset.TRAIN)
+    train_group.create_dataset(enums.Dataset.DATA, data=train_x)
+    train_group.create_dataset(enums.Dataset.LABELS, data=train_y)
+
+    val_group = data_file.create_group(enums.Dataset.VAL)
+    val_group.create_dataset(enums.Dataset.DATA, data=val_x)
+    val_group.create_dataset(enums.Dataset.LABELS, data=val_y)
+
+    test_group = data_file.create_group(enums.Dataset.TEST)
+    test_group.create_dataset(enums.Dataset.DATA, data=test_x)
+    test_group.create_dataset(enums.Dataset.LABELS, data=test_y)
+    data_file.close()
+
+
+def read_min_max(path: str) -> Tuple[float, float]:
+    """
+    Read min and max value from a .csv file
+    :param path:
+    :return: Tuple with min and max
+    """
+    min_, max_ = np.loadtxt(path)
+    return min_, max_
 
 
 def load_pb(path_to_pb: str) -> tf.GraphDef:

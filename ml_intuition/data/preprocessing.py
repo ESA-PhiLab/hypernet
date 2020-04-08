@@ -10,14 +10,15 @@ def normalize_labels(labels: np.ndarray) -> np.ndarray:
     :param labels: labels to normalize
     :return: Normalized labels
     """
-    min_label = np.amin(labels)
-    return labels - min_label
+    for label_index, label in enumerate(np.unique(labels)):
+        labels[labels == label] = label_index
+    return labels
 
 
 def reshape_cube_to_2d_samples(data: np.ndarray,
                                labels: np.ndarray,
                                channels_idx: int = 0) -> Tuple[
-    np.ndarray, np.ndarray]:
+        np.ndarray, np.ndarray]:
     """
     Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL,
     CHANNELS, 1], so it fits the 2D Conv models
@@ -52,7 +53,7 @@ def align_ground_truth(cube_2d_shape: Tuple[int, int], ground_truth: np.ndarray,
 
 
 def remove_nan_samples(data: np.ndarray, labels: np.ndarray) -> Tuple[
-    np.ndarray, np.ndarray]:
+        np.ndarray, np.ndarray]:
     """
     Remove samples which contain only nan values
     :param data: Data with dimensions [SAMPLES, ...]

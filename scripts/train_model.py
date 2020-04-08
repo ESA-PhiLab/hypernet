@@ -3,8 +3,10 @@ Perform the training of the model.
 """
 
 import os
+from typing import Dict, Union
 
 import clize
+import numpy as np
 import tensorflow as tf
 
 from ml_intuition import enums, models
@@ -15,9 +17,9 @@ from ml_intuition.evaluation import time_metrics
 def train(*,
           model_name: str,
           dest_path: str,
-          data_path: str,
           sample_size: int,
           n_classes: int,
+          data: Union[str, Dict],
           kernel_size: int = 3,
           n_kernels: int = 16,
           n_layers: int = 1,
@@ -36,12 +38,12 @@ def train(*,
     :param n_kernels: Number of kernels in each layer.
     :param n_layers: Number of layers in the model.
     :param dest_path: Path to where to save the model under the name "model_name".
-    :param data_path: Path to the input data. First dimension of the
-        dataset should be the number of samples.
     :param sample_size: Size of the input sample.
     :param n_classes: Number of classes.
     :param lr: Learning rate for the model, i.e., regulates the size of the step
         in the gradient descent process.
+    :param data: Either path to the input data or the data dict itself.
+        First dimension of the dataset should be the number of samples.
     :param batch_size: Size of the batch used in training phase,
         it is the size of samples per gradient step.
     :param epochs: Number of epochs for model to train.
@@ -52,14 +54,20 @@ def train(*,
         stop the training phase.
 
     """
-    train_dict = io.extract_set(data_path, enums.Dataset.TRAIN)
-    val_dict = io.extract_set(data_path, enums.Dataset.VAL)
+    if type(data) is str:
+        train_dict = io.extract_set(data, enums.Dataset.TRAIN)
+        val_dict = io.extract_set(data, enums.Dataset.VAL)
+        min_, max_ = train_dict[enums.DataStats.MIN], \
+                     train_dict[enums.DataStats.MAX]
+    else:
+        train_dict = data[enums.Dataset.TRAIN]
+        val_dict = data[enums.Dataset.VAL]
+        min_, max_ = data[enums.DataStats.MIN], \
+                     data[enums.DataStats.MAX]
 
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
-                       transforms.MinMaxNormalize(
-                           min_=train_dict[enums.DataStats.MIN],
-                           max_=train_dict[enums.DataStats.MAX])]
+                       transforms.MinMaxNormalize(min_=min_, max_=max_)]
 
     train_dataset, n_train = \
         utils.create_tf_dataset(batch_size,
@@ -82,23 +90,28 @@ def train(*,
                   metrics=['accuracy'])
 
     time_history = time_metrics.TimeHistory()
+    mcp_save = tf.keras.callbacks.ModelCheckpoint(
+        os.path.join(dest_path, model_name), save_best_only=True,
+        monitor='val_loss', mode='min')
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=patience)
-
     history = model.fit(x=train_dataset.make_one_shot_iterator(),
                         epochs=epochs,
                         verbose=verbose,
                         shuffle=shuffle,
                         validation_data=val_dataset.make_one_shot_iterator(),
-                        callbacks=[early_stopping, time_history],
+                        callbacks=[
+                            early_stopping, mcp_save, time_history],
                         steps_per_epoch=n_train // batch_size,
                         validation_steps=n_val // batch_size)
-    model.save(filepath=os.path.join(dest_path, model_name))
 
     history.history[time_metrics.TimeHistory.__name__] = time_history.average
     io.save_metrics(dest_path=dest_path,
                     file_name='training_metrics.csv',
                     metrics=history.history)
+
+    np.savetxt(os.path.join(dest_path, 'min-max.csv'),
+               np.array([min_, max_]), delimiter=',', fmt='%f')
 
 
 if __name__ == '__main__':
