@@ -15,6 +15,7 @@ def collect_artifacts_report(*, experiments_path: str, dest_path: str):
 
     :param experiments_path: Path to the directory containing the
         experiment subdirectories.
+    :param dest_path: Path to the destination directory.
     """
     all_metrics = io.load_metrics(experiments_path)
     metric_keys = set(tuple(metric_keys)
