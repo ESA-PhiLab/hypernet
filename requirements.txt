@@ -3,7 +3,6 @@ tensorflow==1.12.0
 opencv_python==4.1.2.30
 h5py==2.10.0
 clize==4.1.1
-libtiff==0.4.2
 aenum==2.2.3
 pytest==5.3.5
 scikit_learn==0.22.1

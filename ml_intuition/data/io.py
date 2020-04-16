@@ -10,7 +10,7 @@ from typing import Dict, List, Tuple, Union
 import h5py
 import numpy as np
 import tensorflow as tf
-from libtiff import TIFF
+import tifffile
 
 import ml_intuition.enums as enums
 
@@ -97,8 +97,7 @@ def load_tiff(file_path: str) -> np.ndarray:
     :param file_path: Path to the .tiff file
     :return: Loaded image as np.ndarray
     """
-    tiff = TIFF.open(file_path)
-    return tiff.read_image()
+    return tifffile.imread(file_path)
 
 
 def save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y):
