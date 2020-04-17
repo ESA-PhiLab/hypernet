@@ -4,9 +4,12 @@ Run experiments given set of hyperparameters.
 
 import os
 
+import faulthandler
+faulthandler.enable()
+
 import clize
 import tensorflow as tf
-from scripts import evaluate_model, prepare_data, train_model
+from scripts import evaluate_model, prepare_data
 
 
 def run_experiments(*,
