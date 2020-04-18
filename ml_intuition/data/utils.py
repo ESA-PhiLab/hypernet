@@ -17,7 +17,7 @@ MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
 def create_tf_dataset(batch_size: int,
                       dataset: Dict[str, np.ndarray],
                       transforms: List[BaseTransform]) -> Tuple[
-    tf.data.Dataset, int]:
+        tf.data.Dataset, int]:
     """
     Create and transform datasets that are used in the training, validaton or testing phases.
 
@@ -28,12 +28,15 @@ def create_tf_dataset(batch_size: int,
     :return: Transformed dataset with its size.
     """
     n_samples = dataset[enums.Dataset.DATA].shape[SAMPLES_DIM]
-    dataset = tf.data.Dataset.from_tensor_slices(
-        (dataset[enums.Dataset.DATA], dataset[enums.Dataset.LABELS]))
     for f_transform in transforms:
-        dataset = dataset.map(f_transform)
+        dataset[enums.Dataset.DATA], dataset[enums.Dataset.LABELS] = \
+            f_transform(dataset[enums.Dataset.DATA],
+                        dataset[enums.Dataset.LABELS])
+    dataset = tf.data.Dataset.from_tensor_slices(
+        (tf.convert_to_tensor(dataset[enums.Dataset.DATA], dtype=tf.float32),
+         tf.convert_to_tensor(dataset[enums.Dataset.LABELS], dtype=tf.uint8)))
     return dataset.batch(batch_size=batch_size, drop_remainder=False) \
-               .repeat().prefetch(tf.contrib.data.AUTOTUNE), n_samples
+        .repeat().prefetch(tf.contrib.data.AUTOTUNE), n_samples
 
 
 def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
@@ -91,7 +94,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
     train_indices = np.setdiff1d(train_indices, val_indices)
     return data[train_indices], labels[train_indices], data[val_indices], \
-           labels[val_indices], data[test_indices], labels[test_indices]
+        labels[val_indices], data[test_indices], labels[test_indices]
 
 
 def _get_set_indices(labels: np.ndarray, size: float = 0.8,
@@ -248,7 +251,7 @@ def restructure_per_class_accuracy(metrics: Dict[str, List[float]]) -> Dict[
     """
     if MEAN_PER_CLASS_ACC in metrics.keys():
         per_class_acc = {'Class_' + str(i):
-                             [item] for i, item in
+                         [item] for i, item in
                          enumerate(*metrics[MEAN_PER_CLASS_ACC])}
         metrics.update(per_class_acc)
         del metrics[MEAN_PER_CLASS_ACC]

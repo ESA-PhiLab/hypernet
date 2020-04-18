@@ -3,7 +3,7 @@ Perform the training of the model.
 """
 
 import os
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 import clize
 import numpy as np
@@ -28,7 +28,9 @@ def train(*,
           epochs: int = 10,
           verbose: int = 1,
           shuffle: bool = True,
-          patience: int = 3):
+          patience: int = 3,
+          noise: List,#TODO: the same as scripts.experiments_runner
+          noise_sets: List):
     """
     Function for training tensorflow models given a dataset.
 
@@ -58,25 +60,29 @@ def train(*,
         train_dict = io.extract_set(data, enums.Dataset.TRAIN)
         val_dict = io.extract_set(data, enums.Dataset.VAL)
         min_, max_ = train_dict[enums.DataStats.MIN], \
-                     train_dict[enums.DataStats.MAX]
+            train_dict[enums.DataStats.MAX]
     else:
         train_dict = data[enums.Dataset.TRAIN]
         val_dict = data[enums.Dataset.VAL]
         min_, max_ = data[enums.DataStats.MIN], \
-                     data[enums.DataStats.MAX]
+            data[enums.DataStats.MAX]
 
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_, max_=max_)]
+    tr_transformations = transformations + \
+        noise if enums.Dataset.TRAIN in noise_sets else transformations
+    val_transformations = transformations + \
+        noise if enums.Dataset.VAL in noise_sets else transformations
 
     train_dataset, n_train = \
         utils.create_tf_dataset(batch_size,
                                 train_dict,
-                                transformations)
+                                tr_transformations)
     val_dataset, n_val = \
         utils.create_tf_dataset(batch_size,
                                 val_dict,
-                                transformations)
+                                val_transformations)
 
     if shuffle:
         train_dataset = train_dataset.shuffle(batch_size)

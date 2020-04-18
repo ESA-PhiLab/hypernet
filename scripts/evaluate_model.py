@@ -3,7 +3,7 @@ Perform the inference of the model on the testing dataset.
 """
 
 import os
-from typing import Dict, Union
+from typing import Dict, Union, List
 
 import clize
 import numpy as np
@@ -24,7 +24,9 @@ def evaluate(*,
              data: Union[str, Dict],
              dest_path: str,
              verbose: int = 1,
-             n_classes: int):
+             n_classes: int,
+             augmentation: List,
+             params: Dict):
     """
     Function for evaluating the trained model.
 
@@ -52,6 +54,11 @@ def evaluate(*,
                                  transforms.MinMaxNormalize(
                                      min_=min_value,
                                      max_=max_value)])
+
+    if augmentation is not None:
+        params = json.loads(*params)
+        for fun_aug in get_augmentation(augmentation):
+            fun_aug(data_source[Dataset.TEST][Dataset.DATA], params)
 
     model = tf.keras.models.load_model(model_path, compile=True)
     model.predict = timeit(model.predict)
