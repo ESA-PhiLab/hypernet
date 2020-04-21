@@ -29,8 +29,8 @@ def train(*,
           verbose: int = 1,
           shuffle: bool = True,
           patience: int = 3,
-          noise: List,#TODO: the same as scripts.experiments_runner
-          noise_sets: List):
+          noise: List = None,
+          noise_sets: List = None):
     """
     Function for training tensorflow models given a dataset.
 

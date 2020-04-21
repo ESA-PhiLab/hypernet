@@ -1,12 +1,14 @@
 import abc
+import json
 import math
 import sys
+from itertools import product
 from typing import Dict, List
 
 import numpy as np
 import tensorflow as tf
 
-from ml_intuition.enums import Sample
+from ml_intuition.enums import Dataset, Sample
 
 
 class BaseNoise(abc.ABC):
@@ -90,3 +92,12 @@ def get_noise(noise: str) -> List:
         str(f).lower(): eval(f) for f in dir(sys.modules[__name__])
     }
     return [all_[noise_fun] for noise_fun in noise]
+
+
+def inject_noise(data_source: Dict, affected_subsets: List[str], noise_injectors: List[str], noise_params: str):
+    noise_injectors = [noise_injector(json.loads(
+        noise_params)) for noise_injector in get_noise(noise_injectors)]
+    for f_noise, affected_subset in product(noise_injectors, affected_subsets):
+        data_source[affected_subset][Dataset.DATA], data_source[affected_subset][Dataset.LABELS] = \
+            f_noise(data_source[affected_subset][Dataset.DATA],
+                    data_source[affected_subset][Dataset.LABELS])

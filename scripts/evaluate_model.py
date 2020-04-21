@@ -3,7 +3,7 @@ Perform the inference of the model on the testing dataset.
 """
 
 import os
-from typing import Dict, Union, List
+from typing import Dict, List, Union
 
 import clize
 import numpy as np
@@ -25,8 +25,8 @@ def evaluate(*,
              dest_path: str,
              verbose: int = 1,
              n_classes: int,
-             augmentation: List,
-             params: Dict):
+             noise: List = None,
+             noise_sets: List = None):
     """
     Function for evaluating the trained model.
 
@@ -46,19 +46,15 @@ def evaluate(*,
     else:
         min_value, max_value = data[enums.DataStats.MIN], \
             data[enums.DataStats.MAX]
+    transformations = [transforms.SpectralTransform(),
+                       transforms.OneHotEncode(n_classes=n_classes),
+                       transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
+    transformations = transformations + \
+        noise if enums.Dataset.TEST in noise_sets else transformations
     test_dataset, n_test = \
         utils.create_tf_dataset(BATCH_SIZE,
                                 test_dict,
-                                [transforms.SpectralTransform(),
-                                 transforms.OneHotEncode(n_classes=n_classes),
-                                 transforms.MinMaxNormalize(
-                                     min_=min_value,
-                                     max_=max_value)])
-
-    if augmentation is not None:
-        params = json.loads(*params)
-        for fun_aug in get_augmentation(augmentation):
-            fun_aug(data_source[Dataset.TEST][Dataset.DATA], params)
+                                transformations)
 
     model = tf.keras.models.load_model(model_path, compile=True)
     model.predict = timeit(model.predict)
@@ -68,7 +64,7 @@ def evaluate(*,
         steps=n_test // BATCH_SIZE)
 
     y_pred = tf.Session().run(tf.argmax(y_pred, axis=-1))
-    y_true = test_dict[enums.Dataset.LABELS]
+    y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 
     custom_metrics = [
         metrics.accuracy_score,

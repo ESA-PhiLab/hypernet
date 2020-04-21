@@ -4,7 +4,6 @@ Run experiments given set of hyperparameters.
 
 import json
 import os
-from itertools import product
 
 import clize
 import tensorflow as tf
@@ -15,7 +14,7 @@ from ml_intuition import enums
 from ml_intuition.data import noise
 
 
-def run_experiments(*params,
+def run_experiments(*,
                     data_file_path: str,
                     ground_truth_path: str,
                     train_size: float = 0.8,
@@ -41,7 +40,8 @@ def run_experiments(*params,
                     pre_noise: ('pre', multi(min=0)),
                     pre_noise_sets: ('spre', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
-                    post_noise_sets: ('spost', multi(min=0))):
+                    post_noise_sets: ('spost', multi(min=0)),
+                    noise_params: str = None):
     """
     Function for running experiments given a set of hyperparameters.
     :param data_file_path: Path to the data file. Supported types are: .npy
@@ -109,14 +109,10 @@ def run_experiments(*params,
                                  seed=experiment_id)
         if not save_data:
             data_source = data
+
         if len(pre_noise) > 0:
-            pre_noise_injectors = [noise_class(params=json.loads(*params))
-                                   for noise_class in noise.get_noise(pre_noise)]
-            for fun_noise, dataset_name in product(pre_noise_injectors, pre_noise_sets):
-                data_source[dataset_name][enums.Dataset.DATA], \
-                    data_source[dataset_name][enums.Dataset.LABELS] = \
-                    fun_noise(data_source[dataset_name][enums.Dataset.DATA],
-                              data_source[dataset_name][enums.Dataset.LABELS])
+            noise.inject_noise(data_source=data_source, affected_subsets=pre_noise_sets,
+                               noise_injectors=pre_noise, noise_params=noise_params)
 
         train_model.train(model_name=model_name,
                           kernel_size=kernel_size,
@@ -132,7 +128,7 @@ def run_experiments(*params,
                           verbose=verbose,
                           shuffle=shuffle,
                           patience=patience,
-                          noise=[noise_class(params=json.loads(*params))
+                          noise=[noise_class(params=json.loads(noise_params))
                                  for noise_class in noise.get_noise(post_noise)],
                           noise_sets=post_noise_sets)
 
@@ -141,7 +137,10 @@ def run_experiments(*params,
             data=data_source,
             dest_path=experiment_dest_path,
             verbose=verbose,
-            n_classes=n_classes)
+            n_classes=n_classes,
+            noise=[noise_class(params=json.loads(noise_params))
+                   for noise_class in noise.get_noise(post_noise)],
+            noise_sets=post_noise_sets)
 
         tf.keras.backend.clear_session()
 
