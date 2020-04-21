@@ -4,9 +4,6 @@ Run experiments given set of hyperparameters.
 
 import os
 
-import faulthandler
-faulthandler.enable()
-
 import clize
 import tensorflow as tf
 from scripts import evaluate_model, prepare_data
@@ -52,7 +49,7 @@ def run_experiments(*,
     :param save_data: Whether to save the prepared dataset
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
-    subfolders in this directory.
+        subfolders in this directory.
     :param models_path: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
     :param n_classes: Number of classes.
