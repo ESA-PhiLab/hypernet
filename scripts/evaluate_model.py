@@ -79,7 +79,7 @@ def evaluate(*,
         *model_metrics[mean_per_class_accuracy.__name__])}
     model_metrics.update(per_class_acc)
 
-    np.savetxt(os.path.join(os.path.dirname(model_path),
+    np.savetxt(os.path.join(dest_path,
                             metrics.confusion_matrix.__name__ + '.csv'),
                *model_metrics[metrics.confusion_matrix.__name__], delimiter=',',
                fmt='%d')
