@@ -22,8 +22,8 @@ BATCH_SIZE = 1
 
 
 def evaluate(*,
+             data,
              model_path: str,
-             data: Union[str, Dict],
              dest_path: str,
              verbose: int = 1,
              n_classes: int,

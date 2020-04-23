@@ -17,11 +17,11 @@ from ml_intuition.evaluation import time_metrics
 
 
 def train(*,
+          data,
           model_name: str,
           dest_path: str,
           sample_size: int,
           n_classes: int,
-          data: Union[str, Dict],
           kernel_size: int = 3,
           n_kernels: int = 16,
           n_layers: int = 1,
