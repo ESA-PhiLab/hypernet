@@ -8,9 +8,11 @@ from typing import Dict, List, Union
 import clize
 import numpy as np
 import tensorflow as tf
+from clize.parameters import multi
 
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms, utils
+from ml_intuition.data.noise import get_noise_functions
 from ml_intuition.evaluation import time_metrics
 
 
@@ -29,8 +31,9 @@ def train(*,
           verbose: int = 1,
           shuffle: bool = True,
           patience: int = 3,
-          noise: List = None,
-          noise_sets: List = None):
+          noise: ('post', multi(min=0)),
+          noise_sets: ('spost', multi(min=0)),
+          noise_params: str = None):
     """
     Function for training tensorflow models given a dataset.
 
@@ -70,10 +73,11 @@ def train(*,
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_, max_=max_)]
-    tr_transformations = transformations + \
-        noise if enums.Dataset.TRAIN in noise_sets else transformations
-    val_transformations = transformations + \
-        noise if enums.Dataset.VAL in noise_sets else transformations
+
+    tr_transformations = transformations + get_noise_functions(noise, noise_params) \
+        if enums.Dataset.TRAIN in noise_sets else transformations
+    val_transformations = transformations + get_noise_functions(noise, noise_params) \
+        if enums.Dataset.VAL in noise_sets else transformations
 
     train_dataset, n_train = \
         utils.create_tf_dataset(batch_size,

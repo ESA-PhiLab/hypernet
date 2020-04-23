@@ -8,10 +8,12 @@ from typing import Dict, List, Union
 import clize
 import numpy as np
 import tensorflow as tf
+from clize.parameters import multi
 from sklearn import metrics
 
 from ml_intuition import enums
 from ml_intuition.data import io, transforms, utils
+from ml_intuition.data.noise import get_noise_functions
 from ml_intuition.evaluation.performance_metrics import (
     compute_metrics, mean_per_class_accuracy)
 from ml_intuition.evaluation.time_metrics import timeit
@@ -25,8 +27,9 @@ def evaluate(*,
              dest_path: str,
              verbose: int = 1,
              n_classes: int,
-             noise: List = None,
-             noise_sets: List = None):
+             noise: ('post', multi(min=0)),
+             noise_sets: ('spost', multi(min=0)),
+             noise_params: str = None):
     """
     Function for evaluating the trained model.
 
@@ -49,8 +52,8 @@ def evaluate(*,
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
-    transformations = transformations + \
-        noise if enums.Dataset.TEST in noise_sets else transformations
+    transformations = transformations + get_noise_functions(noise, noise_params) \
+        if enums.Dataset.TEST in noise_sets else transformations
     test_dataset, n_test = \
         utils.create_tf_dataset(BATCH_SIZE,
                                 test_dict,

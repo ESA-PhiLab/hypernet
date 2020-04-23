@@ -128,9 +128,9 @@ def run_experiments(*,
                           verbose=verbose,
                           shuffle=shuffle,
                           patience=patience,
-                          noise=[noise_class(params=json.loads(noise_params))
-                                 for noise_class in noise.get_noise(post_noise)],
-                          noise_sets=post_noise_sets)
+                          noise=post_noise,
+                          noise_sets=pre_noise_sets,
+                          noise_params=noise_params)
 
         evaluate_model.evaluate(
             model_path=os.path.join(experiment_dest_path, model_name),
@@ -138,9 +138,9 @@ def run_experiments(*,
             dest_path=experiment_dest_path,
             verbose=verbose,
             n_classes=n_classes,
-            noise=[noise_class(params=json.loads(noise_params))
-                   for noise_class in noise.get_noise(post_noise)],
-            noise_sets=post_noise_sets)
+            noise=post_noise,
+            noise_sets=pre_noise_sets,
+            noise_params=noise_params)
 
         tf.keras.backend.clear_session()
 
