@@ -30,6 +30,11 @@ pipeline {
                 sh "docker build . -t ${imageName}"
             }
         }
+        stage('GPU') {
+            steps {
+                sh "docker run --gpus all ${imageName} nvidia-smi"
+            }
+        }
         stage('Unit testing') {
             steps {
                 sh "docker run ${imageName} pytest tests"
