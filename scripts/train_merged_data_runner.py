@@ -33,7 +33,7 @@ def run_experiments(*,
                     lr: float = 0.005,
                     batch_size: int = 150,
                     epochs: int = 10,
-                    verbose: int = 1,
+                    verbose: int = 2,
                     shuffle: bool = True,
                     patience: int = 3):
     """

@@ -23,7 +23,7 @@ def evaluate(*,
              model_path: str,
              data: Union[str, Dict],
              dest_path: str,
-             verbose: int = 1,
+             verbose: int = 2,
              n_classes: int):
     """
     Function for evaluating the trained model.
