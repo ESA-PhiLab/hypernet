@@ -13,6 +13,16 @@ SHELL ["conda", "run", "-n", "decent", "/bin/bash", "-c"]
 RUN wget -O xilinx_dnndk_v3.1.tar.gz -nv "https://jug.kplabs.pl/file/cZfqhhaqYz/I53ZXbZyA1"
 RUN tar -xf xilinx_dnndk_v3.1.tar.gz && rm -rf xilinx_dnndk_v3.1.tar.gz
 RUN pip install xilinx_dnndk_v3.1/host_x86/decent-tf/ubuntu18.04/tensorflow_gpu-1.12.0-cp36-cp36m-linux_x86_64.whl
+
+ENV CUDNN_VERSION 7.6.5.32
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libcudnn7=$CUDNN_VERSION-1+cuda10.0 \
+&& \
+    apt-mark hold libcudnn7 && \
+    rm -rf /var/lib/apt/lists/*
+
+
+
 RUN cd xilinx_dnndk_v3.1/host_x86 && ./install.sh
 RUN apt-get install -y --force-yes build-essential autoconf libtool libopenblas-dev \
 libgflags-dev libgoogle-glog-dev libopencv-dev protobuf-compiler libleveldb-dev \
