@@ -30,7 +30,7 @@ pipeline {
                 sh "docker build . -t ${imageName}"
             }
         }
-        stage('GPU') {
+        stage('Check GPU') {
             steps {
                 sh "docker run --gpus all ${imageName} nvidia-smi"
             }
