@@ -57,7 +57,16 @@ def train(*,
      dataset_key each epoch.
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
-
+    :param noise: List containing names of used noise injection methods
+        that are performed after the normalization transformations.
+    :param noise_sets: List of sets that are affected by the noise injecton methods.
+        For this module single element can be either "train" or "val".
+    :param noise_params: JSON containing the parameters setting of injection methods.
+        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        This JSON should include all parameters for noise injection
+        functions that are specified in the noise argument.
+        For the accurate description of each parameter, please
+        refer to the ml_intuition/data/noise.py module.
     """
     if type(data) is str:
         train_dict = io.extract_set(data, enums.Dataset.TRAIN)

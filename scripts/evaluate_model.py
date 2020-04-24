@@ -36,8 +36,19 @@ def evaluate(*,
     :param model_path: Path to the model.
     :param data: Either path to the input data or the data dict.
     :param dest_path: Directory in which to store the calculated matrics
-    :param verbose: Verbosity mode used in training, (0, 1 or 2).
+    :param verbose: Verbosity mode used in inference, (0, 1 or 2).
     :param n_classes: Number of classes.
+    :param noise: List containing names of used noise injection methods
+        that are performed after the normalization transformations.
+    :param noise_sets: List of sets that are affected by the noise injecton.
+        For this module single element can be "test".
+    :param noise_params: JSON containing the parameters
+        setting of noise injection methods.
+        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        This JSON should include all parameters for noise injection
+        functions that are specified in the noise argument.
+        For the accurate description of each parameter, please
+        refer to the ml_intuition/data/noise.py module.
     """
     if type(data) is str:
         test_dict = io.extract_set(data, enums.Dataset.TEST)

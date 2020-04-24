@@ -86,6 +86,20 @@ def run_experiments(*,
      dataset_key each epoch.
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
+    :param pre_noise: The list of names of noise injection methods before
+        the normalization transformations. Examplary names are "gaussian"
+        or "impulsive".
+    :param pre_noise_sets: The list of sets to which the noise will be
+        injected. One element can either be "train", "val" or "test".
+    :param post_noise: The list of names of noise injection metods after
+        the normalization transformations.
+    :param post_noise_sets: The list of sets to which the noise will be injected.
+    :param noise_params: JSON containing the parameter setting of injection methods.
+        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        This JSON should include all parameters for noise injection
+        functions that are specified in pre_noise and post_noise arguments.
+        For the accurate description of each parameter, please
+        refer to the ml_intuition/data/noise.py module.
     """
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(

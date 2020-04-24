@@ -25,9 +25,8 @@ class BaseNoise(abc.ABC):
         :param kwargs: Arbitrary dictionary of arguments.
         """
 
-    @staticmethod
-    def get_n_affected_samples(n_samples: int, ratio: float) -> int:
-        return math.floor(n_samples * ratio)
+    def get_proba(self, n_samples: int) -> int:
+        return math.floor(n_samples * self.params['pa'])
 
 
 class Gaussian(BaseNoise):
@@ -40,18 +39,15 @@ class Gaussian(BaseNoise):
         :param label: Class value for each data.
         :return: List containing the noisy data and the class label.
         """
-        n_affected_samples = self.get_n_affected_samples(
-            data.shape[Sample.SAMPLES_DIM], self.params['pa'])
+        n_affected = self.get_proba(data.shape[Sample.SAMPLES_DIM])
         data = data.astype(np.float)
-        noise = np.random.normal(loc=self.params['mean'],
-                                 scale=self.params['std'],
-                                 size=(n_affected_samples,
-                                       *data.shape[Sample.FEATURES_DIM:]))
-        for noise_index, sample_index in enumerate(np.random.choice(data.shape[Sample.SAMPLES_DIM],
-                                                                    size=n_affected_samples,
-                                                                    replace=False)):
-            data[sample_index] += noise[noise_index]
-        return data, labels
+        noise = np.random.normal(
+            loc=self.params['mean'], scale=self.params['std'],
+            size=(n_affected, *data.shape[Sample.FEATURES_DIM:]))
+        for noise_index, sample_index in enumerate(
+                np.random.choice(data.shape[Sample.SAMPLES_DIM], n_affected, False)):
+            data[sample_index, ...] += noise[noise_index]
+        return [data, labels]
 
 
 class Impulsive(BaseNoise):
@@ -64,22 +60,20 @@ class Impulsive(BaseNoise):
         :param label: Class value for each data.
         :return: List containing the noisy data and the class label.
         """
-        n_affected_samples = self.get_n_affected_samples(
-            data.shape[Sample.SAMPLES_DIM], self.params['pa'])
-        n_white = math.floor(n_affected_samples * self.params['pw'])
+        n_affected = self.get_proba(data.shape[Sample.SAMPLES_DIM])
+        n_white = math.floor(n_affected * self.params['pw'])
 
-        min_, max_ = np.amin(data), np.amax(data)
+        black, white = np.amin(data), np.amax(data)
         affected_samples = np.random.choice(
-            data.shape[0], size=n_affected_samples, replace=False)
+            data.shape[Sample.SAMPLES_DIM], n_affected, False)
 
         for sample_index in affected_samples[:n_white]:
             data[sample_index] = np.full(
-                shape=data[sample_index].shape, fill_value=max_)
-
+                shape=data[sample_index].shape, fill_value=white)
         for sample_index in affected_samples[n_white:]:
             data[sample_index] = np.full(
-                shape=data[sample_index].shape, fill_value=min_)
-        return data, labels
+                shape=data[sample_index].shape, fill_value=black)
+        return [data, labels]
 
 
 def get_all_noise_functions(noise: str) -> List:
