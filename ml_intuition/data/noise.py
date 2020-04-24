@@ -25,8 +25,8 @@ class BaseNoise(abc.ABC):
         :param kwargs: Arbitrary dictionary of arguments.
         """
 
-    def get_proba(self, n_samples: int) -> int:
-        return math.floor(n_samples * self.params['pa'])
+    def get_proba(self, n_samples: int, prob: float) -> int:
+        return math.floor(n_samples * prob)
 
 
 class Gaussian(BaseNoise):
@@ -39,7 +39,8 @@ class Gaussian(BaseNoise):
         :param label: Class value for each data.
         :return: List containing the noisy data and the class label.
         """
-        n_affected = self.get_proba(data.shape[Sample.SAMPLES_DIM])
+        n_affected = self.get_proba(
+            data.shape[Sample.SAMPLES_DIM], self.params['pa'])
         data = data.astype(np.float)
         noise = np.random.normal(
             loc=self.params['mean'], scale=self.params['std'],
@@ -60,8 +61,9 @@ class Impulsive(BaseNoise):
         :param label: Class value for each data.
         :return: List containing the noisy data and the class label.
         """
-        n_affected = self.get_proba(data.shape[Sample.SAMPLES_DIM])
-        n_white = math.floor(n_affected * self.params['pw'])
+        n_affected = self.get_proba(
+            data.shape[Sample.SAMPLES_DIM], self.params['pa'])
+        n_white = self.get_proba(n_affected, self.params['pw'])
 
         black, white = np.amin(data), np.amax(data)
         affected_samples = np.random.choice(
