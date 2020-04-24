@@ -47,7 +47,7 @@ class Gaussian(BaseNoise):
             size=(n_affected, *data.shape[Sample.FEATURES_DIM:]))
         for noise_index, sample_index in enumerate(
                 np.random.choice(data.shape[Sample.SAMPLES_DIM], n_affected, False)):
-            data[sample_index, ...] += noise[noise_index]
+            data[sample_index] += noise[noise_index]
         return [data, labels]
 
 
