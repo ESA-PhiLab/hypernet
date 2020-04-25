@@ -1,9 +1,6 @@
 ARG cuda_version=10.0
 
-#FROM hub.kplabs.pl/cudaconda:${cuda_version}.1-runtime
-FROM ubuntu:18.04
-
-FROM continuumio/miniconda3
+FROM hub.kplabs.pl/cudaconda:${cuda_version}.1-runtime
 
 
 ADD environment.yml environment.yml
