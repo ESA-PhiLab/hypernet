@@ -1,6 +1,6 @@
 ARG cuda_version=10.0
 
-FROM hub.kplabs.pl/cudaconda:${cuda_version}.1-runtime
+FROM hub.kplabs.pl/cudaconda:${cuda_version}.1-devel
 
 
 ADD environment.yml environment.yml
