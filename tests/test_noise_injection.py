@@ -21,8 +21,10 @@ class TestGaussianNoise:
         gaussian_noise = noise.Gaussian(params)
         data_prime, _ = gaussian_noise(data, None)
         assert not np.array_equal(data, data_prime)
-        n_true_affected = gaussian_noise.get_proba(data.shape[0], params['pa'])
-        n_true_bands = gaussian_noise.get_proba(data.shape[1], params['pb'])
+        n_true_affected = gaussian_noise.get_proba(data.shape[0],
+                                                   gaussian_noise.params.pa)
+        n_true_bands = gaussian_noise.get_proba(data.shape[1],
+                                                gaussian_noise.params.pb)
         n_affected = 0
         for i in range(data.shape[0]):
             for j in range(data.shape[1]):
@@ -77,9 +79,12 @@ class TestImpulsiveNoise:
         data_prime, _ = impulsive_noise(data, None)
         unique, counts = np.unique(data_prime, return_counts=True)
         n_affected, n_bands = \
-            impulsive_noise.get_proba(data.shape[0], params['pa']), \
-            impulsive_noise.get_proba(data.shape[1], params['pb'])
-        n_white = impulsive_noise.get_proba(n_affected, params['pw'])
+            impulsive_noise.get_proba(data.shape[0],
+                                      impulsive_noise.params.pa), \
+            impulsive_noise.get_proba(data.shape[1],
+                                      impulsive_noise.params.pb)
+        n_white = impulsive_noise.get_proba(n_affected,
+                                            impulsive_noise.params.pw)
         assert unique[-1] == np.amax(data), \
             'Assert correct value for white noise.'
         assert not abs(counts[-1] - math.floor(n_white * n_bands)) > 1, \
