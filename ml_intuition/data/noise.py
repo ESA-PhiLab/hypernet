@@ -39,15 +39,22 @@ class Gaussian(BaseNoise):
         :param label: Class value for each data.
         :return: List containing the noisy data and the class label.
         """
-        n_affected = self.get_proba(
-            data.shape[Sample.SAMPLES_DIM], self.params['pa'])
+        n_affected, n_bands = \
+            self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params['pa']), \
+            self.get_proba(data.shape[Sample.FEATURES_DIM], self.params['pb'])
         data = data.astype(np.float)
-        noise = np.random.normal(
-            loc=self.params['mean'], scale=self.params['std'],
-            size=(n_affected, *data.shape[Sample.FEATURES_DIM:]))
-        for noise_index, sample_index in enumerate(
-                np.random.choice(data.shape[Sample.SAMPLES_DIM], n_affected, False)):
-            data[sample_index] += noise[noise_index]
+        noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
+                                       n_bands, False)
+        for sample_index in np.random.choice(data.shape[Sample.SAMPLES_DIM],
+                                             n_affected, False):
+            if not self.params['bc']:
+                noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
+                                               n_bands, False)
+            for band_index in noisy_bands:
+                data[sample_index, band_index] += \
+                    np.random.normal(loc=self.params['mean'],
+                                     scale=self.params['std'],
+                                     size=data[sample_index, band_index].shape)
         return [data, labels]
 
 
@@ -61,20 +68,54 @@ class Impulsive(BaseNoise):
         :param label: Class value for each data.
         :return: List containing the noisy data and the class label.
         """
-        n_affected = self.get_proba(
-            data.shape[Sample.SAMPLES_DIM], self.params['pa'])
+        n_affected, n_bands = \
+            self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params['pa']), \
+            self.get_proba(data.shape[Sample.FEATURES_DIM], self.params['pb'])
         n_white = self.get_proba(n_affected, self.params['pw'])
-
         black, white = np.amin(data), np.amax(data)
-        affected_samples = np.random.choice(
-            data.shape[Sample.SAMPLES_DIM], n_affected, False)
+        noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
+                                       n_bands, False)
+        for noise_index, sample_index in enumerate(np.random.choice(
+                data.shape[Sample.SAMPLES_DIM], n_affected, False)):
+            if not self.params['bc']:
+                noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
+                                               n_bands, False)
+            for band_index in noisy_bands:
+                if noise_index < n_white:
+                    data[sample_index, band_index] = \
+                        np.full(shape=data[sample_index, band_index].shape,
+                                fill_value=white)
+                else:
+                    data[sample_index, band_index] = \
+                        np.full(shape=data[sample_index, band_index].shape,
+                                fill_value=black)
+        return [data, labels]
 
-        for sample_index in affected_samples[:n_white]:
-            data[sample_index] = np.full(
-                shape=data[sample_index].shape, fill_value=white)
-        for sample_index in affected_samples[n_white:]:
-            data[sample_index] = np.full(
-                shape=data[sample_index].shape, fill_value=black)
+
+class Shot(BaseNoise):
+
+    def __call__(self, data: np.ndarray, labels: np.ndarray) -> List[np.ndarray]:
+        """
+        Perform shot noise injection.
+
+        :param data: Input data that will undergo noise injection.
+        :param label: Class value for each data.
+        :return: List containing the noisy data and the class label.
+        """
+        n_affected, n_bands = \
+            self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params['pa']), \
+            self.get_proba(data.shape[Sample.FEATURES_DIM], self.params['pb'])
+        data = data.astype(np.float)
+        noise = np.random.poisson(data)
+        noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
+                                       n_bands, False)
+        for sample_index in np.random.choice(data.shape[Sample.SAMPLES_DIM],
+                                             n_affected, False):
+            if not self.params['bc']:
+                noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
+                                               n_bands, False)
+            for band_index in noisy_bands:
+                data[sample_index, band_index] += noise[sample_index, band_index]
         return [data, labels]
 
 
@@ -98,6 +139,5 @@ def get_noise_functions(noise: List[str], noise_params: str) -> List[BaseNoise]:
 def inject_noise(data_source: Dict, affected_subsets: List[str], noise_injectors: List[str], noise_params: str):
     for f_noise, affected_subset in product(
             get_noise_functions(noise_injectors, noise_params), affected_subsets):
-        data_source[affected_subset][Dataset.DATA], data_source[affected_subset][Dataset.LABELS] = \
-            f_noise(data_source[affected_subset][Dataset.DATA],
-                    data_source[affected_subset][Dataset.LABELS])
+        data_source[affected_subset][Dataset.DATA], data_source[affected_subset][Dataset.LABELS] = f_noise(data_source[affected_subset][Dataset.DATA],
+                                                                                                           data_source[affected_subset][Dataset.LABELS])
