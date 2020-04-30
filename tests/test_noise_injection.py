@@ -68,11 +68,11 @@ class TestImpulsiveNoise:
     @pytest.mark.parametrize("data, params",
                              [
                                  (np.random.rand(20, 104, 1),
-                                  {"mean": 0, "std": 1, "pa": 0.5, "pw": 1, "pb": 0.5, "bc": True}),
+                                  {"pa": 0.5, "pw": 1, "pb": 0.5, "bc": True}),
                                  (np.random.rand(19, 20),
-                                  {"mean": 0, "std": 1, "pa": 0.5, "pw": 0.4, "pb": 0.5, "bc": False}),
+                                  {"pa": 0.5, "pw": 0.4, "pb": 0.5, "bc": False}),
                                  (np.random.rand(76, 20, 1),
-                                  {"mean": 0, "std": 1, "pa": 0.8, "pw": 0.1, "pb": 0.5, "bc": True})
+                                  {"pa": 0.8, "pw": 0.1, "pb": 0.5, "bc": True})
                              ])
     def test_impulsive_nosie_injection(self, data: np.ndarray, params: Dict):
         impulsive_noise = noise.Impulsive(params)
@@ -97,12 +97,12 @@ class TestImpulsiveNoise:
 
     @pytest.mark.parametrize("data, params",
                              [
-                                 (np.random.rand(20, 20, 1), {
-                                  "mean": 0, "std": 1, "pa": 0, "pw": 0.2, "pb": 0.5, "bc": True}),
-                                 (np.random.rand(76, 20, 1), {
-                                  "mean": 5, "std": 10, "pa": 0, "pw": 0.2, "pb": 0.5, "bc": True}),
-                                 (np.random.rand(34, 1000, 1), {
-                                     "mean": 5, "std": 10, "pa": 0, "pw": 0.2, "pb": 0.5, "bc": True})
+                                 (np.random.rand(20, 20, 1),
+                                  {"pa": 0, "pw": 0.2, "pb": 0.5, "bc": True}),
+                                 (np.random.rand(76, 20, 1),
+                                  {"pa": 0, "pw": 0.2, "pb": 0.5, "bc": True}),
+                                 (np.random.rand(34, 1000, 1),
+                                  {"pa": 0, "pw": 0.2, "pb": 0.5, "bc": True})
                              ])
     def test_if_no_noise_injected(self, data: np.ndarray, params: Dict):
         impulsive_noise = noise.Impulsive(params)
