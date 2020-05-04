@@ -8,7 +8,7 @@ RUN conda env update -f environment.yml
 SHELL ["conda", "run", "-n", "decent", "/bin/bash", "-c"]
 
 #Install CUDA
-RUN wget -0 cuda-repo-ubuntu1804_10.0.130-1_amd64.deb -nv "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb"
+RUN wget -O cuda-repo-ubuntu1804_10.0.130-1_amd64.deb -nv "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb"
 RUN dpkg -i cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
 RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
 RUN apt-get update
