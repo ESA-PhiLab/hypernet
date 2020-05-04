@@ -165,11 +165,26 @@ def get_all_noise_functions(noise: str) -> List:
 
 
 def get_noise_functions(noise: List[str], noise_params: str) -> List[BaseNoise]:
+    """
+    Helper function for getting all noise injector instances.
+
+    :param noise: List of noise injection methods.
+    :param noise_params: Parameters of the noise injection.
+    """
     return [noise_injector(json.loads(noise_params))
             for noise_injector in get_all_noise_functions(noise)]
 
 
-def inject_noise(data_source: Dict, affected_subsets: List[str], noise_injectors: List[str], noise_params: str):
+def inject_noise(data_source: Dict, affected_subsets: List[str],
+                 noise_injectors: List[str], noise_params: str):
+    """
+    Inject noise into given subsets.
+
+    :param data_source: Dictionary containing subsets.
+    :param affected_subsets: List of names of subsets that will undergo noise injection.
+    :param noise_injectors: List of names of noise injection methods. 
+    :param noise_params: Parameters of the noise injection.
+    """
     for f_noise, affected_subset in product(
             get_noise_functions(noise_injectors, noise_params), affected_subsets):
         data_source[affected_subset][Dataset.DATA], data_source[affected_subset][Dataset.LABELS] = f_noise(data_source[affected_subset][Dataset.DATA],
