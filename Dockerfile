@@ -1,4 +1,4 @@
-FROM ubuntu:18.04
+FROM nvidia/cuda:10.1-runtime-ubuntu18.04
 
 FROM continuumio/miniconda3
 ADD environment.yml environment.yml
@@ -7,14 +7,14 @@ RUN conda env update -f environment.yml
 # Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "decent", "/bin/bash", "-c"]
 
-RUN apt-get -y update && apt-get -y --force-yes install gnupg
+#RUN apt-get -y update && apt-get -y --force-yes install gnupg
 
 #Install CUDA
-RUN wget -O cuda-repo-ubuntu1804_10.0.130-1_amd64.deb -nv "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb"
-RUN dpkg -i cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
-RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
-RUN apt-get update
-RUN apt-get install cuda-10-0
+#RUN wget -O cuda-repo-ubuntu1804_10.0.130-1_amd64.deb -nv "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb"
+#RUN dpkg -i cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
+#RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+#RUN apt-get update
+#RUN apt-get install cuda-10-0
 
 # Install CUDnn
 RUN wget -O cudnn-10.0-linux-x64-v7.4.1.5.tgz -nv https://jug.kplabs.pl/file/kUvED8duLU/iV9OSru55E
@@ -32,8 +32,6 @@ RUN cd xilinx_dnndk_v3.1/host_x86 && ./install.sh
 RUN apt-get -y update && apt-get install -y --force-yes libtool build-essential autoconf libopenblas-dev \
 libgflags-dev libgoogle-glog-dev libopencv-dev protobuf-compiler libleveldb-dev \
 liblmdb-dev libhdf5-dev libsnappy-dev libboost-all-dev libssl-dev
-
-
 
 # Create workspace
 RUN mkdir /workspace
