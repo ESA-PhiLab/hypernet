@@ -7,13 +7,20 @@ RUN conda env update -f environment.yml
 # Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "decent", "/bin/bash", "-c"]
 
+#Install CUDA
+RUN wget -0 cuda-repo-ubuntu1804_10.0.130-1_amd64.deb -nv "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb"
+RUN dpkg -i cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
+RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+RUN apt-get update
+RUN apt-get install cuda-10-0
+
 # Install CUDnn
-#RUN wget -O cudnn-10.0-linux-x64-v7.4.1.5.tgz -nv https://jug.kplabs.pl/file/kUvED8duLU/iV9OSru55E
-#RUN tar -xzvf cudnn-10.0-linux-x64-v7.4.1.5.tgz
-#RUN mkdir usr/local/cuda/include
-#RUN cp -P cuda/include/cudnn.h usr/local/cuda/include
-#RUN cp -P cuda/lib64/libcudnn* usr/local/cuda/lib64
-#RUN chmod a+r usr/local/cuda/include/cudnn.h /usr/local/cuda/lib64/libcudnn*
+RUN wget -O cudnn-10.0-linux-x64-v7.4.1.5.tgz -nv https://jug.kplabs.pl/file/kUvED8duLU/iV9OSru55E
+RUN tar -xzvf cudnn-10.0-linux-x64-v7.4.1.5.tgz
+RUN mkdir usr/local/cuda/include
+RUN cp -P cuda/include/cudnn.h usr/local/cuda/include
+RUN cp -P cuda/lib64/libcudnn* usr/local/cuda/lib64
+RUN chmod a+r usr/local/cuda/include/cudnn.h /usr/local/cuda/lib64/libcudnn*
 
 # Download DNNDK and install it
 RUN wget -O xilinx_dnndk_v3.1.tar.gz -nv "https://jug.kplabs.pl/file/cZfqhhaqYz/I53ZXbZyA1"
