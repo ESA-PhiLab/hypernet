@@ -7,6 +7,8 @@ RUN conda env update -f environment.yml
 # Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "decent", "/bin/bash", "-c"]
 
+RUN apt-get -y update && apt-get install gnupg
+
 #Install CUDA
 RUN wget -O cuda-repo-ubuntu1804_10.0.130-1_amd64.deb -nv "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb"
 RUN dpkg -i cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
