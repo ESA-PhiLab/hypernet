@@ -55,7 +55,7 @@ def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
 
 
 def train_val_test_split(data: np.ndarray, labels: np.ndarray,
-                         train_size: Union[List, float] = 0.8,
+                         train_size: Union[List, float, int] = 0.8,
                          val_size: float = 0.1,
                          stratified: bool = True,
                          seed: int = 0) -> Tuple[
@@ -97,7 +97,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
         labels[val_indices], data[test_indices], labels[test_indices]
 
 
-def _get_set_indices(labels: np.ndarray, size: Union[List, float] = 0.8,
+def _get_set_indices(labels: np.ndarray, size: Union[List, float, int] = 0.8,
                      stratified: bool = True) -> np.ndarray:
     """
     Extract indices of a subset of specified data according to size and
@@ -123,7 +123,7 @@ def _get_set_indices(labels: np.ndarray, size: Union[List, float] = 0.8,
     label_indices = [np.where(labels == label)[0] for label in unique_labels]
     if isinstance(size, list) and len(size) == 1:
         size = float(size[0])
-    if isinstance(size, float):
+    if isinstance(size, (float, int)):
         assert size > 0, "Size argument must be greater than zero"
         if 0.0 < size < 1.0 and stratified is True:  # additional condition isinstance
             for idx in range(len(unique_labels)):
