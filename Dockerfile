@@ -5,8 +5,28 @@
 
 #FROM ubuntu:18.04
 
-FROM continuumio/miniconda3
 FROM nvidia/cuda:10.0-runtime-ubuntu18.04
+
+# Install conda
+ENV LANG=C.UTF-8 LC_ALL=C.UTF-8
+ENV PATH /opt/conda/bin:$PATH
+
+RUN apt-get update --fix-missing && \
+    apt-get install -y wget bzip2 ca-certificates libglib2.0-0 libxext6 libsm6 libxrender1 git mercurial subversion && \
+    apt-get clean
+
+RUN wget --quiet https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh -O ~/miniconda.sh && \
+    /bin/bash ~/miniconda.sh -b -p /opt/conda && \
+    rm ~/miniconda.sh && \
+    /opt/conda/bin/conda clean -tipsy && \
+    ln -s /opt/conda/etc/profile.d/conda.sh /etc/profile.d/conda.sh && \
+    echo ". /opt/conda/etc/profile.d/conda.sh" >> ~/.bashrc && \
+    echo "conda activate base" >> ~/.bashrc && \
+    find /opt/conda/ -follow -type f -name '*.a' -delete && \
+    find /opt/conda/ -follow -type f -name '*.js.map' -delete && \
+    /opt/conda/bin/conda clean -afy
+
+
 ADD environment.yml environment.yml
 RUN conda env update -f environment.yml
 
@@ -16,11 +36,11 @@ SHELL ["conda", "run", "-n", "decent", "/bin/bash", "-c"]
 RUN apt-get -y update && apt-get -y --force-yes install gnupg
 
 # Install CUDA
-RUN wget -O cuda-repo-ubuntu1804_10.0.130-1_amd64.deb -nv "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb"
-RUN dpkg -i cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
-RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
-RUN apt-get update
-RUN apt-get install cuda-10-0
+#RUN wget -O cuda-repo-ubuntu1804_10.0.130-1_amd64.deb -nv "https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/cuda-repo-ubuntu1804_10.0.130-1_amd64.deb"
+#RUN dpkg -i cuda-repo-ubuntu1804_10.0.130-1_amd64.deb
+#RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/cuda/repos/ubuntu1804/x86_64/7fa2af80.pub
+#RUN apt-get update
+#RUN apt-get install cuda-10-0
 
 # Install CUDnn
 RUN wget -O cudnn-10.0-linux-x64-v7.4.1.5.tgz -nv https://jug.kplabs.pl/file/kUvED8duLU/iV9OSru55E
