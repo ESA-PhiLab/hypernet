@@ -39,7 +39,7 @@ RUN cd xilinx_dnndk_v3.1/host_x86 && ./install.sh
 #libgflags-dev libgoogle-glog-dev libopencv-dev protobuf-compiler libleveldb-dev \
 #liblmdb-dev libhdf5-dev libsnappy-dev libboost-all-dev libssl-dev
 RUN conda install cudatoolkit=10.0
-RUN conda install cudnn
+RUN conda install cudnn=7.4.1.5
 RUN conda list
 RUN echo 'export PATH=/usr/local/cuda-10.0/bin${PATH:+:${PATH}}' >> ~/.bashrc
 RUN echo 'export LD_LIBRARY_PATH=/usr/local/cuda-10.0/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}' >> ~/.bashrc
