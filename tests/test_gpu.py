@@ -1,5 +1,6 @@
 import tensorflow as tf
 
+
 class TestGPU:
     def test_run_on_gpu(self):
         with tf.device('/gpu:0'):
@@ -9,7 +10,10 @@ class TestGPU:
                             name='b')
             c = tf.matmul(a, b)
         with tf.Session() as sess:
+            print('elo')
             print(sess.run(c))
+            print('elo2')
 
+        print('elo3')
         sess = tf.Session(config=tf.ConfigProto(log_device_placement=True))
         print(sess)
