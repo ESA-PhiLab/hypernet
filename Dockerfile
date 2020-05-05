@@ -23,10 +23,10 @@ SHELL ["conda", "run", "-n", "decent", "/bin/bash", "-c"]
 # Install CUDnn
 RUN wget -O cudnn-10.0-linux-x64-v7.4.1.5.tgz -nv https://jug.kplabs.pl/file/kUvED8duLU/iV9OSru55E
 RUN tar -xzvf cudnn-10.0-linux-x64-v7.4.1.5.tgz
-RUN mkdir usr/local/cuda/include
-RUN cp -P cuda/include/cudnn.h usr/local/cuda/include
-RUN cp -P cuda/lib64/libcudnn* usr/local/cuda/lib64
-RUN chmod a+r usr/local/cuda/include/cudnn.h /usr/local/cuda/lib64/libcudnn*
+RUN mkdir usr/local/cuda-10.0/include
+RUN cp -P cuda/include/cudnn.h usr/local/cuda-10.0/include
+RUN cp -P cuda/lib64/libcudnn* usr/local/cuda-10.0/lib64
+RUN chmod a+r usr/local/cuda-10.0/include/cudnn.h /usr/local/cuda-10.0/lib64/libcudnn*
 
 # Download DNNDK and install it
 RUN wget -O xilinx_dnndk_v3.1.tar.gz -nv "https://jug.kplabs.pl/file/cZfqhhaqYz/I53ZXbZyA1"
@@ -36,6 +36,9 @@ RUN cd xilinx_dnndk_v3.1/host_x86 && ./install.sh
 #RUN apt-get -y update && apt-get install -y --force-yes libtool build-essential autoconf libopenblas-dev \
 #libgflags-dev libgoogle-glog-dev libopencv-dev protobuf-compiler libleveldb-dev \
 #liblmdb-dev libhdf5-dev libsnappy-dev libboost-all-dev libssl-dev
+
+ENV PATH usr/local/cuda-10.0/bin${PATH:+:${PATH}}
+ENV LD_LIBRARY_PATH usr/local/cuda-10.0/lib64:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
 
 # Create workspace
 RUN mkdir /workspace
