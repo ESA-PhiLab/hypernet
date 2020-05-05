@@ -37,8 +37,8 @@ RUN cd xilinx_dnndk_v3.1/host_x86 && ./install.sh
 #libgflags-dev libgoogle-glog-dev libopencv-dev protobuf-compiler libleveldb-dev \
 #liblmdb-dev libhdf5-dev libsnappy-dev libboost-all-dev libssl-dev
 
-ENV PATH usr/local/cuda-10.0/bin${PATH:+:${PATH}}
-ENV LD_LIBRARY_PATH usr/local/cuda-10.0/lib64:${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}
+RUN echo 'export PATH=/usr/local/cuda-10.0/bin${PATH:+:${PATH}}' >> ~/.bashrc
+RUN echo 'export LD_LIBRARY_PATH=/usr/local/cuda-10.0/lib64${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}' >> ~/.bashrc
 
 # Create workspace
 RUN mkdir /workspace
