@@ -6,7 +6,7 @@ FROM nvidia/cuda:10.0-runtime-ubuntu18.04
 
 #FROM ubuntu:18.04
 
-#FROM continuumio/miniconda3
+FROM continuumio/miniconda3
 ADD environment.yml environment.yml
 RUN conda env update -f environment.yml
 
