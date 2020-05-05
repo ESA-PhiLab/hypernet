@@ -27,17 +27,17 @@ pipeline {
     stages {
         stage('Build docker') {
             steps {
-                sh "docker run --rm --runtime=nvidia nvidia/cuda nvidia-smi"
+                sh "docker build . -t ${imageName}"
             }
         }
         stage('Check GPU') {
             steps {
-                sh "docker run --gpus all --runtime=nvidia ${imageName} nvidia-smi"
+                sh "docker run --runtime=nvidia ${imageName} nvidia-smi"
             }
         }
         stage('Unit testing') {
             steps {
-                sh "docker run --gpus all --runtime=nvidia ${imageName} pytest tests"
+                sh "docker run --runtime=nvidia ${imageName} pytest tests"
             }
         }
         stage('Push docker image to registry') {
