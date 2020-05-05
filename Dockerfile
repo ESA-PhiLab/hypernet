@@ -1,5 +1,5 @@
-#FROM nvidia/cuda:10.0-runtime-ubuntu18.04
-FROM nvidia/cuda
+FROM nvidia/cuda:10.0-runtime-ubuntu18.04
+#FROM nvidia/cuda
 #ARG cuda_version=10.0
 #
 #FROM hub.kplabs.pl/cudaconda:${cuda_version}.1-runtime
