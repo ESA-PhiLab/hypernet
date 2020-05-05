@@ -27,7 +27,7 @@ pipeline {
     stages {
         stage('Build docker') {
             steps {
-                sh "docker build . -t ${imageName}"
+                sh "docker run --rm --runtime=nvidia nvidia/cuda nvidia-smi"
             }
         }
         stage('Check GPU') {
