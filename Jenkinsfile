@@ -37,7 +37,7 @@ pipeline {
         }
         stage('Unit testing') {
             steps {
-                sh "docker run --gpus all --runtime=nvidia ${imageName} pytest tests"
+                sh "docker run --gpus all --runtime=nvidia ${imageName} pytest --durations=0 tests"
             }
         }
         stage('Push docker image to registry') {
