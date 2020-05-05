@@ -3,15 +3,17 @@ Perform the inference of the model on the testing dataset.
 """
 
 import os
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 import clize
 import numpy as np
 import tensorflow as tf
+from clize.parameters import multi
 from sklearn import metrics
 
 from ml_intuition import enums
 from ml_intuition.data import io, transforms, utils
+from ml_intuition.data.noise import get_noise_functions
 from ml_intuition.evaluation.performance_metrics import (
     compute_metrics, mean_per_class_accuracy)
 from ml_intuition.evaluation.time_metrics import timeit
@@ -20,19 +22,33 @@ BATCH_SIZE = 1
 
 
 def evaluate(*,
+             data,
              model_path: str,
-             data: Union[str, Dict],
              dest_path: str,
              verbose: int = 1,
-             n_classes: int):
+             n_classes: int,
+             noise: ('post', multi(min=0)),
+             noise_sets: ('spost', multi(min=0)),
+             noise_params: str = None):
     """
     Function for evaluating the trained model.
 
     :param model_path: Path to the model.
     :param data: Either path to the input data or the data dict.
     :param dest_path: Directory in which to store the calculated matrics
-    :param verbose: Verbosity mode used in training, (0, 1 or 2).
+    :param verbose: Verbosity mode used in inference, (0, 1 or 2).
     :param n_classes: Number of classes.
+    :param noise: List containing names of used noise injection methods
+        that are performed after the normalization transformations.
+    :param noise_sets: List of sets that are affected by the noise injecton.
+        For this module single element can be "test".
+    :param noise_params: JSON containing the parameters
+        setting of noise injection methods.
+        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        This JSON should include all parameters for noise injection
+        functions that are specified in the noise argument.
+        For the accurate description of each parameter, please
+        refer to the ml_intuition/data/noise.py module.
     """
     if type(data) is str:
         test_dict = io.extract_set(data, enums.Dataset.TEST)
@@ -44,14 +60,15 @@ def evaluate(*,
     else:
         min_value, max_value = data[enums.DataStats.MIN], \
             data[enums.DataStats.MAX]
+    transformations = [transforms.SpectralTransform(),
+                       transforms.OneHotEncode(n_classes=n_classes),
+                       transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
+    transformations = transformations + get_noise_functions(noise, noise_params) \
+        if enums.Dataset.TEST in noise_sets else transformations
     test_dataset, n_test = \
         utils.create_tf_dataset(BATCH_SIZE,
                                 test_dict,
-                                [transforms.SpectralTransform(),
-                                 transforms.OneHotEncode(n_classes=n_classes),
-                                 transforms.MinMaxNormalize(
-                                     min_=min_value,
-                                     max_=max_value)])
+                                transformations)
 
     model = tf.keras.models.load_model(model_path, compile=True)
     model.predict = timeit(model.predict)
@@ -61,7 +78,7 @@ def evaluate(*,
         steps=n_test // BATCH_SIZE)
 
     y_pred = tf.Session().run(tf.argmax(y_pred, axis=-1))
-    y_true = test_dict[enums.Dataset.LABELS]
+    y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 
     custom_metrics = [
         metrics.accuracy_score,

@@ -2,13 +2,16 @@
 Run experiments given set of hyperparameters.
 """
 
+import json
 import os
 
 import clize
 import tensorflow as tf
+from clize.parameters import multi
 from scripts import evaluate_model, prepare_data, train_model
 
 from ml_intuition import enums
+from ml_intuition.data import noise
 
 
 def run_experiments(*,
@@ -33,7 +36,12 @@ def run_experiments(*,
                     epochs: int = 10,
                     verbose: int = 1,
                     shuffle: bool = True,
-                    patience: int = 3):
+                    patience: int = 3,
+                    pre_noise: ('pre', multi(min=0)),
+                    pre_noise_sets: ('spre', multi(min=0)),
+                    post_noise: ('post', multi(min=0)),
+                    post_noise_sets: ('spost', multi(min=0)),
+                    noise_params: str = None):
     """
     Function for running experiments given a set of hyperparameters.
     :param data_file_path: Path to the data file. Supported types are: .npy
@@ -78,6 +86,20 @@ def run_experiments(*,
      dataset_key each epoch.
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
+    :param pre_noise: The list of names of noise injection methods before
+        the normalization transformations. Examplary names are "gaussian"
+        or "impulsive".
+    :param pre_noise_sets: The list of sets to which the noise will be
+        injected. One element can either be "train", "val" or "test".
+    :param post_noise: The list of names of noise injection metods after
+        the normalization transformations.
+    :param post_noise_sets: The list of sets to which the noise will be injected.
+    :param noise_params: JSON containing the parameter setting of injection methods.
+        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        This JSON should include all parameters for noise injection
+        functions that are specified in pre_noise and post_noise arguments.
+        For the accurate description of each parameter, please
+        refer to the ml_intuition/data/noise.py module.
     """
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
@@ -102,6 +124,10 @@ def run_experiments(*,
         if not save_data:
             data_source = data
 
+        if len(pre_noise) > 0:
+            noise.inject_noise(data_source=data_source, affected_subsets=pre_noise_sets,
+                               noise_injectors=pre_noise, noise_params=noise_params)
+
         train_model.train(model_name=model_name,
                           kernel_size=kernel_size,
                           n_kernels=n_kernels,
@@ -115,14 +141,20 @@ def run_experiments(*,
                           epochs=epochs,
                           verbose=verbose,
                           shuffle=shuffle,
-                          patience=patience)
+                          patience=patience,
+                          noise=post_noise,
+                          noise_sets=pre_noise_sets,
+                          noise_params=noise_params)
 
         evaluate_model.evaluate(
             model_path=os.path.join(experiment_dest_path, model_name),
             data=data_source,
             dest_path=experiment_dest_path,
             verbose=verbose,
-            n_classes=n_classes)
+            n_classes=n_classes,
+            noise=post_noise,
+            noise_sets=pre_noise_sets,
+            noise_params=noise_params)
 
         tf.keras.backend.clear_session()
 
