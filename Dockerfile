@@ -1,12 +1,12 @@
-#FROM nvidia/cuda:10.0-runtime-ubuntu18.04
 #FROM nvidia/cuda
 #ARG cuda_version=10.0
 
 #FROM hub.kplabs.pl/cudaconda:${cuda_version}.1-runtime
 
-FROM ubuntu:18.04
+#FROM ubuntu:18.04
 
 FROM continuumio/miniconda3
+FROM nvidia/cuda:10.0-runtime-ubuntu18.04
 ADD environment.yml environment.yml
 RUN conda env update -f environment.yml
 
