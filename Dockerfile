@@ -1,16 +1,16 @@
 #FROM nvidia/cuda:10.0-runtime-ubuntu18.04
 #FROM nvidia/cuda
 ARG cuda_version=10.0
-#
+
 FROM hub.kplabs.pl/cudaconda:${cuda_version}.1-runtime
 
 #FROM ubuntu:18.04
 
-FROM continuumio/miniconda3
+#FROM continuumio/miniconda3
 ADD environment.yml environment.yml
 RUN conda env update -f environment.yml
-#
- Make RUN commands use the new environment:
+
+# Make RUN commands use the new environment:
 SHELL ["conda", "run", "-n", "decent", "/bin/bash", "-c"]
 
 #RUN apt-get -y update && apt-get -y --force-yes install gnupg
