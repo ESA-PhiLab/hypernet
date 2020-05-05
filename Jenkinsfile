@@ -32,7 +32,7 @@ pipeline {
         }
         stage('Check GPU') {
             steps {
-                sh "docker run --gpus all ${imageName} nvidia-smi"
+                sh "docker run --gpus all --runtime=nvidia ${imageName} nvidia-smi"
             }
         }
         stage('Unit testing') {
