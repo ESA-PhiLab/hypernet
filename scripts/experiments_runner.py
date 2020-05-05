@@ -18,6 +18,7 @@ def run_experiments(*,
                     data_file_path: str,
                     ground_truth_path: str,
                     train_size: float = 0.8,
+                    train_num: ('tr', multi(min=0)),
                     val_size: float = 0.1,
                     stratified: bool = True,
                     background_label: int = 0,
@@ -110,7 +111,8 @@ def run_experiments(*,
             data_source = None
 
         os.makedirs(experiment_dest_path, exist_ok=True)
-
+        if len(train_num) > 0:
+            train_size = list(map(float, train_num))
         data = prepare_data.main(data_file_path=data_file_path,
                                  ground_truth_path=ground_truth_path,
                                  output_path=data_source,
