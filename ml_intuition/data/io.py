@@ -13,6 +13,7 @@ import tensorflow as tf
 import tifffile
 
 import ml_intuition.enums as enums
+from ml_intuition.data.utils import build_data_dict
 
 
 def load_metrics(experiments_path: str) -> Dict[List, List]:
@@ -89,6 +90,26 @@ def load_satellite_h5(data_file_path: str) -> Tuple[np.ndarray, np.ndarray]:
         cube = file[enums.SatelliteH5Keys.CUBE][:]
         cube_to_gt_transform = file[enums.SatelliteH5Keys.GT_TRANSFORM_MAT][:]
     return cube, cube_to_gt_transform
+
+
+def load_processed_h5(data_file_path: str) -> Dict:
+    """
+    Load procesed dataset containing the train, validation and test subsets
+    with corresponding samples and labels.
+    :param data_file_path: Path to the .h5 file.
+    :return: Dictionary containing train, validation and test subsets.
+    """
+    with h5py.File(data_file_path, 'r') as file:
+        train_x, train_y, val_x, val_y, test_x, test_y = \
+            file[enums.Dataset.TRAIN][enums.Dataset.DATA][:], \
+            file[enums.Dataset.TRAIN][enums.Dataset.LABELS][:],\
+            file[enums.Dataset.VAL][enums.Dataset.DATA][:], \
+            file[enums.Dataset.VAL][enums.Dataset.LABELS][:],\
+            file[enums.Dataset.TEST][enums.Dataset.DATA][:], \
+            file[enums.Dataset.TEST][enums.Dataset.LABELS][:]
+    return build_data_dict(train_x=train_x, train_y=train_y,
+                           val_x=val_x, val_y=val_y,
+                           test_x=test_x, test_y=test_y)
 
 
 def load_tiff(file_path: str) -> np.ndarray:

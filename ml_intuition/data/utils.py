@@ -201,7 +201,7 @@ def build_data_dict(train_x, train_y, val_x, val_y, test_x, test_y) -> Dict:
     :param val_y: Validation labels
     :param test_x: Test set
     :param test_y: Test labels
-    :return:
+    :return: Dictionary containing train, validation and test subsets.
     """
     data_dict = {}
     train_min, train_max = np.amin(train_x), np.amax(train_x)
