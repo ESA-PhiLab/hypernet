@@ -22,7 +22,10 @@ def run_experiments(*,
                     dest_path: str,
                     models_path: str,
                     n_classes: int,
-                    verbose: int = 2):
+                    verbose: int = 2,
+                    pre_noise_sets: ('spre', clize.multi(min=0)),
+                    post_noise: ('post', clize.multi(min=0)),
+                    noise_params: str = None):
     """
     Function for running experiments given a set of hyperparameters.
     :param data_file_path: Path to the data file. Supported types are: .npy
@@ -54,6 +57,16 @@ def run_experiments(*,
         dictionary holding all functions returning models.
     :param n_classes: Number of classes.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
+    :param pre_noise_sets: The list of sets to which the noise will be
+        injected. One element can either be "train", "val" or "test".
+    :param post_noise: The list of names of noise injection methods after
+        the normalization transformations.
+    :param noise_params: JSON containing the parameter setting of injection methods.
+        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        This JSON should include all parameters for noise injection
+        functions that are specified in pre_noise and post_noise arguments.
+        For the accurate description of each parameter, please
+        refer to the ml_intuition/data/noise.py module.
     """
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
@@ -86,7 +99,10 @@ def run_experiments(*,
             data=data_source,
             dest_path=experiment_dest_path,
             verbose=verbose,
-            n_classes=n_classes)
+            n_classes=n_classes,
+            noise=post_noise,
+            noise_sets=pre_noise_sets,
+            noise_params=noise_params)
 
         tf.keras.backend.clear_session()
 
