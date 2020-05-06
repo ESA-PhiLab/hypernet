@@ -113,7 +113,7 @@ def run_experiments(*,
         os.makedirs(experiment_dest_path, exist_ok=True)
         if len(train_size) == 0:
             train_size = 0.8
-        if data_file_path.endswith('h5') and ground_truth_path is None:
+        if data_file_path.endswith('.h5') and ground_truth_path is None:
             data = load_processed_h5(data_file_path=data_file_path)
         else:
             data = prepare_data.main(data_file_path=data_file_path,
