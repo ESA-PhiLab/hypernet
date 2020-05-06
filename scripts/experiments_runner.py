@@ -12,11 +12,12 @@ from scripts import evaluate_model, prepare_data, train_model
 
 from ml_intuition import enums
 from ml_intuition.data import noise
+from ml_intuition.data.io import load_processed_h5
 
 
 def run_experiments(*,
                     data_file_path: str,
-                    ground_truth_path: str,
+                    ground_truth_path: str = None,
                     train_size: ('train_size', multi(min=0)),
                     val_size: float = 0.1,
                     stratified: bool = True,
@@ -112,16 +113,19 @@ def run_experiments(*,
         os.makedirs(experiment_dest_path, exist_ok=True)
         if len(train_size) == 0:
             train_size = 0.8
-        data = prepare_data.main(data_file_path=data_file_path,
-                                 ground_truth_path=ground_truth_path,
-                                 output_path=data_source,
-                                 train_size=train_size,
-                                 val_size=val_size,
-                                 stratified=stratified,
-                                 background_label=background_label,
-                                 channels_idx=channels_idx,
-                                 save_data=save_data,
-                                 seed=experiment_id)
+        if data_file_path.endswith('h5') and ground_truth_path is None:
+            data = load_processed_h5(data_file_path=data_file_path)
+        else:
+            data = prepare_data.main(data_file_path=data_file_path,
+                                     ground_truth_path=ground_truth_path,
+                                     output_path=data_source,
+                                     train_size=train_size,
+                                     val_size=val_size,
+                                     stratified=stratified,
+                                     background_label=background_label,
+                                     channels_idx=channels_idx,
+                                     save_data=save_data,
+                                     seed=experiment_id)
         if not save_data:
             data_source = data
 
