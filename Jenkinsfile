@@ -30,9 +30,14 @@ pipeline {
                 sh "docker build . -t ${imageName}"
             }
         }
+        stage('Check GPU') {
+            steps {
+                sh "docker run --gpus all ${imageName} bash -c nvidia-smi"
+            }
+        }
         stage('Unit testing') {
             steps {
-                sh "docker run ${imageName} pytest tests"
+                sh "docker run --gpus all ${imageName} bash -c pytest -v --capture=tee-sys --durations=0 tests"
             }
         }
         stage('Push docker image to registry') {

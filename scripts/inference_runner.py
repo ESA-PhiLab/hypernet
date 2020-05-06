@@ -22,7 +22,7 @@ def run_experiments(*,
                     dest_path: str,
                     models_path: str,
                     n_classes: int,
-                    verbose: int = 1):
+                    verbose: int = 2):
     """
     Function for running experiments given a set of hyperparameters.
     :param data_file_path: Path to the data file. Supported types are: .npy
