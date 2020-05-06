@@ -14,7 +14,7 @@ import ml_intuition.data.preprocessing as preprocessing
 import ml_intuition.data.io as io
 import ml_intuition.data.utils as utils
 import ml_intuition.enums as enums
-
+from typing import Union, List
 EXTENSION = 1
 
 
@@ -22,7 +22,7 @@ def main(*,
          data_file_path: str,
          ground_truth_path: str,
          output_path: str = None,
-         train_size: float = 0.8,
+         train_size: Union[List, float, int] = 0.8,
          val_size: float = 0.1,
          stratified: bool = True,
          background_label: int = 0,

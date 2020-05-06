@@ -3,23 +3,25 @@ Perform the training of the model.
 """
 
 import os
-from typing import Dict, Union
+from typing import Dict, List, Union
 
 import clize
 import numpy as np
 import tensorflow as tf
+from clize.parameters import multi
 
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms, utils
+from ml_intuition.data.noise import get_noise_functions
 from ml_intuition.evaluation import time_metrics
 
 
 def train(*,
+          data,
           model_name: str,
           dest_path: str,
           sample_size: int,
           n_classes: int,
-          data: Union[str, Dict],
           kernel_size: int = 3,
           n_kernels: int = 16,
           n_layers: int = 1,
@@ -28,7 +30,10 @@ def train(*,
           epochs: int = 10,
           verbose: int = 2,
           shuffle: bool = True,
-          patience: int = 3):
+          patience: int = 3,
+          noise: ('post', multi(min=0)),
+          noise_sets: ('spost', multi(min=0)),
+          noise_params: str = None):
     """
     Function for training tensorflow models given a dataset.
 
@@ -52,31 +57,45 @@ def train(*,
      dataset_key each epoch.
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
-
+    :param noise: List containing names of used noise injection methods
+        that are performed after the normalization transformations.
+    :param noise_sets: List of sets that are affected by the noise injecton methods.
+        For this module single element can be either "train" or "val".
+    :param noise_params: JSON containing the parameters setting of injection methods.
+        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        This JSON should include all parameters for noise injection
+        functions that are specified in the noise argument.
+        For the accurate description of each parameter, please
+        refer to the ml_intuition/data/noise.py module.
     """
     if type(data) is str:
         train_dict = io.extract_set(data, enums.Dataset.TRAIN)
         val_dict = io.extract_set(data, enums.Dataset.VAL)
         min_, max_ = train_dict[enums.DataStats.MIN], \
-                     train_dict[enums.DataStats.MAX]
+            train_dict[enums.DataStats.MAX]
     else:
         train_dict = data[enums.Dataset.TRAIN]
         val_dict = data[enums.Dataset.VAL]
         min_, max_ = data[enums.DataStats.MIN], \
-                     data[enums.DataStats.MAX]
+            data[enums.DataStats.MAX]
 
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_, max_=max_)]
 
+    tr_transformations = transformations + get_noise_functions(noise, noise_params) \
+        if enums.Dataset.TRAIN in noise_sets else transformations
+    val_transformations = transformations + get_noise_functions(noise, noise_params) \
+        if enums.Dataset.VAL in noise_sets else transformations
+
     train_dataset, n_train = \
         utils.create_tf_dataset(batch_size,
                                 train_dict,
-                                transformations)
+                                tr_transformations)
     val_dataset, n_val = \
         utils.create_tf_dataset(batch_size,
                                 val_dict,
-                                transformations)
+                                val_transformations)
 
     if shuffle:
         train_dataset = train_dataset.shuffle(batch_size)

@@ -1,4 +1,11 @@
+import enum
+
 import aenum
+
+
+class Sample(enum.IntEnum):
+    SAMPLES_DIM = 0
+    FEATURES_DIM = 1
 
 
 class Experiment(aenum.Constant):
