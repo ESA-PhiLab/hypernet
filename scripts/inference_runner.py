@@ -6,6 +6,7 @@ import os
 
 import clize
 import tensorflow as tf
+from clize.parameters import multi
 from scripts import evaluate_model, prepare_data
 
 
@@ -23,8 +24,8 @@ def run_experiments(*,
                     models_path: str,
                     n_classes: int,
                     verbose: int = 2,
-                    pre_noise_sets: ('spre', clize.multi(min=0)),
-                    post_noise: ('post', clize.multi(min=0)),
+                    pre_noise_sets: ('spre', multi(min=0)),
+                    post_noise: ('post', multi(min=0)),
                     noise_params: str = None):
     """
     Function for running experiments given a set of hyperparameters.
