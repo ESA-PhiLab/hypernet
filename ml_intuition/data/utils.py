@@ -137,7 +137,7 @@ def _get_set_indices(labels: np.ndarray, size: Union[List, float, int] = 0.8,
                 label_indices[label] = label_indices[label][:int(size)]
             train_indices = np.concatenate(label_indices, axis=0)
         elif size >= 1 and stratified is False:
-            train_indices = np.arange(size)
+            train_indices = np.arange(size, dtype=int)
     elif isinstance(size, list):
         size = list(map(float, size))
         for n_samples, label in zip(size, range(len(unique_labels))):

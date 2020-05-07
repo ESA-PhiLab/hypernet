@@ -51,6 +51,41 @@ def model_2d(kernel_size: int,
     return model
 
 
+def pool_model_2d(kernel_size: int,
+                  n_kernels: int,
+                  n_layers: int,
+                  input_size: int,
+                  n_classes: int) -> tf.keras.Sequential:
+    """
+    2D model which consists of 2D convolutional layers and 2D pooling layers.
+
+    :param kernel_size: Size of the convolutional kernel.
+    :param n_kernels: Number of kernels, i.e., the activation maps in each layer.
+    :param n_layers: Number of layers in the network.
+    :param input_size: Number of input channels, i.e., the number of spectral bands.
+    :param n_classes: Number of classes.
+    """
+
+    def add_layer(model):
+        model.add(tf.keras.layers.Conv2D(n_kernels, (kernel_size, 1),
+                                         strides=(2, 1),
+                                         input_shape=(input_size, 1, 1),
+                                         padding="valid",
+                                         activation='relu'))
+        model.add(tf.keras.layers.BatchNormalization()),
+        model.add(tf.keras.layers.MaxPool2D(pool_size=(2, 1), strides=(1, 1)))
+        return model
+    model = tf.keras.Sequential()
+
+    for _ in range(n_layers):
+        model = add_layer(model)
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(units=256, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=64, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
+    return model
+
+
 def get_model(model_key: str, kernel_size: int, n_kernels: int,
               n_layers: int, input_size: int, n_classes: int):
     """
