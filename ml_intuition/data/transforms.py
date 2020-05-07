@@ -36,7 +36,7 @@ class SpectralTransform(BaseTransform):
         :param label: Class value for each sample.
         :return: List containing the transformed sample and the class label.
         """
-        return [np.expand_dims(sample.astype(np.float), -1), label]
+        return [np.expand_dims(sample.astype(np.float32), -1), label]
 
 
 class OneHotEncode(BaseTransform):
@@ -59,7 +59,7 @@ class OneHotEncode(BaseTransform):
         """
         out_label = np.zeros((label.size, self.n_classes))
         out_label[np.arange(label.size), label] = 1
-        return [sample, out_label.astype(np.uint)]
+        return [sample, out_label.astype(np.uint8)]
 
 
 class MinMaxNormalize(BaseTransform):

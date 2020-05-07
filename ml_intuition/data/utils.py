@@ -90,7 +90,6 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     shuffle_arrays_together([data, labels], seed=seed)
     train_indices = _get_set_indices(labels, train_size, stratified)
     val_indices = _get_set_indices(labels[train_indices], val_size)
-    val_indices = train_indices[val_indices]
     test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
     train_indices = np.setdiff1d(train_indices, val_indices)
     return data[train_indices], labels[train_indices], data[val_indices], \
@@ -137,7 +136,7 @@ def _get_set_indices(labels: np.ndarray, size: Union[List, float, int] = 0.8,
                 label_indices[label] = label_indices[label][:int(size)]
             train_indices = np.concatenate(label_indices, axis=0)
         elif size >= 1 and stratified is False:
-            train_indices = np.arange(size)
+            train_indices = np.arange(size, dtype=int)
     elif isinstance(size, list):
         size = list(map(float, size))
         for n_samples, label in zip(size, range(len(unique_labels))):
