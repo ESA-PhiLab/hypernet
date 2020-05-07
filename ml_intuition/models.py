@@ -80,8 +80,8 @@ def pool_model_2d(kernel_size: int,
     for _ in range(n_layers):
         model = add_layer(model)
     model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(units=256, activation='relu'))
-    model.add(tf.keras.layers.Dense(units=64, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=128, activation='relu'))
     model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
     return model
 
