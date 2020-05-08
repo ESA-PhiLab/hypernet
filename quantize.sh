@@ -9,13 +9,15 @@
 #   5: Input function for calibrating network data input
 #   6: Batch size
 #   7: Output directory
+#   8: GPU
+
 
 INPUT_NODE_NAME=$(jq -r '.input_node' "$1")
 OUTPUT_NODE_NAME=$(jq -r '.output_node' "$1")
 
 export INPUT_NODE_NAME
 export DATA_PATH=$3
-export BATCH_SIZE=$6
+export BATCH_SIZE="$6"
 
 decent_q quantize \
  --input_frozen_graph "$2" \
@@ -24,6 +26,6 @@ decent_q quantize \
  --output_nodes "$OUTPUT_NODE_NAME" \
  --input_fn "$5" \
  --method 1 \
- --gpu 0 \
+ --gpu "$8" \
  --calib_iter 10 \
  --output_dir "$7" \
