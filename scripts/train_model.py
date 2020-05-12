@@ -116,7 +116,7 @@ def train(*,
     time_history = time_metrics.TimeHistory()
     mcp_save = tf.keras.callbacks.ModelCheckpoint(
         os.path.join(dest_path, model_name), save_best_only=True,
-        monitor='val_loss', mode='min')
+        monitor='val_acc', mode='max')
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=patience)
     history = model.fit(x=train_dataset.make_one_shot_iterator(),

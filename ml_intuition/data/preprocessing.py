@@ -29,8 +29,9 @@ def reshape_cube_to_2d_samples(data: np.ndarray,
     :return: Reshape data and labels
     :rtype: tuple with reshaped data and labels
     """
-    data = data.reshape(data.shape[channels_idx], -1)
-    data = np.moveaxis(data, -1, 0)
+    data = np.rollaxis(data, channels_idx, len(data.shape))
+    height, width, channels = data.shape
+    data = data.reshape(height * width, channels)
     data = np.expand_dims(data, -1)
     labels = labels.reshape(-1)
     return data, labels
