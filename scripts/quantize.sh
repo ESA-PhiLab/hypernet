@@ -27,5 +27,5 @@ decent_q quantize \
  --input_fn "$5" \
  --method 1 \
  --gpu "$8" \
- --calib_iter 10 \
+ --calib_iter 15 \
  --output_dir "$7" \
