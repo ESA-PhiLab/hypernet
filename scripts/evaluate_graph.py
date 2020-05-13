@@ -42,10 +42,9 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str):
         node_names[enums.NodeNames.OUTPUT] + ':0')
 
     with tf.Session(graph=graph) as session:
-        predict = timeit(session.run)
-        predictions, inference_time = predict(output_node,
-                                              feed_dict={input_node: test_data})
-        predictions = session.run(tf.argmax(predictions, axis=-1))
+        predict = timeit(utils.predict_with_graph_in_batches)
+        predictions, inference_time = predict(session, input_node, output_node,
+                                              test_data)
 
     graph_metrics = compute_metrics(test_dataset[enums.Dataset.LABELS],
                                     predictions, METRICS)

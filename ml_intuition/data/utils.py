@@ -263,3 +263,15 @@ def restructure_per_class_accuracy(metrics: Dict[str, List[float]]) -> Dict[
         metrics.update(per_class_acc)
         del metrics[MEAN_PER_CLASS_ACC]
     return metrics
+
+
+def predict_with_graph_in_batches(session: tf.Session, input_node: str,
+                                  output_node: str, data: np.ndarray,
+                                  batch_size: int = 1024):
+    batches = np.array_split(data, len(data) // batch_size)
+    outputs = []
+    for batch in batches:
+        prediction = session.run(output_node, feed_dict={input_node: batch})
+        prediction = session.run(tf.argmax(prediction, axis=-1))
+        outputs.append(prediction)
+    return np.concatenate(outputs, axis=0)
