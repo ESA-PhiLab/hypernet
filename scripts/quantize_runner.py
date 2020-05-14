@@ -17,6 +17,7 @@ def run_experiments(*,
                     dest_path: str,
                     data_file_path: str = None,
                     ground_truth_path: str = None,
+                    dataset_path: str = None,
                     background_label: int = 0,
                     channels_idx: int = 2,
                     channels_count: int = 103,
@@ -35,6 +36,7 @@ def run_experiments(*,
         .md5. This is optional, if the data is not already saved in the
         input_dir.
     :param ground_truth_path: Path to the data file.
+    :param dataset_path: Path to the already extracted .h5 dataset
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
                          data
@@ -61,8 +63,13 @@ def run_experiments(*,
         model_path = os.path.join(input_dir,
                                   'experiment_' + str(experiment_id),
                                   'model_2d')
-        data_path = os.path.join(input_dir, 'experiment_' + str(experiment_id),
-                                 'data.h5')
+        created_dataset = False
+        if dataset_path is None:
+            data_path = os.path.join(input_dir, 'experiment_' + str(experiment_id),
+                                     'data.h5')
+            created_dataset = True
+        else:
+            data_path = dataset_path
         os.makedirs(experiment_dest_path, exist_ok=True)
 
         if not os.path.exists(data_path):
@@ -97,7 +104,8 @@ def run_experiments(*,
         evaluate_graph.main(graph_path=graph_path,
                             node_names_path=node_names_file,
                             dataset_path=data_path)
-        os.remove(data_path)
+        if created_dataset:
+            os.remove(data_path)
         tf.keras.backend.clear_session()
 
 
