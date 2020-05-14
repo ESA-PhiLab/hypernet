@@ -3,7 +3,6 @@ Perform the training of the model.
 """
 
 import os
-from typing import Dict, List, Union
 
 import clize
 import numpy as np
@@ -31,6 +30,7 @@ def train(*,
           verbose: int = 2,
           shuffle: bool = True,
           patience: int = 3,
+          seed: int = 0,
           noise: ('post', multi(min=0)),
           noise_sets: ('spost', multi(min=0)),
           noise_params: str = None):
@@ -57,6 +57,7 @@ def train(*,
      dataset_key each epoch.
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
+    :param seed: Seed for training reproducibility.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
     :param noise_sets: List of sets that are affected by the noise injecton methods.
@@ -68,6 +69,12 @@ def train(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     """
+
+    # Reproducibility
+    tf.reset_default_graph()
+    tf.set_random_seed(seed=seed)
+    np.random.seed(seed=seed)
+
     if type(data) is str:
         train_dict = io.extract_set(data, enums.Dataset.TRAIN)
         val_dict = io.extract_set(data, enums.Dataset.VAL)
