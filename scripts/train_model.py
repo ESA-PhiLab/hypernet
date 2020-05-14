@@ -71,9 +71,9 @@ def train(*,
     """
 
     # Reproducibility
+    tf.reset_default_graph()
     tf.set_random_seed(seed=seed)
     np.random.seed(seed=seed)
-    tf.reset_default_graph()
 
     if type(data) is str:
         train_dict = io.extract_set(data, enums.Dataset.TRAIN)

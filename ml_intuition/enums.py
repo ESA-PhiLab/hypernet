@@ -10,6 +10,7 @@ class Sample(enum.IntEnum):
 
 class Experiment(aenum.Constant):
     INFERENCE_METRICS = 'inference_metrics.csv'
+    INFERENCE_GRAPH_METRICS = 'inference_graph_metrics.csv'
     EXPERIMENT = 'experiment'
 
 
