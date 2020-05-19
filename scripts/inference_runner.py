@@ -77,30 +77,25 @@ def run_experiments(*,
         model_path = os.path.join(models_path,
                                   'experiment_' + str(experiment_id),
                                   'model_2d')
-        created_dataset = False
         if dataset_path is None:
-            data_path = os.path.join(models_path,
-                                     'experiment_' + str(experiment_id),
-                                     'data.h5')
-            created_dataset = True
+            data_source = os.path.join(models_path,
+                                       'experiment_' + str(experiment_id),
+                                       'data.h5')
         else:
-            data_path = dataset_path
+            data_source = dataset_path
         os.makedirs(experiment_dest_path, exist_ok=True)
 
-        if not os.path.exists(data_path):
-            data = prepare_data.main(data_file_path=data_file_path,
-                                     ground_truth_path=ground_truth_path,
-                                     output_path=data_source,
-                                     train_size=train_size,
-                                     val_size=val_size,
-                                     stratified=stratified,
-                                     background_label=background_label,
-                                     channels_idx=channels_idx,
-                                     save_data=save_data,
-                                     seed=experiment_id)
-
-        if not save_data:
-            data_source = data
+        if not os.path.exists(data_source):
+            data_source = prepare_data.main(data_file_path=data_file_path,
+                                            ground_truth_path=ground_truth_path,
+                                            output_path=data_source,
+                                            train_size=train_size,
+                                            val_size=val_size,
+                                            stratified=stratified,
+                                            background_label=background_label,
+                                            channels_idx=channels_idx,
+                                            save_data=save_data,
+                                            seed=experiment_id)
 
         evaluate_model.evaluate(
             model_path=model_path,
@@ -111,8 +106,6 @@ def run_experiments(*,
             noise_sets=pre_noise_sets,
             noise_params=noise_params)
 
-        if created_dataset:
-            os.remove(data_path)
         tf.keras.backend.clear_session()
 
 
