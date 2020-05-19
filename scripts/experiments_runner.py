@@ -130,8 +130,10 @@ def run_experiments(*,
             data_source = data
 
         if len(pre_noise) > 0:
-            noise.inject_noise(data_source=data_source, affected_subsets=pre_noise_sets,
-                               noise_injectors=pre_noise, noise_params=noise_params)
+            noise.inject_noise(data_source=data_source,
+                               affected_subsets=pre_noise_sets,
+                               noise_injectors=pre_noise,
+                               noise_params=noise_params)
 
         train_model.train(model_name=model_name,
                           kernel_size=kernel_size,
@@ -155,7 +157,6 @@ def run_experiments(*,
             model_path=os.path.join(experiment_dest_path, model_name),
             data=data_source,
             dest_path=experiment_dest_path,
-            verbose=verbose,
             n_classes=n_classes,
             noise=post_noise,
             noise_sets=pre_noise_sets,

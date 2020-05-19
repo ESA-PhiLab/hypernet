@@ -275,3 +275,15 @@ def predict_with_graph_in_batches(session: tf.Session, input_node: str,
         prediction = session.run(tf.argmax(prediction, axis=-1))
         outputs.append(prediction)
     return np.concatenate(outputs, axis=0)
+
+
+def predict_with_model_in_batches(model: tf.keras.Model,
+                                  data: np.ndarray,
+                                  batch_size: int = 1024):
+    batches = np.array_split(data, len(data) // batch_size)
+    outputs = []
+    for batch in batches:
+        prediction = model.predict(batch, batch_size=batch_size)
+        prediction = np.argmax(prediction, axis=-1)
+        outputs.append(prediction)
+    return np.concatenate(outputs, axis=0)

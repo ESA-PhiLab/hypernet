@@ -13,6 +13,7 @@ from scripts import evaluate_model, prepare_data
 def run_experiments(*,
                     data_file_path: str,
                     ground_truth_path: str,
+                    dataset_path: str = None,
                     train_size: float = 0.8,
                     val_size: float = 0.1,
                     stratified: bool = True,
@@ -31,6 +32,7 @@ def run_experiments(*,
     Function for running experiments given a set of hyperparameters.
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the ground-truth data file.
+    :param dataset_path: Path to the already extracted .h5 dataset
     :param train_size: If float, should be between 0.0 and 1.0,
                         if stratified = True, it represents percentage of each
                         class to be extracted,
@@ -75,22 +77,27 @@ def run_experiments(*,
         model_path = os.path.join(models_path,
                                   'experiment_' + str(experiment_id),
                                   'model_2d')
-        if save_data:
-            data_source = os.path.join(experiment_dest_path, 'data.h5')
+        created_dataset = False
+        if dataset_path is None:
+            data_path = os.path.join(models_path,
+                                     'experiment_' + str(experiment_id),
+                                     'data.h5')
+            created_dataset = True
         else:
-            data_source = None
+            data_path = dataset_path
         os.makedirs(experiment_dest_path, exist_ok=True)
 
-        data = prepare_data.main(data_file_path=data_file_path,
-                                 ground_truth_path=ground_truth_path,
-                                 output_path=data_source,
-                                 train_size=train_size,
-                                 val_size=val_size,
-                                 stratified=stratified,
-                                 background_label=background_label,
-                                 channels_idx=channels_idx,
-                                 save_data=save_data,
-                                 seed=experiment_id)
+        if not os.path.exists(data_path):
+            data = prepare_data.main(data_file_path=data_file_path,
+                                     ground_truth_path=ground_truth_path,
+                                     output_path=data_source,
+                                     train_size=train_size,
+                                     val_size=val_size,
+                                     stratified=stratified,
+                                     background_label=background_label,
+                                     channels_idx=channels_idx,
+                                     save_data=save_data,
+                                     seed=experiment_id)
 
         if not save_data:
             data_source = data
@@ -99,12 +106,13 @@ def run_experiments(*,
             model_path=model_path,
             data=data_source,
             dest_path=experiment_dest_path,
-            verbose=verbose,
             n_classes=n_classes,
             noise=post_noise,
             noise_sets=pre_noise_sets,
             noise_params=noise_params)
 
+        if created_dataset:
+            os.remove(data_path)
         tf.keras.backend.clear_session()
 
 
