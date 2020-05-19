@@ -26,15 +26,21 @@ def load_metrics(experiments_path: str) -> Dict[List, List]:
     all_metrics = {'metric_keys': [], 'metric_values': []}
     for experiment_dir in glob.glob(
             os.path.join(experiments_path, '{}*'.format(enums.Experiment.EXPERIMENT))):
-        with open(os.path.join(experiment_dir,
-                               enums.Experiment.INFERENCE_METRICS)) as metric_file:
+        if os.path.exists(os.path.join(experiment_dir,
+                               enums.Experiment.INFERENCE_METRICS)):
+            inference_metrics_path = os.path.join(experiment_dir,
+                               enums.Experiment.INFERENCE_METRICS)
+        else:
+            inference_metrics_path = os.path.join(experiment_dir,
+                               enums.Experiment.INFERENCE_GRAPH_METRICS)
+        with open(inference_metrics_path) as metric_file:
             reader = csv.reader(metric_file, delimiter=',')
             for row, key in zip(reader, all_metrics.keys()):
                 all_metrics[key].append(row)
     return all_metrics
 
 
-def save_metrics(dest_path: str, file_name: str, metrics: Dict[str, List]):
+def save_metrics(dest_path: str, metrics: Dict[str, List], file_name: str=None):
     """
     Save given dictionary of metrics.
 
@@ -42,7 +48,9 @@ def save_metrics(dest_path: str, file_name: str, metrics: Dict[str, List]):
     :param file_name: Name to save the file.
     :param metrics: Dictionary containing all metrics.
     """
-    with open(os.path.join(dest_path, file_name), 'w') as file:
+    if file_name is not None:
+        dest_path = os.path.join(dest_path, file_name)
+    with open(dest_path, 'w') as file:
         write = csv.writer(file)
         write.writerow(metrics.keys())
         write.writerows(zip(*metrics.values()))

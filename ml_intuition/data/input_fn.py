@@ -11,10 +11,6 @@ import numpy as np
 
 import ml_intuition.enums as enums
 
-dataset_path = os.environ.get('DATA_PATH')
-input_node_name = os.environ.get('INPUT_NODE_NAME')
-batch_size = int(os.environ.get('BATCH_SIZE'))
-
 
 def calibrate_2d_input(iter: int) -> Dict[str, np.ndarray]:
     """
@@ -25,6 +21,10 @@ def calibrate_2d_input(iter: int) -> Dict[str, np.ndarray]:
     :return: Dict with name of the input node as key and training samples in
              np.ndarray as value
     """
+    dataset_path = os.environ.get('DATA_PATH')
+    input_node_name = os.environ.get('INPUT_NODE_NAME')
+    batch_size = int(os.environ.get('BATCH_SIZE'))
+
     batch_start = iter * batch_size
     batch_end = iter * batch_size + batch_size
     with h5py.File(dataset_path, 'r') as file:
