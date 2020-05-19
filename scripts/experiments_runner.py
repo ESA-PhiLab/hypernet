@@ -2,10 +2,11 @@
 Run experiments given set of hyperparameters.
 """
 
-import json
 import os
+import shutil
 
 import clize
+import mlflow
 import tensorflow as tf
 from clize.parameters import multi
 from scripts import evaluate_model, prepare_data, train_model
@@ -29,7 +30,7 @@ def run_experiments(*,
                     n_kernels: int = 16,
                     save_data: bool = 0,
                     n_layers: int = 1,
-                    dest_path: str,
+                    dest_path: str = None,
                     sample_size: int,
                     n_classes: int,
                     lr: float = 0.005,
@@ -102,6 +103,22 @@ def run_experiments(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     """
+
+    mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
+
+    mlflow.set_experiment("First steps in MLFLow")
+
+    mlflow.start_run(run_name="beetle test run")
+
+    if dest_path is None:
+        dest_path = os.path.join(os.path.curdir, "temp_artifacts")
+
+    other_params = {"Batch size": batch_size,
+                    "Temp artifacts storage": dest_path,
+                    "stratified": stratified,
+                    "n_runs": n_runs}
+    mlflow.log_params(other_params)
+
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, '{}_{}'.format(enums.Experiment.EXPERIMENT, str(experiment_id)))
@@ -160,9 +177,12 @@ def run_experiments(*,
             noise=post_noise,
             noise_sets=pre_noise_sets,
             noise_params=noise_params)
-
         tf.keras.backend.clear_session()
+
+    mlflow.log_artifacts(dest_path)
+    shutil.rmtree(dest_path)
 
 
 if __name__ == '__main__':
     clize.run(run_experiments)
+

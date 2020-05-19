@@ -1,0 +1,26 @@
+def DOCKER_FLAGS = "--shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --gpus device=1 --rm"
+pipeline {
+    agent { label "${params.LABEL}" }
+
+    environment {
+        def scmVars = checkout scm
+        def commitHash = "${scmVars.GIT_COMMIT.take(7)}"
+        def imageName = "hub.kplabs.pl/machine-learning:${commitHash}"
+    }
+    options {
+        gitLabConnection('KPLabs Git')
+    }
+    stages {
+        stage('Build docker') {
+            steps {
+                sh "docker build . -t ${imageName}"
+            }
+        }
+        stage('RUN') {
+            steps {
+                sh "docker run ${DOCKER_FLAGS} -v /media/ML:/media/ML beetle:${imageName} bash -c ${params.COMMAND}"
+            }
+        }
+        }
+    }
+}
