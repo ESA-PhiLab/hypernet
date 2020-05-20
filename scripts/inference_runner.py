@@ -5,6 +5,7 @@ Run experiments given set of hyperparameters.
 import os
 
 import clize
+from clize.parameters import multi
 import tensorflow as tf
 from clize.parameters import multi
 from scripts import evaluate_model, prepare_data
@@ -14,7 +15,7 @@ def run_experiments(*,
                     data_file_path: str=None,
                     ground_truth_path: str=None,
                     dataset_path: str = None,
-                    train_size: float = 0.8,
+                    train_size: ('train_size', multi(min=0)),
                     val_size: float = 0.1,
                     stratified: bool = True,
                     background_label: int = 0,
