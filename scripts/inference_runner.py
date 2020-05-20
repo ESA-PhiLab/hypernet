@@ -11,8 +11,8 @@ from scripts import evaluate_model, prepare_data
 
 
 def run_experiments(*,
-                    data_file_path: str,
-                    ground_truth_path: str,
+                    data_file_path: str=None,
+                    ground_truth_path: str=None,
                     dataset_path: str = None,
                     train_size: float = 0.8,
                     val_size: float = 0.1,
