@@ -8,6 +8,7 @@ import clize
 import tensorflow as tf
 from clize.parameters import multi
 from scripts import evaluate_model, prepare_data
+from ml_intuition.data.io import load_processed_h5
 
 
 def run_experiments(*,
@@ -85,7 +86,10 @@ def run_experiments(*,
             data_source = dataset_path
         os.makedirs(experiment_dest_path, exist_ok=True)
 
-        if not os.path.exists(data_source):
+        if data_file_path.endswith('.h5') and ground_truth_path is None:
+            data = load_processed_h5(data_file_path=data_file_path)
+        
+        elif not os.path.exists(data_source):
             data_source = prepare_data.main(data_file_path=data_file_path,
                                             ground_truth_path=ground_truth_path,
                                             output_path=data_source,
@@ -96,7 +100,8 @@ def run_experiments(*,
                                             channels_idx=channels_idx,
                                             save_data=save_data,
                                             seed=experiment_id)
-
+        if not save_data:
+            data_source = data
         evaluate_model.evaluate(
             model_path=model_path,
             data=data_source,
