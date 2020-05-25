@@ -87,7 +87,7 @@ def run_experiments(*,
         os.makedirs(experiment_dest_path, exist_ok=True)
 
         if data_file_path.endswith('.h5') and ground_truth_path is None:
-            data = load_processed_h5(data_file_path=data_file_path)
+            data_source = load_processed_h5(data_file_path=data_file_path)
         
         elif not os.path.exists(data_source):
             data_source = prepare_data.main(data_file_path=data_file_path,
@@ -100,8 +100,7 @@ def run_experiments(*,
                                             channels_idx=channels_idx,
                                             save_data=save_data,
                                             seed=experiment_id)
-        if not save_data:
-            data_source = data
+
         evaluate_model.evaluate(
             model_path=model_path,
             data=data_source,
