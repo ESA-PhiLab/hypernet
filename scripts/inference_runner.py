@@ -5,15 +5,14 @@ Run experiments given set of hyperparameters.
 import os
 
 import clize
-from clize.parameters import multi
 import tensorflow as tf
 from clize.parameters import multi
 from scripts import evaluate_model, prepare_data
 
 
 def run_experiments(*,
-                    data_file_path: str=None,
-                    ground_truth_path: str=None,
+                    data_file_path: str = None,
+                    ground_truth_path: str = None,
                     dataset_path: str = None,
                     train_size: ('train_size', multi(min=0)),
                     val_size: float = 0.1,
@@ -26,7 +25,7 @@ def run_experiments(*,
                     models_path: str,
                     n_classes: int,
                     verbose: int = 2,
-                    pre_noise_sets: ('spre', multi(min=0)),
+                    post_noise_sets: ('spost', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
                     noise_params: str = None):
     """
@@ -57,11 +56,11 @@ def run_experiments(*,
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
         subfolders in this directory.
-    :param models_path: Path to the directory containing all models stored
-        in subdirectories.
+    :param models_path: Name of the model, it serves as a key in the
+        dictionary holding all functions returning models.
     :param n_classes: Number of classes.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
-    :param pre_noise_sets: The list of sets to which the noise will be
+    :param post_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
     :param post_noise: The list of names of noise injection methods after
         the normalization transformations.
@@ -104,7 +103,7 @@ def run_experiments(*,
             dest_path=experiment_dest_path,
             n_classes=n_classes,
             noise=post_noise,
-            noise_sets=pre_noise_sets,
+            noise_sets=post_noise_sets,
             noise_params=noise_params)
 
         tf.keras.backend.clear_session()
