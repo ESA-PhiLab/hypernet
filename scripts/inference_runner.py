@@ -57,8 +57,8 @@ def run_experiments(*,
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
         subfolders in this directory.
-    :param models_path: Name of the model, it serves as a key in the
-        dictionary holding all functions returning models.
+    :param models_path: Path to the directory containing all models stored
+        in subdirectories.
     :param n_classes: Number of classes.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
     :param pre_noise_sets: The list of sets to which the noise will be

@@ -13,12 +13,10 @@ from sklearn import metrics
 from ml_intuition import enums
 from ml_intuition.data import io, transforms, utils
 from ml_intuition.data.noise import get_noise_functions
+from ml_intuition.data.utils import predict_with_model_in_batches
 from ml_intuition.evaluation.performance_metrics import (
     compute_metrics, mean_per_class_accuracy)
 from ml_intuition.evaluation.time_metrics import timeit
-from ml_intuition.data.utils import predict_with_model_in_batches
-
-BATCH_SIZE = 1
 
 
 def evaluate(*,
