@@ -16,23 +16,24 @@ import ml_intuition.enums as enums
 from ml_intuition.data.utils import build_data_dict
 
 
-def load_metrics(experiments_path: str) -> Dict[List, List]:
+def load_metrics(experiments_path: str, filename: str = None) -> \
+        Dict[List, List]:
     """
     Load metrics to a dictionary.
 
     :param experiments_path: Path to the experiments directory.
+    :param filename: Name of the file holding metrics. Defaults to
+        'inference_metrics.csv'.
     :return: Dictionary containing all metric names and values from all experiments.
     """
     all_metrics = {'metric_keys': [], 'metric_values': []}
     for experiment_dir in glob.glob(
             os.path.join(experiments_path, '{}*'.format(enums.Experiment.EXPERIMENT))):
-        if os.path.exists(os.path.join(experiment_dir,
-                               enums.Experiment.INFERENCE_METRICS)):
+        if filename is None:
             inference_metrics_path = os.path.join(experiment_dir,
                                enums.Experiment.INFERENCE_METRICS)
         else:
-            inference_metrics_path = os.path.join(experiment_dir,
-                               enums.Experiment.INFERENCE_GRAPH_METRICS)
+            inference_metrics_path = os.path.join(experiment_dir, filename)
         with open(inference_metrics_path) as metric_file:
             reader = csv.reader(metric_file, delimiter=',')
             for row, key in zip(reader, all_metrics.keys()):

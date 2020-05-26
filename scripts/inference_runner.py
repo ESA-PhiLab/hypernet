@@ -8,7 +8,7 @@ import clize
 from clize.parameters import multi
 import tensorflow as tf
 from clize.parameters import multi
-from scripts import evaluate_model, prepare_data
+from scripts import evaluate_model, prepare_data, artifacts_reporter
 
 
 def run_experiments(*,
@@ -106,6 +106,9 @@ def run_experiments(*,
             noise=post_noise,
             noise_sets=pre_noise_sets,
             noise_params=noise_params)
+
+        artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                    dest_path=dest_path)
 
         tf.keras.backend.clear_session()
 

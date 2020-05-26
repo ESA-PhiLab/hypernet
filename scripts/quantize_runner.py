@@ -8,7 +8,8 @@ import subprocess
 import clize
 from clize.parameters import multi
 import tensorflow as tf
-from scripts import evaluate_graph, freeze_model, prepare_data
+from scripts import evaluate_graph, freeze_model, prepare_data, \
+    artifacts_reporter
 
 
 def run_experiments(*,
@@ -106,6 +107,11 @@ def run_experiments(*,
                             dataset_path=data_path)
         if created_dataset:
             os.remove(data_path)
+
+        artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                    dest_path=dest_path,
+                                                    filename='inference_graph_metrics.csv')
+
         tf.keras.backend.clear_session()
 
 
