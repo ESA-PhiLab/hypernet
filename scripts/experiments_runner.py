@@ -8,7 +8,8 @@ import os
 import clize
 import tensorflow as tf
 from clize.parameters import multi
-from scripts import evaluate_model, prepare_data, train_model
+from scripts import evaluate_model, prepare_data, train_model, \
+    artifacts_reporter
 
 from ml_intuition import enums
 from ml_intuition.data import noise
@@ -161,6 +162,9 @@ def run_experiments(*,
             noise=post_noise,
             noise_sets=pre_noise_sets,
             noise_params=noise_params)
+
+        artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                    dest_path=dest_path)
 
         tf.keras.backend.clear_session()
 
