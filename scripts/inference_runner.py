@@ -5,15 +5,16 @@ Run experiments given set of hyperparameters.
 import os
 
 import clize
-from clize.parameters import multi
 import tensorflow as tf
 from clize.parameters import multi
+
 from scripts import evaluate_model, prepare_data, artifacts_reporter
+from ml_intuition.data.io import load_processed_h5
 
 
 def run_experiments(*,
-                    data_file_path: str=None,
-                    ground_truth_path: str=None,
+                    data_file_path: str = None,
+                    ground_truth_path: str = None,
                     dataset_path: str = None,
                     train_size: ('train_size', multi(min=0)),
                     val_size: float = 0.1,
@@ -26,7 +27,7 @@ def run_experiments(*,
                     models_path: str,
                     n_classes: int,
                     verbose: int = 2,
-                    pre_noise_sets: ('spre', multi(min=0)),
+                    post_noise_sets: ('spost', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
                     noise_params: str = None):
     """
@@ -61,7 +62,7 @@ def run_experiments(*,
         dictionary holding all functions returning models.
     :param n_classes: Number of classes.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
-    :param pre_noise_sets: The list of sets to which the noise will be
+    :param post_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
     :param post_noise: The list of names of noise injection methods after
         the normalization transformations.
@@ -86,7 +87,10 @@ def run_experiments(*,
             data_source = dataset_path
         os.makedirs(experiment_dest_path, exist_ok=True)
 
-        if not os.path.exists(data_source):
+        if data_file_path.endswith('.h5') and ground_truth_path is None:
+            data_source = load_processed_h5(data_file_path=data_file_path)
+        
+        elif not os.path.exists(data_source):
             data_source = prepare_data.main(data_file_path=data_file_path,
                                             ground_truth_path=ground_truth_path,
                                             output_path=data_source,
@@ -104,7 +108,7 @@ def run_experiments(*,
             dest_path=experiment_dest_path,
             n_classes=n_classes,
             noise=post_noise,
-            noise_sets=pre_noise_sets,
+            noise_sets=post_noise_sets,
             noise_params=noise_params)
 
         artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
