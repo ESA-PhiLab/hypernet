@@ -22,7 +22,8 @@ METRICS = [
 ]
 
 
-def main(*, graph_path: str, node_names_path: str, dataset_path: str):
+def main(*, graph_path: str, node_names_path: str, dataset_path: str,
+         batch_size: int):
     graph = io.load_pb(graph_path)
     test_dataset = io.extract_set(dataset_path, enums.Dataset.TEST)
 

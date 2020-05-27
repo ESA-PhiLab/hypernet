@@ -96,7 +96,7 @@ def run_experiments(*,
               + frozen_graph_path + ' ' + data_path + ' ' + \
               '?,{},1,1'.format(channels_count) + ' ' + \
               'ml_intuition.data.input_fn.calibrate_2d_input' + ' ' + \
-              '{}'.format(batch_size) + ' ' + experiment_dest_path + \
+              '64' + ' ' + experiment_dest_path + \
               ' ' + str(gpu)
         subprocess.call(cmd, shell=True, env=os.environ.copy())
 
@@ -104,7 +104,8 @@ def run_experiments(*,
                                   'quantize_eval_model.pb')
         evaluate_graph.main(graph_path=graph_path,
                             node_names_path=node_names_file,
-                            dataset_path=data_path)
+                            dataset_path=data_path,
+                            batch_size=batch_size)
         if created_dataset:
             os.remove(data_path)
 
