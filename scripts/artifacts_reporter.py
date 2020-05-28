@@ -11,7 +11,9 @@ from ml_intuition.data import io
 EXTENSION = 1
 
 
-def collect_artifacts_report(*, experiments_path: str, dest_path: str):
+def collect_artifacts_report(*, experiments_path: str,
+                             dest_path: str,
+                             filename: str = None):
     """
     Collect the artifacts report based on the experiment runs
     placed in the "experiments_path" directory.
@@ -20,8 +22,10 @@ def collect_artifacts_report(*, experiments_path: str, dest_path: str):
         experiment subdirectories.
     :param dest_path: Path to the destination directory or
         full path to the report .csv file.
+    :param filename: Name of the file holding metrics.
+        Defaults to 'inference_metrics.csv'
     """
-    all_metrics = io.load_metrics(experiments_path)
+    all_metrics = io.load_metrics(experiments_path, filename)
     metric_keys = set(tuple(metric_keys)
                       for metric_keys in all_metrics['metric_keys'])
     assert len(metric_keys) == 1, \
