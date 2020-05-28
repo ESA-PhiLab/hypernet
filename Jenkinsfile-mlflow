@@ -1,13 +1,15 @@
 pipeline {
     agent { label "${params.LABEL}" }
-        stage('prebuild') {
-            steps {
-                sh "bash -c '${params.command_prebuild}'"
+        stages{
+            stage('prebuild') {
+                steps {
+                    sh "bash -c '${params.command_prebuild}'"
+                }
             }
-        }
-        stage('RUN') {
-            steps {
-                sh "bash -c '${params.command_run}'"
+            stage('RUN') {
+                steps {
+                    sh "bash -c '${params.command_run}'"
+                }
             }
         }
 }
