@@ -1,5 +1,5 @@
 pipeline {
-    agent { label "${params.LABEL}" }
+    agent { label "${params.label}" }
         stages{
             stage('prebuild') {
                 steps {
