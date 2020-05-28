@@ -13,7 +13,6 @@ from sklearn import metrics
 from ml_intuition import enums
 from ml_intuition.data import io, transforms, utils
 from ml_intuition.data.noise import get_noise_functions
-from ml_intuition.data.utils import predict_with_model_in_batches
 from ml_intuition.evaluation.performance_metrics import (
     compute_metrics, mean_per_class_accuracy)
 from ml_intuition.evaluation.time_metrics import timeit
@@ -24,6 +23,7 @@ def evaluate(*,
              model_path: str,
              dest_path: str,
              n_classes: int,
+             batch_size: int=1024,
              noise: ('post', multi(min=0)),
              noise_sets: ('spost', multi(min=0)),
              noise_params: str = None):
@@ -56,20 +56,21 @@ def evaluate(*,
     else:
         min_value, max_value = data[enums.DataStats.MIN], \
             data[enums.DataStats.MAX]
+
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
     transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.TEST in noise_sets else transformations
 
-    for f_transform in transformations:
-        test_dict[enums.Dataset.DATA], test_dict[enums.Dataset.LABELS] = \
-            f_transform(test_dict[enums.Dataset.DATA],
-                        test_dict[enums.Dataset.LABELS])
+    test_dict = utils.apply_transformations(test_dict, transformations)
 
     model = tf.keras.models.load_model(model_path, compile=True)
-    predict = timeit(predict_with_model_in_batches)
-    y_pred, inference_time = predict(model, test_dict[enums.Dataset.DATA])
+
+    predict = timeit(model.predict)
+    y_pred, inference_time = predict(test_dict[enums.Dataset.DATA],
+                                     batch_size=batch_size)
+    y_pred = np.argmax(y_pred, axis=-1)
 
     y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 

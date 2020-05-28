@@ -95,17 +95,8 @@ def train(*,
     val_transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.VAL in noise_sets else transformations
 
-    train_dataset, n_train = \
-        utils.create_tf_dataset(batch_size,
-                                train_dict,
-                                tr_transformations)
-    val_dataset, n_val = \
-        utils.create_tf_dataset(batch_size,
-                                val_dict,
-                                val_transformations)
-
-    if shuffle:
-        train_dataset = train_dataset.shuffle(batch_size)
+    train_dict = utils.apply_transformations(train_dict, tr_transformations)
+    val_dict = utils.apply_transformations(val_dict, val_transformations)
 
     model = models.get_model(model_key=model_name, kernel_size=kernel_size,
                              n_kernels=n_kernels, n_layers=n_layers,
@@ -121,15 +112,16 @@ def train(*,
         monitor='val_acc', mode='max')
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=patience)
-    history = model.fit(x=train_dataset.make_one_shot_iterator(),
+    history = model.fit(x=train_dict[enums.Dataset.DATA],
+                        y=train_dict[enums.Dataset.LABELS],
                         epochs=epochs,
                         verbose=verbose,
                         shuffle=shuffle,
-                        validation_data=val_dataset.make_one_shot_iterator(),
+                        validation_data=(val_dict[enums.Dataset.DATA],
+                                         val_dict[enums.Dataset.LABELS]),
                         callbacks=[
                             early_stopping, mcp_save, time_history],
-                        steps_per_epoch=n_train // batch_size,
-                        validation_steps=n_val // batch_size)
+                        batch_size=batch_size)
 
     history.history[time_metrics.TimeHistory.__name__] = time_history.average
     io.save_metrics(dest_path=dest_path,
