@@ -3,7 +3,6 @@ Perform the inference of the model on the testing dataset.
 """
 
 import os
-from typing import Dict, List, Union
 
 import clize
 import numpy as np
@@ -18,15 +17,13 @@ from ml_intuition.evaluation.performance_metrics import (
     compute_metrics, mean_per_class_accuracy)
 from ml_intuition.evaluation.time_metrics import timeit
 
-BATCH_SIZE = 1
-
 
 def evaluate(*,
              data,
              model_path: str,
              dest_path: str,
-             verbose: int = 2,
              n_classes: int,
+             batch_size: int=1024,
              noise: ('post', multi(min=0)),
              noise_sets: ('spost', multi(min=0)),
              noise_params: str = None):
@@ -36,7 +33,6 @@ def evaluate(*,
     :param model_path: Path to the model.
     :param data: Either path to the input data or the data dict.
     :param dest_path: Directory in which to store the calculated matrics
-    :param verbose: Verbosity mode used in inference, (0, 1 or 2).
     :param n_classes: Number of classes.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
@@ -60,24 +56,22 @@ def evaluate(*,
     else:
         min_value, max_value = data[enums.DataStats.MIN], \
             data[enums.DataStats.MAX]
+
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
     transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.TEST in noise_sets else transformations
-    test_dataset, n_test = \
-        utils.create_tf_dataset(BATCH_SIZE,
-                                test_dict,
-                                transformations)
+
+    test_dict = utils.apply_transformations(test_dict, transformations)
 
     model = tf.keras.models.load_model(model_path, compile=True)
-    model.predict = timeit(model.predict)
-    y_pred, inference_time = model.predict(
-        x=test_dataset.make_one_shot_iterator(),
-        verbose=verbose,
-        steps=n_test // BATCH_SIZE)
 
-    y_pred = tf.Session().run(tf.argmax(y_pred, axis=-1))
+    predict = timeit(model.predict)
+    y_pred, inference_time = predict(test_dict[enums.Dataset.DATA],
+                                     batch_size=batch_size)
+    y_pred = np.argmax(y_pred, axis=-1)
+
     y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 
     custom_metrics = [

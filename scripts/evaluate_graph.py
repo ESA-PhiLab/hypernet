@@ -12,6 +12,7 @@ from ml_intuition.evaluation.performance_metrics import compute_metrics, \
 from ml_intuition.data import io, utils
 from ml_intuition import enums
 from ml_intuition.evaluation.time_metrics import timeit
+import ml_intuition.data.transforms as transforms
 
 METRICS = [
     metrics.accuracy_score,
@@ -22,16 +23,18 @@ METRICS = [
 ]
 
 
-def main(*, graph_path: str, node_names_path: str, dataset_path: str):
+def main(*, graph_path: str, node_names_path: str, dataset_path: str,
+         batch_size: int):
     graph = io.load_pb(graph_path)
-    test_dataset = io.extract_set(dataset_path, enums.Dataset.TEST)
+    test_dict = io.extract_set(dataset_path, enums.Dataset.TEST)
+    min_max_path = os.path.join(os.path.dirname(graph_path), "min-max.csv")
+    if os.path.exists(min_max_path):
+        min_value, max_value = io.read_min_max(min_max_path)
 
-    min_value, max_value = test_dataset[enums.DataStats.MIN], \
-                           test_dataset[enums.DataStats.MAX]
-    test_data = (test_dataset[enums.Dataset.DATA] - min_value) / \
-                (max_value - min_value)
+    transformations = [transforms.SpectralTransform(),
+                       transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
 
-    test_data = np.expand_dims(test_data, axis=-1)
+    test_dict = utils.apply_transformations(test_dict, transformations)
 
     with open(node_names_path, 'r') as node_names_file:
         node_names = json.loads(node_names_file.read())
@@ -44,9 +47,10 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str):
     with tf.Session(graph=graph) as session:
         predict = timeit(utils.predict_with_graph_in_batches)
         predictions, inference_time = predict(session, input_node, output_node,
-                                              test_data)
+                                              test_dict[enums.Dataset.DATA],
+                                              batch_size)
 
-    graph_metrics = compute_metrics(test_dataset[enums.Dataset.LABELS],
+    graph_metrics = compute_metrics(test_dict[enums.Dataset.LABELS],
                                     predictions, METRICS)
     graph_metrics['inference_time'] = [inference_time]
 

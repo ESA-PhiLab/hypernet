@@ -8,7 +8,8 @@ import os
 import clize
 import tensorflow as tf
 from clize.parameters import multi
-from scripts import evaluate_model, prepare_data, train_model
+from scripts import evaluate_model, prepare_data, train_model, \
+    artifacts_reporter
 
 from ml_intuition import enums
 from ml_intuition.data import noise
@@ -130,8 +131,10 @@ def run_experiments(*,
             data_source = data
 
         if len(pre_noise) > 0:
-            noise.inject_noise(data_source=data_source, affected_subsets=pre_noise_sets,
-                               noise_injectors=pre_noise, noise_params=noise_params)
+            noise.inject_noise(data_source=data_source,
+                               affected_subsets=pre_noise_sets,
+                               noise_injectors=pre_noise,
+                               noise_params=noise_params)
 
         train_model.train(model_name=model_name,
                           kernel_size=kernel_size,
@@ -155,13 +158,16 @@ def run_experiments(*,
             model_path=os.path.join(experiment_dest_path, model_name),
             data=data_source,
             dest_path=experiment_dest_path,
-            verbose=verbose,
             n_classes=n_classes,
+            batch_size=batch_size,
             noise=post_noise,
             noise_sets=pre_noise_sets,
             noise_params=noise_params)
 
         tf.keras.backend.clear_session()
+
+    artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                dest_path=dest_path)
 
 
 if __name__ == '__main__':

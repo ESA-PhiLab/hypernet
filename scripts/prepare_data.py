@@ -5,15 +5,12 @@ split it into train, test and val sets and save them in .h5 file with
 """
 
 import os
-import h5py
-import numpy as np
 
 import clize
 
 import ml_intuition.data.preprocessing as preprocessing
 import ml_intuition.data.io as io
 import ml_intuition.data.utils as utils
-import ml_intuition.enums as enums
 from typing import Union, List
 EXTENSION = 1
 
