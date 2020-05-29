@@ -28,7 +28,7 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str,
     graph = io.load_pb(graph_path)
     test_dict = io.extract_set(dataset_path, enums.Dataset.TEST)
     min_value, max_value = test_dict[enums.DataStats.MIN], \
-                           test_dict[enums.Dataset.MAX]
+                           test_dict[enums.DataStats.MAX]
 
     transformations = [transforms.SpectralTransform(),
                        transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
