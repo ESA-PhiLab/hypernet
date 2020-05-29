@@ -9,13 +9,14 @@ import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
 from sklearn import metrics
+import mlflow
 
 from ml_intuition import enums
 from ml_intuition.data import io, transforms, utils
 from ml_intuition.data.noise import get_noise_functions
 from ml_intuition.evaluation.performance_metrics import (
     compute_metrics, mean_per_class_accuracy)
-from ml_intuition.evaluation.time_metrics import timeit
+from ml_intuition.evaluation.custom_callbacks import timeit
 
 
 def evaluate(*,
@@ -26,7 +27,8 @@ def evaluate(*,
              batch_size: int=1024,
              noise: ('post', multi(min=0)),
              noise_sets: ('spost', multi(min=0)),
-             noise_params: str = None):
+             noise_params: str = None,
+             use_mlflow: bool = False):
     """
     Function for evaluating the trained model.
 
@@ -97,10 +99,14 @@ def evaluate(*,
 
     del model_metrics[metrics.confusion_matrix.__name__]
     model_metrics = utils.restructure_per_class_accuracy(model_metrics)
-
     io.save_metrics(dest_path=dest_path,
                     file_name=enums.Experiment.INFERENCE_METRICS,
                     metrics=model_metrics)
+    if use_mlflow:
+        for key in model_metrics.keys():
+            model_metrics[key] = model_metrics[key][0]
+        mlflow.log_metrics(model_metrics)
+
 
 
 if __name__ == '__main__':

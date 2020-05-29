@@ -2,7 +2,7 @@
 All data handling methods.
 """
 
-from typing import Dict, List, Tuple, Type, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import tensorflow as tf

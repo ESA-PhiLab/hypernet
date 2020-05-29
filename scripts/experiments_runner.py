@@ -44,7 +44,10 @@ def run_experiments(*,
                     pre_noise_sets: ('spre', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
                     post_noise_sets: ('spost', multi(min=0)),
-                    noise_params: str = None):
+                    noise_params: str = None,
+                    use_mlflow: bool = True,
+                    experiment_name: str = None,
+                    run_name: str = None):
     """
     Function for running experiments given a set of hyperparameters.
     :param data_file_path: Path to the data file. Supported types are: .npy
@@ -104,21 +107,29 @@ def run_experiments(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     """
-
-    mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
-
-    mlflow.set_experiment("First steps in MLFLow")
-
-    mlflow.start_run(run_name="beetle test run")
+    if use_mlflow:
+        mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
+        mlflow.set_experiment(experiment_name)
+        mlflow.start_run(run_name=run_name)
+        other_params = {"batch_size": batch_size,
+                        "Temp artifacts storage": dest_path,
+                        "stratified": stratified,
+                        "n_runs": n_runs,
+                        "model_name": model_name,
+                        "train_size": train_size,
+                        "val_size": val_size,
+                        "kernel_size": kernel_size,
+                        "n_kernels": n_kernels,
+                        "n_layers": n_layers,
+                        "sample_size": sample_size,
+                        "lr": lr,
+                        "epochs": epochs,
+                        "patience": patience}
+        mlflow.log_params(other_params)
+        mlflow.set_tag("elo", 2)
 
     if dest_path is None:
         dest_path = os.path.join(os.path.curdir, "temp_artifacts")
-
-    other_params = {"Batch size": batch_size,
-                    "Temp artifacts storage": dest_path,
-                    "stratified": stratified,
-                    "n_runs": n_runs}
-    mlflow.log_params(other_params)
 
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
@@ -169,7 +180,8 @@ def run_experiments(*,
                           patience=patience,
                           noise=post_noise,
                           noise_sets=pre_noise_sets,
-                          noise_params=noise_params)
+                          noise_params=noise_params,
+                          use_mlflow=use_mlflow)
 
         evaluate_model.evaluate(
             model_path=os.path.join(experiment_dest_path, model_name),
@@ -179,13 +191,16 @@ def run_experiments(*,
             batch_size=batch_size,
             noise=post_noise,
             noise_sets=pre_noise_sets,
-            noise_params=noise_params)
+            noise_params=noise_params,
+            use_mlflow=use_mlflow)
         tf.keras.backend.clear_session()
 
-    mlflow.log_artifacts(dest_path)
-    shutil.rmtree(dest_path)
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
                                                 dest_path=dest_path)
+    if use_mlflow:
+        mlflow.log_artifacts(dest_path)
+        shutil.rmtree(dest_path)
+
 
 
 if __name__ == '__main__':

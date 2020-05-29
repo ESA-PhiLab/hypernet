@@ -11,7 +11,7 @@ from ml_intuition.evaluation.performance_metrics import compute_metrics, \
     mean_per_class_accuracy
 from ml_intuition.data import io, utils
 from ml_intuition import enums
-from ml_intuition.evaluation.time_metrics import timeit
+from ml_intuition.evaluation.custom_callbacks import timeit
 import ml_intuition.data.transforms as transforms
 
 METRICS = [

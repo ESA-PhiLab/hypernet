@@ -12,7 +12,7 @@ from clize.parameters import multi
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms, utils
 from ml_intuition.data.noise import get_noise_functions
-from ml_intuition.evaluation import time_metrics
+from ml_intuition.evaluation import custom_callbacks
 
 
 def train(*,
@@ -33,7 +33,8 @@ def train(*,
           seed: int = 0,
           noise: ('post', multi(min=0)),
           noise_sets: ('spost', multi(min=0)),
-          noise_params: str = None):
+          noise_params: str = None,
+          use_mlflow: bool = False):
     """
     Function for training tensorflow models given a dataset.
 
@@ -106,12 +107,15 @@ def train(*,
                   'categorical_crossentropy',
                   metrics=['accuracy'])
 
-    time_history = time_metrics.TimeHistory()
+    time_history = custom_callbacks.TimeHistory()
     mcp_save = tf.keras.callbacks.ModelCheckpoint(
         os.path.join(dest_path, model_name), save_best_only=True,
         monitor='val_acc', mode='max')
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=patience)
+    callbacks = [time_history, mcp_save, early_stopping]
+    if use_mlflow:
+        callbacks.append(custom_callbacks.MLflowLogger())
     history = model.fit(x=train_dict[enums.Dataset.DATA],
                         y=train_dict[enums.Dataset.LABELS],
                         epochs=epochs,
@@ -119,11 +123,10 @@ def train(*,
                         shuffle=shuffle,
                         validation_data=(val_dict[enums.Dataset.DATA],
                                          val_dict[enums.Dataset.LABELS]),
-                        callbacks=[
-                            early_stopping, mcp_save, time_history],
+                        callbacks=callbacks,
                         batch_size=batch_size)
 
-    history.history[time_metrics.TimeHistory.__name__] = time_history.average
+    history.history[custom_callbacks.TimeHistory.__name__] = time_history.average
     io.save_metrics(dest_path=dest_path,
                     file_name='training_metrics.csv',
                     metrics=history.history)
