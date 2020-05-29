@@ -27,9 +27,8 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str,
          batch_size: int):
     graph = io.load_pb(graph_path)
     test_dict = io.extract_set(dataset_path, enums.Dataset.TEST)
-    min_max_path = os.path.join(os.path.dirname(graph_path), "min-max.csv")
-    if os.path.exists(min_max_path):
-        min_value, max_value = io.read_min_max(min_max_path)
+    min_value, max_value = test_dict[enums.DataStats.MIN], \
+                           test_dict[enums.Dataset.MAX]
 
     transformations = [transforms.SpectralTransform(),
                        transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
