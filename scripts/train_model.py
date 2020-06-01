@@ -33,8 +33,7 @@ def train(*,
           seed: int = 0,
           noise: ('post', multi(min=0)),
           noise_sets: ('spost', multi(min=0)),
-          noise_params: str = None,
-          use_mlflow: bool = False):
+          noise_params: str = None):
     """
     Function for training tensorflow models given a dataset.
 
@@ -114,8 +113,6 @@ def train(*,
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=patience)
     callbacks = [time_history, mcp_save, early_stopping]
-    if use_mlflow:
-        callbacks.append(custom_callbacks.MLflowLogger())
     history = model.fit(x=train_dict[enums.Dataset.DATA],
                         y=train_dict[enums.Dataset.LABELS],
                         epochs=epochs,

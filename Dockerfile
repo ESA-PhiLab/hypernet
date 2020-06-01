@@ -9,7 +9,7 @@ RUN conda env update -f environment.yml
 SHELL ["conda", "run", "-n", "decent", "/bin/bash", "-c"]
 
 # Install CUDnn
-RUN wget -O cudnn-10.0-linux-x64-v7.4.1.5.tgz -nv https://jug.kplabs.pl/file/kUvED8duLU/iV9OSru55E
+RUN wget -O cudnn-10.0-linux-x64-v7.4.1.5.tgz -nv "https://jug.kplabs.pl/file/kUvED8duLU/iV9OSru55E"
 RUN tar -xzvf cudnn-10.0-linux-x64-v7.4.1.5.tgz
 RUN mkdir usr/local/cuda-10.0/include
 RUN cp -P cuda/include/cudnn.h usr/local/cuda-10.0/include
@@ -35,4 +35,6 @@ VOLUME "/workspace/parameters"
 ENV PARAMETERS_DIR "/workspace/parameters"
 ENV WORK_DIR "/workspace/work"
 
-ENTRYPOINT ["conda", "run", "-n", "decent"]
+ENV PATH /opt/conda/envs/decent/bin:$PATH
+
+ENTRYPOINT ["/bin/bash", "-c"]

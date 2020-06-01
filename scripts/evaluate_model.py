@@ -27,8 +27,7 @@ def evaluate(*,
              batch_size: int=1024,
              noise: ('post', multi(min=0)),
              noise_sets: ('spost', multi(min=0)),
-             noise_params: str = None,
-             use_mlflow: bool = False):
+             noise_params: str = None):
     """
     Function for evaluating the trained model.
 
@@ -102,11 +101,6 @@ def evaluate(*,
     io.save_metrics(dest_path=dest_path,
                     file_name=enums.Experiment.INFERENCE_METRICS,
                     metrics=model_metrics)
-    if use_mlflow:
-        for key in model_metrics.keys():
-            model_metrics[key] = model_metrics[key][0]
-        mlflow.log_metrics(model_metrics)
-
 
 
 if __name__ == '__main__':

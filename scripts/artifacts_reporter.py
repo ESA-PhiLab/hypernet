@@ -1,9 +1,8 @@
-import collections
-import csv
 import os
 
 import clize
 import numpy as np
+import mlflow
 
 from ml_intuition.data import io
 
@@ -13,7 +12,8 @@ EXTENSION = 1
 
 def collect_artifacts_report(*, experiments_path: str,
                              dest_path: str,
-                             filename: str = None):
+                             filename: str = None,
+                             use_mlflow: bool = False):
     """
     Collect the artifacts report based on the experiment runs
     placed in the "experiments_path" directory.
@@ -47,6 +47,10 @@ def collect_artifacts_report(*, experiments_path: str,
     else:
         os.makedirs(dest_path, exist_ok=True)
         io.save_metrics(dest_path, stat_report, 'report.csv')
+    if use_mlflow:
+        for metric in stat_report.keys():
+            if metric != 'Stats':
+                mlflow.log_metric(metric, stat_report[metric][0])
 
 
 if __name__ == '__main__':

@@ -126,7 +126,6 @@ def run_experiments(*,
                         "epochs": epochs,
                         "patience": patience}
         mlflow.log_params(other_params)
-        mlflow.set_tag("elo", 2)
 
     if dest_path is None:
         dest_path = os.path.join(os.path.curdir, "temp_artifacts")
@@ -180,8 +179,7 @@ def run_experiments(*,
                           patience=patience,
                           noise=post_noise,
                           noise_sets=pre_noise_sets,
-                          noise_params=noise_params,
-                          use_mlflow=use_mlflow)
+                          noise_params=noise_params)
 
         evaluate_model.evaluate(
             model_path=os.path.join(experiment_dest_path, model_name),
@@ -191,18 +189,16 @@ def run_experiments(*,
             batch_size=batch_size,
             noise=post_noise,
             noise_sets=pre_noise_sets,
-            noise_params=noise_params,
-            use_mlflow=use_mlflow)
+            noise_params=noise_params)
         tf.keras.backend.clear_session()
 
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-                                                dest_path=dest_path)
+                                                dest_path=dest_path,
+                                                use_mlflow=use_mlflow)
     if use_mlflow:
         mlflow.log_artifacts(dest_path)
         shutil.rmtree(dest_path)
 
 
-
 if __name__ == '__main__':
     clize.run(run_experiments)
-
