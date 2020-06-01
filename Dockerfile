@@ -35,6 +35,6 @@ VOLUME "/workspace/parameters"
 ENV PARAMETERS_DIR "/workspace/parameters"
 ENV WORK_DIR "/workspace/work"
 
-#ENV PATH /opt/conda/envs/decent/bin:$PATH
+ENV PATH /opt/conda/envs/decent/bin:$PATH
 
-ENTRYPOINT ["conda", "run", "-n", "decent", "/bin/bash", "-c"]
+ENTRYPOINT ["/bin/bash", "-c"]
