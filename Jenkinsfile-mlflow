@@ -1,3 +1,4 @@
+@Library('obc-jpl')
 pipeline {
     agent { label "${params.label}" }
     environment {
@@ -9,7 +10,9 @@ pipeline {
     stages {
         stage('Pre Build') {
             steps {
-                sh "${params.command_prebuild}"
+                withGitPrivateKey('gitlab_beetle') {
+                    sh "${params.prebuild_command}"
+                }
             }
         }
         stage('Build') {
