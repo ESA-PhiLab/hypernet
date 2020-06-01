@@ -11,7 +11,7 @@ pipeline {
         stage('Pre Build') {
             steps {
                 withGitPrivateKey('gitlab_beetle') {
-                    sh "${params.prebuild_command}"
+                    sh "${params.command_prebuild}"
                 }
             }
         }
