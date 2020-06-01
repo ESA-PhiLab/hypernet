@@ -8,13 +8,19 @@ pipeline {
     stages {
         stage('Build') {
             steps {
+                sh "{params.command_prebuild}"
+            }
+        }
+    stages {
+        stage('Build') {
+            steps {
                 sh "docker build -t beetle:${COMMIT_ID} ."
             }
         }
 
         stage('Run') {
             steps {
-                sh "docker run ${DOCKER_FLAGS} -v /media/ML:/media/ML beetle:${COMMIT_ID} sh -c '${params.command_run}'"
+                sh "docker run ${DOCKER_FLAGS} -v /media/ML:/media/ML beetle:${COMMIT_ID}'${params.command_run}'"
             }
         }
     }
