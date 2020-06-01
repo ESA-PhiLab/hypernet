@@ -30,6 +30,7 @@ WORKDIR /workspace
 ADD ml_intuition ml_intuition
 ADD scripts scripts
 ADD tests tests
+ADD datasets datasets
 VOLUME "/workspace/parameters"
 
 ENV PARAMETERS_DIR "/workspace/parameters"
