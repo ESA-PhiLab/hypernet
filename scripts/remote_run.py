@@ -42,6 +42,9 @@ def process_request(
     assert credentials_id is not None, 'Credentials ID is required'
     assert repository_url is not None, 'Repository URL is required'
     assert commit_id is not None, 'Commit ID is required'
+    assert command_prebuild is not None, 'Prebuild command is required'
+    assert command_run is not None, 'Run command is required'
+    assert label is not None, 'Label is required'
 
     if host_port == '80':
         url = 'http://' + host_name
@@ -135,6 +138,18 @@ def parse_arguments() -> argparse.ArgumentParser:
         dest='url',
         help='URL of git repository to process'
     )
+    parser.add_argument(
+        '-p',
+        action='store',
+        dest='command_prebuild',
+        help='Command to be executed before the build'
+    )
+    parser.add_argument(
+        '-r',
+        action='store',
+        dest='command_run',
+        help='Command to be executed'
+    )
 
     return parser
 
@@ -161,9 +176,9 @@ def main() -> None:
         credentials_id=args.credentials_id or configuration.get('credentials_id', None),
         repository_url=args.url or configuration.get('url', None),
         commit_id=commit_id,
-        command_prebuild='dvc pull datasets/pavia/pavia.npy.dvc',
-        command_run='ls -a',
-        label='ml-exp'
+        command_prebuild=args.command_prebuild,
+        command_run=args.command_run,
+        label=args.label
     )
 
 
