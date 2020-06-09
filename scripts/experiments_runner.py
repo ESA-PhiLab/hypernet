@@ -186,7 +186,7 @@ def run_experiments(*,
             data=data_source,
             dest_path=experiment_dest_path,
             n_classes=n_classes,
-            batch_size=batch_size,
+            batch_size=32768,
             noise=post_noise,
             noise_sets=pre_noise_sets,
             noise_params=noise_params)

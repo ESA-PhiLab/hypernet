@@ -96,7 +96,7 @@ def run_experiments(*,
               + frozen_graph_path + ' ' + data_path + ' ' + \
               '?,{},1,1'.format(channels_count) + ' ' + \
               'ml_intuition.data.input_fn.calibrate_2d_input' + ' ' + \
-              '64' + ' ' + experiment_dest_path + \
+              '128' + ' ' + experiment_dest_path + \
               ' ' + str(gpu)
         subprocess.call(cmd, shell=True, env=os.environ.copy())
 
