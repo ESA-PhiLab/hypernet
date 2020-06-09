@@ -82,8 +82,7 @@ def get_commit_id() -> str:
     return commit_id[:-1].decode(sys.stdout.encoding)
 
 
-def queue_build(*,
-                command_prebuild: str,
+def queue_build(command_prebuild: str,
                 command_run: str,
                 settings: str='settings.json',
                 commit_id = None,
