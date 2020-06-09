@@ -22,7 +22,7 @@ pipeline {
         }
         stage('Run') {
             steps {
-                docker run --shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --gpus device=1 --rm -v /media/ML:/media/ML beetle:${COMMIT_ID} "${params.command_run}"
+                sh 'docker run ${DOCKER_FLAGS} -v /media/ML:/media/ML beetle:${COMMIT_ID} "${params.command_run}"'
             }
         }
     }
