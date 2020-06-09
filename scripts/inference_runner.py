@@ -80,6 +80,7 @@ def run_experiments(*,
         refer to the ml_intuition/data/noise.py module.
     """
 
+    print(noise_params)
     if use_mlflow:
         args = locals()
         mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
@@ -87,7 +88,6 @@ def run_experiments(*,
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
         models_path = mlflow.get_artifact_uri(artifact_path=models_path)
-
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))
@@ -104,7 +104,7 @@ def run_experiments(*,
 
         if data_file_path.endswith('.h5') and ground_truth_path is None:
             data_source = load_processed_h5(data_file_path=data_file_path)
-        
+
         elif not os.path.exists(data_source):
             data_source = prepare_data.main(data_file_path=data_file_path,
                                             ground_truth_path=ground_truth_path,

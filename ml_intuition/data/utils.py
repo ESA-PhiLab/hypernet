@@ -4,6 +4,7 @@ All data handling methods.
 
 from typing import Dict, List, Tuple, Union
 
+import json
 import mlflow
 import numpy as np
 import tensorflow as tf
@@ -315,6 +316,11 @@ def list_to_string(list_to_convert: List):
     return ",".join(list_to_convert)
 
 
+def log_dict(dict_as_string: str):
+    to_log = json.loads(dict_as_string)
+    mlflow.log_params(to_log)
+
+
 def log_params_to_mlflow(args: Dict) -> None:
     """
     Log provided arguments as dictionary to mlflow.
@@ -326,4 +332,7 @@ def log_params_to_mlflow(args: Dict) -> None:
                 args[arg] = list_to_string(args[arg])
                 if args[arg] == "":
                     continue
+            elif arg == 'noise_params':
+                log_dict(args[arg])
+                continue
             mlflow.log_param(arg, args[arg])
