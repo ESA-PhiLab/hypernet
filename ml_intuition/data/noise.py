@@ -5,6 +5,7 @@ import sys
 from itertools import product
 from typing import Dict, List, NamedTuple
 
+import yaml
 import numpy as np
 import tensorflow as tf
 
@@ -171,6 +172,10 @@ def get_noise_functions(noise: List[str], noise_params: str) -> List[BaseNoise]:
     :param noise: List of noise injection methods.
     :param noise_params: Parameters of the noise injection.
     """
+    try:
+        noise_params = json.loads(noise_params)
+    except Exception:
+        noise_params = yaml.load(noise_params)
     return [noise_injector(json.loads(noise_params))
             for noise_injector in get_all_noise_functions(noise)]
 

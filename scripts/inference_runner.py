@@ -79,10 +79,6 @@ def run_experiments(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     """
-
-    print(noise_params)
-    noise_params = noise_params[1:]
-    noise_params = noise_params[:-1]
     print(noise_params)
     if use_mlflow:
         args = locals()

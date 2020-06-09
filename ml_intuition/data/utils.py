@@ -5,6 +5,7 @@ All data handling methods.
 from typing import Dict, List, Tuple, Union
 
 import json
+import yaml
 import mlflow
 import numpy as np
 import tensorflow as tf
@@ -317,9 +318,10 @@ def list_to_string(list_to_convert: List):
 
 
 def log_dict(dict_as_string: str):
-    dict_as_string = dict_as_string[1:]
-    dict_as_string = dict_as_string[:-1]
-    to_log = json.loads(dict_as_string)
+    try:
+        to_log = json.loads(dict_as_string)
+    except Exception:
+        to_log = yaml.load(dict_as_string)
     mlflow.log_params(to_log)
 
 
