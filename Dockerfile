@@ -37,5 +37,3 @@ ENV PARAMETERS_DIR "/workspace/parameters"
 ENV WORK_DIR "/workspace/work"
 
 ENV PATH /opt/conda/envs/decent/bin:$PATH
-
-ENTRYPOINT ["/bin/bash", "-c"]
