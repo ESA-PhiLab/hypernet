@@ -86,12 +86,11 @@ def run_experiments(*,
         mlflow.set_experiment(experiment_name)
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
+        models_path = mlflow.get_artifact_uri(artifact_path=models_path)
 
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))
-        if use_mlflow:
-            model_path = mlflow.get_artifact_uri(artifact_path=models_path)
         model_path = os.path.join(models_path,
                                   'experiment_' + str(experiment_id),
                                   'model_2d')
