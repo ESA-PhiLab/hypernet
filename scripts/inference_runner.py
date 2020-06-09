@@ -86,6 +86,12 @@ def run_experiments(*,
         mlflow.set_experiment(experiment_name)
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
+        if 'grids_v2' in models_path:
+            mlflow.set_tag('split', 'grids_v2')
+        elif 'grids_v3' in models_path:
+            mlflow.set_tag('split', 'grids_v3')
+        fold_id = models_path[-1]
+        mlflow.set_tag('fold', fold_id)
         models_path = get_mlflow_artifacts_path(models_path)
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
