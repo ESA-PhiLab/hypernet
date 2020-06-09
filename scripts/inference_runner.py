@@ -81,6 +81,9 @@ def run_experiments(*,
     """
 
     print(noise_params)
+    noise_params = noise_params[1:]
+    noise_params = noise_params[:-1]
+    print(noise_params)
     if use_mlflow:
         args = locals()
         mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
