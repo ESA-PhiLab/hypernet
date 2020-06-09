@@ -4,6 +4,7 @@ All data handling methods.
 
 from typing import Dict, List, Tuple, Union
 
+import os
 import json
 import yaml
 import mlflow
@@ -340,3 +341,14 @@ def log_params_to_mlflow(args: Dict) -> None:
                 log_dict(args[arg])
                 continue
             mlflow.log_param(arg, args[arg])
+
+
+def get_mlflow_artifacts_path(artifacts_storage_path: str) -> str:
+    """
+    Find full local artifacts storage path relative artifacts storage path
+    :param artifacts_storage_path: Relative artifacts storage path
+    :return: Full local path to artifacts
+    """
+    filter_string = 'parameters.artifacts_storage = \'{}\''.format(artifacts_storage_path)
+    result = mlflow.search_runs(filter_string=filter_string)['artifacts_uri']
+    return os.path.join(result, artifacts_storage_path)

@@ -12,7 +12,8 @@ from clize.parameters import multi
 
 from scripts import evaluate_model, prepare_data, artifacts_reporter
 from ml_intuition.data.io import load_processed_h5
-from ml_intuition.data.utils import log_params_to_mlflow
+from ml_intuition.data.utils import log_params_to_mlflow, \
+    get_mlflow_artifacts_path
 
 
 def run_experiments(*,
@@ -79,14 +80,13 @@ def run_experiments(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     """
-    print(noise_params)
     if use_mlflow:
         args = locals()
         mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
         mlflow.set_experiment(experiment_name)
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
-        models_path = mlflow.get_artifact_uri(artifact_path=models_path)
+        models_path = get_mlflow_artifacts_path(models_path)
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))
