@@ -22,7 +22,7 @@ pipeline {
         }
         stage('Run') {
             steps {
-                sh "docker run ${DOCKER_FLAGS} -v /media/ML:/media/ML beetle:${COMMIT_ID} ${params.command_run}"
+                sh "docker run ${DOCKER_FLAGS} -v /media/ML:/media/ML beetle:${COMMIT_ID} bash -c '${params.command_run}'"
             }
         }
     }
