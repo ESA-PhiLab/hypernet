@@ -129,7 +129,8 @@ def run_experiments(*,
         tf.keras.backend.clear_session()
 
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-                                                dest_path=dest_path)
+                                                dest_path=dest_path,
+                                                use_mlflow=use_mlflow)
     if use_mlflow:
         mlflow.log_artifacts(dest_path, artifact_path=dest_path)
         shutil.rmtree(dest_path)

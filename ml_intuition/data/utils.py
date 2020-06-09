@@ -331,6 +331,7 @@ def log_params_to_mlflow(args: Dict) -> None:
     Log provided arguments as dictionary to mlflow.
     :param args: Arguments to log
     """
+    args['artifacts_storage'] = args.pop('dest_path')
     for arg in args.keys():
         if arg not in LOGGING_EXCLUDED_PARAMS and args[arg] is not None:
             if type(args[arg]) is list:
