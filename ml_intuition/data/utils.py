@@ -350,5 +350,5 @@ def get_mlflow_artifacts_path(artifacts_storage_path: str) -> str:
     :return: Full local path to artifacts
     """
     filter_string = 'parameters.artifacts_storage = \'{}\''.format(artifacts_storage_path)
-    result = mlflow.search_runs(filter_string=filter_string)['artifact_uri']
+    result = mlflow.search_runs(filter_string=filter_string)['artifact_uri'][0]
     return os.path.join(result, artifacts_storage_path)
