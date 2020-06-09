@@ -15,6 +15,7 @@ from scripts import evaluate_model, prepare_data, train_model, \
 from ml_intuition import enums
 from ml_intuition.data import noise
 from ml_intuition.data.io import load_processed_h5
+from ml_intuition.data.utils import log_params_to_mlflow
 
 
 def run_experiments(*,
@@ -108,24 +109,11 @@ def run_experiments(*,
         refer to the ml_intuition/data/noise.py module.
     """
     if use_mlflow:
+        args = locals()
         mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
         mlflow.set_experiment(experiment_name)
         mlflow.start_run(run_name=run_name)
-        other_params = {"batch_size": batch_size,
-                        "Temp artifacts storage": dest_path,
-                        "stratified": stratified,
-                        "n_runs": n_runs,
-                        "model_name": model_name,
-                        "train_size": train_size,
-                        "val_size": val_size,
-                        "kernel_size": kernel_size,
-                        "n_kernels": n_kernels,
-                        "n_layers": n_layers,
-                        "sample_size": sample_size,
-                        "lr": lr,
-                        "epochs": epochs,
-                        "patience": patience}
-        mlflow.log_params(other_params)
+        log_params_to_mlflow(args)
 
     if dest_path is None:
         dest_path = os.path.join(os.path.curdir, "temp_artifacts")
@@ -196,7 +184,7 @@ def run_experiments(*,
                                                 dest_path=dest_path,
                                                 use_mlflow=use_mlflow)
     if use_mlflow:
-        mlflow.log_artifacts(dest_path)
+        mlflow.log_artifacts(dest_path, artifact_path=os.path.join(experiment_name, run_name))
         shutil.rmtree(dest_path)
 
 

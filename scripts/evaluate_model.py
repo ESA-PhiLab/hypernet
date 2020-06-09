@@ -24,7 +24,7 @@ def evaluate(*,
              model_path: str,
              dest_path: str,
              n_classes: int,
-             batch_size: int=1024,
+             batch_size: int = 1024,
              noise: ('post', multi(min=0)),
              noise_sets: ('spost', multi(min=0)),
              noise_params: str = None):

@@ -4,6 +4,7 @@ All data handling methods.
 
 from typing import Dict, List, Tuple, Union
 
+import mlflow
 import numpy as np
 import tensorflow as tf
 
@@ -12,6 +13,7 @@ from ml_intuition.data.transforms import BaseTransform
 
 SAMPLES_DIM = 0
 MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
+LOGGING_EXCLUDED_PARAMS = ['run_name', 'experiment_name', 'use_mlflow', 'verbose']
 
 
 def create_tf_dataset(batch_size: int,
@@ -302,3 +304,26 @@ def apply_transformations(data: Dict,
         data[enums.Dataset.DATA], data[enums.Dataset.LABELS] = transformation(
             data[enums.Dataset.DATA], data[enums.Dataset.LABELS])
     return data
+
+
+def list_to_string(list_to_convert: List):
+    """
+    Convert provided list to comma separated string
+    :param list_to_convert: List to convert
+    :return: Comma separated string with values of the provided list
+    """
+    return ",".join(list_to_convert)
+
+
+def log_params_to_mlflow(args: Dict) -> None:
+    """
+    Log provided arguments as dictionary to mlflow.
+    :param args: Arguments to log
+    """
+    for arg in args.keys():
+        if arg not in LOGGING_EXCLUDED_PARAMS and args[arg] is not None:
+            if type(args[arg]) is list:
+                args[arg] = list_to_string(args[arg])
+                if args[arg] == "":
+                    continue
+            mlflow.log_param(arg, args[arg])

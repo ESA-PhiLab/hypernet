@@ -82,105 +82,35 @@ def get_commit_id() -> str:
     return commit_id[:-1].decode(sys.stdout.encoding)
 
 
-def parse_arguments() -> argparse.ArgumentParser:
-    """
-    Parse arguments
-    :return: (argparse.ArgumentParser) Parser
-    """
-    parser = argparse.ArgumentParser(description='Script for running remote jobs.')
-
-    parser.add_argument(
-        '-s',
-        action='store',
-        dest='settings',
-        default='settings.json',
-        help='Path to the settings .json file'
-    )
-    parser.add_argument(
-        '-c',
-        action='store',
-        dest='commit_id',
-        help='Commit id'
-    )
-    parser.add_argument(
-        '-l',
-        action='store',
-        dest='label',
-        help='Target machine labels'
-    )
-    parser.add_argument(
-        '--host',
-        action='store',
-        dest='remote_host_name',
-        help='Jenkins host name'
-    )
-    parser.add_argument(
-        '--port',
-        action='store',
-        dest='remote_host_port',
-        help='Jenkins port number'
-    )
-    parser.add_argument(
-        '-j',
-        action='store',
-        dest='job_name',
-        help='Jenkins job name'
-    )
-    parser.add_argument(
-        '-i',
-        action='store',
-        dest='credentials_id',
-        help='Jenkins credentials ID'
-    )
-    parser.add_argument(
-        '-u',
-        action='store',
-        dest='url',
-        help='URL of git repository to process'
-    )
-    parser.add_argument(
-        '-p',
-        action='store',
-        dest='command_prebuild',
-        help='Command to be executed before the build'
-    )
-    parser.add_argument(
-        '-r',
-        action='store',
-        dest='command_run',
-        help='Command to be executed'
-    )
-
-    return parser
-
-
-def main() -> None:
+def queue_build(command_prebuild: str,
+                command_run: str,
+                settings: str='settings.json',
+                commit_id = None,
+                label: str = 'ml-exp',
+                remote_host_name = None,
+                remote_host_port = None,
+                job_name = None,
+                credentials_id = None,
+                url = None) -> None:
     """
     Entry point
     """
     configuration = {}
-
-    args = parse_arguments().parse_args()
-
     try:
-        with open(args.settings) as config_file:
+        with open(settings) as config_file:
             configuration = json.load(config_file)
     except FileNotFoundError:
-        print('{} not available'.format(args.settings))
+        print('{} not available'.format(settings))
 
-    commit_id = args.commit_id or get_commit_id()
+    commit_id = commit_id or get_commit_id()
     process_request(
-        host_name=args.remote_host_name or configuration.get('remote_host_name', None),
-        host_port=args.remote_host_port or configuration.get('remote_host_port', None),
-        job_name=args.job_name or configuration.get('job_name', None),
-        credentials_id=args.credentials_id or configuration.get('credentials_id', None),
-        repository_url=args.url or configuration.get('url', None),
+        host_name=remote_host_name or configuration.get('remote_host_name', None),
+        host_port=remote_host_port or configuration.get('remote_host_port', None),
+        job_name=job_name or configuration.get('job_name', None),
+        credentials_id=credentials_id or configuration.get('credentials_id', None),
+        repository_url=url or configuration.get('url', None),
         commit_id=commit_id,
-        command_prebuild=args.command_prebuild,
-        command_run=args.command_run,
-        label=args.label
+        command_prebuild=command_prebuild,
+        command_run=command_run,
+        label=label
     )
-
-
-if __name__ == '__main__':
-    main()

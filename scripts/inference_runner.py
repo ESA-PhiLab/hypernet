@@ -3,13 +3,16 @@ Run experiments given set of hyperparameters.
 """
 
 import os
+import shutil
 
 import clize
+import mlflow
 import tensorflow as tf
 from clize.parameters import multi
 
 from scripts import evaluate_model, prepare_data, artifacts_reporter
 from ml_intuition.data.io import load_processed_h5
+from ml_intuition.data.utils import log_params_to_mlflow
 
 
 def run_experiments(*,
@@ -26,10 +29,13 @@ def run_experiments(*,
                     dest_path: str,
                     models_path: str,
                     n_classes: int,
-                    verbose: int = 2,
+                    batch_size: int = 1024,
                     post_noise_sets: ('spost', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
-                    noise_params: str = None):
+                    noise_params: str = None,
+                    use_mlflow: bool = True,
+                    experiment_name: str = None,
+                    run_name: str = None):
     """
     Function for running experiments given a set of hyperparameters.
     :param data_file_path: Path to the data file. Supported types are: .npy
@@ -73,9 +79,19 @@ def run_experiments(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     """
+
+    if use_mlflow:
+        args = locals()
+        mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
+        mlflow.set_experiment(experiment_name)
+        mlflow.start_run(run_name=run_name)
+        log_params_to_mlflow(args)
+
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))
+        if use_mlflow:
+            model_path = mlflow.get_artifact_uri(artifact_path=models_path)
         model_path = os.path.join(models_path,
                                   'experiment_' + str(experiment_id),
                                   'model_2d')
@@ -109,12 +125,16 @@ def run_experiments(*,
             n_classes=n_classes,
             noise=post_noise,
             noise_sets=post_noise_sets,
-            noise_params=noise_params)
-
-        artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-                                                    dest_path=dest_path)
+            noise_params=noise_params,
+            batch_size=batch_size)
 
         tf.keras.backend.clear_session()
+
+    artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                dest_path=dest_path)
+    if use_mlflow:
+        mlflow.log_artifacts(dest_path, artifact_path=dest_path)
+        shutil.rmtree(dest_path)
 
 
 if __name__ == '__main__':
