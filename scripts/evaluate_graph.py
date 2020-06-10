@@ -1,26 +1,16 @@
 import os
 import clize
 import json
-import numpy as np
 
 import tensorflow as tf
 import tensorflow.contrib.decent_q
-from sklearn import metrics
 
-from ml_intuition.evaluation.performance_metrics import compute_metrics, \
-    mean_per_class_accuracy
+from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
+    get_confusion_matrix
 from ml_intuition.data import io, utils
 from ml_intuition import enums
 from ml_intuition.evaluation.custom_callbacks import timeit
 import ml_intuition.data.transforms as transforms
-
-METRICS = [
-    metrics.accuracy_score,
-    metrics.balanced_accuracy_score,
-    metrics.cohen_kappa_score,
-    mean_per_class_accuracy,
-    metrics.confusion_matrix
-]
 
 
 def main(*, graph_path: str, node_names_path: str, dataset_path: str,
@@ -34,7 +24,7 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str,
                        transforms.MinMaxNormalize(min_=min_value,
                                                   max_=max_value)]
 
-    test_dict = utils.apply_transformations(test_dict, transformations)
+    test_dict = transforms.apply_transformations(test_dict, transformations)
 
     with open(node_names_path, 'r') as node_names_file:
         node_names = json.loads(node_names_file.read())
@@ -50,21 +40,14 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str,
                                               test_dict[enums.Dataset.DATA],
                                               batch_size)
 
-    graph_metrics = compute_metrics(test_dict[enums.Dataset.LABELS],
-                                    predictions, METRICS)
-    graph_metrics['inference_time'] = [inference_time]
-
-    np.savetxt(os.path.join(os.path.dirname(graph_path),
-                            metrics.confusion_matrix.__name__ + '.csv'),
-               *graph_metrics[metrics.confusion_matrix.__name__],
-               delimiter=',',
-               fmt='%d')
-    del graph_metrics[metrics.confusion_matrix.__name__]
-
-    graph_metrics = utils.restructure_per_class_accuracy(graph_metrics)
+    model_metrics = get_model_metrics(test_dict[enums.Dataset.LABELS],
+                                      predictions, inference_time)
+    confusion_matrix = get_confusion_matrix(test_dict[enums.Dataset.LABELS],
+                                            predictions)
     io.save_metrics(dest_path=os.path.dirname(graph_path),
-                    file_name='inference_graph_metrics.csv',
-                    metrics=graph_metrics)
+                    file_name=enums.Experiment.INFERENCE_METRICS,
+                    metrics=model_metrics)
+    io.save_confusion_matrix(confusion_matrix, os.path.dirname(graph_path))
 
 
 if __name__ == '__main__':

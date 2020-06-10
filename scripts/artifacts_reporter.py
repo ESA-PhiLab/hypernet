@@ -8,6 +8,7 @@ from ml_intuition.data import io
 
 
 EXTENSION = 1
+MEAN = 0
 
 
 def collect_artifacts_report(*, experiments_path: str,
@@ -50,7 +51,7 @@ def collect_artifacts_report(*, experiments_path: str,
     if use_mlflow:
         for metric in stat_report.keys():
             if metric != 'Stats':
-                mlflow.log_metric(metric, stat_report[metric][0])
+                mlflow.log_metric(metric, stat_report[metric][MEAN])
 
 
 if __name__ == '__main__':

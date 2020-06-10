@@ -8,14 +8,12 @@ import clize
 import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
-from sklearn import metrics
-import mlflow
 
 from ml_intuition import enums
-from ml_intuition.data import io, transforms, utils
+from ml_intuition.data import io, transforms
 from ml_intuition.data.noise import get_noise_functions
-from ml_intuition.evaluation.performance_metrics import (
-    compute_metrics, mean_per_class_accuracy)
+from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
+    get_confusion_matrix
 from ml_intuition.evaluation.custom_callbacks import timeit
 
 
@@ -56,7 +54,7 @@ def evaluate(*,
         min_value, max_value = io.read_min_max(min_max_path)
     else:
         min_value, max_value = data[enums.DataStats.MIN], \
-            data[enums.DataStats.MAX]
+                               data[enums.DataStats.MAX]
 
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
@@ -64,7 +62,7 @@ def evaluate(*,
     transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.TEST in noise_sets else transformations
 
-    test_dict = utils.apply_transformations(test_dict, transformations)
+    test_dict = transforms.apply_transformations(test_dict, transformations)
 
     model = tf.keras.models.load_model(model_path, compile=True)
 
@@ -75,32 +73,12 @@ def evaluate(*,
 
     y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 
-    custom_metrics = [
-        metrics.accuracy_score,
-        metrics.balanced_accuracy_score,
-        metrics.cohen_kappa_score,
-        mean_per_class_accuracy,
-        metrics.confusion_matrix
-    ]
-    model_metrics = compute_metrics(y_true=y_true,
-                                    y_pred=y_pred,
-                                    metrics=custom_metrics)
-    model_metrics['inference_time'] = [inference_time]
-    per_class_acc = {'Class_' + str(i):
-                     [item] for i, item in enumerate(
-        *model_metrics[mean_per_class_accuracy.__name__])}
-    model_metrics.update(per_class_acc)
-
-    np.savetxt(os.path.join(dest_path,
-                            metrics.confusion_matrix.__name__ + '.csv'),
-               *model_metrics[metrics.confusion_matrix.__name__], delimiter=',',
-               fmt='%d')
-
-    del model_metrics[metrics.confusion_matrix.__name__]
-    model_metrics = utils.restructure_per_class_accuracy(model_metrics)
+    model_metrics = get_model_metrics(y_true, y_pred, inference_time)
+    confusion_matrix = get_confusion_matrix(y_true, y_pred)
     io.save_metrics(dest_path=dest_path,
                     file_name=enums.Experiment.INFERENCE_METRICS,
                     metrics=model_metrics)
+    io.save_confusion_matrix(confusion_matrix, dest_path)
 
 
 if __name__ == '__main__':

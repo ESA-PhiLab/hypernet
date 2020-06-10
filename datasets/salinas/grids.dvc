@@ -1,0 +1,13 @@
+md5: 36891d251cb1293fdcd1838dc7babeed
+locked: true
+deps:
+- path: hyperspectral/salinas/grids
+  repo:
+    url: git@git.kplabs.pl:ml/data_registry.git
+    rev_lock: 5b5fac106f3d7ed8cd2783043ea4129013c2cc50
+outs:
+- md5: 7b4874767bcdcb5edd98c1ec1eb2fce3.dir
+  path: grids
+  cache: true
+  metric: false
+  persist: false

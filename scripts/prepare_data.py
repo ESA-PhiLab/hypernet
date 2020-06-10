@@ -76,8 +76,9 @@ def main(*,
     data = data[labels != background_label]
     labels = labels[labels != background_label]
     labels = preprocessing.normalize_labels(labels)
-    train_x, train_y, val_x, val_y, test_x, test_y = utils.train_val_test_split(
-        data, labels, train_size, val_size, stratified, seed=seed)
+    train_x, train_y, val_x, val_y, test_x, test_y = \
+        preprocessing.train_val_test_split(data, labels, train_size, val_size,
+                                           stratified, seed=seed)
 
     if save_data:
         io.save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y)

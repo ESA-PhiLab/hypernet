@@ -12,8 +12,8 @@ from clize.parameters import multi
 
 from scripts import evaluate_model, prepare_data, artifacts_reporter
 from ml_intuition.data.io import load_processed_h5
-from ml_intuition.data.utils import log_params_to_mlflow, \
-    get_mlflow_artifacts_path
+from ml_intuition.data.utils import get_mlflow_artifacts_path
+from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 
 
 def run_experiments(*,
@@ -86,13 +86,9 @@ def run_experiments(*,
         mlflow.set_experiment(experiment_name)
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
-        if 'grids_v2' in models_path:
-            mlflow.set_tag('split', 'grids_v2')
-        elif 'grids_v3' in models_path:
-            mlflow.set_tag('split', 'grids_v3')
-        fold_id = models_path[-1]
-        mlflow.set_tag('fold', fold_id)
+        log_tags_to_mlflow(args)
         models_path = get_mlflow_artifacts_path(models_path)
+
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))

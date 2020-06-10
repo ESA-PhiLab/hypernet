@@ -37,3 +37,15 @@ class DataStats(aenum.Constant):
 class NodeNames(aenum.Constant):
     INPUT = 'input_node'
     OUTPUT = 'output_node'
+
+
+class MLflowTags(aenum.Constant):
+    SPLIT = 'split'
+    FOLD = 'fold'
+    QUANTIZED = 'quantized'
+
+
+class Splits(aenum.Constant):
+    BALANCED = 'balanced'
+    IMBALANCED = 'imbalanced'
+    GRIDS = 'grids'

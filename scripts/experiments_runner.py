@@ -15,7 +15,7 @@ from scripts import evaluate_model, prepare_data, train_model, \
 from ml_intuition import enums
 from ml_intuition.data import noise
 from ml_intuition.data.io import load_processed_h5
-from ml_intuition.data.utils import log_params_to_mlflow
+from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 
 
 def run_experiments(*,
@@ -114,6 +114,7 @@ def run_experiments(*,
         mlflow.set_experiment(experiment_name)
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
+        log_tags_to_mlflow(args)
 
     if dest_path is None:
         dest_path = os.path.join(os.path.curdir, "temp_artifacts")

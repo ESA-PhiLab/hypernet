@@ -3,9 +3,11 @@ Module containing all the transformations that can be done on a dataset.
 """
 
 import abc
-from typing import List
+from typing import List, Dict
 
 import numpy as np
+
+from ml_intuition import enums
 
 
 class BaseTransform(abc.ABC):
@@ -83,3 +85,17 @@ class MinMaxNormalize(BaseTransform):
         :return: List containing the normalized sample and the class label.
         """
         return [(sample - self.min_) / (self.max_ - self.min_), label]
+
+
+def apply_transformations(data: Dict,
+                          transformations: List[BaseTransform]) -> Dict:
+    """
+    Apply each transformation from provided list
+    :param data: Dictionary with 'data' and 'labels' keys holding np.ndarrays
+    :param transformations: List of transformations
+    :return: Transformed data, in the same format as input
+    """
+    for transformation in transformations:
+        data[enums.Dataset.DATA], data[enums.Dataset.LABELS] = transformation(
+            data[enums.Dataset.DATA], data[enums.Dataset.LABELS])
+    return data

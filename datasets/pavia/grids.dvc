@@ -1,0 +1,13 @@
+md5: 7a8d4fa765d8ad06d13399d16ed4aeae
+locked: true
+deps:
+- path: hyperspectral/pavia/grids
+  repo:
+    url: git@git.kplabs.pl:ml/data_registry.git
+    rev_lock: 5b5fac106f3d7ed8cd2783043ea4129013c2cc50
+outs:
+- md5: 134df63a2d2f80cc0796781599b1f61c.dir
+  path: grids
+  cache: true
+  metric: false
+  persist: false

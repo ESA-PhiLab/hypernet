@@ -9,6 +9,7 @@ import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
 
+import ml_intuition.data.transforms
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms, utils
 from ml_intuition.data.noise import get_noise_functions
@@ -95,8 +96,8 @@ def train(*,
     val_transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.VAL in noise_sets else transformations
 
-    train_dict = utils.apply_transformations(train_dict, tr_transformations)
-    val_dict = utils.apply_transformations(val_dict, val_transformations)
+    train_dict = ml_intuition.data.transforms.apply_transformations(train_dict, tr_transformations)
+    val_dict = ml_intuition.data.transforms.apply_transformations(val_dict, val_transformations)
 
     model = models.get_model(model_key=model_name, kernel_size=kernel_size,
                              n_kernels=n_kernels, n_layers=n_layers,
