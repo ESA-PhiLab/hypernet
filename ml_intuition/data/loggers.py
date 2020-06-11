@@ -51,7 +51,7 @@ def log_tags_to_mlflow(args: Dict):
         mlflow.set_tag(MLflowTags.SPLIT, Splits.BALANCED)
     elif Splits.GRIDS in run_name:
         # match 'grids' or 'grids_v#' where # is a grid version number
-        split = re.findall('{Splits.GRIDS}(?:_v)?[0-9]?', run_name)[0]
+        split = re.findall('{}(?:_v)?[0-9]?'.format(Splits.GRIDS), run_name)[0]
         # get the fold number after the 'fold' keyword,
         # with an optional '_' in between
         fold_id = re.findall(r'fold[_]?(\d+)', run_name)[0]
