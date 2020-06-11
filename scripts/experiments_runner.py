@@ -94,15 +94,15 @@ def run_experiments(*,
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
     :param pre_noise: The list of names of noise injection methods before
-        the normalization transformations. Examplary names are "gaussian"
+        the normalization transformations. Exemplary names are "gaussian"
         or "impulsive".
     :param pre_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
-    :param post_noise: The list of names of noise injection metods after
+    :param post_noise: The list of names of noise injection methods after
         the normalization transformations.
     :param post_noise_sets: The list of sets to which the noise will be injected.
     :param noise_params: JSON containing the parameter setting of injection methods.
-        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
         This JSON should include all parameters for noise injection
         functions that are specified in pre_noise and post_noise arguments.
         For the accurate description of each parameter, please
@@ -117,7 +117,7 @@ def run_experiments(*,
         log_tags_to_mlflow(args)
 
     if dest_path is None:
-        dest_path = os.path.join(os.path.curdir, "temp_artifacts")
+        dest_path = os.path.join(os.path.curdir, "temp_artifacts_grids")
 
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
@@ -184,6 +184,13 @@ def run_experiments(*,
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
                                                 dest_path=dest_path,
                                                 use_mlflow=use_mlflow)
+    if enums.Splits.GRIDS in data_file_path:
+        fair_report_path = os.path.join(dest_path, enums.Experiment.REPORT_FAIR)
+        artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                    dest_path=fair_report_path,
+                                                    filename=enums.Experiment.INFERENCE_FAIR_METRICS,
+                                                    use_mlflow=use_mlflow)
+
     if use_mlflow:
         mlflow.log_artifacts(dest_path, artifact_path=os.path.join(experiment_name, run_name))
         shutil.rmtree(dest_path)

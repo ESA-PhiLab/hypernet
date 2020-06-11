@@ -11,6 +11,7 @@ import tensorflow as tf
 from clize.parameters import multi
 
 from scripts import evaluate_model, prepare_data, artifacts_reporter
+from ml_intuition.enums import Splits, Experiment
 from ml_intuition.data.io import load_processed_h5
 from ml_intuition.data.utils import get_mlflow_artifacts_path
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
@@ -133,6 +134,12 @@ def run_experiments(*,
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
                                                 dest_path=dest_path,
                                                 use_mlflow=use_mlflow)
+    if Splits.GRIDS in data_file_path:
+        fair_report_path = os.path.join(dest_path, Experiment.REPORT_FAIR)
+        artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                    dest_path=fair_report_path,
+                                                    filename=Experiment.INFERENCE_FAIR_METRICS,
+                                                    use_mlflow=use_mlflow)
     if use_mlflow:
         mlflow.log_artifacts(dest_path, artifact_path=dest_path)
         shutil.rmtree(dest_path)

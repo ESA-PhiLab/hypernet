@@ -1,7 +1,6 @@
 """
 All metrics that are calculated on the model's output.
 """
-import os
 from typing import Dict, List
 
 import numpy as np
@@ -45,20 +44,42 @@ CUSTOM_METRICS = [
 ]
 
 
-def get_model_metrics(y_true, y_pred, inference_time):
+def get_model_metrics(y_true, y_pred, inference_time: float = None,
+                      metrics_to_compute: List = None):
+    metrics_to_compute = CUSTOM_METRICS if metrics_to_compute is None else metrics_to_compute
     model_metrics = compute_metrics(y_true=y_true,
                                     y_pred=y_pred,
-                                    metrics=CUSTOM_METRICS)
-    model_metrics['inference_time'] = [inference_time]
-    per_class_acc = {'Class_' + str(i):
-                         [item] for i, item in enumerate(
-        *model_metrics[mean_per_class_accuracy.__name__])}
-    model_metrics.update(per_class_acc)
-    model_metrics = utils.restructure_per_class_accuracy(model_metrics)
+                                    metrics=metrics_to_compute)
+    if inference_time is not None:
+        model_metrics['inference_time'] = [inference_time]
+    if mean_per_class_accuracy.__name__ in model_metrics:
+        per_class_acc = {'Class_' + str(i):
+                             [item] for i, item in enumerate(
+            *model_metrics[mean_per_class_accuracy.__name__])}
+        model_metrics.update(per_class_acc)
+        model_metrics = utils.restructure_per_class_accuracy(model_metrics)
     return model_metrics
-
-
 
 
 def get_confusion_matrix(y_true, y_pred):
     return confusion_matrix(y_true, y_pred)
+
+
+def get_fair_model_metrics(conf_matrix, labels_in_train):
+    conf_matrix = conf_matrix[labels_in_train, :]
+    conf_matrix = conf_matrix[:, labels_in_train]
+    all_preds = []
+    all_targets = []
+    for row_id in range(conf_matrix.shape[0]):
+        preds = []
+        targets = []
+        for column_id in range(conf_matrix.shape[1]):
+            for i in range(int(conf_matrix[row_id, column_id])):
+                preds.append(column_id)
+            targets = [row_id for _ in range(len(preds))]
+        all_preds.append(preds)
+        all_targets.append(targets)
+    y_pred = np.concatenate(all_preds, axis=0)
+    y_true = np.concatenate(all_targets, axis=0)
+    return get_model_metrics(y_true, y_pred,
+                             metrics_to_compute=CUSTOM_METRICS[:-1])

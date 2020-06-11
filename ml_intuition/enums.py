@@ -11,7 +11,10 @@ class Sample(enum.IntEnum):
 class Experiment(aenum.Constant):
     INFERENCE_METRICS = 'inference_metrics.csv'
     INFERENCE_GRAPH_METRICS = 'inference_graph_metrics.csv'
+    INFERENCE_FAIR_METRICS = 'inference_fair_metrics.csv'
     EXPERIMENT = 'experiment'
+    REPORT = 'report.csv'
+    REPORT_FAIR = 'report-fair.csv'
 
 
 class Dataset(aenum.Constant):
