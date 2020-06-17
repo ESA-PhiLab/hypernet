@@ -140,6 +140,7 @@ class Shot(BaseNoise):
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
             self.get_proba(data.shape[Sample.FEATURES_DIM], self.params.pb)
         data = data.astype(np.float)
+        data = np.clip(data, a_min=0, a_max=None)
         noise = np.random.poisson(data)
         noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
                                        n_bands, False)
