@@ -7,14 +7,15 @@ import yaml
 
 from ml_intuition.data.utils import list_to_string
 from ml_intuition.enums import MLflowTags, Splits
+from scripts.artifacts_reporter import MEAN
 
 LOGGING_EXCLUDED_PARAMS = ['run_name', 'experiment_name', 'use_mlflow',
                            'verbose']
 
 
-def log_dict(dict_as_string: str) -> None:
+def log_dict_to_mlflow(dict_as_string: str) -> None:
     """
-    Log a string which represent a dictionary to MLflow
+    Log a string which represents a dictionary to MLflow
     :param dict_as_string: A string with dictionary format
     :return: None
     """
@@ -38,7 +39,7 @@ def log_params_to_mlflow(args: Dict) -> None:
                 if args[arg] == "":
                     continue
             elif arg == 'noise_params':
-                log_dict(args[arg])
+                log_dict_to_mlflow(args[arg])
                 continue
             mlflow.log_param(arg, args[arg])
 
@@ -66,3 +67,18 @@ def log_tags_to_mlflow(args: Dict):
 
     if MLflowTags.QUANTIZED in run_name:
         mlflow.set_tag(MLflowTags.QUANTIZED, '1')
+
+
+def log_metrics_to_mlflow(metrics: Dict[str, float], fair: bool = False):
+    """
+    Log provided metrics to mlflow
+    :param metrics: Metrics in a dictionary
+    :param fair: Whether to add '_fair' suffix to the metrics name
+    :return: None
+    """
+    for metric in metrics.keys():
+        if metric != 'Stats':
+            if fair:
+                mlflow.log_metric(metric + '_fair', metrics[metric][MEAN])
+            else:
+                mlflow.log_metric(metric, metrics[metric][MEAN])

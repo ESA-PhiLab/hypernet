@@ -121,7 +121,7 @@ def run_experiments(*,
         log_tags_to_mlflow(args)
 
     if dest_path is None:
-        dest_path = os.path.join(os.path.curdir, "temp_artifacts_grids")
+        dest_path = os.path.join(os.path.curdir, "temp_artifacts")
 
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(

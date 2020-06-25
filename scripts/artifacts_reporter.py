@@ -2,10 +2,9 @@ import os
 
 import clize
 import numpy as np
-import mlflow
 
 from ml_intuition.data import io
-
+from ml_intuition.data.loggers import log_metrics_to_mlflow
 
 EXTENSION = 1
 MEAN = 0
@@ -51,12 +50,8 @@ def collect_artifacts_report(*,
         os.makedirs(dest_path, exist_ok=True)
         io.save_metrics(dest_path, stat_report, 'report.csv')
     if use_mlflow:
-        for metric in stat_report.keys():
-            if metric != 'Stats':
-                if 'fair' in dest_path:
-                    mlflow.log_metric(metric + '_fair', stat_report[metric][MEAN])
-                else:
-                    mlflow.log_metric(metric, stat_report[metric][MEAN])
+        log_metrics_to_mlflow(stat_report,
+                              fair=True if 'fair' in dest_path else False)
 
 
 if __name__ == '__main__':

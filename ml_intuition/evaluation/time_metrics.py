@@ -4,7 +4,6 @@ All metric utils regarding time measures.
 
 from time import time
 
-import mlflow
 from tensorflow.keras.callbacks import Callback
 
 
