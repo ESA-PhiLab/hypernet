@@ -50,7 +50,7 @@ def run_experiments(*,
                     experiment_name: str = None,
                     run_name: str = None):
     """
-    Function for running experiments given a set of hyperparameters.
+    Function for running experiments given a set of hyper parameters.
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the ground-truth data file.
     :param train_size: If float, should be between 0.0 and 1.0,
@@ -79,8 +79,8 @@ def run_experiments(*,
     :param kernel_size: Size of ech kernel in each layer.
     :param n_kernels: Number of kernels in each layer.
     :param n_layers: Number of layers in the model.
-    :param dest_path: Path to where all experiment runs will be saved as subfolders
-        in this directory.
+    :param dest_path: Path to where all experiment runs will be saved as
+        subfolders in this directory.
     :param sample_size: Size of the input sample.
     :param n_classes: Number of classes.
     :param lr: Learning rate for the model, i.e., regulates the size of the step
@@ -107,6 +107,10 @@ def run_experiments(*,
         functions that are specified in pre_noise and post_noise arguments.
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
+    :param use_mlflow: Whether to log metrics and artifacts to mlflow.
+    :param experiment_name: Name of the experiment. Used only if
+        use_mlflow = True
+    :param run_name: Name of the run. Used only if use_mlflow = True.
     """
     if use_mlflow:
         args = locals()

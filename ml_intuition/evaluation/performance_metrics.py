@@ -45,8 +45,17 @@ CUSTOM_METRICS = [
 
 
 def get_model_metrics(y_true, y_pred, inference_time: float = None,
-                      metrics_to_compute: List = None):
-    metrics_to_compute = CUSTOM_METRICS if metrics_to_compute is None else metrics_to_compute
+                      metrics_to_compute: List = None) -> Dict[str, float]:
+    """
+    Calculate provided metrics and store them in a Dict
+    :param y_true: True labels
+    :param y_pred: Predicted labels
+    :param inference_time: Prediction time, defaults to None
+    :param metrics_to_compute: Metrics which will be computed, defaults to None
+    :return: Dictionary with metric name as key and metric value as value
+    """
+    metrics_to_compute = CUSTOM_METRICS if metrics_to_compute is None else \
+        metrics_to_compute
     model_metrics = compute_metrics(y_true=y_true,
                                     y_pred=y_pred,
                                     metrics=metrics_to_compute)
@@ -61,11 +70,24 @@ def get_model_metrics(y_true, y_pred, inference_time: float = None,
     return model_metrics
 
 
-def get_confusion_matrix(y_true, y_pred):
+def get_confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
+    """
+    Get confusion matrix for provided labels
+    :param y_true: True labels
+    :param y_pred: Predicted labels
+    :return: Confusion matrix
+    """
     return confusion_matrix(y_true, y_pred)
 
 
-def get_fair_model_metrics(conf_matrix, labels_in_train):
+def get_fair_model_metrics(conf_matrix, labels_in_train) -> Dict[str, float]:
+    """
+    Recalculate model metrics discarding classes which where not present in the
+    training set
+    :param conf_matrix: Original confusion matrix containing all classes
+    :param labels_in_train: Labels which were present in the training set
+    :return: Recalculated metrics as Dict
+    """
     conf_matrix = conf_matrix[labels_in_train, :]
     conf_matrix = conf_matrix[:, labels_in_train]
     all_preds = []

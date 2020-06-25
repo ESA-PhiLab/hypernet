@@ -12,7 +12,12 @@ LOGGING_EXCLUDED_PARAMS = ['run_name', 'experiment_name', 'use_mlflow',
                            'verbose']
 
 
-def log_dict(dict_as_string: str):
+def log_dict(dict_as_string: str) -> None:
+    """
+    Log a string which represent a dictionary to MLflow
+    :param dict_as_string: A string with dictionary format
+    :return: None
+    """
     try:
         to_log = json.loads(dict_as_string)
     except Exception:

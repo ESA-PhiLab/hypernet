@@ -201,7 +201,7 @@ def predict_with_model_in_batches(model: tf.keras.Model,
     return np.concatenate(outputs, axis=0)
 
 
-def list_to_string(list_to_convert: List):
+def list_to_string(list_to_convert: List) -> str:
     """
     Convert provided list to comma separated string
     :param list_to_convert: List to convert
@@ -219,4 +219,3 @@ def get_mlflow_artifacts_path(artifacts_storage_path: str) -> str:
     filter_string = 'parameters.artifacts_storage = \'{}\''.format(artifacts_storage_path)
     result = mlflow.search_runs(filter_string=filter_string)['artifact_uri'][0]
     return os.path.join(result, artifacts_storage_path)
-

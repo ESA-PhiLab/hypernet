@@ -80,6 +80,10 @@ def run_experiments(*,
         functions that are specified in pre_noise and post_noise arguments.
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
+    :param use_mlflow: Whether to log metrics and artifacts to mlflow.
+    :param experiment_name: Name of the experiment. Used only if
+        use_mlflow = True
+    :param run_name: Name of the run. Used only if use_mlflow = True.
     """
     if use_mlflow:
         args = locals()
@@ -104,7 +108,7 @@ def run_experiments(*,
             data_source = dataset_path
         os.makedirs(experiment_dest_path, exist_ok=True)
 
-        if data_file_path.endswith('.md5') and ground_truth_path is None:
+        if data_file_path.endswith('.h5') and ground_truth_path is None:
             data_source = load_processed_h5(data_file_path=data_file_path)
 
         elif not os.path.exists(data_source):

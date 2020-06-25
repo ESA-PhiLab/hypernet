@@ -59,12 +59,3 @@ def timeit(function):
         stop = time()
         return result, stop-start
     return timed
-
-
-class MLflowLogger(Callback):
-
-    def on_epoch_end(self, epoch, logs=None):
-        mlflow.log_metric("train_accuracy", logs['acc'], epoch)
-        mlflow.log_metric("train_loss", logs['loss'], epoch)
-        mlflow.log_metric("val_accuracy", logs['val_acc'], epoch)
-        mlflow.log_metric("val_loss", logs['val_loss'], epoch)

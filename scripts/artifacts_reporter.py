@@ -26,6 +26,7 @@ def collect_artifacts_report(*,
         full path to the report .csv file.
     :param filename: Name of the file holding metrics.
         Defaults to 'inference_metrics.csv'
+    :param use_mlflow: Whether to log metrics and artifacts to mlflow
     """
     all_metrics = io.load_metrics(experiments_path, filename)
     metric_keys = set(tuple(metric_keys)

@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from ml_intuition.evaluation.custom_callbacks import timeit
+from ml_intuition.evaluation.time_metrics import timeit
 
 
 class TestTimeMetrics:

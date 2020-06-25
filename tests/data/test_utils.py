@@ -1,8 +1,7 @@
 import pytest
 import numpy as np
 
-import ml_intuition.data.preprocessing
-from ml_intuition.data import utils
+from ml_intuition.data import utils, preprocessing
 
 
 class TestShufflingArrays:
@@ -60,7 +59,7 @@ class TestGetSetIndices:
     ])
     def test_if_returns_correct_amount(self, labels, size, stratified, result):
         assert len(
-            ml_intuition.data.preprocessing._get_set_indices(labels, size, stratified)) == result
+           preprocessing._get_set_indices(labels, size, stratified)) == result
 
     @pytest.mark.parametrize("labels, size, result", [
         (labels_2_class, 0.5, np.array([0, 1, 2, 7, 8, 9])),
@@ -69,7 +68,7 @@ class TestGetSetIndices:
     ])
     def test_if_returns_correct_indices(self, labels, size, result):
         assert np.all(np.equal(
-            ml_intuition.data.preprocessing._get_set_indices(labels, size), result))
+            preprocessing._get_set_indices(labels, size), result))
 
 
 class TestTrainValTestSplit:
@@ -84,7 +83,7 @@ class TestTrainValTestSplit:
     ])
     def test_if_sets_have_correct_length(self, data, labels, train_size,
                                          result):
-        train_x, train_y, val_x, val_y, test_x, test_y = ml_intuition.data.preprocessing.train_val_test_split(
+        train_x, train_y, val_x, val_y, test_x, test_y = preprocessing.train_val_test_split(
             data, labels, train_size)
         assert len(train_x) == result[0] and len(val_x) == result[1] and len(
             test_x) == result[2]
@@ -97,14 +96,14 @@ class TestTrainValTestSplit:
     ])
     def test_if_x_and_y_have_same_length(self, data, labels, train_size,
                                          result):
-        train_x, train_y, val_x, val_y, test_x, test_y = ml_intuition.data.preprocessing.train_val_test_split(
+        train_x, train_y, val_x, val_y, test_x, test_y = preprocessing.train_val_test_split(
             data, labels, train_size)
         assert len(train_x) == len(train_y) and len(val_x) == len(
             val_y) and len(test_x) == len(test_y)
 
     def test_if_sets_overlap(self, ):
         data = np.arange(30)
-        train_x, train_y, val_x, val_y, test_x, test_y = ml_intuition.data.preprocessing.train_val_test_split(
+        train_x, train_y, val_x, val_y, test_x, test_y = preprocessing.train_val_test_split(
             data, self.labels, 0.5, stratified=False)
         assert not np.any(np.equal(train_x, test_x))
 

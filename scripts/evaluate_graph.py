@@ -9,7 +9,7 @@ from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
     get_confusion_matrix
 from ml_intuition.data import io, utils
 from ml_intuition import enums
-from ml_intuition.evaluation.custom_callbacks import timeit
+from ml_intuition.evaluation.time_metrics import timeit
 import ml_intuition.data.transforms as transforms
 
 
@@ -40,13 +40,13 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str,
                                               test_dict[enums.Dataset.DATA],
                                               batch_size)
 
-    model_metrics = get_model_metrics(test_dict[enums.Dataset.LABELS],
+    graph_metrics = get_model_metrics(test_dict[enums.Dataset.LABELS],
                                       predictions, inference_time)
     confusion_matrix = get_confusion_matrix(test_dict[enums.Dataset.LABELS],
                                             predictions)
     io.save_metrics(dest_path=os.path.dirname(graph_path),
-                    file_name=enums.Experiment.INFERENCE_METRICS,
-                    metrics=model_metrics)
+                    file_name=enums.Experiment.INFERENCE_GRAPH_METRICS,
+                    metrics=graph_metrics)
     io.save_confusion_matrix(confusion_matrix, os.path.dirname(graph_path))
 
 

@@ -187,7 +187,15 @@ def load_pb(path_to_pb: str) -> tf.GraphDef:
 
 
 def save_confusion_matrix(matrix: np.ndarray, dest_path: str, filename: str = None):
+    """
+    Save confusion matrix to provided destination. If filename is not provided
+    'confusion_matrix.csv' will be used.
+    :param matrix: Matrix to save
+    :param dest_path: Destination folder
+    :param filename: Name of the file, defaults to 'confusion_matrix.csv'
+    :return: None
+    """
     if filename is None:
         filename = 'confusion_matrix'
-    np.savetxt(os.path.join(dest_path, filename + '.csv'),
-               matrix, delimiter=',', fmt='%d')
+    np.savetxt(os.path.join(dest_path, filename + '.csv'), matrix,
+               delimiter=',', fmt='%d')
