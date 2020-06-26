@@ -141,7 +141,7 @@ def _get_set_indices(labels: np.ndarray, size: Union[List, float, int] = 0.8,
         size = float(size[0])
     if isinstance(size, (float, int)):
         assert size > 0, "Size argument must be greater than zero"
-        if 0.0 < size < 1.0 and stratified is True:  # additional condition isinstance
+        if 0.0 < size <= 1.0 and stratified is True:  # additional condition isinstance
             for idx in range(len(unique_labels)):
                 samples_per_label = int(len(label_indices[idx]) * size)
                 label_indices[idx] = label_indices[idx][:samples_per_label]
