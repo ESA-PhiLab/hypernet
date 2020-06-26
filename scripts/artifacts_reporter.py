@@ -7,7 +7,6 @@ from ml_intuition.data import io
 from ml_intuition.data.loggers import log_metrics_to_mlflow
 
 EXTENSION = 1
-MEAN = 0
 
 
 def collect_artifacts_report(*,

@@ -84,7 +84,7 @@ def get_commit_id() -> str:
 
 def queue_build(command_prebuild: str,
                 command_run: str,
-                settings: str='settings.json',
+                settings: str='../ml_intuition/settings.json',
                 commit_id = None,
                 label: str = 'ml-exp',
                 remote_host_name = None,

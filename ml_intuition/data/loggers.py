@@ -7,7 +7,8 @@ import yaml
 
 from ml_intuition.data.utils import list_to_string
 from ml_intuition.enums import MLflowTags, Splits
-from scripts.artifacts_reporter import MEAN
+
+MEAN = 0
 
 LOGGING_EXCLUDED_PARAMS = ['run_name', 'experiment_name', 'use_mlflow',
                            'verbose']
