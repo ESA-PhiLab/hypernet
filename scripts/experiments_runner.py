@@ -174,20 +174,20 @@ def run_experiments(*,
                           noise_sets=pre_noise_sets,
                           noise_params=noise_params)
 
-        # evaluate_model.evaluate(
-        #     model_path=os.path.join(experiment_dest_path, model_name),
-        #     data=data_source,
-        #     dest_path=experiment_dest_path,
-        #     n_classes=n_classes,
-        #     batch_size=batch_size,
-        #     noise=post_noise,
-        #     noise_sets=pre_noise_sets,
-        #     noise_params=noise_params)
+        evaluate_model.evaluate(
+            model_path=os.path.join(experiment_dest_path, model_name),
+            data=data_source,
+            dest_path=experiment_dest_path,
+            n_classes=n_classes,
+            batch_size=batch_size,
+            noise=post_noise,
+            noise_sets=pre_noise_sets,
+            noise_params=noise_params)
         tf.keras.backend.clear_session()
 
-    # artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-    #                                             dest_path=dest_path,
-    #                                             use_mlflow=use_mlflow)
+    artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                dest_path=dest_path,
+                                                use_mlflow=use_mlflow)
     if enums.Splits.GRIDS in data_file_path:
         fair_report_path = os.path.join(dest_path, enums.Experiment.REPORT_FAIR)
         artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
