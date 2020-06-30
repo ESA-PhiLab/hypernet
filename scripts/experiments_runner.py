@@ -118,7 +118,7 @@ def run_experiments(*,
         mlflow.set_experiment(experiment_name)
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
-        log_tags_to_mlflow(args)
+        log_tags_to_mlflow(args['run_name'])
 
     if dest_path is None:
         dest_path = os.path.join(os.path.curdir, "temp_artifacts")

@@ -45,13 +45,12 @@ def log_params_to_mlflow(args: Dict) -> None:
             mlflow.log_param(arg, args[arg])
 
 
-def log_tags_to_mlflow(args: Dict):
+def log_tags_to_mlflow(run_name: str) -> None:
     """
     Log tags to mlflow based on provided args
     :param args: Argument of the running script
     :return: None
     """
-    run_name = args['run_name']
     if Splits.IMBALANCED in run_name:
         mlflow.set_tag(MLflowTags.SPLIT, Splits.IMBALANCED)
     elif Splits.BALANCED in run_name:

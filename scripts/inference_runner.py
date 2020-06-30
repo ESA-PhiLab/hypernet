@@ -91,7 +91,7 @@ def run_experiments(*,
         mlflow.set_experiment(experiment_name)
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
-        log_tags_to_mlflow(args)
+        log_tags_to_mlflow(args['run_name'])
         models_path = get_mlflow_artifacts_path(models_path)
 
     for experiment_id in range(n_runs):

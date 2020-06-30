@@ -14,7 +14,6 @@ from ml_intuition.data.transforms import BaseTransform
 
 SAMPLES_DIM = 0
 MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
-LOGGING_EXCLUDED_PARAMS = ['run_name', 'experiment_name', 'use_mlflow', 'verbose']
 
 
 def create_tf_dataset(batch_size: int,
