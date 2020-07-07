@@ -175,7 +175,7 @@ def get_noise_functions(noise: List[str], noise_params: str) -> List[BaseNoise]:
     """
     try:
         noise_params = json.loads(noise_params)
-    except Exception:
+    except json.decoder.JSONDecodeError:
         noise_params = yaml.load(noise_params)
     return [noise_injector(noise_params)
             for noise_injector in get_all_noise_functions(noise)]

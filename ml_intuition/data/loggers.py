@@ -22,7 +22,7 @@ def log_dict_to_mlflow(dict_as_string: str) -> None:
     """
     try:
         to_log = json.loads(dict_as_string)
-    except Exception:
+    except json.decoder.JSONDecodeError:
         to_log = yaml.load(dict_as_string)
     mlflow.log_params(to_log)
 
