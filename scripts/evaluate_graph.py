@@ -4,6 +4,7 @@ import json
 
 import tensorflow as tf
 import tensorflow.contrib.decent_q
+from sklearn.metrics import confusion_matrix
 
 from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
     get_confusion_matrix
@@ -42,12 +43,13 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str,
 
     graph_metrics = get_model_metrics(test_dict[enums.Dataset.LABELS],
                                       predictions, inference_time)
-    confusion_matrix = get_confusion_matrix(test_dict[enums.Dataset.LABELS],
+    graph_metrics['inference_time'] = [inference_time]
+    conf_matrix = confusion_matrix(test_dict[enums.Dataset.LABELS],
                                             predictions)
     io.save_metrics(dest_path=os.path.dirname(graph_path),
                     file_name=enums.Experiment.INFERENCE_GRAPH_METRICS,
                     metrics=graph_metrics)
-    io.save_confusion_matrix(confusion_matrix, os.path.dirname(graph_path))
+    io.save_confusion_matrix(conf_matrix, os.path.dirname(graph_path))
 
 
 if __name__ == '__main__':

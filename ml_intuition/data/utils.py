@@ -206,7 +206,7 @@ def list_to_string(list_to_convert: List) -> str:
     :param list_to_convert: List to convert
     :return: Comma separated string with values of the provided list
     """
-    return ",".join(list_to_convert)
+    return ",".join(map(str, list_to_convert))
 
 
 def get_mlflow_artifacts_path(artifacts_storage_path: str) -> str:

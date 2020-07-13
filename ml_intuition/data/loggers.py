@@ -14,7 +14,7 @@ LOGGING_EXCLUDED_PARAMS = ['run_name', 'experiment_name', 'use_mlflow',
                            'verbose']
 
 
-def log_dict_to_mlflow(dict_as_string: str) -> None:
+def log_dict_as_str_to_mlflow(dict_as_string: str) -> None:
     """
     Log a string which represents a dictionary to MLflow
     :param dict_as_string: A string with dictionary format
@@ -40,7 +40,7 @@ def log_params_to_mlflow(args: Dict) -> None:
                 if args[arg] == "":
                     continue
             elif arg == 'noise_params':
-                log_dict_to_mlflow(args[arg])
+                log_dict_as_str_to_mlflow(args[arg])
                 continue
             mlflow.log_param(arg, args[arg])
 

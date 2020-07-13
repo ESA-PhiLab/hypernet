@@ -36,16 +36,22 @@ def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, metrics: list) -> \
             metrics}
 
 
-CUSTOM_METRICS = [
+DEFAULT_METRICS = [
     metrics.accuracy_score,
     metrics.balanced_accuracy_score,
     metrics.cohen_kappa_score,
     mean_per_class_accuracy,
 ]
 
+DEFAULT_FAIR_METRICS = [
+    metrics.accuracy_score,
+    metrics.balanced_accuracy_score,
+    metrics.cohen_kappa_score
+]
 
-def get_model_metrics(y_true, y_pred, inference_time: float = None,
-                      metrics_to_compute: List = None) -> Dict[str, float]:
+
+def get_model_metrics(y_true, y_pred, metrics_to_compute: List = None) \
+        -> Dict[str, List[float]]:
     """
     Calculate provided metrics and store them in a Dict
     :param y_true: True labels
@@ -54,13 +60,11 @@ def get_model_metrics(y_true, y_pred, inference_time: float = None,
     :param metrics_to_compute: Metrics which will be computed, defaults to None
     :return: Dictionary with metric name as key and metric value as value
     """
-    metrics_to_compute = CUSTOM_METRICS if metrics_to_compute is None else \
+    metrics_to_compute = DEFAULT_METRICS if metrics_to_compute is None else \
         metrics_to_compute
     model_metrics = compute_metrics(y_true=y_true,
                                     y_pred=y_pred,
                                     metrics=metrics_to_compute)
-    if inference_time is not None:
-        model_metrics['inference_time'] = [inference_time]
     if mean_per_class_accuracy.__name__ in model_metrics:
         per_class_acc = {'Class_' + str(i):
                              [item] for i, item in enumerate(
@@ -70,17 +74,7 @@ def get_model_metrics(y_true, y_pred, inference_time: float = None,
     return model_metrics
 
 
-def get_confusion_matrix(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
-    """
-    Get confusion matrix for provided labels
-    :param y_true: True labels
-    :param y_pred: Predicted labels
-    :return: Confusion matrix
-    """
-    return confusion_matrix(y_true, y_pred)
-
-
-def get_fair_model_metrics(conf_matrix, labels_in_train) -> Dict[str, float]:
+def get_fair_model_metrics(conf_matrix, labels_in_train) -> Dict[str, List[float]]:
     """
     Recalculate model metrics discarding classes which where not present in the
     training set
@@ -104,4 +98,4 @@ def get_fair_model_metrics(conf_matrix, labels_in_train) -> Dict[str, float]:
     y_pred = np.concatenate(all_preds, axis=0)
     y_true = np.concatenate(all_targets, axis=0)
     return get_model_metrics(y_true, y_pred,
-                             metrics_to_compute=CUSTOM_METRICS[:-1])
+                             metrics_to_compute=DEFAULT_FAIR_METRICS)

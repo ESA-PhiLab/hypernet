@@ -8,6 +8,7 @@ import clize
 import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
+from sklearn.metrics import confusion_matrix
 
 from ml_intuition import enums
 from ml_intuition.data import io, transforms
@@ -73,12 +74,13 @@ def evaluate(*,
     y_pred = np.argmax(y_pred, axis=-1)
     y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 
-    model_metrics = get_model_metrics(y_true, y_pred, inference_time)
-    confusion_matrix = get_confusion_matrix(y_true, y_pred)
+    model_metrics = get_model_metrics(y_true, y_pred)
+    model_metrics['inference_time'] = [inference_time]
+    conf_matrix = confusion_matrix(y_true, y_pred)
     io.save_metrics(dest_path=dest_path,
                     file_name=enums.Experiment.INFERENCE_METRICS,
                     metrics=model_metrics)
-    io.save_confusion_matrix(confusion_matrix, dest_path)
+    io.save_confusion_matrix(conf_matrix, dest_path)
     if enums.Splits.GRIDS in model_path:
         if type(data) is str:
             train_dict = io.extract_set(data, enums.Dataset.TRAIN)
@@ -88,7 +90,7 @@ def evaluate(*,
             if train_labels.ndim > 1:
                 train_labels = np.argmax(train_labels, axis=-1)
             labels_in_train = np.unique(train_labels)
-        fair_metrics = get_fair_model_metrics(confusion_matrix, labels_in_train)
+        fair_metrics = get_fair_model_metrics(conf_matrix, labels_in_train)
         io.save_metrics(dest_path=dest_path,
                         file_name=enums.Experiment.INFERENCE_FAIR_METRICS,
                         metrics=fair_metrics)
