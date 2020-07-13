@@ -7,6 +7,8 @@ split it into train, test and val sets and save them in .h5 file with
 import os
 
 import clize
+from clize.parameters import argument_decorator
+from clize.parameters import multi
 
 import ml_intuition.data.preprocessing as preprocessing
 import ml_intuition.data.io as io
@@ -19,7 +21,7 @@ def main(*,
          data_file_path: str,
          ground_truth_path: str,
          output_path: str = None,
-         train_size: Union[List, float, int] = 0.8,
+         train_size: ('train_size', multi(min=0)),
          val_size: float = 0.1,
          stratified: bool = True,
          background_label: int = 0,
@@ -55,6 +57,7 @@ def main(*,
     :param seed: Seed used for data shuffling
     :raises TypeError: When provided data or labels file is not supported
     """
+    train_size = utils.parse_train_size(train_size)
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
         data, labels = io.load_npy(data_file_path, ground_truth_path)
         data, labels = preprocessing.reshape_cube_to_2d_samples(

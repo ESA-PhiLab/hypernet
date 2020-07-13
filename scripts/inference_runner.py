@@ -13,7 +13,7 @@ from clize.parameters import multi
 from scripts import evaluate_model, prepare_data, artifacts_reporter
 from ml_intuition.enums import Splits, Experiment
 from ml_intuition.data.io import load_processed_h5
-from ml_intuition.data.utils import get_mlflow_artifacts_path
+from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 
 
@@ -85,6 +85,7 @@ def run_experiments(*,
         use_mlflow = True
     :param run_name: Name of the run. Used only if use_mlflow = True.
     """
+    train_size = parse_train_size(train_size)
     if use_mlflow:
         args = locals()
         mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")

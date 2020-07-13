@@ -16,6 +16,7 @@ from ml_intuition import enums
 from ml_intuition.data import noise
 from ml_intuition.data.io import load_processed_h5
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
+from ml_intuition.data.utils import parse_train_size
 
 
 def run_experiments(*,
@@ -46,7 +47,7 @@ def run_experiments(*,
                     post_noise: ('post', multi(min=0)),
                     post_noise_sets: ('spost', multi(min=0)),
                     noise_params: str = None,
-                    use_mlflow: bool = True,
+                    use_mlflow: bool = False,
                     experiment_name: str = None,
                     run_name: str = None):
     """
@@ -112,6 +113,7 @@ def run_experiments(*,
         use_mlflow = True
     :param run_name: Name of the run. Used only if use_mlflow = True.
     """
+    train_size = parse_train_size(train_size)
     if use_mlflow:
         args = locals()
         mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
@@ -132,8 +134,6 @@ def run_experiments(*,
             data_source = None
 
         os.makedirs(experiment_dest_path, exist_ok=True)
-        if len(train_size) == 0:
-            train_size = 0.8
         if data_file_path.endswith('.h5') and ground_truth_path is None:
             data = load_processed_h5(data_file_path=data_file_path)
         else:

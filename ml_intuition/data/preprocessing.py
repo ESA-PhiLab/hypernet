@@ -1,9 +1,10 @@
 from typing import Tuple, Union, List
+import functools
 
 import cv2
 import numpy as np
 
-from ml_intuition.data.utils import shuffle_arrays_together
+from ml_intuition.data.utils import shuffle_arrays_together, get_label_indices
 
 
 def normalize_labels(labels: np.ndarray) -> np.ndarray:
@@ -104,8 +105,8 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     :raises AssertionError: When wrong type is passed as train_size
     """
     shuffle_arrays_together([data, labels], seed=seed)
-    train_indices = _get_set_indices(labels, train_size, stratified)
-    val_indices = _get_set_indices(labels[train_indices], val_size)
+    train_indices = _get_set_indices(train_size, labels,  stratified)
+    val_indices = _get_set_indices(val_size, labels[train_indices])
     val_indices = train_indices[val_indices]
     test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
     train_indices = np.setdiff1d(train_indices, val_indices)
@@ -113,7 +114,9 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
            labels[val_indices], data[test_indices], labels[test_indices]
 
 
-def _get_set_indices(labels: np.ndarray, size: Union[List, float, int] = 0.8,
+@functools.singledispatch
+def _get_set_indices(size: Union[List, float, int],
+                     labels: np.ndarray,
                      stratified: bool = True) -> np.ndarray:
     """
     Extract indices of a subset of specified data according to size and
@@ -135,28 +138,48 @@ def _get_set_indices(labels: np.ndarray, size: Union[List, float, int] = 0.8,
     :return: Indexes of the train set
     :raises TypeError: When wrong type is passed as size
     """
-    unique_labels = np.unique(labels)
-    label_indices = [np.where(labels == label)[0] for label in unique_labels]
-    if isinstance(size, list) and len(size) == 1:
-        size = float(size[0])
-    if isinstance(size, (float, int)):
-        assert size > 0, "Size argument must be greater than zero"
-        if 0.0 < size <= 1.0 and stratified is True:  # additional condition isinstance
-            for idx in range(len(unique_labels)):
-                samples_per_label = int(len(label_indices[idx]) * size)
-                label_indices[idx] = label_indices[idx][:samples_per_label]
-            train_indices = np.concatenate(label_indices, axis=0)
-        elif 0.0 < size < 1.0 and stratified is False:
-            train_indices = np.arange(int(len(labels) * size))
-        elif size >= 1 and stratified is True:
-            for label in range(len(unique_labels)):
-                label_indices[label] = label_indices[label][:int(size)]
-            train_indices = np.concatenate(label_indices, axis=0)
-        elif size >= 1 and stratified is False:
-            train_indices = np.arange(size, dtype=int)
-    elif isinstance(size, list):
-        size = list(map(float, size))
-        for n_samples, label in zip(size, range(len(unique_labels))):
-            label_indices[label] = label_indices[label][:int(n_samples)]
+    raise NotImplementedError()
+
+
+@_get_set_indices.register(float)
+def _(size: int,
+      labels: np.ndarray,
+      stratified: bool = True) -> np.ndarray:
+    label_indices, unique_labels = get_label_indices(labels, return_uniques=True)
+    assert 0 < size <= 1
+    if stratified:
+        for idx in range(len(unique_labels)):
+            samples_per_label = int(len(label_indices[idx]) * size)
+            label_indices[idx] = label_indices[idx][:samples_per_label]
         train_indices = np.concatenate(label_indices, axis=0)
+    else:
+        train_indices = np.arange(int(len(labels) * size))
+    return train_indices
+
+
+@_get_set_indices.register(int)
+def _(size: int,
+      labels: np.ndarray,
+      stratified: bool = True) -> np.ndarray:
+    label_indices, unique_labels = get_label_indices(labels, return_uniques=True)
+    assert size >= 1
+    if stratified:
+        for label in range(len(unique_labels)):
+            label_indices[label] = label_indices[label][:int(size)]
+        train_indices = np.concatenate(label_indices, axis=0)
+    else:
+        train_indices = np.arange(size, dtype=int)
+    return train_indices
+
+
+@_get_set_indices.register(list)
+def _(size: List,
+      labels: np.ndarray,
+      stratified: bool = True) -> np.ndarray:
+    label_indices, unique_labels = get_label_indices(labels, return_uniques=True)
+    if len(size) == 1:
+        size = int(size[0])
+    for n_samples, label in zip(size, range(len(unique_labels))):
+        label_indices[label] = label_indices[label][:int(n_samples)]
+    train_indices = np.concatenate(label_indices, axis=0)
     return train_indices

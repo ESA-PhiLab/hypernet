@@ -14,7 +14,7 @@ from ml_intuition import enums
 from ml_intuition.data import io, transforms
 from ml_intuition.data.noise import get_noise_functions
 from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
-    get_confusion_matrix, get_fair_model_metrics
+    get_fair_model_metrics
 from ml_intuition.evaluation.time_metrics import timeit
 
 

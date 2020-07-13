@@ -59,7 +59,7 @@ class TestGetSetIndices:
     ])
     def test_if_returns_correct_amount(self, labels, size, stratified, result):
         assert len(
-           preprocessing._get_set_indices(labels, size, stratified)) == result
+           preprocessing._get_set_indices(size, labels, stratified)) == result
 
     @pytest.mark.parametrize("labels, size, result", [
         (labels_2_class, 0.5, np.array([0, 1, 2, 7, 8, 9])),
@@ -68,7 +68,7 @@ class TestGetSetIndices:
     ])
     def test_if_returns_correct_indices(self, labels, size, result):
         assert np.all(np.equal(
-            preprocessing._get_set_indices(labels, size), result))
+            preprocessing._get_set_indices(size, labels), result))
 
 
 class TestTrainValTestSplit:

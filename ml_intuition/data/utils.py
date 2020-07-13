@@ -2,7 +2,7 @@
 All data handling methods.
 """
 
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Union
 
 import os
 import mlflow
@@ -218,3 +218,38 @@ def get_mlflow_artifacts_path(artifacts_storage_path: str) -> str:
     filter_string = 'parameters.artifacts_storage = \'{}\''.format(artifacts_storage_path)
     result = mlflow.search_runs(filter_string=filter_string)['artifact_uri'][0]
     return os.path.join(result, artifacts_storage_path)
+
+
+def parse_train_size(train_size: List) -> Union[float, int, List[int]]:
+    """
+    If single element list provided, convert to int or float based on provided
+    value
+    :param train_size: Train size as list
+    :return: Converted type
+    """
+    if type(train_size) is not list:
+        return train_size
+    if len(train_size) == 1:
+        train_size = float(train_size[0])
+        if 0.0 <= train_size <= 1:
+            return float(train_size)
+        else:
+            return int(train_size)
+    else:
+        return list(map(int, train_size))
+
+
+def get_label_indices(labels, return_uniques: bool = True):
+    """
+    Extract indices of each class
+    :param labels: Data labels
+    :param return_uniques: Whether to return unique labels contained in
+        labels arg
+    :return: List with lists of label indices of consecutive labels
+    """
+    unique_labels = np.unique(labels)
+    label_indices = [np.where(labels == label)[0] for label in unique_labels]
+    if return_uniques:
+        return label_indices, unique_labels
+    else:
+        return label_indices
