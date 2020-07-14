@@ -142,7 +142,7 @@ def _get_set_indices(size: Union[List, float, int],
 
 
 @_get_set_indices.register(float)
-def _(size: int,
+def _(size: float,
       labels: np.ndarray,
       stratified: bool = True) -> np.ndarray:
     label_indices, unique_labels = get_label_indices(labels, return_uniques=True)
@@ -175,7 +175,7 @@ def _(size: int,
 @_get_set_indices.register(list)
 def _(size: List,
       labels: np.ndarray,
-      stratified: bool = True) -> np.ndarray:
+      _) -> np.ndarray:
     label_indices, unique_labels = get_label_indices(labels, return_uniques=True)
     if len(size) == 1:
         size = int(size[0])
