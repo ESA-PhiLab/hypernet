@@ -35,7 +35,7 @@ def run_experiments(*,
                     post_noise_sets: ('spost', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
                     noise_params: str = None,
-                    use_mlflow: bool = True,
+                    use_mlflow: bool = False,
                     experiment_name: str = None,
                     run_name: str = None):
     """
@@ -69,13 +69,13 @@ def run_experiments(*,
     :param models_path: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
     :param n_classes: Number of classes.
-    :param verbose: Verbosity mode used in training, (0, 1 or 2).
+    :param batch_size: Size of the batch for the inference
     :param post_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
     :param post_noise: The list of names of noise injection methods after
         the normalization transformations.
     :param noise_params: JSON containing the parameter setting of injection methods.
-        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
         This JSON should include all parameters for noise injection
         functions that are specified in pre_noise and post_noise arguments.
         For the accurate description of each parameter, please

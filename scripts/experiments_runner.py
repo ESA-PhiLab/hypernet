@@ -196,7 +196,7 @@ def run_experiments(*,
                                                     use_mlflow=use_mlflow)
 
     if use_mlflow:
-        mlflow.log_artifacts(dest_path, artifact_path=os.path.join(experiment_name, run_name))
+        mlflow.log_artifacts(dest_path, artifact_path=dest_path)
         shutil.rmtree(dest_path)
 
 

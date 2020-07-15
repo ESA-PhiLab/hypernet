@@ -239,7 +239,7 @@ def parse_train_size(train_size: List) -> Union[float, int, List[int]]:
         return list(map(int, train_size))
 
 
-def get_label_indices(labels, return_uniques: bool = True):
+def get_label_indices_per_class(labels, return_uniques: bool = True):
     """
     Extract indices of each class
     :param labels: Data labels

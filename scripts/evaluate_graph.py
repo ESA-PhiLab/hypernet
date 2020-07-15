@@ -6,8 +6,7 @@ import tensorflow as tf
 import tensorflow.contrib.decent_q
 from sklearn.metrics import confusion_matrix
 
-from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
-    get_confusion_matrix
+from ml_intuition.evaluation.performance_metrics import get_model_metrics
 from ml_intuition.data import io, utils
 from ml_intuition import enums
 from ml_intuition.evaluation.time_metrics import timeit

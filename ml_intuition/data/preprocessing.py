@@ -4,7 +4,7 @@ import functools
 import cv2
 import numpy as np
 
-from ml_intuition.data.utils import shuffle_arrays_together, get_label_indices
+from ml_intuition.data.utils import shuffle_arrays_together, get_label_indices_per_class
 
 
 def normalize_labels(labels: np.ndarray) -> np.ndarray:
@@ -145,7 +145,8 @@ def _get_set_indices(size: Union[List, float, int],
 def _(size: float,
       labels: np.ndarray,
       stratified: bool = True) -> np.ndarray:
-    label_indices, unique_labels = get_label_indices(labels, return_uniques=True)
+    label_indices, unique_labels = get_label_indices_per_class(labels,
+                                                               return_uniques=True)
     assert 0 < size <= 1
     if stratified:
         for idx in range(len(unique_labels)):
@@ -161,7 +162,7 @@ def _(size: float,
 def _(size: int,
       labels: np.ndarray,
       stratified: bool = True) -> np.ndarray:
-    label_indices, unique_labels = get_label_indices(labels, return_uniques=True)
+    label_indices, unique_labels = get_label_indices_per_class(labels, return_uniques=True)
     assert size >= 1
     if stratified:
         for label in range(len(unique_labels)):
@@ -176,7 +177,7 @@ def _(size: int,
 def _(size: List,
       labels: np.ndarray,
       _) -> np.ndarray:
-    label_indices, unique_labels = get_label_indices(labels, return_uniques=True)
+    label_indices, unique_labels = get_label_indices_per_class(labels, return_uniques=True)
     if len(size) == 1:
         size = int(size[0])
     for n_samples, label in zip(size, range(len(unique_labels))):
