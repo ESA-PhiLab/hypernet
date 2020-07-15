@@ -5,6 +5,7 @@ import sys
 from itertools import product
 from typing import Dict, List, NamedTuple
 
+import yaml
 import numpy as np
 import tensorflow as tf
 
@@ -139,6 +140,7 @@ class Shot(BaseNoise):
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
             self.get_proba(data.shape[Sample.FEATURES_DIM], self.params.pb)
         data = data.astype(np.float)
+        data = np.clip(data, a_min=0, a_max=None)
         noise = np.random.poisson(data)
         noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
                                        n_bands, False)
@@ -171,7 +173,11 @@ def get_noise_functions(noise: List[str], noise_params: str) -> List[BaseNoise]:
     :param noise: List of noise injection methods.
     :param noise_params: Parameters of the noise injection.
     """
-    return [noise_injector(json.loads(noise_params))
+    try:
+        noise_params = json.loads(noise_params)
+    except json.decoder.JSONDecodeError:
+        noise_params = yaml.load(noise_params)
+    return [noise_injector(noise_params)
             for noise_injector in get_all_noise_functions(noise)]
 
 

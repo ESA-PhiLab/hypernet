@@ -2,10 +2,11 @@
 Run experiments given set of hyperparameters.
 """
 
-import json
 import os
+import shutil
 
 import clize
+import mlflow
 import tensorflow as tf
 from clize.parameters import multi
 from scripts import evaluate_model, prepare_data, train_model, \
@@ -14,6 +15,8 @@ from scripts import evaluate_model, prepare_data, train_model, \
 from ml_intuition import enums
 from ml_intuition.data import noise
 from ml_intuition.data.io import load_processed_h5
+from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
+from ml_intuition.data.utils import parse_train_size
 
 
 def run_experiments(*,
@@ -30,7 +33,7 @@ def run_experiments(*,
                     n_kernels: int = 16,
                     save_data: bool = 0,
                     n_layers: int = 1,
-                    dest_path: str,
+                    dest_path: str = None,
                     sample_size: int,
                     n_classes: int,
                     lr: float = 0.005,
@@ -43,9 +46,12 @@ def run_experiments(*,
                     pre_noise_sets: ('spre', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
                     post_noise_sets: ('spost', multi(min=0)),
-                    noise_params: str = None):
+                    noise_params: str = None,
+                    use_mlflow: bool = False,
+                    experiment_name: str = None,
+                    run_name: str = None):
     """
-    Function for running experiments given a set of hyperparameters.
+    Function for running experiments given a set of hyper parameters.
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the ground-truth data file.
     :param train_size: If float, should be between 0.0 and 1.0,
@@ -74,8 +80,8 @@ def run_experiments(*,
     :param kernel_size: Size of ech kernel in each layer.
     :param n_kernels: Number of kernels in each layer.
     :param n_layers: Number of layers in the model.
-    :param dest_path: Path to where all experiment runs will be saved as subfolders
-        in this directory.
+    :param dest_path: Path to where all experiment runs will be saved as
+        subfolders in this directory.
     :param sample_size: Size of the input sample.
     :param n_classes: Number of classes.
     :param lr: Learning rate for the model, i.e., regulates the size of the step
@@ -89,20 +95,36 @@ def run_experiments(*,
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
     :param pre_noise: The list of names of noise injection methods before
-        the normalization transformations. Examplary names are "gaussian"
+        the normalization transformations. Exemplary names are "gaussian"
         or "impulsive".
     :param pre_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
-    :param post_noise: The list of names of noise injection metods after
+    :param post_noise: The list of names of noise injection methods after
         the normalization transformations.
     :param post_noise_sets: The list of sets to which the noise will be injected.
     :param noise_params: JSON containing the parameter setting of injection methods.
-        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
         This JSON should include all parameters for noise injection
         functions that are specified in pre_noise and post_noise arguments.
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
+    :param use_mlflow: Whether to log metrics and artifacts to mlflow.
+    :param experiment_name: Name of the experiment. Used only if
+        use_mlflow = True
+    :param run_name: Name of the run. Used only if use_mlflow = True.
     """
+    train_size = parse_train_size(train_size)
+    if use_mlflow:
+        args = locals()
+        mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
+        mlflow.set_experiment(experiment_name)
+        mlflow.start_run(run_name=run_name)
+        log_params_to_mlflow(args)
+        log_tags_to_mlflow(args['run_name'])
+
+    if dest_path is None:
+        dest_path = os.path.join(os.path.curdir, "temp_artifacts")
+
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, '{}_{}'.format(enums.Experiment.EXPERIMENT, str(experiment_id)))
@@ -112,8 +134,6 @@ def run_experiments(*,
             data_source = None
 
         os.makedirs(experiment_dest_path, exist_ok=True)
-        if len(train_size) == 0:
-            train_size = 0.8
         if data_file_path.endswith('.h5') and ground_truth_path is None:
             data = load_processed_h5(data_file_path=data_file_path)
         else:
@@ -163,11 +183,21 @@ def run_experiments(*,
             noise=post_noise,
             noise_sets=pre_noise_sets,
             noise_params=noise_params)
-
         tf.keras.backend.clear_session()
 
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-                                                dest_path=dest_path)
+                                                dest_path=dest_path,
+                                                use_mlflow=use_mlflow)
+    if enums.Splits.GRIDS in data_file_path:
+        fair_report_path = os.path.join(dest_path, enums.Experiment.REPORT_FAIR)
+        artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                    dest_path=fair_report_path,
+                                                    filename=enums.Experiment.INFERENCE_FAIR_METRICS,
+                                                    use_mlflow=use_mlflow)
+
+    if use_mlflow:
+        mlflow.log_artifacts(dest_path, artifact_path=dest_path)
+        shutil.rmtree(dest_path)
 
 
 if __name__ == '__main__':

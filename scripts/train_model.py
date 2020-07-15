@@ -10,7 +10,7 @@ import tensorflow as tf
 from clize.parameters import multi
 
 from ml_intuition import enums, models
-from ml_intuition.data import io, transforms, utils
+from ml_intuition.data import io, transforms
 from ml_intuition.data.noise import get_noise_functions
 from ml_intuition.evaluation import time_metrics
 
@@ -95,8 +95,8 @@ def train(*,
     val_transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.VAL in noise_sets else transformations
 
-    train_dict = utils.apply_transformations(train_dict, tr_transformations)
-    val_dict = utils.apply_transformations(val_dict, val_transformations)
+    train_dict = transforms.apply_transformations(train_dict, tr_transformations)
+    val_dict = transforms.apply_transformations(val_dict, val_transformations)
 
     model = models.get_model(model_key=model_name, kernel_size=kernel_size,
                              n_kernels=n_kernels, n_layers=n_layers,
@@ -109,9 +109,10 @@ def train(*,
     time_history = time_metrics.TimeHistory()
     mcp_save = tf.keras.callbacks.ModelCheckpoint(
         os.path.join(dest_path, model_name), save_best_only=True,
-        monitor='val_acc', mode='max')
+        monitor='val_loss', mode='max')
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=patience)
+    callbacks = [time_history, mcp_save, early_stopping]
     history = model.fit(x=train_dict[enums.Dataset.DATA],
                         y=train_dict[enums.Dataset.LABELS],
                         epochs=epochs,
@@ -119,8 +120,7 @@ def train(*,
                         shuffle=shuffle,
                         validation_data=(val_dict[enums.Dataset.DATA],
                                          val_dict[enums.Dataset.LABELS]),
-                        callbacks=[
-                            early_stopping, mcp_save, time_history],
+                        callbacks=callbacks,
                         batch_size=batch_size)
 
     history.history[time_metrics.TimeHistory.__name__] = time_history.average
