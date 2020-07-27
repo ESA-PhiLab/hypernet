@@ -102,11 +102,11 @@ def get_model(model_key: str, **kwargs):
     return all_[model_key](**kwargs)
 
 
-def model_3d(kernel_size: int,
-             n_kernels: int,
-             n_classes: int,
-             input_size: int,
-             **kwargs):
+def model_3d_mfl(kernel_size: int,
+                 n_kernels: int,
+                 n_classes: int,
+                 input_size: int,
+                 **kwargs):
 
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Conv2D(filters=n_kernels,
