@@ -1,10 +1,17 @@
-from typing import Tuple, Union, List
 import functools
+from typing import Tuple, Union, List
+from itertools import product
 
 import cv2
 import numpy as np
 
-from ml_intuition.data.utils import shuffle_arrays_together, get_label_indices_per_class
+from ml_intuition.data.utils import shuffle_arrays_together, \
+    get_label_indices_per_class
+
+
+HEIGHT = 0
+WIDTH = 1
+DEPTH = 2
 
 
 def normalize_labels(labels: np.ndarray) -> np.ndarray:
@@ -38,6 +45,37 @@ def reshape_cube_to_2d_samples(data: np.ndarray,
     data = np.expand_dims(data, -1)
     labels = labels.reshape(-1)
     return data, labels
+
+
+def get_padded_cube(data: np.ndarray, padding_size: int):
+    v_padding = np.zeros((padding_size, data.shape[WIDTH], data.shape[DEPTH]))
+    data = np.vstack((v_padding, data))
+    data = np.vstack((data, v_padding))
+    h_padding = np.zeros((data.shape[HEIGHT], padding_size, data.shape[DEPTH]))
+    data = np.hstack((h_padding, data))
+    data = np.hstack((data, h_padding))
+    return data
+
+
+def reshape_cube_to_3d_samples(data: np.ndarray,
+                               labels: np.ndarray,
+                               neighborhood_size: int = 5,
+                               background_label: int = 0,
+                               channels_idx: int = 0) -> Tuple[np.ndarray,
+                                                               np.ndarray]:
+    data = np.rollaxis(data, channels_idx, len(data.shape))
+    height, width, _ = data.shape
+    padding_size = int(neighborhood_size % np.ceil(float(neighborhood_size) / 2.))
+    data = get_padded_cube(data, padding_size)
+    samples = []
+    labels_3d = []
+    for x, y in product(list(range(height)), list(range(width))):
+        if labels[x, y] != background_label:
+            samples.append(data[x:x + padding_size * 2 + 1,
+                                y:y + padding_size * 2 + 1])
+            labels_3d.append(labels[x, y])
+    return np.array(samples).astype(np.float64), \
+           np.array(labels_3d).astype(np.uint8)
 
 
 def align_ground_truth(cube_2d_shape: Tuple[int, int], ground_truth: np.ndarray,

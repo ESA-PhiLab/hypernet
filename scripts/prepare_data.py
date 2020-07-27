@@ -25,6 +25,7 @@ def main(*,
          val_size: float = 0.1,
          stratified: bool = True,
          background_label: int = 0,
+         neighborhood_size: int = None,
          channels_idx: int = 0,
          save_data: bool = False,
          seed: int = 0):
@@ -60,16 +61,28 @@ def main(*,
     train_size = utils.parse_train_size(train_size)
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
         data, labels = io.load_npy(data_file_path, ground_truth_path)
-        data, labels = preprocessing.reshape_cube_to_2d_samples(
-            data, labels, channels_idx)
+        if neighborhood_size is not None:
+            data, labels = preprocessing.reshape_cube_to_3d_samples(data,
+                                                                    labels,
+                                                                    neighborhood_size,
+                                                                    background_label,
+                                                                    channels_idx)
+        else:
+            data, labels = preprocessing.reshape_cube_to_2d_samples(
+                data, labels, channels_idx)
     elif data_file_path.endswith('.h5') and ground_truth_path.endswith('.tiff'):
         data, gt_transform_mat = io.load_satellite_h5(data_file_path)
         labels = io.load_tiff(ground_truth_path)
         data_2d_shape = data.shape[1:]
         labels = preprocessing.align_ground_truth(data_2d_shape, labels,
                                                   gt_transform_mat)
-        data, labels = preprocessing.reshape_cube_to_2d_samples(data, labels,
-                                                                channels_idx)
+        if neighborhood_size is not None:
+            data, labels = preprocessing.\
+                reshape_cube_to_3d_samples(data, labels, neighborhood_size,
+                                           background_label, channels_idx)
+        else:
+            data, labels = preprocessing.reshape_cube_to_2d_samples(
+                data, labels, channels_idx)
         data, labels = preprocessing.remove_nan_samples(data, labels)
     else:
         raise ValueError(

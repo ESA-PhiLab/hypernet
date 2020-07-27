@@ -30,7 +30,7 @@ def calibrate_2d_input(iter: int) -> Dict[str, np.ndarray]:
     with h5py.File(dataset_path, 'r') as file:
         samples = file[enums.Dataset.TRAIN][enums.Dataset.DATA][:]
         samples = samples[batch_start:batch_end]
-        samples = np.expand_dims(samples, axis=-1)
+        # samples = np.expand_dims(samples, axis=-1)
         min_value, max_value = file.attrs[enums.DataStats.MIN], \
                                file.attrs[enums.DataStats.MAX]
     samples = (samples - min_value) / (max_value - min_value)
