@@ -59,7 +59,17 @@ def main(*,
     :raises TypeError: When provided data or labels file is not supported
     """
     train_size = utils.parse_train_size(train_size)
-    if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
+    if 'patches' in data_file_path:
+        train_x, train_y, val_x, val_y, test_x, test_y = preprocessing.patches_to_samples(data_file_path, neighborhood_size, val_size, background_label,
+                                                                                          channels_idx)
+        if save_data:
+            io.save_md5(output_path, train_x, train_y, val_x, val_y, test_x,
+                        test_y)
+            return None
+        else:
+            return utils.build_data_dict(train_x, train_y, val_x, val_y, test_x,
+                                         test_y)
+    elif data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
         data, labels = io.load_npy(data_file_path, ground_truth_path)
         if neighborhood_size is not None:
             data, labels = preprocessing.reshape_cube_to_3d_samples(data,

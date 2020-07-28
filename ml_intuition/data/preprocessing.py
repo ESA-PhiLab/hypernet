@@ -7,7 +7,8 @@ import numpy as np
 
 from ml_intuition.data.utils import shuffle_arrays_together, \
     get_label_indices_per_class
-
+import ml_intuition.data.io as io
+import ml_intuition.enums as enums
 
 HEIGHT = 0
 WIDTH = 1
@@ -28,7 +29,7 @@ def normalize_labels(labels: np.ndarray) -> np.ndarray:
 def reshape_cube_to_2d_samples(data: np.ndarray,
                                labels: np.ndarray,
                                channels_idx: int = 0) -> Tuple[
-        np.ndarray, np.ndarray]:
+    np.ndarray, np.ndarray]:
     """
     Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL,
     CHANNELS, 1], so it fits the 2D Conv models
@@ -65,17 +66,20 @@ def reshape_cube_to_3d_samples(data: np.ndarray,
                                                                np.ndarray]:
     data = np.rollaxis(data, channels_idx, len(data.shape))
     height, width, _ = data.shape
-    padding_size = int(neighborhood_size % np.ceil(float(neighborhood_size) / 2.))
+    padding_size = int(
+        neighborhood_size % np.ceil(float(neighborhood_size) / 2.))
     data = get_padded_cube(data, padding_size)
     samples = []
     labels_3d = []
+    data = data.astype(np.float32)
     for x, y in product(list(range(height)), list(range(width))):
         if labels[x, y] != background_label:
             samples.append(data[x:x + padding_size * 2 + 1,
-                                y:y + padding_size * 2 + 1])
+                           y:y + padding_size * 2 + 1])
             labels_3d.append(labels[x, y])
-    return np.array(samples).astype(np.float64), \
-           np.array(labels_3d).astype(np.uint8)
+    samples = np.array(samples).astype(np.float32)
+    labels3d = np.array(labels_3d).astype(np.uint8)
+    return samples, labels3d
 
 
 def align_ground_truth(cube_2d_shape: Tuple[int, int], ground_truth: np.ndarray,
@@ -95,7 +99,7 @@ def align_ground_truth(cube_2d_shape: Tuple[int, int], ground_truth: np.ndarray,
 
 
 def remove_nan_samples(data: np.ndarray, labels: np.ndarray) -> Tuple[
-        np.ndarray, np.ndarray]:
+    np.ndarray, np.ndarray]:
     """
     Remove samples which contain only nan values
     :param data: Data with dimensions [SAMPLES, ...]
@@ -143,7 +147,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     :raises AssertionError: When wrong type is passed as train_size
     """
     shuffle_arrays_together([data, labels], seed=seed)
-    train_indices = _get_set_indices(train_size, labels,  stratified)
+    train_indices = _get_set_indices(train_size, labels, stratified)
     val_indices = _get_set_indices(val_size, labels[train_indices])
     val_indices = train_indices[val_indices]
     test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
@@ -200,7 +204,8 @@ def _(size: float,
 def _(size: int,
       labels: np.ndarray,
       stratified: bool = True) -> np.ndarray:
-    label_indices, unique_labels = get_label_indices_per_class(labels, return_uniques=True)
+    label_indices, unique_labels = get_label_indices_per_class(labels,
+                                                               return_uniques=True)
     assert size >= 1
     if stratified:
         for label in range(len(unique_labels)):
@@ -215,10 +220,44 @@ def _(size: int,
 def _(size: List,
       labels: np.ndarray,
       _) -> np.ndarray:
-    label_indices, unique_labels = get_label_indices_per_class(labels, return_uniques=True)
+    label_indices, unique_labels = get_label_indices_per_class(labels,
+                                                               return_uniques=True)
     if len(size) == 1:
         size = int(size[0])
     for n_samples, label in zip(size, range(len(unique_labels))):
         label_indices[label] = label_indices[label][:int(n_samples)]
     train_indices = np.concatenate(label_indices, axis=0)
     return train_indices
+
+
+def patches_to_samples(data_file_path: str, neighborhood_size, val_size: float = 0.1, background_label: int = 0,
+                       channels_idx=2):
+    dataset = io.load_processed_h5(data_file_path)
+    train_x = []
+    train_y = []
+    for patch, patch_gt in zip(dataset[enums.Dataset.TRAIN][enums.Dataset.DATA],
+                               dataset[enums.Dataset.TRAIN][
+                                   enums.Dataset.LABELS]):
+        patch_samples, patch_samples_gt = reshape_cube_to_3d_samples(patch,
+                                                                     patch_gt,
+                                                                     neighborhood_size,
+                                                                     background_label,
+                                                                     channels_idx)
+        train_x.append(patch_samples)
+        train_y.append(patch_samples_gt)
+
+    train_x = np.concatenate(train_x, axis=0)
+    train_y = np.concatenate(train_y, axis=0)
+
+    test_x, test_y = reshape_cube_to_3d_samples(
+        dataset[enums.Dataset.TEST][enums.Dataset.DATA],
+        dataset[enums.Dataset.TEST][enums.Dataset.LABELS], neighborhood_size, background_label, channels_idx)
+
+    train_y = train_y - 1
+    test_y = test_y - 1
+    val_indices = _get_set_indices(val_size, train_y)
+    val_x = train_x[val_indices]
+    val_y = train_y[val_indices]
+    train_x = np.delete(train_x, val_indices, axis=0)
+    train_y = np.delete(train_y, val_indices)
+    return train_x, train_y, val_x, val_y, test_x, test_y

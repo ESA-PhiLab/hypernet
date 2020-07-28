@@ -109,7 +109,7 @@ def run_experiments(*,
             data_source = dataset_path
         os.makedirs(experiment_dest_path, exist_ok=True)
 
-        if data_file_path.endswith('.h5') and ground_truth_path is None:
+        if data_file_path.endswith('.h5') and ground_truth_path is None and 'patches' not in data_file_path:
             data_source = load_processed_h5(data_file_path=data_file_path)
 
         elif not os.path.exists(data_source):
