@@ -1,10 +1,10 @@
-md5: f753eeb2a5e6c4f3d5f5b71e8102cf3a
+md5: 51372b36d5695515ae191ecb62730f30
 frozen: true
 deps:
 - path: hyperspectral/indiana/grids_5x5
   repo:
     url: git@git.kplabs.pl:ml/data_registry.git
-    rev_lock: 782f5c145a8b02b3a6483c7c9b542fa242074450
+    rev_lock: ce91a052002b150d7e0ab89e276d4dd1c9c57639
 outs:
-- md5: 41318dbc91d9d30d22ebbb7799e4169c.dir
+- md5: 4d43b4b9ee6f2f6d35f69f69a8d4e12b.dir
   path: grids_5x5
