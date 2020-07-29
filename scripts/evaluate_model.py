@@ -57,30 +57,16 @@ def evaluate(*,
     else:
         min_value, max_value = data[enums.DataStats.MIN], \
                                data[enums.DataStats.MAX]
-    print('before tr', test_dict[enums.Dataset.DATA].shape)
     transformations = [transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
-    print(model_path)
-    if '2d' in model_path:
+
+    if '2d' in os.path.basename(model_path):
         transformations.append(transforms.SpectralTransform())
-        print('elo')
-        
-    print('transformations', transformations)
-    test_dict = transforms.apply_transformations(test_dict, transformations)
-    print('after first tr', test_dict[enums.Dataset.DATA].shape)
 
-
-    # transformations = transformations + get_noise_functions(noise, noise_params) \
-    #     if enums.Dataset.TEST in noise_sets else transformations
-
-    transformations = get_noise_functions(noise, noise_params) \
+    transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.TEST in noise_sets else transformations
 
-    # test_dict = transforms.apply_transformations(test_dict, transformations)
-
     test_dict = transforms.apply_transformations(test_dict, transformations)
-
-    print('after second tr', test_dict[enums.Dataset.DATA].shape)
 
     model = tf.keras.models.load_model(model_path, compile=True)
 
