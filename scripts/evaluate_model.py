@@ -60,9 +60,11 @@ def evaluate(*,
     print('before tr', test_dict[enums.Dataset.DATA].shape)
     transformations = [transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
+    print(model_path)
     if '2d' in model_path:
         transformations.append(transforms.SpectralTransform())
-
+        print('elo')
+        
     print('transformations', transformations)
     test_dict = transforms.apply_transformations(test_dict, transformations)
     print('after first tr', test_dict[enums.Dataset.DATA].shape)
