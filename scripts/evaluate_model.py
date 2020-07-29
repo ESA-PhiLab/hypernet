@@ -57,7 +57,7 @@ def evaluate(*,
     else:
         min_value, max_value = data[enums.DataStats.MIN], \
                                data[enums.DataStats.MAX]
-
+    print('before tr', test_dict[enums.Dataset.DATA].shape)
     transformations = [transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
     if '2d' in model_path:
@@ -67,6 +67,8 @@ def evaluate(*,
         if enums.Dataset.TEST in noise_sets else transformations
 
     test_dict = transforms.apply_transformations(test_dict, transformations)
+
+    print('after tr', test_dict[enums.Dataset.DATA].shape)
 
     model = tf.keras.models.load_model(model_path, compile=True)
 
