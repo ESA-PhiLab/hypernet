@@ -1,0 +1,10 @@
+md5: e2364885a5c8ad7fb8467908b95823cb
+frozen: true
+deps:
+- path: hyperspectral/houston/grids_v2_patches
+  repo:
+    url: git@git.kplabs.pl:ml/data_registry.git
+    rev_lock: 1ad9a7478920c52923186d8d28fd9ebd8a0162f4
+outs:
+- md5: 9699c1088190e5e3434f8f2b4bae0b78.dir
+  path: grids_v2_patches
