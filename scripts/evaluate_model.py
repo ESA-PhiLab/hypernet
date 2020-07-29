@@ -63,12 +63,22 @@ def evaluate(*,
     if '2d' in model_path:
         transformations.append(transforms.SpectralTransform())
 
-    transformations = transformations + get_noise_functions(noise, noise_params) \
+    print('transformations', transformations)
+    test_dict = transforms.apply_transformations(test_dict, transformations)
+    print('after first tr', test_dict[enums.Dataset.DATA].shape)
+
+
+    # transformations = transformations + get_noise_functions(noise, noise_params) \
+    #     if enums.Dataset.TEST in noise_sets else transformations
+
+    transformations = get_noise_functions(noise, noise_params) \
         if enums.Dataset.TEST in noise_sets else transformations
+
+    # test_dict = transforms.apply_transformations(test_dict, transformations)
 
     test_dict = transforms.apply_transformations(test_dict, transformations)
 
-    print('after tr', test_dict[enums.Dataset.DATA].shape)
+    print('after second tr', test_dict[enums.Dataset.DATA].shape)
 
     model = tf.keras.models.load_model(model_path, compile=True)
 
