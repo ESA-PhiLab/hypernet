@@ -139,9 +139,9 @@ class Shot(BaseNoise):
         n_affected, n_bands = \
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
             self.get_proba(data.shape[Sample.FEATURES_DIM], self.params.pb)
-        data = data.astype(np.float32)
+        data = data.astype(np.float16)
         data = np.clip(data, a_min=0, a_max=None)
-        noise = np.random.poisson(data)
+        noise = np.random.poisson(np.expand_dims(data[:, [0], [0], :], axis=1))
         noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
                                        n_bands, False)
         for sample_index in np.random.choice(data.shape[Sample.SAMPLES_DIM],
@@ -150,7 +150,7 @@ class Shot(BaseNoise):
                 noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
                                                n_bands, False)
             for band_index in noisy_bands:
-                data[sample_index, :, :, band_index] += noise[sample_index, :, :, band_index]
+                data[sample_index, :, :, band_index] += np.repeat(np.repeat(noise[sample_index, :, :, band_index], 7, axis=0), 7, axis=1)
         return [data, labels]
 
 
