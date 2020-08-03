@@ -60,7 +60,7 @@ def evaluate(*,
     transformations = [transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
 
-    if '2d' in os.path.basename(model_path):
+    if '2d' in os.path.basename(model_path) or 'deep' in os.path.basename(model_path):
         transformations.append(transforms.SpectralTransform())
 
     transformations = transformations + get_noise_functions(noise, noise_params) \

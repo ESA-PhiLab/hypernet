@@ -128,3 +128,16 @@ def model_3d_mfl(kernel_size: int,
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Softmax())
     return model
+
+
+def model_3d_deep(n_classes: int, input_size: int, **kwargs):
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu', input_shape=(7, 7, input_size, 1), data_format='channels_last'))
+    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu'))
+    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu'))
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=256, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=128, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
+    return model

@@ -88,7 +88,7 @@ def train(*,
 
     transformations = [transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_, max_=max_)]
-    if '2d' in model_name:
+    if '2d' in model_name or 'deep' in model_name:
         transformations.append(transforms.SpectralTransform())
 
     tr_transformations = transformations + get_noise_functions(noise, noise_params) \
