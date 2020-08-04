@@ -101,7 +101,7 @@ def run_experiments(*,
             dest_path, 'experiment_' + str(experiment_id))
         model_path = os.path.join(models_path,
                                   'experiment_' + str(experiment_id),
-                                  'model_3d_mfl')
+                                  'model_3d_deep')
         if dataset_path is None:
             data_source = os.path.join(models_path,
                                        'experiment_' + str(experiment_id),
