@@ -141,3 +141,11 @@ def model_3d_deep(n_classes: int, input_size: int, **kwargs):
     model.add(tf.keras.layers.Dense(units=128, activation='relu'))
     model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
     return model
+
+
+def unmixing_cube_based_cnn(n_classes: int, input_size: int, **kwargs) -> tf.keras.Sequential:
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Conv3D(filters=16, kernel_size=(1, 1, 5), activation='relu', input_shape=(3, 3, input_size, 1), data_format='channels_last'))
+    
+
+    return model
