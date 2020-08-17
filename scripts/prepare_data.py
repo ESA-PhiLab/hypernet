@@ -7,13 +7,12 @@ split it into train, test and val sets and save them in .h5 file with
 import os
 
 import clize
-from clize.parameters import argument_decorator
 from clize.parameters import multi
 
-import ml_intuition.data.preprocessing as preprocessing
 import ml_intuition.data.io as io
+import ml_intuition.data.preprocessing as preprocessing
 import ml_intuition.data.utils as utils
-from typing import Union, List
+
 EXTENSION = 1
 
 
@@ -28,7 +27,8 @@ def main(*,
          neighborhood_size: int = None,
          channels_idx: int = 0,
          save_data: bool = False,
-         seed: int = 0):
+         seed: int = 0,
+         use_unmixing: bool = False):
     """
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the data file.
@@ -56,11 +56,15 @@ def main(*,
                          data
     :param save_data: Whether to save data as .md5 or to return it as a dict
     :param seed: Seed used for data shuffling
+    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+            where classes in each pixel are present as fractions.
     :raises TypeError: When provided data or labels file is not supported
     """
     train_size = utils.parse_train_size(train_size)
     if 'patches' in data_file_path:
-        train_x, train_y, val_x, val_y, test_x, test_y = preprocessing.patches_to_samples(data_file_path, neighborhood_size, val_size, background_label,
+        train_x, train_y, val_x, val_y, test_x, test_y = preprocessing.patches_to_samples(data_file_path,
+                                                                                          neighborhood_size, val_size,
+                                                                                          background_label,
                                                                                           channels_idx)
         if save_data:
             io.save_md5(output_path, train_x, train_y, val_x, val_y, test_x,
@@ -70,16 +74,16 @@ def main(*,
             return utils.build_data_dict(train_x, train_y, val_x, val_y, test_x,
                                          test_y)
     elif data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
-        data, labels = io.load_npy(data_file_path, ground_truth_path)
+        data, labels = io.load_npy(data_file_path, ground_truth_path, use_unmixing)
         if neighborhood_size is not None:
             data, labels = preprocessing.reshape_cube_to_3d_samples(data,
                                                                     labels,
                                                                     neighborhood_size,
                                                                     background_label,
-                                                                    channels_idx)
+                                                                    channels_idx,
+                                                                    use_unmixing)
         else:
-            data, labels = preprocessing.reshape_cube_to_2d_samples(
-                data, labels, channels_idx)
+            data, labels = preprocessing.reshape_cube_to_2d_samples(data, labels, channels_idx, use_unmixing)
     elif data_file_path.endswith('.h5') and ground_truth_path.endswith('.tiff'):
         data, gt_transform_mat = io.load_satellite_h5(data_file_path)
         labels = io.load_tiff(ground_truth_path)
@@ -87,7 +91,7 @@ def main(*,
         labels = preprocessing.align_ground_truth(data_2d_shape, labels,
                                                   gt_transform_mat)
         if neighborhood_size is not None:
-            data, labels = preprocessing.\
+            data, labels = preprocessing. \
                 reshape_cube_to_3d_samples(data, labels, neighborhood_size,
                                            background_label, channels_idx)
         else:
@@ -98,20 +102,18 @@ def main(*,
         raise ValueError(
             "The following data file type is not supported: {}".format(
                 os.path.splitext(data_file_path)[EXTENSION]))
-
-    data = data[labels != background_label]
-    labels = labels[labels != background_label]
-    labels = preprocessing.normalize_labels(labels)
+    if not use_unmixing:
+        data = data[labels != background_label]
+        labels = labels[labels != background_label]
+        labels = preprocessing.normalize_labels(labels)
     train_x, train_y, val_x, val_y, test_x, test_y = \
-        preprocessing.train_val_test_split(data, labels, train_size, val_size,
-                                           stratified, seed=seed)
+        preprocessing.train_val_test_split(data, labels, train_size, val_size, stratified, seed, use_unmixing)
 
     if save_data:
         io.save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y)
         return None
     else:
-        return utils.build_data_dict(train_x, train_y, val_x, val_y, test_x,
-                                     test_y)
+        return utils.build_data_dict(train_x, train_y, val_x, val_y, test_x, test_y)
 
 
 if __name__ == '__main__':

@@ -69,7 +69,6 @@ def train(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     """
-
     # Reproducibility
     tf.reset_default_graph()
     tf.set_random_seed(seed=seed)
@@ -86,8 +85,7 @@ def train(*,
         min_, max_ = data[enums.DataStats.MIN], \
             data[enums.DataStats.MAX]
 
-    transformations = [transforms.OneHotEncode(n_classes=n_classes),
-                       transforms.MinMaxNormalize(min_=min_, max_=max_)]
+    transformations = [transforms.OneHotEncode(n_classes=n_classes), transforms.MinMaxNormalize(min_=min_, max_=max_)]
     if '2d' in model_name or 'deep' in model_name:
         transformations.append(transforms.SpectralTransform())
 

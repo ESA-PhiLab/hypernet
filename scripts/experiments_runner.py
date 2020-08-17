@@ -49,6 +49,7 @@ def run_experiments(*,
                     post_noise_sets: ('spost', multi(min=0)),
                     noise_params: str = None,
                     use_mlflow: bool = False,
+                    use_unmixing: bool = False,
                     experiment_name: str = None,
                     run_name: str = None):
     """
@@ -110,6 +111,8 @@ def run_experiments(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     :param use_mlflow: Whether to log metrics and artifacts to mlflow.
+    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+        where classes in each pixel are present as fractions.
     :param experiment_name: Name of the experiment. Used only if
         use_mlflow = True
     :param run_name: Name of the run. Used only if use_mlflow = True.
@@ -148,7 +151,8 @@ def run_experiments(*,
                                      channels_idx=channels_idx,
                                      neighborhood_size=neighborhood_size,
                                      save_data=save_data,
-                                     seed=experiment_id)
+                                     seed=experiment_id,
+                                     use_unmixing=use_unmixing)
         if not save_data:
             data_source = data
 

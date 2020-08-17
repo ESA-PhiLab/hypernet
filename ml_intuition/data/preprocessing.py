@@ -1,14 +1,14 @@
 import functools
-from typing import Tuple, Union, List
 from itertools import product
+from typing import Tuple, Union, List
 
 import cv2
 import numpy as np
 
-from ml_intuition.data.utils import shuffle_arrays_together, \
-    get_label_indices_per_class
 import ml_intuition.data.io as io
 import ml_intuition.enums as enums
+from ml_intuition.data.utils import shuffle_arrays_together, \
+    get_label_indices_per_class
 
 HEIGHT = 0
 WIDTH = 1
@@ -28,15 +28,18 @@ def normalize_labels(labels: np.ndarray) -> np.ndarray:
 
 def reshape_cube_to_2d_samples(data: np.ndarray,
                                labels: np.ndarray,
-                               channels_idx: int = 0) -> Tuple[
+                               channels_idx: int = 0,
+                               use_unmixing: bool = False) -> Tuple[
     np.ndarray, np.ndarray]:
     """
-    Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL,
-    CHANNELS, 1], so it fits the 2D Conv models
+    Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL,CHANNELS, 1],
+    so it fits the 2D Convolutional modules.
     :param data: Data to reshape.
     :param labels: Corresponding labels.
     :param channels_idx: Index at which the channels are located in the
-                         provided data file
+                         provided data file.
+    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+            where classes in each pixel are present as fractions.
     :return: Reshape data and labels
     :rtype: tuple with reshaped data and labels
     """
@@ -44,7 +47,16 @@ def reshape_cube_to_2d_samples(data: np.ndarray,
     height, width, channels = data.shape
     data = data.reshape(height * width, channels)
     data = np.expand_dims(data, -1)
-    labels = labels.reshape(-1)
+    if use_unmixing:
+        labels = labels.reshape(height * width, -1)
+    else:
+        labels = labels.reshape(-1)
+
+    data = data.astype(np.float32)
+    if use_unmixing:
+        labels = labels.astype(np.float32)
+    else:
+        labels = labels.astype(np.uint8)
     return data, labels
 
 
@@ -62,8 +74,20 @@ def reshape_cube_to_3d_samples(data: np.ndarray,
                                labels: np.ndarray,
                                neighborhood_size: int = 5,
                                background_label: int = 0,
-                               channels_idx: int = 0) -> Tuple[np.ndarray,
-                                                               np.ndarray]:
+                               channels_idx: int = 0,
+                               use_unmixing: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Reshape data to a array of dimensionality: [N_SAMPLES, HEIGHT, WIDTH, CHANNELS]
+    and the labels to dimensionality of: [N_SAMPLES, N_CLASSES]
+    :param data: Data passed as array.
+    :param labels: Labels passed as array.
+    :param neighborhood_size: Length of the spatial patch.
+    :param background_label: Label to filter out the background.
+    :param channels_idx: Index of the channels.
+    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+            where classes in each pixel are present as fractions.
+    :rtype: Tuple of data and labels reshaped to 3D format.
+    """
     data = np.rollaxis(data, channels_idx, len(data.shape))
     height, width, _ = data.shape
     padding_size = int(
@@ -73,12 +97,15 @@ def reshape_cube_to_3d_samples(data: np.ndarray,
     labels_3d = []
     data = data.astype(np.float32)
     for x, y in product(list(range(height)), list(range(width))):
-        if labels[x, y] != background_label:
+        if use_unmixing or labels[x, y] != background_label:
             samples.append(data[x:x + padding_size * 2 + 1,
                            y:y + padding_size * 2 + 1])
             labels_3d.append(labels[x, y])
     samples = np.array(samples).astype(np.float32)
-    labels3d = np.array(labels_3d).astype(np.uint8)
+    if use_unmixing:
+        labels3d = np.array(labels_3d).astype(np.float32)
+    else:
+        labels3d = np.array(labels_3d).astype(np.uint8)
     return samples, labels3d
 
 
@@ -117,7 +144,8 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                          train_size: Union[List, float, int] = 0.8,
                          val_size: float = 0.1,
                          stratified: bool = True,
-                         seed: int = 0) -> Tuple[
+                         seed: int = 0,
+                         use_unmixing: bool = False) -> Tuple[
     np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split the data into train, val and test sets. The size of the training set
@@ -143,13 +171,19 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     :param stratified: Indicated whether the extracted training set should be
                      stratified, defaults to True
     :param seed: Seed used for data shuffling
+    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+            where classes in each pixel are present as fractions.
     :return: train_x, train_y, val_x, val_y, test_x, test_y
     :raises AssertionError: When wrong type is passed as train_size
     """
     shuffle_arrays_together([data, labels], seed=seed)
-    train_indices = _get_set_indices(train_size, labels, stratified)
-    val_indices = _get_set_indices(val_size, labels[train_indices])
-    val_indices = train_indices[val_indices]
+    if use_unmixing:
+        train_indices = np.random.choice(len(data), size=int(train_size * len(data)), replace=False)
+        val_indices = np.random.choice(train_indices, size=int(val_size * len(train_indices)), replace=False)
+    else:
+        train_indices = _get_set_indices(train_size, labels, stratified)
+        val_indices = _get_set_indices(val_size, labels[train_indices])
+        val_indices = train_indices[val_indices]
     test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
     train_indices = np.setdiff1d(train_indices, val_indices)
     return data[train_indices], labels[train_indices], data[val_indices], \

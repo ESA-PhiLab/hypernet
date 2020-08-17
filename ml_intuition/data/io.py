@@ -15,6 +15,8 @@ import tifffile
 import ml_intuition.enums as enums
 from ml_intuition.data.utils import build_data_dict
 
+UNMIXING_CLASS_FRACTIONS = 0
+
 
 def load_metrics(experiments_path: str, filename: str = None) -> \
         Dict[List, List]:
@@ -31,7 +33,7 @@ def load_metrics(experiments_path: str, filename: str = None) -> \
             os.path.join(experiments_path, '{}*'.format(enums.Experiment.EXPERIMENT))):
         if filename is None:
             inference_metrics_path = os.path.join(experiment_dir,
-                               enums.Experiment.INFERENCE_METRICS)
+                                                  enums.Experiment.INFERENCE_METRICS)
         else:
             inference_metrics_path = os.path.join(experiment_dir, filename)
         with open(inference_metrics_path) as metric_file:
@@ -41,7 +43,7 @@ def load_metrics(experiments_path: str, filename: str = None) -> \
     return all_metrics
 
 
-def save_metrics(dest_path: str, metrics: Dict[str, List], file_name: str=None):
+def save_metrics(dest_path: str, metrics: Dict[str, List], file_name: str = None):
     """
     Save given dictionary of metrics.
 
@@ -77,16 +79,22 @@ def extract_set(data_path: str, dataset_key: str) -> Dict[str, Union[np.ndarray,
     return dataset
 
 
-def load_npy(data_file_path: str, gt_input_path: str) -> Tuple[
-        np.ndarray, np.ndarray]:
+def load_npy(data_file_path: str, gt_input_path: str, use_unmixing: bool = False) -> Tuple[
+    np.ndarray, np.ndarray]:
     """
     Load .npy data and GT from specified paths
 
     :param data_file_path: Path to the data .npy file
     :param gt_input_path: Path to the GT .npy file
+    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+            where classes in each pixel are present as fractions.
     :return: Tuple with loaded data and GT
     """
-    return np.load(data_file_path), np.load(gt_input_path)
+    data, labels = np.load(data_file_path), np.load(gt_input_path)
+    if use_unmixing:
+        height, width, _ = data.shape
+        labels = np.moveaxis(labels.reshape(-1, height, width), UNMIXING_CLASS_FRACTIONS, -1)
+    return data, labels
 
 
 def load_satellite_h5(data_file_path: str) -> Tuple[np.ndarray, np.ndarray]:
@@ -111,9 +119,9 @@ def load_processed_h5(data_file_path: str) -> Dict:
     with h5py.File(data_file_path, 'r') as file:
         train_x, train_y, val_x, val_y, test_x, test_y = \
             file[enums.Dataset.TRAIN][enums.Dataset.DATA][:], \
-            file[enums.Dataset.TRAIN][enums.Dataset.LABELS][:],\
+            file[enums.Dataset.TRAIN][enums.Dataset.LABELS][:], \
             file[enums.Dataset.VAL][enums.Dataset.DATA][:], \
-            file[enums.Dataset.VAL][enums.Dataset.LABELS][:],\
+            file[enums.Dataset.VAL][enums.Dataset.LABELS][:], \
             file[enums.Dataset.TEST][enums.Dataset.DATA][:], \
             file[enums.Dataset.TEST][enums.Dataset.LABELS][:]
     return build_data_dict(train_x=train_x, train_y=train_y,
