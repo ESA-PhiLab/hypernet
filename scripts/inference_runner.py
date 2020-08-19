@@ -4,6 +4,7 @@ Run experiments given set of hyperparameters.
 
 import os
 import shutil
+import re
 
 import clize
 import mlflow
@@ -99,9 +100,10 @@ def run_experiments(*,
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))
-        model_path = os.path.join(models_path,
-                                  'experiment_' + str(experiment_id),
-                                  'model_3d_deep')
+        model_name_regex = re.compile('model_.*')
+        model_dir = os.path.join(models_path, f'experiment_{experiment_id}')
+        model_name = list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
+        model_path = os.path.join(model_dir, model_name)
         if dataset_path is None:
             data_source = os.path.join(models_path,
                                        'experiment_' + str(experiment_id),
