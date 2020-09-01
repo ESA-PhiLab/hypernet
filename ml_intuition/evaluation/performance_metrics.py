@@ -4,10 +4,41 @@ All metrics that are calculated on the model's output.
 from typing import Dict, List
 
 import numpy as np
+import tensorflow as tf
 from sklearn import metrics
 from sklearn.metrics import confusion_matrix
 
 from ml_intuition.data import utils
+
+
+def rms_abundance_angle_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    """
+    Calculate the root-mean square abundance angle distance, which measures the similarity
+    between the original abundance fractions and the predicted ones.
+    It utilizes the inverse of cosine function at the range [0, pi], which means that
+    the domain of arccos is in the range [-1; 1], that is why the "tf.clip_by_value" method is used.
+    For the identical abundances the numerator / denominator is 1 and arccos(1) is 0, which resembles the perfect score.
+    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
+    :return: The root-mean square abundance angle distance error.
+    """
+    numerator = tf.reduce_sum(tf.multiply(y_true, y_pred), 1)
+    y_true_len = tf.sqrt(tf.reduce_sum(tf.square(tf.cast(y_true, tf.float32)), 1))
+    y_pred_len = tf.sqrt(tf.reduce_sum(tf.square(tf.cast(y_pred, tf.float32)), 1))
+    denominator = tf.multiply(y_true_len, y_pred_len)
+    loss = tf.sqrt(tf.reduce_mean(tf.square(tf.acos(tf.clip_by_value(numerator / denominator, -1, 1)))))
+    return loss
+
+
+def rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    """
+    Calculate the root-mean square error, which measures the similarity
+    between the original abundance fractions and the predicted ones.
+    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
+    :return: The root-mean square error.
+    """
+    return tf.sqrt(tf.reduce_mean((y_true - y_pred) ** 2))
 
 
 def mean_per_class_accuracy(y_true: np.ndarray,

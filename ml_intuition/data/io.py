@@ -18,8 +18,7 @@ from ml_intuition.data.utils import build_data_dict
 UNMIXING_CLASS_FRACTIONS = 0
 
 
-def load_metrics(experiments_path: str, filename: str = None) -> \
-        Dict[List, List]:
+def load_metrics(experiments_path: str, filename: str = None) -> Dict[List, List]:
     """
     Load metrics to a dictionary.
 
@@ -53,7 +52,7 @@ def save_metrics(dest_path: str, metrics: Dict[str, List], file_name: str = None
     """
     if file_name is not None:
         dest_path = os.path.join(dest_path, file_name)
-    with open(dest_path, 'w') as file:
+    with open(dest_path, 'w', newline='') as file:
         write = csv.writer(file)
         write.writerow(metrics.keys())
         write.writerows(zip(*metrics.values()))

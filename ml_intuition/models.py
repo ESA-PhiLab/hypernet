@@ -151,21 +151,19 @@ def unmixing_cube_based_cnn(n_classes: int, input_size: int, cube_based: bool = 
     Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
     "Hyperspectral unmixing via deep convolutional neural networks."
     IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
-    Args:
-        n_classes: Number of classes.
-        input_size: Number of input spectral bands.
-        cube_based: Boolean indicating whether to use 3D or 1D convolutional feature extractor.
-        **kwargs: Additional arguments.
 
-    Returns: Model proposed in the publication listed above.
-
+    :param n_classes: Number of classes.
+    :param input_size: Number of input spectral bands.
+    :param cube_based: Boolean indicating whether to use 3D or 1D convolutional feature extractor.
+    :param kwargs: Additional arguments.
+    :return: Model proposed in the publication listed above.
     """
     model = tf.keras.Sequential()
     if cube_based:
         model.add(tf.keras.layers.Conv3D(filters=16, kernel_size=(1, 1, 5), activation='relu',
                                          input_shape=(3, 3, input_size, 1), data_format='channels_last'))
         model.add(tf.keras.layers.Conv3D(filters=32, kernel_size=(1, 1, 4), activation='relu'))
-        model.add(tf.keras.layers.Conv3D(filters=64, kernel_size=(1, 1, 5), activation='ralu'))
+        model.add(tf.keras.layers.Conv3D(filters=64, kernel_size=(1, 1, 5), activation='relu'))
         model.add(tf.keras.layers.Dropout(rate=0.2))
         model.add(tf.keras.layers.Conv3D(filters=128, kernel_size=(1, 1, 4), activation='relu'))
         model.add(tf.keras.layers.Dropout(rate=0.2))

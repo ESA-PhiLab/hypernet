@@ -12,7 +12,7 @@ from clize.parameters import multi
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms
 from ml_intuition.data.noise import get_noise_functions
-from ml_intuition.evaluation import time_metrics
+from ml_intuition.evaluation import time_metrics, performance_metrics
 
 
 def train(*,
@@ -31,6 +31,7 @@ def train(*,
           shuffle: bool = True,
           patience: int = 3,
           seed: int = 0,
+          use_unmixing: bool = False,
           noise: ('post', multi(min=0)),
           noise_sets: ('spost', multi(min=0)),
           noise_params: str = None):
@@ -58,12 +59,14 @@ def train(*,
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
     :param seed: Seed for training reproducibility.
+    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+        where classes in each pixel are present as abundances fractions.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
-    :param noise_sets: List of sets that are affected by the noise injecton methods.
+    :param noise_sets: List of sets that are affected by the noise injection methods.
         For this module single element can be either "train" or "val".
     :param noise_params: JSON containing the parameters setting of injection methods.
-        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+        Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
         This JSON should include all parameters for noise injection
         functions that are specified in the noise argument.
         For the accurate description of each parameter, please
@@ -78,14 +81,17 @@ def train(*,
         train_dict = io.extract_set(data, enums.Dataset.TRAIN)
         val_dict = io.extract_set(data, enums.Dataset.VAL)
         min_, max_ = train_dict[enums.DataStats.MIN], \
-            train_dict[enums.DataStats.MAX]
+                     train_dict[enums.DataStats.MAX]
     else:
         train_dict = data[enums.Dataset.TRAIN]
         val_dict = data[enums.Dataset.VAL]
         min_, max_ = data[enums.DataStats.MIN], \
-            data[enums.DataStats.MAX]
+                     data[enums.DataStats.MAX]
 
-    transformations = [transforms.OneHotEncode(n_classes=n_classes), transforms.MinMaxNormalize(min_=min_, max_=max_)]
+    transformations = [transforms.SpectralTransform()] if use_unmixing else [
+        transforms.OneHotEncode(n_classes=n_classes)]
+    transformations += [transforms.MinMaxNormalize(min_=min_, max_=max_)]
+
     if '2d' in model_name or 'deep' in model_name:
         transformations.append(transforms.SpectralTransform())
 
@@ -104,34 +110,34 @@ def train(*,
                     'n_classes': n_classes}
     model = models.get_model(model_key=model_name, **model_kwargs)
     model.summary()
-    model.compile(tf.keras.optimizers.Adam(lr=lr),
-                  'categorical_crossentropy',
-                  metrics=['accuracy'])
+
+    metrics = [performance_metrics.rmse,
+               performance_metrics.rms_abundance_angle_distance] if use_unmixing \
+        else ['accuracy']
+    loss = 'mse' if use_unmixing else 'categorical_crossentropy'
+
+    model.compile(optimizer=tf.keras.optimizers.Adam(lr=lr), loss=loss, metrics=metrics)
+    monitor = 'val_loss' if use_unmixing else 'val_acc'
+    mode = 'min' if use_unmixing else 'max'
 
     time_history = time_metrics.TimeHistory()
-    mcp_save = tf.keras.callbacks.ModelCheckpoint(
-        os.path.join(dest_path, model_name), save_best_only=True,
-        monitor='val_acc', mode='max')
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
-                                                      patience=patience)
+    mcp_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(dest_path, model_name), save_best_only=True,
+                                                  monitor=monitor, mode=mode)
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience, mode='min')
     callbacks = [time_history, mcp_save, early_stopping]
     history = model.fit(x=train_dict[enums.Dataset.DATA],
                         y=train_dict[enums.Dataset.LABELS],
                         epochs=epochs,
                         verbose=verbose,
                         shuffle=shuffle,
-                        validation_data=(val_dict[enums.Dataset.DATA],
-                                         val_dict[enums.Dataset.LABELS]),
+                        validation_data=(val_dict[enums.Dataset.DATA], val_dict[enums.Dataset.LABELS]),
                         callbacks=callbacks,
                         batch_size=batch_size)
 
     history.history[time_metrics.TimeHistory.__name__] = time_history.average
-    io.save_metrics(dest_path=dest_path,
-                    file_name='training_metrics.csv',
-                    metrics=history.history)
+    io.save_metrics(dest_path=dest_path, file_name='training_metrics.csv', metrics=history.history)
 
-    np.savetxt(os.path.join(dest_path, 'min-max.csv'),
-               np.array([min_, max_]), delimiter=',', fmt='%f')
+    np.savetxt(os.path.join(dest_path, 'min-max.csv'), np.array([min_, max_]), delimiter=',', fmt='%f')
 
 
 if __name__ == '__main__':

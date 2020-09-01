@@ -9,14 +9,14 @@ import clize
 import mlflow
 import tensorflow as tf
 from clize.parameters import multi
-from scripts import evaluate_model, prepare_data, train_model, \
-    artifacts_reporter
 
 from ml_intuition import enums
 from ml_intuition.data import noise
 from ml_intuition.data.io import load_processed_h5
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 from ml_intuition.data.utils import parse_train_size
+from scripts import evaluate_model, prepare_data, train_model, \
+    artifacts_reporter
 
 
 def run_experiments(*,
@@ -112,7 +112,7 @@ def run_experiments(*,
         refer to the ml_intuition/data/noise.py module.
     :param use_mlflow: Whether to log metrics and artifacts to mlflow.
     :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
-        where classes in each pixel are present as fractions.
+        where classes in each pixel are present as abundances fractions.
     :param experiment_name: Name of the experiment. Used only if
         use_mlflow = True
     :param run_name: Name of the run. Used only if use_mlflow = True.
@@ -176,6 +176,7 @@ def run_experiments(*,
                           verbose=verbose,
                           shuffle=shuffle,
                           patience=patience,
+                          use_unmixing=use_unmixing,
                           noise=post_noise,
                           noise_sets=pre_noise_sets,
                           noise_params=noise_params)
@@ -186,6 +187,7 @@ def run_experiments(*,
             dest_path=experiment_dest_path,
             n_classes=n_classes,
             batch_size=batch_size,
+            use_unmixing=use_unmixing,
             noise=post_noise,
             noise_sets=pre_noise_sets,
             noise_params=noise_params)
