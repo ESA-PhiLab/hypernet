@@ -11,7 +11,15 @@ from sklearn.metrics import confusion_matrix
 from ml_intuition.data import utils
 
 
-def rms_abundance_angle_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+def sum_per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    return tf.reduce_sum(per_class_rmse(y_true=y_true, y_pred=y_pred))
+
+
+def per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    return tf.sqrt(tf.reduce_mean((y_true - y_pred) ** 2, 0))
+
+
+def overall_rms_abundance_angle_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
     Calculate the root-mean square abundance angle distance, which measures the similarity
     between the original abundance fractions and the predicted ones.
@@ -23,14 +31,14 @@ def rms_abundance_angle_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Ten
     :return: The root-mean square abundance angle distance error.
     """
     numerator = tf.reduce_sum(tf.multiply(y_true, y_pred), 1)
-    y_true_len = tf.sqrt(tf.reduce_sum(tf.square(tf.cast(y_true, tf.float32)), 1))
-    y_pred_len = tf.sqrt(tf.reduce_sum(tf.square(tf.cast(y_pred, tf.float32)), 1))
+    y_true_len = tf.sqrt(tf.reduce_sum(tf.square(y_true), 1))
+    y_pred_len = tf.sqrt(tf.reduce_sum(tf.square(y_pred), 1))
     denominator = tf.multiply(y_true_len, y_pred_len)
     loss = tf.sqrt(tf.reduce_mean(tf.square(tf.acos(tf.clip_by_value(numerator / denominator, -1, 1)))))
     return loss
 
 
-def rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+def overall_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
     Calculate the root-mean square error, which measures the similarity
     between the original abundance fractions and the predicted ones.

@@ -111,8 +111,9 @@ def train(*,
     model = models.get_model(model_key=model_name, **model_kwargs)
     model.summary()
 
-    metrics = [performance_metrics.rmse,
-               performance_metrics.rms_abundance_angle_distance] if use_unmixing \
+    metrics = [performance_metrics.overall_rmse,
+               performance_metrics.overall_rms_abundance_angle_distance,
+               performance_metrics.sum_per_class_rmse] if use_unmixing \
         else ['accuracy']
     loss = 'mse' if use_unmixing else 'categorical_crossentropy'
 

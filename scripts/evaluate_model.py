@@ -14,7 +14,7 @@ from ml_intuition import enums
 from ml_intuition.data import io, transforms
 from ml_intuition.data.noise import get_noise_functions
 from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
-    get_fair_model_metrics, rmse, rms_abundance_angle_distance
+    get_fair_model_metrics, overall_rmse, overall_rms_abundance_angle_distance, per_class_rmse, sum_per_class_rmse
 from ml_intuition.evaluation.time_metrics import timeit
 
 
@@ -72,19 +72,29 @@ def evaluate(*,
         if enums.Dataset.TEST in noise_sets else transformations
 
     test_dict = transforms.apply_transformations(test_dict, transformations)
-    custom_objects = {rmse.__name__: rmse,
-                      rms_abundance_angle_distance.__name__: rms_abundance_angle_distance} if use_unmixing else {}
+    custom_objects = {overall_rmse.__name__: overall_rmse,
+                      overall_rms_abundance_angle_distance.__name__: overall_rms_abundance_angle_distance,
+                      per_class_rmse.__name__: per_class_rmse,
+                      sum_per_class_rmse.__name__: sum_per_class_rmse} if use_unmixing else {}
     model = tf.keras.models.load_model(model_path, compile=True, custom_objects=custom_objects)
 
     predict = timeit(model.predict)
     y_pred, inference_time = predict(test_dict[enums.Dataset.DATA], batch_size=batch_size)
 
     if use_unmixing:
-        session = tf.Session()
+        sess = tf.Session()
         model_metrics = {
-            rmse.__name__: [float(rmse(y_true=test_dict[enums.Dataset.LABELS], y_pred=y_pred).eval(session=session))],
-            rms_abundance_angle_distance.__name__: [float(rms_abundance_angle_distance(
-                y_true=test_dict[enums.Dataset.LABELS], y_pred=y_pred).eval(session=session))]}
+            overall_rmse.__name__: [float(overall_rmse(y_true=test_dict[enums.Dataset.LABELS],
+                                                       y_pred=y_pred).eval(session=sess))],
+
+            overall_rms_abundance_angle_distance.__name__: [float(overall_rms_abundance_angle_distance(
+                y_true=test_dict[enums.Dataset.LABELS], y_pred=y_pred).eval(session=sess))],
+
+            sum_per_class_rmse.__name__: [sum_per_class_rmse(y_true=test_dict[enums.Dataset.LABELS],
+                                                             y_pred=y_pred).eval(session=sess)]}
+        for class_idx, class_rmse in enumerate(per_class_rmse(y_true=test_dict[enums.Dataset.LABELS],
+                                                              y_pred=y_pred).eval(session=sess).tolist()):
+            model_metrics[f'Class_{class_idx}_rmse'] = [class_rmse]
     else:
         y_pred = np.argmax(y_pred, axis=-1)
         y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
