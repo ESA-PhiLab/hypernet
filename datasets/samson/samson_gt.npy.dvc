@@ -1,0 +1,7 @@
+md5: f5f898b1198f2680e047037208341225
+outs:
+- md5: b203cf3810aa5703007010c370d1ae4f
+  path: samson_gt.npy
+  cache: true
+  metric: false
+  persist: false

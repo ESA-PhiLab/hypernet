@@ -1,0 +1,7 @@
+md5: 7636737e95f03e3b491b89e109ca9c2d
+outs:
+- md5: 5436146f8ffe1bcce527b01a0e2a6d56
+  path: urban_gt.npy
+  cache: true
+  metric: false
+  persist: false

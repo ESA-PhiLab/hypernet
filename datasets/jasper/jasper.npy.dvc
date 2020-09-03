@@ -1,0 +1,7 @@
+md5: befed301ff677c683973b432a3ae6b88
+outs:
+- md5: a0caef00b099c65c61d665de45faac83
+  path: jasper.npy
+  cache: true
+  metric: false
+  persist: false

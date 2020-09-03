@@ -1,0 +1,7 @@
+md5: 7667bb0956a51e7da90aea36a71954af
+outs:
+- md5: c2a27858af4b945d14d6859f8db999b0
+  path: samson.npy
+  cache: true
+  metric: false
+  persist: false
