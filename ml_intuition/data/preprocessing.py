@@ -168,8 +168,10 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     """
     shuffle_arrays_together([data, labels], seed=seed)
     if use_unmixing:
-        train_indices = np.random.choice(len(data), size=int(train_size * len(data)), replace=False)
-        val_indices = np.random.choice(train_indices, size=int(val_size * len(train_indices)), replace=False)
+        train_size = int(train_size * len(data)) if isinstance(train_size, float) else train_size
+        train_indices = np.random.choice(len(data), size=train_size, replace=False)
+        val_size = int(val_size * len(train_indices))
+        val_indices = np.random.choice(train_indices, size=val_size, replace=False)
     else:
         train_indices = _get_set_indices(train_size, labels, stratified)
         val_indices = _get_set_indices(val_size, labels[train_indices])

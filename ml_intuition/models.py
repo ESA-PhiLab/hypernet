@@ -180,7 +180,7 @@ def unmixing_cube_based_cnn(n_classes: int, input_size: int, cube_based: bool = 
         model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
 
     model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
-    model.add(tf.keras.layers.Dense(units=128, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=192, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=150, activation='relu'))
     model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
     return model
