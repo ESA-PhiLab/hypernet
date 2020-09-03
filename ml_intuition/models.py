@@ -145,7 +145,7 @@ def model_3d_deep(n_classes: int, input_size: int, **kwargs):
     return model
 
 
-def unmixing_cube_based_cnn(n_classes: int, input_size: int, cube_based: bool = True, **kwargs) -> tf.keras.Sequential:
+def unmixing_cube_based_cnn(n_classes: int, input_size: int, **kwargs) -> tf.keras.Sequential:
     """
     Model for hyperspectral unmixing proposed in the following publication:
     Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
@@ -154,30 +154,48 @@ def unmixing_cube_based_cnn(n_classes: int, input_size: int, cube_based: bool = 
 
     :param n_classes: Number of classes.
     :param input_size: Number of input spectral bands.
-    :param cube_based: Boolean indicating whether to use 3D or 1D convolutional feature extractor.
     :param kwargs: Additional arguments.
     :return: Model proposed in the publication listed above.
     """
     model = tf.keras.Sequential()
-    if cube_based:
-        model.add(tf.keras.layers.Conv3D(filters=16, kernel_size=(1, 1, 5), activation='relu',
-                                         input_shape=(3, 3, input_size, 1), data_format='channels_last'))
-        model.add(tf.keras.layers.Conv3D(filters=32, kernel_size=(1, 1, 4), activation='relu'))
-        model.add(tf.keras.layers.Conv3D(filters=64, kernel_size=(1, 1, 5), activation='relu'))
-        model.add(tf.keras.layers.Dropout(rate=0.2))
-        model.add(tf.keras.layers.Conv3D(filters=128, kernel_size=(1, 1, 4), activation='relu'))
-        model.add(tf.keras.layers.Dropout(rate=0.2))
-    else:
-        model.add(
-            tf.keras.layers.Conv2D(filters=3, kernel_size=(1, 5), activation='relu',
-                                   input_shape=(1, input_size, 1), data_format='channels_last'))
-        model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
-        model.add(tf.keras.layers.Conv2D(filters=6, kernel_size=(1, 4), activation='relu'))
-        model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
-        model.add(tf.keras.layers.Conv2D(filters=12, kernel_size=(1, 5), activation='relu'))
-        model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
-        model.add(tf.keras.layers.Conv2D(filters=24, kernel_size=(1, 4), activation='relu'))
-        model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
+    model.add(tf.keras.layers.Conv3D(filters=16, kernel_size=(1, 1, 5), activation='relu',
+                                     input_shape=(3, 3, input_size, 1), data_format='channels_last'))
+    model.add(tf.keras.layers.Conv3D(filters=32, kernel_size=(1, 1, 4), activation='relu'))
+    model.add(tf.keras.layers.Conv3D(filters=64, kernel_size=(1, 1, 5), activation='relu'))
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+    model.add(tf.keras.layers.Conv3D(filters=128, kernel_size=(1, 1, 4), activation='relu'))
+    model.add(tf.keras.layers.Dropout(rate=0.2))
+
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(units=192, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=150, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
+    return model
+
+
+def unmixing_pixel_based_cnn(n_classes: int, input_size: int, **kwargs) -> tf.keras.Sequential:
+    """
+    Model for hyperspectral unmixing proposed in the following publication:
+    Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
+    "Hyperspectral unmixing via deep convolutional neural networks."
+    IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
+
+    :param n_classes: Number of classes.
+    :param input_size: Number of input spectral bands.
+    :param kwargs: Additional arguments.
+    :return: Model proposed in the publication listed above.
+    """
+    model = tf.keras.Sequential()
+    model.add(
+        tf.keras.layers.Conv2D(filters=3, kernel_size=(1, 5), activation='relu',
+                               input_shape=(1, input_size, 1), data_format='channels_last'))
+    model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
+    model.add(tf.keras.layers.Conv2D(filters=6, kernel_size=(1, 4), activation='relu'))
+    model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
+    model.add(tf.keras.layers.Conv2D(filters=12, kernel_size=(1, 5), activation='relu'))
+    model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
+    model.add(tf.keras.layers.Conv2D(filters=24, kernel_size=(1, 4), activation='relu'))
+    model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
 
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(units=192, activation='relu'))
