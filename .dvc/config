@@ -1,4 +1,2 @@
-[cache]
-    type = "hardlink,symlink"
 ['remote "earth_data_registry"']
     url = /media/ML/.dvc_data_registry
