@@ -85,10 +85,10 @@ class Gaussian(BaseNoise):
                 noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
                                                n_bands, False)
             for band_index in noisy_bands:
-                data[sample_index, :, :, band_index] += \
+                data[sample_index, band_index] += \
                     np.random.normal(loc=self.params.mean,
                                      scale=self.params.std,
-                                     size=data[sample_index, :, :, band_index].shape)
+                                     size=data[sample_index, band_index].shape)
         return [data, labels]
 
 
@@ -116,12 +116,12 @@ class Impulsive(BaseNoise):
                                                n_bands, False)
             for band_index in noisy_bands:
                 if noise_index < n_white:
-                    data[sample_index, :, :, band_index] = \
-                        np.full(shape=data[sample_index, :, :, band_index].shape,
+                    data[sample_index, band_index] = \
+                        np.full(shape=data[sample_index, band_index].shape,
                                 fill_value=white)
                 else:
-                    data[sample_index, :, :, band_index] = \
-                        np.full(shape=data[sample_index, :, :, band_index].shape,
+                    data[sample_index, band_index] = \
+                        np.full(shape=data[sample_index, band_index].shape,
                                 fill_value=black)
         return [data, labels]
 
@@ -150,7 +150,7 @@ class Shot(BaseNoise):
                 noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
                                                n_bands, False)
             for band_index in noisy_bands:
-                data[sample_index, :, :, band_index] += noise[sample_index, :, :, band_index]
+                data[sample_index, band_index] += noise[sample_index, band_index]
         return [data, labels]
 
 

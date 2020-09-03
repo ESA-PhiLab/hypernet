@@ -12,10 +12,22 @@ from ml_intuition.data import utils
 
 
 def sum_per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    """
+    Calculate the sum of per class root-mean square error.
+    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
+    :return: The sum of per class root-mean square error.
+    """
     return tf.reduce_sum(per_class_rmse(y_true=y_true, y_pred=y_pred))
 
 
 def per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    """
+    Calculate the per class root-mean square error vector.
+    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
+    :return: The root-mean square error vector.
+    """
     return tf.sqrt(tf.reduce_mean((y_true - y_pred) ** 2, 0))
 
 

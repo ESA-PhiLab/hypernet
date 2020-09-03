@@ -124,10 +124,10 @@ class TestShotNoise:
     def test_shot_nosie_injection(self, data: np.ndarray, params: Dict):
         shot_noise = noise.Shot(params)
         data_prime, _ = shot_noise(data, None)
-        assert not np.array_equal(data, data_prime)
+        assert not np.array_equal(data.astype(np.float32), data_prime)
         assert np.amax(data_prime) > np.amax(data), \
             'When adding shot noise, the maximum value must be greater.'
-        assert np.amin(data_prime) == np.amin(data), \
+        assert round(float(np.amin(data_prime)), 3) == round(float(np.amin(data)), 3), \
             'The minimum value should not change when adding shot noise.'
 
     @pytest.mark.parametrize("data, params",
@@ -142,5 +142,5 @@ class TestShotNoise:
     def test_if_no_noise_injected(self, data: np.ndarray, params: Dict):
         shot_noise = noise.Shot(params)
         data_prime, _ = shot_noise(data, None)
-        assert (data == data_prime).all(), \
+        assert (data.astype(np.float32) == data_prime).all(), \
             'Assert no element is augmented with noise (\"pa\" == 0)'
