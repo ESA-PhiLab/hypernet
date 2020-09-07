@@ -78,15 +78,14 @@ def extract_set(data_path: str, dataset_key: str) -> Dict[str, Union[np.ndarray,
     return dataset
 
 
-def load_npy(data_file_path: str, gt_input_path: str, use_unmixing: bool = False) -> Tuple[
-    np.ndarray, np.ndarray]:
+def load_npy(data_file_path: str, gt_input_path: str, use_unmixing: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     """
     Load .npy data and GT from specified paths
 
     :param data_file_path: Path to the data .npy file
     :param gt_input_path: Path to the GT .npy file
     :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
-            where classes in each pixel are present as fractions.
+            where classes in each pixel are present as abundance fractions.
     :return: Tuple with loaded data and GT
     """
     data, labels = np.load(data_file_path), np.load(gt_input_path)
