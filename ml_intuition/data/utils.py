@@ -2,9 +2,9 @@
 All data handling methods.
 """
 
+import os
 from typing import Dict, List, Tuple, Union
 
-import os
 import mlflow
 import numpy as np
 import tensorflow as tf
@@ -207,6 +207,13 @@ def list_to_string(list_to_convert: List) -> str:
     :return: Comma separated string with values of the provided list
     """
     return ",".join(map(str, list_to_convert))
+
+
+def get_central_pixel_spectrum(data: np.ndarray, neighborhood_size: int) -> np.ndarray:
+    if neighborhood_size is not None:
+        central_index = np.floor(neighborhood_size / 2).astype(int)
+        return np.squeeze(data[:, central_index, central_index])
+    return np.squeeze(data)
 
 
 def get_mlflow_artifacts_path(artifacts_storage_path: str) -> str:

@@ -13,8 +13,9 @@ from sklearn.metrics import confusion_matrix
 from ml_intuition import enums
 from ml_intuition.data import io, transforms
 from ml_intuition.data.noise import get_noise_functions
-from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
-    get_fair_model_metrics, overall_rmse, overall_rms_abundance_angle_distance, per_class_rmse, sum_per_class_rmse
+from ml_intuition.data.utils import get_central_pixel_spectrum
+from ml_intuition.evaluation.performance_metrics import get_model_metrics, get_unmixing_metrics, \
+    get_fair_model_metrics, calculate_unmixing_metrics
 from ml_intuition.evaluation.time_metrics import timeit
 
 
@@ -23,8 +24,10 @@ def evaluate(*,
              model_path: str,
              dest_path: str,
              n_classes: int,
+             neighborhood_size: int = None,
              batch_size: int = 1024,
              use_unmixing: bool = False,
+             endmembers_path: str = None,
              noise: ('post', multi(min=0)),
              noise_sets: ('spost', multi(min=0)),
              noise_params: str = None):
@@ -35,9 +38,12 @@ def evaluate(*,
     :param data: Either path to the input data or the data dict.
     :param dest_path: Directory in which to store the calculated metrics
     :param n_classes: Number of classes.
+    :param neighborhood_size: Size of the spatial patch.
     :param batch_size: Size of the batch for inference.
     :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
         where classes in each pixel are present as abundances fractions.
+    :param endmembers_path: Path to the endmembers file containing average reflectances for each class.
+        Used only when use_unmixing is true.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
     :param noise_sets: List of sets that are affected by the noise injection.
@@ -64,37 +70,30 @@ def evaluate(*,
         transforms.OneHotEncode(n_classes=n_classes)]
 
     transformations += [transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
+    model_name = os.path.basename(model_path)
 
-    if '2d' in os.path.basename(model_path) or 'deep' in os.path.basename(model_path):
+    if '2d' in model_name or 'deep' in model_name:
         transformations.append(transforms.SpectralTransform())
 
     transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.TEST in noise_sets else transformations
 
     test_dict = transforms.apply_transformations(test_dict, transformations)
-    custom_objects = {overall_rmse.__name__: overall_rmse,
-                      overall_rms_abundance_angle_distance.__name__: overall_rms_abundance_angle_distance,
-                      per_class_rmse.__name__: per_class_rmse,
-                      sum_per_class_rmse.__name__: sum_per_class_rmse} if use_unmixing else {}
-    model = tf.keras.models.load_model(model_path, compile=True, custom_objects=custom_objects)
+    model = tf.keras.models.load_model(model_path, compile=True,
+                                       custom_objects=get_unmixing_metrics(model_name, use_unmixing, 'TRAIN'))
+    if 'dcae' in model_name:
+        model.pop()  # Drop the decoder of the already trained autoencoder
 
     predict = timeit(model.predict)
     y_pred, inference_time = predict(test_dict[enums.Dataset.DATA], batch_size=batch_size)
 
     if use_unmixing:
-        sess = tf.Session()
-        model_metrics = {
-            overall_rmse.__name__: [float(overall_rmse(y_true=test_dict[enums.Dataset.LABELS],
-                                                       y_pred=y_pred).eval(session=sess))],
-
-            overall_rms_abundance_angle_distance.__name__: [float(overall_rms_abundance_angle_distance(
-                y_true=test_dict[enums.Dataset.LABELS], y_pred=y_pred).eval(session=sess))],
-
-            sum_per_class_rmse.__name__: [sum_per_class_rmse(y_true=test_dict[enums.Dataset.LABELS],
-                                                             y_pred=y_pred).eval(session=sess)]}
-        for class_idx, class_rmse in enumerate(per_class_rmse(y_true=test_dict[enums.Dataset.LABELS],
-                                                              y_pred=y_pred).eval(session=sess).tolist()):
-            model_metrics[f'Class_{class_idx}_rmse'] = [class_rmse]
+        # Load the endmembers i.e., the decoder weights in the DCAE model, else None:
+        model_metrics = calculate_unmixing_metrics(model_name, **{
+            'endmembers': np.load(endmembers_path) if endmembers_path is not None else None,
+            'y_pred': y_pred, 'y_true': test_dict[enums.Dataset.LABELS],
+            'x_true': get_central_pixel_spectrum(test_dict['data'], neighborhood_size)
+        })
     else:
         y_pred = np.argmax(y_pred, axis=-1)
         y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
@@ -114,7 +113,8 @@ def evaluate(*,
                 labels_in_train = np.unique(train_labels)
             fair_metrics = get_fair_model_metrics(conf_matrix, labels_in_train)
             io.save_metrics(dest_path=dest_path,
-                            file_name=enums.Experiment.INFERENCE_FAIR_METRICS, metrics=fair_metrics)
+                            file_name=enums.Experiment.INFERENCE_FAIR_METRICS,
+                            metrics=fair_metrics)
 
     model_metrics['inference_time'] = [inference_time]
     io.save_metrics(dest_path=dest_path, file_name=enums.Experiment.INFERENCE_METRICS, metrics=model_metrics)

@@ -1,7 +1,7 @@
 """
 All metrics that are calculated on the model's output.
 """
-from typing import Dict, List
+from typing import Dict, List, Union
 
 import numpy as np
 import tensorflow as tf
@@ -9,6 +9,32 @@ from sklearn import metrics
 from sklearn.metrics import confusion_matrix
 
 from ml_intuition.data import utils
+
+
+def convert_to_tensor(metric_function):
+    def wrapper(y_true: np.ndarray, y_pred: np.ndarray):
+        if not isinstance(y_true, tf.Tensor):
+            y_true = tf.cast(tf.convert_to_tensor(y_true), tf.float32)
+        if not isinstance(y_pred, tf.Tensor):
+            y_pred = tf.cast(tf.convert_to_tensor(y_pred), tf.float32)
+        with tf.Session() as session:
+            return metric_function(y_true=y_true, y_pred=y_pred).eval(session=session)
+
+    return wrapper
+
+
+def spectral_information_divergence_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    """
+    Calculate the spectral information divergence loss, which is based on the divergence in information theory.
+    :param y_true: Labels as two dimensional abundances or original input array of shape:
+    [n_samples, n_classes], [n_samples, n_bands].
+    :param y_pred: Predicted abundances or reconstructed input array of shape:
+    [n_samples, n_classes], [n_samples, n_bands].
+    :return: The spectral information divergence loss.
+    """
+    y_true, y_pred = tf.keras.backend.clip(y_true, tf.keras.backend.epsilon(), 1), \
+                     tf.keras.backend.clip(y_pred, tf.keras.backend.epsilon(), 1)
+    return tf.reduce_sum(y_true * tf.log(y_true / y_pred)) + tf.reduce_sum(y_pred * tf.log(y_pred / y_true))
 
 
 def sum_per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
@@ -99,6 +125,58 @@ DEFAULT_FAIR_METRICS = [
     metrics.balanced_accuracy_score,
     metrics.cohen_kappa_score
 ]
+
+UNMIXING_METRICS = {
+    'TRAIN': {'dcae': {spectral_information_divergence_loss.__name__: spectral_information_divergence_loss,
+                       overall_rmse.__name__: overall_rmse},
+              'cnn': {overall_rmse.__name__: overall_rmse,
+                      overall_rms_abundance_angle_distance.__name__: overall_rms_abundance_angle_distance,
+                      sum_per_class_rmse.__name__: sum_per_class_rmse}},
+    'TEST': {'dcae': {'aRMSE': overall_rmse,
+                      'aSAM': overall_rms_abundance_angle_distance},
+             'cnn': {'overallRMSE': overall_rmse,
+                     'rmsAAD': overall_rms_abundance_angle_distance,
+                     'sumRMSE': sum_per_class_rmse}}
+}
+UNMIXING_LOSSES = {
+    'dcae': spectral_information_divergence_loss,
+    'cnn': 'mse'
+}
+
+
+def get_loss(model_name: str, use_unmixing: bool = True) -> Union[str, object]:
+    loss = 'categorical_crossentropy'
+    if use_unmixing:
+        loss = UNMIXING_LOSSES[model_name.split('_')[-1]]
+    return loss
+
+
+def get_unmixing_metrics(model_name: str, use_unmixing: bool = False, mode: str = 'TRAIN') -> Dict[str, object]:
+    unmixing_metrics = {}
+    if use_unmixing:
+        try:
+            unmixing_metrics = UNMIXING_METRICS[mode][model_name.split('_')[-1]]
+        except KeyError:
+            print(f'The model name: {model_name} or mode: {mode} for unmixing is incorrect.')
+    return unmixing_metrics
+
+
+def calculate_unmixing_metrics(model_name: str, **kwargs) -> Dict[str, List[float]]:
+    model_metrics = {}
+    for f_name, f_metric in get_unmixing_metrics(model_name, True, 'TEST').items():
+        model_metrics[f_name] = [float(convert_to_tensor(f_metric)
+                                       (y_true=kwargs['y_true'], y_pred=kwargs['y_pred']))]
+    for class_idx, class_rmse in enumerate(convert_to_tensor(per_class_rmse)(
+            y_true=kwargs['y_true'], y_pred=kwargs['y_pred'])):
+        model_metrics[f'Class_{class_idx}_rmse'] = [float(class_rmse)]
+    if kwargs['endmembers'] is not None:
+        # Calculate the reconstruction RMSE and SID losses:
+        x_pred = np.matmul(kwargs['y_pred'], kwargs['endmembers'].T)
+        model_metrics['rRMSE'] = [float(convert_to_tensor(overall_rmse)
+                                        (y_true=kwargs['x_true'], y_pred=x_pred))]
+        model_metrics['rSID'] = [float(convert_to_tensor(spectral_information_divergence_loss)
+                                       (y_true=kwargs['x_true'], y_pred=x_pred))]
+    return model_metrics
 
 
 def get_model_metrics(y_true, y_pred, metrics_to_compute: List = None) \

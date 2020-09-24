@@ -61,42 +61,29 @@ def main(*,
     :raises TypeError: When provided data or labels file is not supported
     """
     train_size = utils.parse_train_size(train_size)
-    if 'patches' in data_file_path:
-        train_x, train_y, val_x, val_y, test_x, test_y = preprocessing.patches_to_samples(data_file_path,
-                                                                                          neighborhood_size, val_size,
-                                                                                          background_label,
-                                                                                          channels_idx)
-        if save_data:
-            io.save_md5(output_path, train_x, train_y, val_x, val_y, test_x,
-                        test_y)
-            return None
-        else:
-            return utils.build_data_dict(train_x, train_y, val_x, val_y, test_x,
-                                         test_y)
-    elif data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
+    if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
         data, labels = io.load_npy(data_file_path, ground_truth_path, use_unmixing)
-        if neighborhood_size is not None:
+        if neighborhood_size is None:
+            data, labels = preprocessing.reshape_cube_to_2d_samples(data, labels, channels_idx, use_unmixing)
+
+        else:
             data, labels = preprocessing.reshape_cube_to_3d_samples(data,
                                                                     labels,
                                                                     neighborhood_size,
                                                                     background_label,
                                                                     channels_idx,
                                                                     use_unmixing)
-        else:
-            data, labels = preprocessing.reshape_cube_to_2d_samples(data, labels, channels_idx, use_unmixing)
     elif data_file_path.endswith('.h5') and ground_truth_path.endswith('.tiff'):
         data, gt_transform_mat = io.load_satellite_h5(data_file_path)
         labels = io.load_tiff(ground_truth_path)
         data_2d_shape = data.shape[1:]
         labels = preprocessing.align_ground_truth(data_2d_shape, labels,
                                                   gt_transform_mat)
-        if neighborhood_size is not None:
-            data, labels = preprocessing. \
-                reshape_cube_to_3d_samples(data, labels, neighborhood_size,
-                                           background_label, channels_idx)
+        if neighborhood_size is None:
+            data, labels = preprocessing.reshape_cube_to_2d_samples(data, labels, channels_idx)
         else:
-            data, labels = preprocessing.reshape_cube_to_2d_samples(
-                data, labels, channels_idx)
+            data, labels = preprocessing.reshape_cube_to_3d_samples(data, labels, neighborhood_size,
+                                                                    background_label, channels_idx)
         data, labels = preprocessing.remove_nan_samples(data, labels)
     else:
         raise ValueError(

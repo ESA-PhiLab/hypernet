@@ -21,7 +21,6 @@ def run_experiments(*,
                     dataset_path: str = None,
                     background_label: int = 0,
                     channels_idx: int = 2,
-                    neighborhood_size: int = None,
                     channels_count: int = 103,
                     train_size: ('train_size', multi(min=0)),
                     batch_size: int = 64,
@@ -64,7 +63,7 @@ def run_experiments(*,
             dest_path, 'experiment_' + str(experiment_id))
         model_path = os.path.join(input_dir,
                                   'experiment_' + str(experiment_id),
-                                  'model_3d')
+                                  'model_2d')
         created_dataset = False
         if dataset_path is None:
             data_path = os.path.join(input_dir, 'experiment_' + str(experiment_id),
@@ -81,7 +80,6 @@ def run_experiments(*,
                               output_path=data_path,
                               background_label=background_label,
                               channels_idx=channels_idx,
-                              neighborhood_size=neighborhood_size,
                               save_data=True,
                               seed=experiment_id,
                               train_size=train_size,
@@ -94,9 +92,9 @@ def run_experiments(*,
                                        'freeze_input_output_node_name.json')
         frozen_graph_path = os.path.join(experiment_dest_path,
                                          'frozen_graph.pb')
-        cmd = '../scripts/quantize.sh ' + node_names_file + ' ' \
+        cmd = 'scripts/quantize.sh ' + node_names_file + ' ' \
               + frozen_graph_path + ' ' + data_path + ' ' + \
-              '?,7,7,103'.format(channels_count) + ' ' + \
+              '?,{},1,1'.format(channels_count) + ' ' + \
               'ml_intuition.data.input_fn.calibrate_2d_input' + ' ' + \
               '128' + ' ' + experiment_dest_path + \
               ' ' + str(gpu)

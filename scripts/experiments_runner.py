@@ -50,6 +50,7 @@ def run_experiments(*,
                     noise_params: str = None,
                     use_mlflow: bool = False,
                     use_unmixing: bool = False,
+                    endmembers_path: str = None,
                     experiment_name: str = None,
                     run_name: str = None):
     """
@@ -74,7 +75,8 @@ def run_experiments(*,
                      stratified, defaults to True
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
-                         data
+                         data.
+    :param neighborhood_size: Size of the spatial patch.
     :param save_data: Whether to save the prepared dataset
     :param n_runs: Number of total experiment runs.
     :param model_name: Name of the model, it serves as a key in the
@@ -113,6 +115,8 @@ def run_experiments(*,
     :param use_mlflow: Whether to log metrics and artifacts to mlflow.
     :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
         where classes in each pixel are present as abundances fractions.
+    :param endmembers_path: Path to the endmembers file containing average reflectances for each class.
+        Used only when use_unmixing is true.
     :param experiment_name: Name of the experiment. Used only if
         use_mlflow = True
     :param run_name: Name of the run. Used only if use_mlflow = True.
@@ -169,6 +173,7 @@ def run_experiments(*,
                           dest_path=experiment_dest_path,
                           data=data_source,
                           sample_size=sample_size,
+                          neighborhood_size=neighborhood_size,
                           n_classes=n_classes,
                           lr=lr,
                           batch_size=batch_size,
@@ -177,6 +182,7 @@ def run_experiments(*,
                           shuffle=shuffle,
                           patience=patience,
                           use_unmixing=use_unmixing,
+                          endmembers_path=endmembers_path,
                           noise=post_noise,
                           noise_sets=pre_noise_sets,
                           noise_params=noise_params)
@@ -185,9 +191,11 @@ def run_experiments(*,
             model_path=os.path.join(experiment_dest_path, model_name),
             data=data_source,
             dest_path=experiment_dest_path,
+            neighborhood_size=neighborhood_size,
             n_classes=n_classes,
             batch_size=batch_size,
             use_unmixing=use_unmixing,
+            endmembers_path=endmembers_path,
             noise=post_noise,
             noise_sets=pre_noise_sets,
             noise_params=noise_params)

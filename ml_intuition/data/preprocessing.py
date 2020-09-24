@@ -5,8 +5,6 @@ from typing import Tuple, Union, List
 import cv2
 import numpy as np
 
-import ml_intuition.data.io as io
-import ml_intuition.enums as enums
 from ml_intuition.data.utils import shuffle_arrays_together, \
     get_label_indices_per_class
 
@@ -254,36 +252,3 @@ def _(size: List,
         label_indices[label] = label_indices[label][:int(n_samples)]
     train_indices = np.concatenate(label_indices, axis=0)
     return train_indices
-
-
-def patches_to_samples(data_file_path: str, neighborhood_size, val_size: float = 0.1, background_label: int = 0,
-                       channels_idx=2):
-    dataset = io.load_processed_h5(data_file_path)
-    train_x = []
-    train_y = []
-    for patch, patch_gt in zip(dataset[enums.Dataset.TRAIN][enums.Dataset.DATA],
-                               dataset[enums.Dataset.TRAIN][
-                                   enums.Dataset.LABELS]):
-        patch_samples, patch_samples_gt = reshape_cube_to_3d_samples(patch,
-                                                                     patch_gt,
-                                                                     neighborhood_size,
-                                                                     background_label,
-                                                                     channels_idx)
-        train_x.append(patch_samples)
-        train_y.append(patch_samples_gt)
-
-    train_x = np.concatenate(train_x, axis=0)
-    train_y = np.concatenate(train_y, axis=0)
-
-    test_x, test_y = reshape_cube_to_3d_samples(
-        dataset[enums.Dataset.TEST][enums.Dataset.DATA],
-        dataset[enums.Dataset.TEST][enums.Dataset.LABELS], neighborhood_size, background_label, channels_idx)
-
-    train_y = train_y - 1
-    test_y = test_y - 1
-    val_indices = _get_set_indices(val_size, train_y)
-    val_x = train_x[val_indices]
-    val_y = train_y[val_indices]
-    train_x = np.delete(train_x, val_indices, axis=0)
-    train_y = np.delete(train_y, val_indices)
-    return train_x, train_y, val_x, val_y, test_x, test_y

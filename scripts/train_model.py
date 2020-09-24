@@ -12,6 +12,7 @@ from clize.parameters import multi
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms
 from ml_intuition.data.noise import get_noise_functions
+from ml_intuition.data.utils import get_central_pixel_spectrum
 from ml_intuition.evaluation import time_metrics, performance_metrics
 
 
@@ -21,6 +22,7 @@ def train(*,
           dest_path: str,
           sample_size: int,
           n_classes: int,
+          neighborhood_size: int = None,
           kernel_size: int = 3,
           n_kernels: int = 16,
           n_layers: int = 1,
@@ -32,6 +34,7 @@ def train(*,
           patience: int = 3,
           seed: int = 0,
           use_unmixing: bool = False,
+          endmembers_path: str = None,
           noise: ('post', multi(min=0)),
           noise_sets: ('spost', multi(min=0)),
           noise_params: str = None):
@@ -46,6 +49,7 @@ def train(*,
     :param dest_path: Path to where to save the model under the name "model_name".
     :param sample_size: Size of the input sample.
     :param n_classes: Number of classes.
+    :param neighborhood_size: Size of the spatial patch.
     :param lr: Learning rate for the model, i.e., regulates the size of the step
         in the gradient descent process.
     :param data: Either path to the input data or the data dict itself.
@@ -61,6 +65,8 @@ def train(*,
     :param seed: Seed for training reproducibility.
     :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
         where classes in each pixel are present as abundances fractions.
+    :param endmembers_path: Path to the endmembers file containing average reflectances for each class.
+        Used only when use_unmixing is true.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
     :param noise_sets: List of sets that are affected by the noise injection methods.
@@ -88,8 +94,8 @@ def train(*,
         min_, max_ = data[enums.DataStats.MIN], \
                      data[enums.DataStats.MAX]
 
-    transformations = [transforms.SpectralTransform()] if use_unmixing else [
-        transforms.OneHotEncode(n_classes=n_classes)]
+    transformations = [transforms.SpectralTransform()] if use_unmixing \
+        else [transforms.OneHotEncode(n_classes=n_classes)]
     transformations += [transforms.MinMaxNormalize(min_=min_, max_=max_)]
 
     if '2d' in model_name or 'deep' in model_name:
@@ -107,33 +113,37 @@ def train(*,
                     'n_kernels': n_kernels,
                     'n_layers': n_layers,
                     'input_size': sample_size,
-                    'n_classes': n_classes}
+                    'n_classes': n_classes,
+                    'endmembers': np.load(endmembers_path) if endmembers_path is not None else None}
     model = models.get_model(model_key=model_name, **model_kwargs)
     model.summary()
 
-    metrics = [performance_metrics.overall_rmse,
-               performance_metrics.overall_rms_abundance_angle_distance,
-               performance_metrics.sum_per_class_rmse] if use_unmixing \
-        else ['accuracy']
-    loss = 'mse' if use_unmixing else 'categorical_crossentropy'
-
-    model.compile(optimizer=tf.keras.optimizers.Adam(lr=lr), loss=loss, metrics=metrics)
-    monitor = 'val_loss' if use_unmixing else 'val_acc'
-    mode = 'min' if use_unmixing else 'max'
+    model.compile(optimizer=tf.keras.optimizers.Adam(lr=lr),
+                  loss=performance_metrics.get_loss(model_name, use_unmixing),
+                  metrics=list(performance_metrics.get_unmixing_metrics(model_name,
+                                                                        use_unmixing,
+                                                                        'TRAIN').values()) if use_unmixing
+                  else ['accuracy'])
 
     time_history = time_metrics.TimeHistory()
-    mcp_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(dest_path, model_name), save_best_only=True,
-                                                  monitor=monitor, mode=mode)
+    mcp_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(dest_path, model_name),
+                                                  save_best_only=True,
+                                                  monitor='val_loss' if use_unmixing else 'val_acc',
+                                                  mode='min' if use_unmixing else 'max')
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience, mode='min')
     callbacks = [time_history, mcp_save, early_stopping]
-    history = model.fit(x=train_dict[enums.Dataset.DATA],
-                        y=train_dict[enums.Dataset.LABELS],
-                        epochs=epochs,
-                        verbose=verbose,
-                        shuffle=shuffle,
-                        validation_data=(val_dict[enums.Dataset.DATA], val_dict[enums.Dataset.LABELS]),
-                        callbacks=callbacks,
-                        batch_size=batch_size)
+
+    if 'dcae' in model_name:
+        x, y = train_dict[enums.Dataset.DATA],\
+               get_central_pixel_spectrum(train_dict[enums.Dataset.DATA], neighborhood_size)
+        val_data = (val_dict[enums.Dataset.DATA],
+                    get_central_pixel_spectrum(val_dict[enums.Dataset.DATA], neighborhood_size))
+    else:
+        x, y = train_dict[enums.Dataset.DATA], train_dict[enums.Dataset.LABELS]
+        val_data = (val_dict[enums.Dataset.DATA], val_dict[enums.Dataset.LABELS])
+
+    history = model.fit(x=x, y=y, epochs=epochs, verbose=verbose, shuffle=shuffle,
+                        validation_data=val_data, callbacks=callbacks, batch_size=batch_size)
 
     history.history[time_metrics.TimeHistory.__name__] = time_history.average
     io.save_metrics(dest_path=dest_path, file_name='training_metrics.csv', metrics=history.history)

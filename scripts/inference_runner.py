@@ -10,11 +10,11 @@ import mlflow
 import tensorflow as tf
 from clize.parameters import multi
 
-from scripts import evaluate_model, prepare_data, artifacts_reporter
-from ml_intuition.enums import Splits, Experiment
 from ml_intuition.data.io import load_processed_h5
-from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
+from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
+from ml_intuition.enums import Splits, Experiment
+from scripts import evaluate_model, prepare_data, artifacts_reporter
 
 
 def run_experiments(*,
@@ -31,6 +31,7 @@ def run_experiments(*,
                     n_runs: int,
                     dest_path: str,
                     models_path: str,
+                    model_name: str = 'model_2d',
                     n_classes: int,
                     batch_size: int = 1024,
                     post_noise_sets: ('spost', multi(min=0)),
@@ -69,6 +70,7 @@ def run_experiments(*,
         subfolders in this directory.
     :param models_path: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
+    :param model_name: The name of model for the inference.
     :param n_classes: Number of classes.
     :param batch_size: Size of the batch for the inference
     :param post_noise_sets: The list of sets to which the noise will be
@@ -101,7 +103,7 @@ def run_experiments(*,
             dest_path, 'experiment_' + str(experiment_id))
         model_path = os.path.join(models_path,
                                   'experiment_' + str(experiment_id),
-                                  'model_3d_deep')
+                                  model_name)
         if dataset_path is None:
             data_source = os.path.join(models_path,
                                        'experiment_' + str(experiment_id),
