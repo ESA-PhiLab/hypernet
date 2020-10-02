@@ -14,6 +14,24 @@ from ml_intuition.data import io, transforms
 from ml_intuition.data.noise import get_noise_functions
 from ml_intuition.data.utils import get_central_pixel_spectrum
 from ml_intuition.evaluation import time_metrics, performance_metrics
+from ml_intuition.models import check_for_autoencoder
+
+
+def get_checkpoint_monitor_quantity(use_unmixing: bool, is_autoencoder: bool) -> str:
+    """
+    Get the monitor quantity:
+    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+        where classes in each pixel are present as abundances fractions.
+    :param is_autoencoder: Boolean indicating whether the model is an autoencoder.
+    """
+    if use_unmixing:
+        if is_autoencoder:
+            monitor = 'loss'
+        else:
+            monitor = 'val_loss'
+    else:
+        monitor = 'val_acc'
+    return monitor
 
 
 def train(*,
@@ -78,10 +96,51 @@ def train(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     """
-    # Reproducibility
+    # Reproducibility:
     tf.reset_default_graph()
     tf.set_random_seed(seed=seed)
     np.random.seed(seed=seed)
+
+    is_autoencoder = check_for_autoencoder(model_name)
+    # Set the training specifications:
+    model_kwargs = {'kernel_size': kernel_size,
+                    'n_kernels': n_kernels,
+                    'n_layers': n_layers,
+                    'input_size': sample_size,
+                    'n_classes': n_classes,
+                    'endmembers': np.load(endmembers_path) if endmembers_path is not None else None}
+    model = models.get_model(model_key=model_name, **model_kwargs)
+    model.summary()
+
+    model.compile(optimizer=tf.keras.optimizers.Adam(lr=lr),
+                  loss=performance_metrics.get_loss(model_name, use_unmixing),
+                  metrics=list(
+                      performance_metrics.get_unmixing_metrics(model_name, use_unmixing, 'TRAIN').values())
+                  if use_unmixing else ['accuracy'])
+
+    time_history = time_metrics.TimeHistory()
+    monitor = get_checkpoint_monitor_quantity(use_unmixing, is_autoencoder)
+    mcp_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(dest_path, model_name),
+                                                  save_best_only=True,
+                                                  monitor=monitor,
+                                                  mode='min' if use_unmixing else 'max')
+    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss' if is_autoencoder else 'val_loss',
+                                                      patience=patience, mode='min')
+    callbacks = [time_history, mcp_save, early_stopping]
+    # Set transformations:
+    transformations = [transforms.SpectralTransform()] if use_unmixing \
+        else [transforms.OneHotEncode(n_classes=n_classes)]
+
+    if is_autoencoder:
+        # If the model is an autoencoder train on entire data cube returned in prepare_data script:
+        transformations += [transforms.MinMaxNormalize(min_=data['data'].min(), max_=data['data'].max())]
+        data = transforms.apply_transformations(data, transformations)
+        history = model.fit(x=data['data'], y=get_central_pixel_spectrum(data['data'], neighborhood_size),
+                            epochs=epochs, verbose=verbose,
+                            shuffle=shuffle, callbacks=callbacks, batch_size=batch_size)
+        history.history[time_metrics.TimeHistory.__name__] = time_history.average
+        io.save_metrics(dest_path=dest_path, file_name='training_metrics.csv', metrics=history.history)
+        return
 
     if type(data) is str:
         train_dict = io.extract_set(data, enums.Dataset.TRAIN)
@@ -94,8 +153,6 @@ def train(*,
         min_, max_ = data[enums.DataStats.MIN], \
                      data[enums.DataStats.MAX]
 
-    transformations = [transforms.SpectralTransform()] if use_unmixing \
-        else [transforms.OneHotEncode(n_classes=n_classes)]
     transformations += [transforms.MinMaxNormalize(min_=min_, max_=max_)]
 
     if '2d' in model_name or 'deep' in model_name:
@@ -109,46 +166,15 @@ def train(*,
     train_dict = transforms.apply_transformations(train_dict, tr_transformations)
     val_dict = transforms.apply_transformations(val_dict, val_transformations)
 
-    model_kwargs = {'kernel_size': kernel_size,
-                    'n_kernels': n_kernels,
-                    'n_layers': n_layers,
-                    'input_size': sample_size,
-                    'n_classes': n_classes,
-                    'endmembers': np.load(endmembers_path) if endmembers_path is not None else None}
-    model = models.get_model(model_key=model_name, **model_kwargs)
-    model.summary()
-
-    model.compile(optimizer=tf.keras.optimizers.Adam(lr=lr),
-                  loss=performance_metrics.get_loss(model_name, use_unmixing),
-                  metrics=list(performance_metrics.get_unmixing_metrics(model_name,
-                                                                        use_unmixing,
-                                                                        'TRAIN').values()) if use_unmixing
-                  else ['accuracy'])
-
-    time_history = time_metrics.TimeHistory()
-    mcp_save = tf.keras.callbacks.ModelCheckpoint(os.path.join(dest_path, model_name),
-                                                  save_best_only=True,
-                                                  monitor='val_loss' if use_unmixing else 'val_acc',
-                                                  mode='min' if use_unmixing else 'max')
-    early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=patience, mode='min')
-    callbacks = [time_history, mcp_save, early_stopping]
-
-    if 'dcae' in model_name:
-        x, y = train_dict[enums.Dataset.DATA],\
-               get_central_pixel_spectrum(train_dict[enums.Dataset.DATA], neighborhood_size)
-        val_data = (val_dict[enums.Dataset.DATA],
-                    get_central_pixel_spectrum(val_dict[enums.Dataset.DATA], neighborhood_size))
-    else:
-        x, y = train_dict[enums.Dataset.DATA], train_dict[enums.Dataset.LABELS]
-        val_data = (val_dict[enums.Dataset.DATA], val_dict[enums.Dataset.LABELS])
+    x, y = train_dict[enums.Dataset.DATA], train_dict[enums.Dataset.LABELS]
+    val_data = (val_dict[enums.Dataset.DATA], val_dict[enums.Dataset.LABELS])
 
     history = model.fit(x=x, y=y, epochs=epochs, verbose=verbose, shuffle=shuffle,
                         validation_data=val_data, callbacks=callbacks, batch_size=batch_size)
 
+    np.savetxt(os.path.join(dest_path, 'min-max.csv'), np.array([min_, max_]), delimiter=',', fmt='%f')
     history.history[time_metrics.TimeHistory.__name__] = time_history.average
     io.save_metrics(dest_path=dest_path, file_name='training_metrics.csv', metrics=history.history)
-
-    np.savetxt(os.path.join(dest_path, 'min-max.csv'), np.array([min_, max_]), delimiter=',', fmt='%f')
 
 
 if __name__ == '__main__':

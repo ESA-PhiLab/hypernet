@@ -12,6 +12,7 @@ from clize.parameters import multi
 import ml_intuition.data.io as io
 import ml_intuition.data.preprocessing as preprocessing
 import ml_intuition.data.utils as utils
+from ml_intuition.models import check_for_autoencoder
 
 EXTENSION = 1
 
@@ -28,7 +29,8 @@ def main(*,
          channels_idx: int = 0,
          save_data: bool = False,
          seed: int = 0,
-         use_unmixing: bool = False):
+         use_unmixing: bool = False,
+         model_name=None):
     """
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the data file.
@@ -58,6 +60,8 @@ def main(*,
     :param seed: Seed used for data shuffling
     :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
             where classes in each pixel are present as fractions.
+    :param model_name: Name of the model, it serves as a key in the
+        dictionary holding all functions returning models.
     :raises TypeError: When provided data or labels file is not supported
     """
     train_size = utils.parse_train_size(train_size)
@@ -84,15 +88,18 @@ def main(*,
         else:
             data, labels = preprocessing.reshape_cube_to_3d_samples(data, labels, neighborhood_size,
                                                                     background_label, channels_idx)
-        data, labels = preprocessing.remove_nan_samples(data, labels)
     else:
         raise ValueError(
             "The following data file type is not supported: {}".format(
                 os.path.splitext(data_file_path)[EXTENSION]))
+    data, labels = preprocessing.remove_nan_samples(data, labels)
     if not use_unmixing:
         data = data[labels != background_label]
         labels = labels[labels != background_label]
         labels = preprocessing.normalize_labels(labels)
+    if check_for_autoencoder(model_name):
+        # If the model is an autoencoder do not extract subsets, since it is trained and evaluated on the entire cube:
+        return {'data': data, 'labels': labels}
     train_x, train_y, val_x, val_y, test_x, test_y = \
         preprocessing.train_val_test_split(data, labels, train_size, val_size, stratified, seed, use_unmixing)
 

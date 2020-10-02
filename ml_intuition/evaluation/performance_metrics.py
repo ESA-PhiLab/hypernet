@@ -32,9 +32,14 @@ def spectral_information_divergence_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -
     [n_samples, n_classes], [n_samples, n_bands].
     :return: The spectral information divergence loss.
     """
+    y_true_row_sum = tf.reduce_sum(y_true, 1)
+    y_pred_row_sum = tf.reduce_sum(y_pred, 1)
+    y_true = y_true / tf.reshape(y_true_row_sum, (-1, 1))
+    y_pred = y_pred / tf.reshape(y_pred_row_sum, (-1, 1))
     y_true, y_pred = tf.keras.backend.clip(y_true, tf.keras.backend.epsilon(), 1), \
                      tf.keras.backend.clip(y_pred, tf.keras.backend.epsilon(), 1)
-    return tf.reduce_sum(y_true * tf.log(y_true / y_pred)) + tf.reduce_sum(y_pred * tf.log(y_pred / y_true))
+    loss = tf.reduce_sum(y_true * tf.log(y_true / y_pred)) + tf.reduce_sum(y_pred * tf.log(y_pred / y_true))
+    return loss
 
 
 def sum_per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
@@ -55,6 +60,23 @@ def per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     :return: The root-mean square error vector.
     """
     return tf.sqrt(tf.reduce_mean((y_true - y_pred) ** 2, 0))
+
+
+def average_angle_spectral_mapper(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    """
+    Calculate the average angle spectral mapper value.
+    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes]
+        or original input pixel and its reconstruction of shape: [n_samples, n_bands].
+    :param y_pred: Predicted abundances of shape: [n_samples, n_classes]
+        or original input pixel and its reconstruction of shape: [n_samples, n_bands].
+    :return: The root-mean square abundance angle distance error.
+    """
+    numerator = tf.reduce_sum(tf.multiply(y_true, y_pred), 1)
+    y_true_len = tf.sqrt(tf.reduce_sum(tf.square(y_true), 1))
+    y_pred_len = tf.sqrt(tf.reduce_sum(tf.square(y_pred), 1))
+    denominator = tf.multiply(y_true_len, y_pred_len)
+    loss = tf.reduce_mean(tf.acos(tf.clip_by_value(numerator / denominator, -1, 1)))
+    return loss
 
 
 def overall_rms_abundance_angle_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
@@ -133,13 +155,13 @@ UNMIXING_METRICS = {
                       overall_rms_abundance_angle_distance.__name__: overall_rms_abundance_angle_distance,
                       sum_per_class_rmse.__name__: sum_per_class_rmse}},
     'TEST': {'dcae': {'aRMSE': overall_rmse,
-                      'aSAM': overall_rms_abundance_angle_distance},
+                      'aSAM': average_angle_spectral_mapper},
              'cnn': {'overallRMSE': overall_rmse,
                      'rmsAAD': overall_rms_abundance_angle_distance,
                      'sumRMSE': sum_per_class_rmse}}
 }
 UNMIXING_LOSSES = {
-    'dcae': spectral_information_divergence_loss,
+    'dcae': 'mse',
     'cnn': 'mse'
 }
 
@@ -162,7 +184,14 @@ def get_unmixing_metrics(model_name: str, use_unmixing: bool = False, mode: str 
 
 
 def calculate_unmixing_metrics(model_name: str, **kwargs) -> Dict[str, List[float]]:
+    """
+    Calculate the metrics for unmixing problem.
+
+    :param model_name: Name of the unmixing model.
+    :param kwargs: Additional keyword arguments.
+    """
     model_metrics = {}
+    print(kwargs['y_pred'].shape)
     for f_name, f_metric in get_unmixing_metrics(model_name, True, 'TEST').items():
         model_metrics[f_name] = [float(convert_to_tensor(f_metric)
                                        (y_true=kwargs['y_true'], y_pred=kwargs['y_pred']))]

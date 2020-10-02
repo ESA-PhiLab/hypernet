@@ -17,6 +17,7 @@ from ml_intuition.data.utils import get_central_pixel_spectrum
 from ml_intuition.evaluation.performance_metrics import get_model_metrics, get_unmixing_metrics, \
     get_fair_model_metrics, calculate_unmixing_metrics
 from ml_intuition.evaluation.time_metrics import timeit
+from ml_intuition.models import check_for_autoencoder
 
 
 def evaluate(*,
@@ -56,47 +57,55 @@ def evaluate(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     """
-    if type(data) is str:
-        test_dict = io.extract_set(data, enums.Dataset.TEST)
-    else:
-        test_dict = data[enums.Dataset.TEST]
-    min_max_path = os.path.join(os.path.dirname(model_path), "min-max.csv")
-    if os.path.exists(min_max_path):
-        min_value, max_value = io.read_min_max(min_max_path)
-    else:
-        min_value, max_value = data[enums.DataStats.MIN], \
-                               data[enums.DataStats.MAX]
-    transformations = [transforms.SpectralTransform()] if use_unmixing else [
-        transforms.OneHotEncode(n_classes=n_classes)]
-
-    transformations += [transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
     model_name = os.path.basename(model_path)
-
-    if '2d' in model_name or 'deep' in model_name:
-        transformations.append(transforms.SpectralTransform())
-
-    transformations = transformations + get_noise_functions(noise, noise_params) \
-        if enums.Dataset.TEST in noise_sets else transformations
-
-    test_dict = transforms.apply_transformations(test_dict, transformations)
     model = tf.keras.models.load_model(model_path, compile=True,
                                        custom_objects=get_unmixing_metrics(model_name, use_unmixing, 'TRAIN'))
-    if 'dcae' in model_name:
-        model.pop()  # Drop the decoder of the already trained autoencoder
-
     predict = timeit(model.predict)
-    y_pred, inference_time = predict(test_dict[enums.Dataset.DATA], batch_size=batch_size)
+
+    is_autoencoder = check_for_autoencoder(model_name)
+    if not is_autoencoder:
+        if type(data) is str:
+            test_dict = io.extract_set(data, enums.Dataset.TEST)
+        else:
+            test_dict = data[enums.Dataset.TEST]
+        min_max_path = os.path.join(os.path.dirname(model_path), "min-max.csv")
+        if os.path.exists(min_max_path):
+            min_value, max_value = io.read_min_max(min_max_path)
+        else:
+            min_value, max_value = data[enums.DataStats.MIN], \
+                                   data[enums.DataStats.MAX]
+        transformations = [transforms.SpectralTransform()] if use_unmixing else [
+            transforms.OneHotEncode(n_classes=n_classes)]
+
+        transformations += [transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
+
+        if '2d' in model_name or 'deep' in model_name:
+            transformations.append(transforms.SpectralTransform())
+
+        transformations = transformations + get_noise_functions(noise, noise_params) \
+            if enums.Dataset.TEST in noise_sets else transformations
+
+        test_dict = transforms.apply_transformations(test_dict, transformations)
+        x = test_dict[enums.Dataset.DATA]
+        y_true = test_dict[enums.Dataset.LABELS]
+
+    else:
+        model.pop()  # Drop the decoder of the already trained autoencoder
+        x = data['data']
+        y_true = data['labels']
+
+    y_pred, inference_time = predict(x, batch_size=batch_size)
 
     if use_unmixing:
         # Load the endmembers i.e., the decoder weights in the DCAE model, else None:
         model_metrics = calculate_unmixing_metrics(model_name, **{
             'endmembers': np.load(endmembers_path) if endmembers_path is not None else None,
-            'y_pred': y_pred, 'y_true': test_dict[enums.Dataset.LABELS],
-            'x_true': get_central_pixel_spectrum(test_dict['data'], neighborhood_size)
+            'y_pred': y_pred, 'y_true': y_true,
+            'x_true': get_central_pixel_spectrum(x, neighborhood_size)
         })
     else:
         y_pred = np.argmax(y_pred, axis=-1)
-        y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
+        y_true = np.argmax(y_true, axis=-1)
 
         model_metrics = get_model_metrics(y_true, y_pred)
         conf_matrix = confusion_matrix(y_true, y_pred)

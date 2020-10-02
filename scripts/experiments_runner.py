@@ -156,7 +156,8 @@ def run_experiments(*,
                                      neighborhood_size=neighborhood_size,
                                      save_data=save_data,
                                      seed=experiment_id,
-                                     use_unmixing=use_unmixing)
+                                     use_unmixing=use_unmixing,
+                                     model_name=model_name)
         if not save_data:
             data_source = data
 
