@@ -12,6 +12,7 @@ from clize.parameters import multi
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms
 from ml_intuition.data.noise import get_noise_functions
+from ml_intuition.data.preprocessing import reshape_cube_to_2d_samples, reshape_cube_to_3d_samples
 from ml_intuition.data.utils import get_central_pixel_spectrum
 from ml_intuition.evaluation import time_metrics, performance_metrics
 from ml_intuition.models import check_for_autoencoder
@@ -127,14 +128,17 @@ def train(*,
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='loss' if is_autoencoder else 'val_loss',
                                                       patience=patience, mode='min')
     callbacks = [time_history, mcp_save, early_stopping]
-    # Set transformations:
-    transformations = [transforms.SpectralTransform()] if use_unmixing \
-        else [transforms.OneHotEncode(n_classes=n_classes)]
 
     if is_autoencoder:
-        # If the model is an autoencoder train on entire data cube returned in prepare_data script:
-        transformations += [transforms.MinMaxNormalize(min_=data['data'].min(), max_=data['data'].max())]
-        data = transforms.apply_transformations(data, transformations)
+        data = transforms.apply_transformations(data, [transforms.PerBandMinMaxNormalization(
+            **transforms.PerBandMinMaxNormalization.get_min_max_vectors((data['data'])))])
+        if neighborhood_size is None:
+            data['data'], data['labels'] = reshape_cube_to_2d_samples(data['data'], data['labels'], -1, use_unmixing)
+
+        else:
+            data['data'], data['labels'] = reshape_cube_to_3d_samples(data['data'], data['labels'],
+                                                                      neighborhood_size, -1, -1, use_unmixing)
+        data['data'] = np.expand_dims(data['data'], -1)
         history = model.fit(x=data['data'], y=get_central_pixel_spectrum(data['data'], neighborhood_size),
                             epochs=epochs, verbose=verbose,
                             shuffle=shuffle, callbacks=callbacks, batch_size=batch_size)
@@ -152,8 +156,7 @@ def train(*,
         val_dict = data[enums.Dataset.VAL]
         min_, max_ = data[enums.DataStats.MIN], \
                      data[enums.DataStats.MAX]
-
-    transformations += [transforms.MinMaxNormalize(min_=min_, max_=max_)]
+    transformations = [transforms.OneHotEncode(n_classes=n_classes), transforms.MinMaxNormalize(min_=min_, max_=max_)]
 
     if '2d' in model_name or 'deep' in model_name:
         transformations.append(transforms.SpectralTransform())

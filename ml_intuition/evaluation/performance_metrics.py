@@ -161,12 +161,12 @@ UNMIXING_METRICS = {
                      'sumRMSE': sum_per_class_rmse}}
 }
 UNMIXING_LOSSES = {
-    'dcae': 'mse',
+    'dcae': spectral_information_divergence_loss,
     'cnn': 'mse'
 }
 
 
-def get_loss(model_name: str, use_unmixing: bool = True) -> Union[str, object]:
+def get_loss(model_name: str, use_unmixing: bool = True, **kwargs) -> Union[str, object]:
     loss = 'categorical_crossentropy'
     if use_unmixing:
         loss = UNMIXING_LOSSES[model_name.split('_')[-1]]

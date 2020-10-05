@@ -216,16 +216,16 @@ def unmixing_pixel_based_dcae(n_classes: int, input_size: int, **kwargs) -> tf.k
     :return: Model proposed in the publication listed above.
     """
     model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Conv3D(filters=40, kernel_size=(1, 1, 3), activation='relu',
+    model.add(tf.keras.layers.Conv3D(filters=2, kernel_size=(1, 1, 3), activation='relu',
                                      input_shape=(1, 1, input_size, 1), data_format='channels_last'))
     model.add(tf.keras.layers.MaxPool3D(pool_size=(1, 1, 2)))
-    model.add(tf.keras.layers.Conv3D(filters=80, kernel_size=(1, 1, 3), activation='relu'))
+    model.add(tf.keras.layers.Conv3D(filters=4, kernel_size=(1, 1, 3), activation='relu'))
     model.add(tf.keras.layers.MaxPool3D(pool_size=(1, 1, 2)))
-    model.add(tf.keras.layers.Conv3D(filters=120, kernel_size=(1, 1, 3), activation='relu'))
+    model.add(tf.keras.layers.Conv3D(filters=8, kernel_size=(1, 1, 3), activation='relu'))
     model.add(tf.keras.layers.MaxPool3D(pool_size=(1, 1, 2)))
-    model.add(tf.keras.layers.Conv3D(filters=240, kernel_size=(1, 1, 3), activation='relu'))
+    model.add(tf.keras.layers.Conv3D(filters=16, kernel_size=(1, 1, 3), activation='relu'))
     model.add(tf.keras.layers.MaxPool3D(pool_size=(1, 1, 2)))
-    model.add(tf.keras.layers.Conv3D(filters=480, kernel_size=(1, 1, 3), activation='relu'))
+    model.add(tf.keras.layers.Conv3D(filters=32, kernel_size=(1, 1, 3), activation='relu'))
     model.add(tf.keras.layers.Flatten())
     model.add(tf.keras.layers.Dense(units=256, activation='relu'))
     model.add(tf.keras.layers.Dense(units=n_classes, activation='relu'))
@@ -233,7 +233,7 @@ def unmixing_pixel_based_dcae(n_classes: int, input_size: int, **kwargs) -> tf.k
     # Decoder:
     model.add(tf.keras.layers.Dense(units=input_size, activation='relu'))
     # Set the endmembers weights:
-    model.layers[-1].set_weights((np.swapaxes(kwargs['endmembers'], 1, 0), np.random.normal(0, 1, input_size)))
+    model.layers[-1].set_weights((np.swapaxes(kwargs['endmembers'], 1, 0), np.zeros(input_size)))
     # Freeze the last layer which must be equal to endmembers and white Gaussian noise:
     model.layers[-1].trainable = False
     return model
@@ -265,7 +265,7 @@ def unmixing_cube_based_dcae(n_classes: int, input_size: int, **kwargs) -> tf.ke
     # Decoder:
     model.add(tf.keras.layers.Dense(units=input_size, activation='linear'))
     # Set the endmembers weights:
-    model.layers[-1].set_weights((np.swapaxes(kwargs['endmembers'], 1, 0), np.random.normal(0, 1, input_size)))
+    model.layers[-1].set_weights((np.swapaxes(kwargs['endmembers'], 1, 0), np.zeros(input_size)))
     # Freeze the last layer which must be equal to endmembers and white Gaussian noise:
     model.layers[-1].trainable = False
     return model

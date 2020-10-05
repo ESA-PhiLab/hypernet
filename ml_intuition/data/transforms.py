@@ -99,3 +99,24 @@ def apply_transformations(data: Dict,
         data[enums.Dataset.DATA], data[enums.Dataset.LABELS] = transformation(
             data[enums.Dataset.DATA], data[enums.Dataset.LABELS])
     return data
+
+
+class PerBandMinMaxNormalization(BaseTransform):
+    SPECTRAL_DIM = -1
+
+    def __init__(self, min_: np.ndarray, max_: np.ndarray):
+        self.min_ = min_
+        self.max_ = max_
+
+    def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[np.ndarray]:
+        sample, label = sample.astype(np.float32), label.astype(np.float32)
+        sample_shape = sample.shape
+        sample = sample.reshape(-1, sample.shape[PerBandMinMaxNormalization.SPECTRAL_DIM])
+        for band_index, (min_val, max_val) in enumerate(zip(self.min_, self.max_)):
+            sample[..., band_index] = (sample[..., band_index] - min_val) / (max_val - min_val)
+        return [sample.reshape(sample_shape), label]
+
+    @staticmethod
+    def get_min_max_vectors(data_cube: np.ndarray) -> Dict[str, np.ndarray]:
+        data_cube = data_cube.reshape(-1, data_cube.shape[PerBandMinMaxNormalization.SPECTRAL_DIM])
+        return {'min_': np.amin(data_cube, axis=0), 'max_': np.amax(data_cube, axis=0)}

@@ -10,7 +10,6 @@ import numpy as np
 import tensorflow as tf
 
 from ml_intuition import enums
-from ml_intuition.data.transforms import BaseTransform
 
 SAMPLES_DIM = 0
 MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
@@ -18,7 +17,7 @@ MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
 
 def create_tf_dataset(batch_size: int,
                       dataset: Dict[str, np.ndarray],
-                      transforms: List[BaseTransform]) -> Tuple[
+                      transforms: List) -> Tuple[
     tf.data.Dataset, int]:
     """
     Create and transform datasets that are used in the training, validaton or testing phases.

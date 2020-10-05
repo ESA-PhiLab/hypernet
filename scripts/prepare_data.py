@@ -67,6 +67,9 @@ def main(*,
     train_size = utils.parse_train_size(train_size)
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
         data, labels = io.load_npy(data_file_path, ground_truth_path, use_unmixing)
+        if check_for_autoencoder(model_name):
+            # If the model is an autoencoder do not extract subsets, since it is trained and evaluated on the entire cube:
+            return {'data': data, 'labels': labels}
         if neighborhood_size is None:
             data, labels = preprocessing.reshape_cube_to_2d_samples(data, labels, channels_idx, use_unmixing)
 
@@ -97,9 +100,6 @@ def main(*,
         data = data[labels != background_label]
         labels = labels[labels != background_label]
         labels = preprocessing.normalize_labels(labels)
-    if check_for_autoencoder(model_name):
-        # If the model is an autoencoder do not extract subsets, since it is trained and evaluated on the entire cube:
-        return {'data': data, 'labels': labels}
     train_x, train_y, val_x, val_y, test_x, test_y = \
         preprocessing.train_val_test_split(data, labels, train_size, val_size, stratified, seed, use_unmixing)
 
