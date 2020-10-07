@@ -109,6 +109,13 @@ class PerBandMinMaxNormalization(BaseTransform):
         self.max_ = max_
 
     def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[np.ndarray]:
+        """
+        Perform per-band min-max normalization. Each band is treated as a separate feature.
+
+        :param sample: Input sample that will undergo transformation.
+        :param label: Abundance vector for each sample.
+        :return: List containing the normalized sample and the abundance vector.
+        """
         sample, label = sample.astype(np.float32), label.astype(np.float32)
         sample_shape = sample.shape
         sample = sample.reshape(-1, sample.shape[PerBandMinMaxNormalization.SPECTRAL_DIM])
@@ -118,5 +125,11 @@ class PerBandMinMaxNormalization(BaseTransform):
 
     @staticmethod
     def get_min_max_vectors(data_cube: np.ndarray) -> Dict[str, np.ndarray]:
+        """
+        Get the min-max vectors for each spectral band.
+
+        :param data_cube: Hyperspectral data cube, with bands in the last dimension.
+        :return: Dictionary containing the min as well as the max vectors for each band.
+        """
         data_cube = data_cube.reshape(-1, data_cube.shape[PerBandMinMaxNormalization.SPECTRAL_DIM])
         return {'min_': np.amin(data_cube, axis=0), 'max_': np.amax(data_cube, axis=0)}

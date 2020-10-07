@@ -146,9 +146,39 @@ def model_3d_deep(n_classes: int, input_size: int, **kwargs):
     return model
 
 
+def unmixing_pixel_based_cnn(n_classes: int, input_size: int, **kwargs) -> tf.keras.Sequential:
+    """
+    Model for supervised hyperspectral unmixing proposed in the following publication (Chicago style citation):
+    Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
+    "Hyperspectral unmixing via deep convolutional neural networks."
+    IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
+
+    :param n_classes: Number of classes.
+    :param input_size: Number of input spectral bands.
+    :param kwargs: Additional arguments.
+    :return: Model proposed in the publication listed above.
+    """
+    model = tf.keras.Sequential()
+    model.add(
+        tf.keras.layers.Conv3D(filters=3, kernel_size=(1, 1, 5), activation='relu',
+                               input_shape=(1, 1, input_size, 1), data_format='channels_last'))
+    model.add(tf.keras.layers.MaxPool3D(pool_size=(1, 1, 2)))
+    model.add(tf.keras.layers.Conv3D(filters=6, kernel_size=(1, 1, 4), activation='relu'))
+    model.add(tf.keras.layers.MaxPool3D(pool_size=(1, 1, 2)))
+    model.add(tf.keras.layers.Conv3D(filters=12, kernel_size=(1, 1, 5), activation='relu'))
+    model.add(tf.keras.layers.MaxPool3D(pool_size=(1, 1, 2)))
+    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=(1, 1, 4), activation='relu'))
+    model.add(tf.keras.layers.MaxPool3D(pool_size=(1, 1, 2)))
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(units=192, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=150, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
+    return model
+
+
 def unmixing_cube_based_cnn(n_classes: int, input_size: int, **kwargs) -> tf.keras.Sequential:
     """
-    Model for hyperspectral unmixing proposed in the following publication (Chicago style citation):
+    Model for supervised hyperspectral unmixing proposed in the following publication (Chicago style citation):
     Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
     "Hyperspectral unmixing via deep convolutional neural networks."
     IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
@@ -160,7 +190,8 @@ def unmixing_cube_based_cnn(n_classes: int, input_size: int, **kwargs) -> tf.ker
     """
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Conv3D(filters=16, kernel_size=(1, 1, 5), activation='relu',
-                                     input_shape=(3, 3, input_size, 1), data_format='channels_last'))
+                                     input_shape=(kwargs['neighborhood_size'], kwargs['neighborhood_size'],
+                                                  input_size, 1), data_format='channels_last'))
     model.add(tf.keras.layers.Conv3D(filters=32, kernel_size=(1, 1, 4), activation='relu'))
     model.add(tf.keras.layers.Conv3D(filters=64, kernel_size=(1, 1, 5), activation='relu'))
     model.add(tf.keras.layers.Dropout(rate=0.2))
@@ -173,42 +204,12 @@ def unmixing_cube_based_cnn(n_classes: int, input_size: int, **kwargs) -> tf.ker
     return model
 
 
-def unmixing_pixel_based_cnn(n_classes: int, input_size: int, **kwargs) -> tf.keras.Sequential:
-    """
-    Model for hyperspectral unmixing proposed in the following publication (Chicago style citation):
-    Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
-    "Hyperspectral unmixing via deep convolutional neural networks."
-    IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
-
-    :param n_classes: Number of classes.
-    :param input_size: Number of input spectral bands.
-    :param kwargs: Additional arguments.
-    :return: Model proposed in the publication listed above.
-    """
-    model = tf.keras.Sequential()
-    model.add(
-        tf.keras.layers.Conv2D(filters=3, kernel_size=(1, 5), activation='relu',
-                               input_shape=(1, input_size, 1), data_format='channels_last'))
-    model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
-    model.add(tf.keras.layers.Conv2D(filters=6, kernel_size=(1, 4), activation='relu'))
-    model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
-    model.add(tf.keras.layers.Conv2D(filters=12, kernel_size=(1, 5), activation='relu'))
-    model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
-    model.add(tf.keras.layers.Conv2D(filters=24, kernel_size=(1, 4), activation='relu'))
-    model.add(tf.keras.layers.MaxPool2D(pool_size=(1, 2)))
-    model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(units=192, activation='relu'))
-    model.add(tf.keras.layers.Dense(units=150, activation='relu'))
-    model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
-    return model
-
-
 def unmixing_pixel_based_dcae(n_classes: int, input_size: int, **kwargs) -> tf.keras.Sequential:
     """
-    Model for hyperspectral unmixing proposed in the following publication (Chicago style citation):
-    Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
-    "Hyperspectral unmixing via deep convolutional neural networks."
-    IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
+    Model for unsupervised hyperspectral unmixing proposed in the following publication (Chicago style citation):
+    Khajehrayeni, Farshid, and Hassan Ghassemian.
+    "Hyperspectral unmixing using deep convolutional autoencoders in a supervised scenario."
+    IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13 (2020): 567-576.
 
     :param n_classes: Number of classes.
     :param input_size: Number of input spectral bands.
@@ -230,21 +231,21 @@ def unmixing_pixel_based_dcae(n_classes: int, input_size: int, **kwargs) -> tf.k
     model.add(tf.keras.layers.Dense(units=256, activation='relu'))
     model.add(tf.keras.layers.Dense(units=n_classes, activation='relu'))
     model.add(tf.keras.layers.Softmax())
-    # Decoder:
+    # Decoder part (later to be dropped):
     model.add(tf.keras.layers.Dense(units=input_size, activation='relu'))
-    # Set the endmembers weights:
+    # Set the endmembers weights to be equal to the endmembers matrix i.e., the spectral signatures of each class:
     model.layers[-1].set_weights((np.swapaxes(kwargs['endmembers'], 1, 0), np.zeros(input_size)))
-    # Freeze the last layer which must be equal to endmembers and white Gaussian noise:
+    # Freeze the last layer which must be equal to endmembers and residual term (zero vector):
     model.layers[-1].trainable = False
     return model
 
 
 def unmixing_cube_based_dcae(n_classes: int, input_size: int, **kwargs) -> tf.keras.Sequential:
     """
-    Model for hyperspectral unmixing proposed in the following publication (Chicago style citation):
-    Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
-    "Hyperspectral unmixing via deep convolutional neural networks."
-    IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
+    Model for unsupervised hyperspectral unmixing proposed in the following publication (Chicago style citation):
+    Khajehrayeni, Farshid, and Hassan Ghassemian.
+    "Hyperspectral unmixing using deep convolutional autoencoders in a supervised scenario."
+    IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13 (2020): 567-576.
 
     :param n_classes: Number of classes.
     :param input_size: Number of input spectral bands.
@@ -253,7 +254,8 @@ def unmixing_cube_based_dcae(n_classes: int, input_size: int, **kwargs) -> tf.ke
     """
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Conv3D(filters=16, kernel_size=(3, 3, 3), activation='relu',
-                                     input_shape=(5, 5, input_size, 1), data_format='channels_last'))
+                                     input_shape=(kwargs['neighborhood_size'], kwargs['neighborhood_size'],
+                                                  input_size, 1), data_format='channels_last'))
     model.add(tf.keras.layers.Conv3D(filters=32, kernel_size=(3, 3, 3), activation='relu'))
     model.add(tf.keras.layers.Conv3D(filters=64, kernel_size=(1, 1, 3), activation='relu'))
     model.add(tf.keras.layers.Conv3D(filters=128, kernel_size=(1, 1, 3), activation='relu'))
@@ -262,11 +264,11 @@ def unmixing_cube_based_dcae(n_classes: int, input_size: int, **kwargs) -> tf.ke
     model.add(tf.keras.layers.Dropout(rate=0.2))
     model.add(tf.keras.layers.Dense(units=n_classes, activation='relu'))
     model.add(tf.keras.layers.Softmax())
-    # Decoder:
+    # Decoder part (later to be dropped):
     model.add(tf.keras.layers.Dense(units=input_size, activation='linear'))
-    # Set the endmembers weights:
+    # Set the endmembers weights to be equal to the endmembers matrix i.e., the spectral signatures of each class:
     model.layers[-1].set_weights((np.swapaxes(kwargs['endmembers'], 1, 0), np.zeros(input_size)))
-    # Freeze the last layer which must be equal to endmembers and white Gaussian noise:
+    # Freeze the last layer which must be equal to endmembers and residual term (zero vector):
     model.layers[-1].trainable = False
     return model
 

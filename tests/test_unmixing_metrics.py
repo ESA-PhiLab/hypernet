@@ -4,7 +4,7 @@ import tensorflow as tf
 from sklearn.metrics import mean_squared_error
 
 from ml_intuition.evaluation.performance_metrics import overall_rms_abundance_angle_distance, \
-    overall_rmse, per_class_rmse
+    cnn_rmse, per_class_rmse
 
 sess = tf.Session()
 
@@ -46,7 +46,7 @@ class TestRMSE:
     def test_rmse_with_external_implementations(self, y_true: np.ndarray, y_pred: np.ndarray):
         y_true, y_pred = softmax(y_true), softmax(y_pred)
         tf_y_true, tf_y_pred = tf.convert_to_tensor(y_true), tf.convert_to_tensor(y_pred)
-        tf_overall_error = overall_rmse(y_true=tf_y_true, y_pred=tf_y_pred).eval(session=sess)
+        tf_overall_error = cnn_rmse(y_true=tf_y_true, y_pred=tf_y_pred).eval(session=sess)
         error = np.sqrt(np.mean((y_true - y_pred) ** 2))
         assert round(tf_overall_error, 3) == round(error, 3) == \
                round(np.sqrt(mean_squared_error(y_true=y_true, y_pred=y_pred)), 3)

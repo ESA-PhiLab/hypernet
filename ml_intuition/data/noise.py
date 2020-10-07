@@ -5,9 +5,8 @@ import sys
 from itertools import product
 from typing import Dict, List, NamedTuple
 
-import yaml
 import numpy as np
-import tensorflow as tf
+import yaml
 
 from ml_intuition.enums import Dataset, Sample
 
@@ -46,8 +45,10 @@ class Params(NamedTuple):
 class BaseNoise(abc.ABC):
     def __init__(self, params: Dict):
         super().__init__()
-        self.params = Params(**params)
-        pass
+        default_params = {'pa': None, 'pb': None, 'bc': None, 'mean': None, 'std': None, 'pw': None}
+        for key, value in params.items():
+            default_params[key] = value
+        self.params = Params(**default_params)
 
     @abc.abstractmethod
     def __call__(self, *args, **kwargs):
@@ -139,7 +140,7 @@ class Shot(BaseNoise):
         n_affected, n_bands = \
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
             self.get_proba(data.shape[Sample.FEATURES_DIM], self.params.pb)
-        data = data.astype(np.float32)
+        data = data.astype(np.float)
         data = np.clip(data, a_min=0, a_max=None)
         noise = np.random.poisson(data)
         noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
@@ -188,10 +189,11 @@ def inject_noise(data_source: Dict, affected_subsets: List[str],
 
     :param data_source: Dictionary containing subsets.
     :param affected_subsets: List of names of subsets that will undergo noise injection.
-    :param noise_injectors: List of names of noise injection methods. 
+    :param noise_injectors: List of names of noise injection methods.
     :param noise_params: Parameters of the noise injection.
     """
     for f_noise, affected_subset in product(
             get_noise_functions(noise_injectors, noise_params), affected_subsets):
-        data_source[affected_subset][Dataset.DATA], data_source[affected_subset][Dataset.LABELS] = f_noise(data_source[affected_subset][Dataset.DATA],
-                                                                                                           data_source[affected_subset][Dataset.LABELS])
+        data_source[affected_subset][Dataset.DATA], data_source[affected_subset][Dataset.LABELS] = f_noise(
+            data_source[affected_subset][Dataset.DATA],
+            data_source[affected_subset][Dataset.LABELS])

@@ -11,9 +11,9 @@ class TestGaussianNoise:
     @pytest.mark.parametrize("data, params",
                              [
                                  (np.random.rand(100, 20, 1), {
-                                  "mean": 0, "std": 1, "pa": 0.1, "pb": 0.5, "bc": True}),
+                                     "mean": 0, "std": 1, "pa": 0.1, "pb": 0.5, "bc": True}),
                                  (np.random.rand(250, 104, 1), {
-                                  "mean": 5, "std": 10, "pa": 0.4, "pb": 0.9, "bc": False}),
+                                     "mean": 5, "std": 10, "pa": 0.4, "pb": 0.9, "bc": False}),
                                  (np.random.rand(99, 1000), {
                                      "mean": 5, "std": 10, "pa": 0.96, "pb": 0.5, "bc": True})
                              ])
@@ -36,9 +36,9 @@ class TestGaussianNoise:
     @pytest.mark.parametrize("data, params",
                              [
                                  (np.random.rand(100, 20, 1), {
-                                  "mean": 0, "std": 1, "pa": 1, "pb": 1, "bc": True}),
+                                     "mean": 0, "std": 1, "pa": 1, "pb": 1, "bc": True}),
                                  (np.random.rand(160, 1, 4, 2, 1), {
-                                  "mean": 5, "std": 10, "pa": 1, "pb": 1, "bc": False}),
+                                     "mean": 5, "std": 10, "pa": 1, "pb": 1, "bc": False}),
                                  (np.random.rand(50, 1000), {
                                      "mean": 5, "std": 10, "pa": 1, "pb": 1, "bc": True})
                              ])
@@ -51,9 +51,9 @@ class TestGaussianNoise:
     @pytest.mark.parametrize("data, params",
                              [
                                  (np.random.rand(20, 20, 1), {
-                                  "mean": 0, "std": 1, "pa": 0, "pb": 0, "bc": True}),
+                                     "mean": 0, "std": 1, "pa": 0, "pb": 0, "bc": True}),
                                  (np.random.rand(76, 104), {
-                                  "mean": 5, "std": 10, "pa": 0, "pb": 0.1, "bc": False}),
+                                     "mean": 5, "std": 10, "pa": 0, "pb": 0.1, "bc": False}),
                                  (np.random.rand(34, 1000), {
                                      "mean": 5, "std": 10, "pa": 0, "pb": 0.5, "bc": True})
                              ])
@@ -74,7 +74,7 @@ class TestImpulsiveNoise:
                                  (np.random.rand(76, 20, 1),
                                   {"pa": 0.8, "pw": 0.1, "pb": 0.5, "bc": True})
                              ])
-    def test_impulsive_nosie_injection(self, data: np.ndarray, params: Dict):
+    def test_impulsive_noise_injection(self, data: np.ndarray, params: Dict):
         impulsive_noise = noise.Impulsive(params)
         data_prime, _ = impulsive_noise(data, None)
         unique, counts = np.unique(data_prime, return_counts=True)
@@ -121,13 +121,13 @@ class TestShotNoise:
                                  (np.random.rand(30, 20, 1),
                                   {"pa": 0.8, "pb": 0.5, "bc": True})
                              ])
-    def test_shot_nosie_injection(self, data: np.ndarray, params: Dict):
+    def test_shot_noise_injection(self, data: np.ndarray, params: Dict):
         shot_noise = noise.Shot(params)
         data_prime, _ = shot_noise(data, None)
-        assert not np.array_equal(data.astype(np.float32), data_prime)
+        assert not np.array_equal(data, data_prime)
         assert np.amax(data_prime) > np.amax(data), \
             'When adding shot noise, the maximum value must be greater.'
-        assert round(float(np.amin(data_prime)), 3) == round(float(np.amin(data)), 3), \
+        assert np.amin(data_prime) == np.amin(data), \
             'The minimum value should not change when adding shot noise.'
 
     @pytest.mark.parametrize("data, params",
@@ -142,5 +142,5 @@ class TestShotNoise:
     def test_if_no_noise_injected(self, data: np.ndarray, params: Dict):
         shot_noise = noise.Shot(params)
         data_prime, _ = shot_noise(data, None)
-        assert (data.astype(np.float32) == data_prime).all(), \
+        assert (data == data_prime).all(), \
             'Assert no element is augmented with noise (\"pa\" == 0)'

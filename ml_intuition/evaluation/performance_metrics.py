@@ -26,6 +26,10 @@ def convert_to_tensor(metric_function):
 def spectral_information_divergence_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
     Calculate the spectral information divergence loss, which is based on the divergence in information theory.
+    Khajehrayeni, Farshid, and Hassan Ghassemian.
+    "Hyperspectral unmixing using deep convolutional autoencoders in a supervised scenario."
+    IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13 (2020): 567-576.
+
     :param y_true: Labels as two dimensional abundances or original input array of shape:
     [n_samples, n_classes], [n_samples, n_bands].
     :param y_pred: Predicted abundances or reconstructed input array of shape:
@@ -42,29 +46,13 @@ def spectral_information_divergence_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -
     return loss
 
 
-def sum_per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
-    """
-    Calculate the sum of per class root-mean square error.
-    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
-    :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
-    :return: The sum of per class root-mean square error.
-    """
-    return tf.reduce_sum(per_class_rmse(y_true=y_true, y_pred=y_pred))
-
-
-def per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
-    """
-    Calculate the per class root-mean square error vector.
-    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
-    :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
-    :return: The root-mean square error vector.
-    """
-    return tf.sqrt(tf.reduce_mean((y_true - y_pred) ** 2, 0))
-
-
 def average_angle_spectral_mapper(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
-    Calculate the average angle spectral mapper value.
+    Calculate the dcae average angle spectral mapper value. Taken from dcae paper.
+    Khajehrayeni, Farshid, and Hassan Ghassemian.
+    "Hyperspectral unmixing using deep convolutional autoencoders in a supervised scenario."
+    IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13 (2020): 567-576.
+
     :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes]
         or original input pixel and its reconstruction of shape: [n_samples, n_bands].
     :param y_pred: Predicted abundances of shape: [n_samples, n_classes]
@@ -79,13 +67,32 @@ def average_angle_spectral_mapper(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Te
     return loss
 
 
+def dcae_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    """
+    Calculate the custom dcae root-mean square error, which measures the similarity
+    between the original abundance fractions and the predicted ones.
+    Khajehrayeni, Farshid, and Hassan Ghassemian.
+    "Hyperspectral unmixing using deep convolutional autoencoders in a supervised scenario."
+    IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13 (2020): 567-576.
+
+    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
+    :return: The root-mean square error.
+    """
+    return tf.reduce_mean(tf.sqrt(tf.reduce_mean(tf.square(y_pred - y_true), axis=1)))
+
+
 def overall_rms_abundance_angle_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
-    Calculate the root-mean square abundance angle distance, which measures the similarity
-    between the original abundance fractions and the predicted ones.
+    Calculate the cnn root-mean square abundance angle distance, which measures the similarity
+    between the original abundance fractions and the predicted ones. Taken from cnn paper.
     It utilizes the inverse of cosine function at the range [0, pi], which means that
     the domain of arccos is in the range [-1; 1], that is why the "tf.clip_by_value" method is used.
     For the identical abundances the numerator / denominator is 1 and arccos(1) is 0, which resembles the perfect score.
+    Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
+    "Hyperspectral unmixing via deep convolutional neural networks."
+    IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
+
     :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
     :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
     :return: The root-mean square abundance angle distance error.
@@ -98,10 +105,36 @@ def overall_rms_abundance_angle_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -
     return loss
 
 
-def overall_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+def sum_per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
-    Calculate the root-mean square error, which measures the similarity
+    Calculate the sum of per class root-mean square error.
+
+    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
+    :return: The sum of per class root-mean square error.
+    """
+    return tf.reduce_sum(per_class_rmse(y_true=y_true, y_pred=y_pred))
+
+
+def per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    """
+    Calculate the per class root-mean square error vector.
+
+    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
+    :return: The root-mean square error vector.
+    """
+    return tf.sqrt(tf.reduce_mean((y_true - y_pred) ** 2, 0))
+
+
+def cnn_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+    """
+    Calculate the custom cnn root-mean square error, which measures the similarity
     between the original abundance fractions and the predicted ones.
+    Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
+    "Hyperspectral unmixing via deep convolutional neural networks."
+    IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
+
     :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
     :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
     :return: The root-mean square error.
@@ -147,18 +180,31 @@ DEFAULT_FAIR_METRICS = [
     metrics.balanced_accuracy_score,
     metrics.cohen_kappa_score
 ]
-
+UNMIXING_TEST_METRICS = {
+    # The test metrics taken from both papers on hyperspectral unmixing.
+    # All of them allow from qualitative and quantitative analysis of
+    # the abundance regression problem as well as input reconstruction (in the case of autoencoders).
+    # DCAE metrics:
+    # Khajehrayeni, Farshid, and Hassan Ghassemian.
+    # "Hyperspectral unmixing using deep convolutional autoencoders in a supervised scenario."
+    # IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13 (2020): 567-576.
+    'aRMSE': dcae_rmse,
+    'aSAM': average_angle_spectral_mapper,
+    # CNN metrics:
+    # Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
+    # "Hyperspectral unmixing via deep convolutional neural networks."
+    # IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
+    'overallRMSE': cnn_rmse,
+    'rmsAAD': overall_rms_abundance_angle_distance,
+    'perClassSumRMSE': sum_per_class_rmse
+}
 UNMIXING_METRICS = {
-    'TRAIN': {'dcae': {spectral_information_divergence_loss.__name__: spectral_information_divergence_loss,
-                       overall_rmse.__name__: overall_rmse},
-              'cnn': {overall_rmse.__name__: overall_rmse,
+    'TRAIN': {'dcae': {spectral_information_divergence_loss.__name__: spectral_information_divergence_loss},
+              'cnn': {cnn_rmse.__name__: cnn_rmse,
                       overall_rms_abundance_angle_distance.__name__: overall_rms_abundance_angle_distance,
                       sum_per_class_rmse.__name__: sum_per_class_rmse}},
-    'TEST': {'dcae': {'aRMSE': overall_rmse,
-                      'aSAM': average_angle_spectral_mapper},
-             'cnn': {'overallRMSE': overall_rmse,
-                     'rmsAAD': overall_rms_abundance_angle_distance,
-                     'sumRMSE': sum_per_class_rmse}}
+    'TEST': {'dcae': UNMIXING_TEST_METRICS,
+             'cnn': UNMIXING_TEST_METRICS}
 }
 UNMIXING_LOSSES = {
     'dcae': spectral_information_divergence_loss,
@@ -166,7 +212,7 @@ UNMIXING_LOSSES = {
 }
 
 
-def get_loss(model_name: str, use_unmixing: bool = True, **kwargs) -> Union[str, object]:
+def get_loss(model_name: str, use_unmixing: bool = True) -> Union[str, object]:
     loss = 'categorical_crossentropy'
     if use_unmixing:
         loss = UNMIXING_LOSSES[model_name.split('_')[-1]]
@@ -197,11 +243,11 @@ def calculate_unmixing_metrics(model_name: str, **kwargs) -> Dict[str, List[floa
                                        (y_true=kwargs['y_true'], y_pred=kwargs['y_pred']))]
     for class_idx, class_rmse in enumerate(convert_to_tensor(per_class_rmse)(
             y_true=kwargs['y_true'], y_pred=kwargs['y_pred'])):
-        model_metrics[f'Class_{class_idx}_rmse'] = [float(class_rmse)]
+        model_metrics[f'class{class_idx}RMSE'] = [float(class_rmse)]
     if kwargs['endmembers'] is not None:
         # Calculate the reconstruction RMSE and SID losses:
         x_pred = np.matmul(kwargs['y_pred'], kwargs['endmembers'].T)
-        model_metrics['rRMSE'] = [float(convert_to_tensor(overall_rmse)
+        model_metrics['rRMSE'] = [float(convert_to_tensor(dcae_rmse)
                                         (y_true=kwargs['x_true'], y_pred=x_pred))]
         model_metrics['rSID'] = [float(convert_to_tensor(spectral_information_divergence_loss)
                                        (y_true=kwargs['x_true'], y_pred=x_pred))]
@@ -257,3 +303,20 @@ def get_fair_model_metrics(conf_matrix, labels_in_train) -> Dict[str, List[float
     y_true = np.concatenate(all_targets, axis=0)
     return get_model_metrics(y_true, y_pred,
                              metrics_to_compute=DEFAULT_FAIR_METRICS)
+
+
+def get_checkpoint_monitor_quantity(use_unmixing: bool, is_autoencoder: bool) -> str:
+    """
+    Get the monitor quantity:
+    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+        where classes in each pixel are present as abundances fractions.
+    :param is_autoencoder: Boolean indicating whether the model is an autoencoder.
+    """
+    if use_unmixing:
+        if is_autoencoder:
+            monitor = 'loss'
+        else:
+            monitor = 'val_loss'
+    else:
+        monitor = 'val_acc'
+    return monitor
