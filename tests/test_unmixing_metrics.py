@@ -10,8 +10,12 @@ sess = tf.Session()
 
 
 def softmax(x: np.ndarray) -> np.ndarray:
-    e_x = np.exp(x - np.max(x))
-    return e_x / e_x.sum()
+    exp_x = np.exp(x)
+    norm_factor = np.sum(exp_x, axis=1)
+    result = exp_x / norm_factor[:, None]
+    np.testing.assert_array_equal(np.around(result.sum(axis=1), 5).astype(int),
+                                  np.ones(shape=(result.shape[0])).astype(int))
+    return result
 
 
 class TestRMSAbundanceAngleDistance:
