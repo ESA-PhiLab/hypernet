@@ -18,21 +18,25 @@ from ml_intuition.data.utils import build_data_dict
 UNMIXING_CLASS_FRACTIONS = 0
 
 
-def load_metrics(experiments_path: str, filename: str = None) -> Dict[List, List]:
+def load_metrics(experiments_path: str, filename: str = None) -> Dict[
+    List, List]:
     """
     Load metrics to a dictionary.
 
     :param experiments_path: Path to the experiments directory.
     :param filename: Name of the file holding metrics. Defaults to
         'inference_metrics.csv'.
-    :return: Dictionary containing all metric names and values from all experiments.
+    :return: Dictionary containing all metric names and
+        values from all experiments.
     """
     all_metrics = {'metric_keys': [], 'metric_values': []}
     for experiment_dir in glob.glob(
-            os.path.join(experiments_path, '{}*'.format(enums.Experiment.EXPERIMENT))):
+            os.path.join(experiments_path,
+                         '{}*'.format(enums.Experiment.EXPERIMENT))):
         if filename is None:
-            inference_metrics_path = os.path.join(experiment_dir,
-                                                  enums.Experiment.INFERENCE_METRICS)
+            inference_metrics_path = os.path.join(
+                experiment_dir,
+                enums.Experiment.INFERENCE_METRICS)
         else:
             inference_metrics_path = os.path.join(experiment_dir, filename)
         with open(inference_metrics_path) as metric_file:
@@ -42,7 +46,8 @@ def load_metrics(experiments_path: str, filename: str = None) -> Dict[List, List
     return all_metrics
 
 
-def save_metrics(dest_path: str, metrics: Dict[str, List], file_name: str = None):
+def save_metrics(dest_path: str, metrics: Dict[str, List],
+                 file_name: str = None):
     """
     Save given dictionary of metrics.
 
@@ -58,7 +63,8 @@ def save_metrics(dest_path: str, metrics: Dict[str, List], file_name: str = None
         write.writerows(zip(*metrics.values()))
 
 
-def extract_set(data_path: str, dataset_key: str) -> Dict[str, Union[np.ndarray, float]]:
+def extract_set(data_path: str, dataset_key: str) -> Dict[
+    str, Union[np.ndarray, float]]:
     """
     Function for loading a h5 format dataset as a dictionary
         of samples, labels, min and max values.
@@ -78,28 +84,33 @@ def extract_set(data_path: str, dataset_key: str) -> Dict[str, Union[np.ndarray,
     return dataset
 
 
-def load_npy(data_file_path: str, gt_input_path: str, use_unmixing: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+def load_npy(data_file_path: str, gt_input_path: str,
+             use_unmixing: bool = False) -> Tuple[np.ndarray, np.ndarray]:
     """
     Load .npy data and GT from specified paths
 
     :param data_file_path: Path to the data .npy file
     :param gt_input_path: Path to the GT .npy file
-    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
-            where classes in each pixel are present as abundance fractions.
+    :param use_unmixing: Boolean indicating whether to perform experiments on
+        the unmixing datasets, where classes in each pixel
+        are present as abundance fractions.
     :return: Tuple with loaded data and GT
     """
     data, labels = np.load(data_file_path), np.load(gt_input_path)
     if use_unmixing:
         height, width, _ = data.shape
-        labels = np.moveaxis(labels.reshape(-1, height, width), UNMIXING_CLASS_FRACTIONS, -1)
+        labels = np.moveaxis(labels.reshape(-1, height, width),
+                             UNMIXING_CLASS_FRACTIONS, -1)
     return data, labels
 
 
 def load_satellite_h5(data_file_path: str) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Load hyperspectral cube and ground truth transformation matrix from .h5 file
+    Load hyperspectral cube and ground truth
+        transformation matrix from .h5 file
     :param data_file_path: Path to the .h5 file
-    :return: Hyperspectral cube and transformation matrix, both as np.ndarray
+    :return: Hyperspectral cube and transformation matrix,
+        both as np.ndarray
     """
     with h5py.File(data_file_path, 'r') as file:
         cube = file[enums.SatelliteH5Keys.CUBE][:]
@@ -109,7 +120,7 @@ def load_satellite_h5(data_file_path: str) -> Tuple[np.ndarray, np.ndarray]:
 
 def load_processed_h5(data_file_path: str) -> Dict:
     """
-    Load procesed dataset containing the train, validation and test subsets
+    Load processed dataset containing the train, validation and test subsets
     with corresponding samples and labels.
     :param data_file_path: Path to the .h5 file.
     :return: Dictionary containing train, validation and test subsets.

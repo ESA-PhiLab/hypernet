@@ -18,20 +18,26 @@ def convert_to_tensor(metric_function):
         if not isinstance(y_pred, tf.Tensor):
             y_pred = tf.cast(tf.convert_to_tensor(y_pred), tf.float32)
         with tf.Session() as session:
-            return metric_function(y_true=y_true, y_pred=y_pred).eval(session=session)
+            return metric_function(y_true=y_true,
+                                   y_pred=y_pred).eval(session=session)
 
     return wrapper
 
 
-def spectral_information_divergence_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+def spectral_information_divergence_loss(y_true: tf.Tensor,
+                                         y_pred: tf.Tensor) -> tf.Tensor:
     """
-    Calculate the spectral information divergence loss, which is based on the divergence in information theory.
-    Khajehrayeni, Farshid, and Hassan Ghassemian.
-    "Hyperspectral unmixing using deep convolutional autoencoders in a supervised scenario."
-    IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13 (2020): 567-576.
+    Calculate the spectral information divergence loss,
+        which is based on the divergence in information theory.
 
-    :param y_true: Labels as two dimensional abundances or original input array of shape:
-    [n_samples, n_classes], [n_samples, n_bands].
+    Khajehrayeni, Farshid, and Hassan Ghassemian.
+    "Hyperspectral unmixing using deep convolutional
+    autoencoders in a supervised scenario."
+    IEEE Journal of Selected Topics in Applied Earth Observations and
+    Remote Sensing 13 (2020): 567-576.
+
+    :param y_true: Labels as two dimensional abundances or original
+        input array of shape: [n_samples, n_classes], [n_samples, n_bands].
     :param y_pred: Predicted abundances or reconstructed input array of shape:
     [n_samples, n_classes], [n_samples, n_bands].
     :return: The spectral information divergence loss.
@@ -40,60 +46,82 @@ def spectral_information_divergence_loss(y_true: tf.Tensor, y_pred: tf.Tensor) -
     y_pred_row_sum = tf.reduce_sum(y_pred, 1)
     y_true = y_true / tf.reshape(y_true_row_sum, (-1, 1))
     y_pred = y_pred / tf.reshape(y_pred_row_sum, (-1, 1))
-    y_true, y_pred = tf.keras.backend.clip(y_true, tf.keras.backend.epsilon(), 1), \
-                     tf.keras.backend.clip(y_pred, tf.keras.backend.epsilon(), 1)
-    loss = tf.reduce_sum(y_true * tf.log(y_true / y_pred)) + tf.reduce_sum(y_pred * tf.log(y_pred / y_true))
+    y_true, y_pred = tf.keras.backend.clip(y_true,
+                                           tf.keras.backend.epsilon(), 1), \
+                     tf.keras.backend.clip(y_pred,
+                                           tf.keras.backend.epsilon(), 1)
+    loss = tf.reduce_sum(y_true * tf.log(y_true / y_pred)) + \
+           tf.reduce_sum(y_pred * tf.log(y_pred / y_true))
     return loss
 
 
-def average_angle_spectral_mapper(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+def average_angle_spectral_mapper(y_true: tf.Tensor,
+                                  y_pred: tf.Tensor) -> tf.Tensor:
     """
-    Calculate the dcae average angle spectral mapper value. Taken from dcae paper.
-    Khajehrayeni, Farshid, and Hassan Ghassemian.
-    "Hyperspectral unmixing using deep convolutional autoencoders in a supervised scenario."
-    IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13 (2020): 567-576.
+    Calculate the dcae average angle spectral mapper value.
 
-    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes]
-        or original input pixel and its reconstruction of shape: [n_samples, n_bands].
+    Khajehrayeni, Farshid, and Hassan Ghassemian.
+    "Hyperspectral unmixing using deep convolutional autoencoders
+    in a supervised scenario."
+    IEEE Journal of Selected Topics in Applied Earth Observations
+    and Remote Sensing 13 (2020): 567-576.
+
+    :param y_true: Labels as two dimensional abundances
+        array of shape: [n_samples, n_classes] or original input pixel
+        and its reconstruction of shape: [n_samples, n_bands].
     :param y_pred: Predicted abundances of shape: [n_samples, n_classes]
-        or original input pixel and its reconstruction of shape: [n_samples, n_bands].
+        or original input pixel and
+        its reconstruction of shape: [n_samples, n_bands].
     :return: The root-mean square abundance angle distance error.
     """
     numerator = tf.reduce_sum(tf.multiply(y_true, y_pred), 1)
     y_true_len = tf.sqrt(tf.reduce_sum(tf.square(y_true), 1))
     y_pred_len = tf.sqrt(tf.reduce_sum(tf.square(y_pred), 1))
     denominator = tf.multiply(y_true_len, y_pred_len)
-    loss = tf.reduce_mean(tf.acos(tf.clip_by_value(numerator / denominator, -1, 1)))
+    loss = tf.reduce_mean(tf.acos(
+        tf.clip_by_value(numerator / denominator, -1, 1)))
     return loss
 
 
 def dcae_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
-    Calculate the custom dcae root-mean square error, which measures the similarity
-    between the original abundance fractions and the predicted ones.
-    Khajehrayeni, Farshid, and Hassan Ghassemian.
-    "Hyperspectral unmixing using deep convolutional autoencoders in a supervised scenario."
-    IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13 (2020): 567-576.
+    Calculate the custom dcae root-mean square error,
+    which measures the similarity between the original abundance
+    fractions and the predicted ones.
 
-    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    Khajehrayeni, Farshid, and Hassan Ghassemian.
+    "Hyperspectral unmixing using deep convolutional autoencoders
+    in a supervised scenario."
+    IEEE Journal of Selected Topics in Applied Earth Observations
+    and Remote Sensing 13 (2020): 567-576.
+
+    :param y_true: Labels as two dimensional abundances
+    array of shape: [n_samples, n_classes].
     :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
     :return: The root-mean square error.
     """
-    return tf.reduce_mean(tf.sqrt(tf.reduce_mean(tf.square(y_pred - y_true), axis=1)))
+    return tf.reduce_mean(tf.sqrt(tf.reduce_mean(
+        tf.square(y_pred - y_true), axis=1)))
 
 
-def overall_rms_abundance_angle_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
+def overall_rms_abundance_angle_distance(y_true: tf.Tensor,
+                                         y_pred: tf.Tensor) -> tf.Tensor:
     """
-    Calculate the cnn root-mean square abundance angle distance, which measures the similarity
-    between the original abundance fractions and the predicted ones. Taken from cnn paper.
-    It utilizes the inverse of cosine function at the range [0, pi], which means that
-    the domain of arccos is in the range [-1; 1], that is why the "tf.clip_by_value" method is used.
-    For the identical abundances the numerator / denominator is 1 and arccos(1) is 0, which resembles the perfect score.
+    Calculate the cnn root-mean square abundance angle distance,
+    which measures the similarity between the original abundance fractions
+    and the predicted ones. Taken from cnn paper.
+    It utilizes the inverse of cosine function at the range [0, pi],
+    which means that the domain of arccos is in the range [-1; 1],
+    that is why the "tf.clip_by_value" method is used.
+    For the identical abundances the numerator / denominator is 1 and
+    arccos(1) is 0, which resembles the perfect score.
+
     Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
     "Hyperspectral unmixing via deep convolutional neural networks."
     IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
 
-    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_true: Labels as two dimensional abundances
+        array of shape: [n_samples, n_classes].
     :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
     :return: The root-mean square abundance angle distance error.
     """
@@ -101,7 +129,8 @@ def overall_rms_abundance_angle_distance(y_true: tf.Tensor, y_pred: tf.Tensor) -
     y_true_len = tf.sqrt(tf.reduce_sum(tf.square(y_true), 1))
     y_pred_len = tf.sqrt(tf.reduce_sum(tf.square(y_pred), 1))
     denominator = tf.multiply(y_true_len, y_pred_len)
-    loss = tf.sqrt(tf.reduce_mean(tf.square(tf.acos(tf.clip_by_value(numerator / denominator, -1, 1)))))
+    loss = tf.sqrt(tf.reduce_mean(tf.square(tf.acos(
+        tf.clip_by_value(numerator / denominator, -1, 1)))))
     return loss
 
 
@@ -109,7 +138,8 @@ def sum_per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
     Calculate the sum of per class root-mean square error.
 
-    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_true: Labels as two dimensional abundances
+        array of shape: [n_samples, n_classes].
     :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
     :return: The sum of per class root-mean square error.
     """
@@ -120,7 +150,8 @@ def per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
     Calculate the per class root-mean square error vector.
 
-    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_true: Labels as two dimensional abundances
+        array of shape: [n_samples, n_classes].
     :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
     :return: The root-mean square error vector.
     """
@@ -129,13 +160,15 @@ def per_class_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
 
 def cnn_rmse(y_true: tf.Tensor, y_pred: tf.Tensor) -> tf.Tensor:
     """
-    Calculate the custom cnn root-mean square error, which measures the similarity
-    between the original abundance fractions and the predicted ones.
+    Calculate the custom cnn root-mean square error, which measures the
+    similarity between the original abundance fractions and the predicted ones.
+
     Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
     "Hyperspectral unmixing via deep convolutional neural networks."
     IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
 
-    :param y_true: Labels as two dimensional abundances array of shape: [n_samples, n_classes].
+    :param y_true: Labels as two dimensional abundances
+        array of shape: [n_samples, n_classes].
     :param y_pred: Predicted abundances of shape: [n_samples, n_classes].
     :return: The root-mean square error.
     """
@@ -154,18 +187,18 @@ def mean_per_class_accuracy(y_true: np.ndarray,
     return conf_matrix.diagonal() / conf_matrix.sum(axis=1)
 
 
-def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray, metrics: list) -> \
-        Dict[str, List[float]]:
+def compute_metrics(y_true: np.ndarray, y_pred: np.ndarray,
+                    metric_list: List) -> Dict[str, List[float]]:
     """
     Compute all metrics on predicted labels and labels.
 
     :param y_true: Labels as a one-dimensional numpy array.
     :param y_pred: Model's predictions as a one-dimensional numpy array.
-    :param metrics: List of metrics functions.
+    :param metric_list: List of metrics functions.
     """
     return {metric_function.__name__:
                 [metric_function(y_true, y_pred)] for metric_function in
-            metrics}
+            metric_list}
 
 
 DEFAULT_METRICS = [
@@ -181,27 +214,18 @@ DEFAULT_FAIR_METRICS = [
     metrics.cohen_kappa_score
 ]
 UNMIXING_TEST_METRICS = {
-    # The test metrics taken from both papers on hyperspectral unmixing.
-    # All of them allow from qualitative and quantitative analysis of
-    # the abundance regression problem as well as input reconstruction (in the case of autoencoders).
-    # DCAE metrics:
-    # Khajehrayeni, Farshid, and Hassan Ghassemian.
-    # "Hyperspectral unmixing using deep convolutional autoencoders in a supervised scenario."
-    # IEEE Journal of Selected Topics in Applied Earth Observations and Remote Sensing 13 (2020): 567-576.
     'aRMSE': dcae_rmse,
     'aSAM': average_angle_spectral_mapper,
-    # CNN metrics:
-    # Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
-    # "Hyperspectral unmixing via deep convolutional neural networks."
-    # IEEE Geoscience and Remote Sensing Letters 15, no. 11 (2018): 1755-1759.
     'overallRMSE': cnn_rmse,
     'rmsAAD': overall_rms_abundance_angle_distance,
     'perClassSumRMSE': sum_per_class_rmse
 }
 UNMIXING_METRICS = {
-    'TRAIN': {'dcae': {spectral_information_divergence_loss.__name__: spectral_information_divergence_loss},
+    'TRAIN': {'dcae': {spectral_information_divergence_loss.__name__:
+                           spectral_information_divergence_loss},
               'cnn': {cnn_rmse.__name__: cnn_rmse,
-                      overall_rms_abundance_angle_distance.__name__: overall_rms_abundance_angle_distance,
+                      overall_rms_abundance_angle_distance.__name__:
+                          overall_rms_abundance_angle_distance,
                       sum_per_class_rmse.__name__: sum_per_class_rmse}},
     'TEST': {'dcae': UNMIXING_TEST_METRICS,
              'cnn': UNMIXING_TEST_METRICS}
@@ -219,17 +243,21 @@ def get_loss(model_name: str, use_unmixing: bool = True) -> Union[str, object]:
     return loss
 
 
-def get_unmixing_metrics(model_name: str, use_unmixing: bool = False, mode: str = 'TRAIN') -> Dict[str, object]:
+def get_unmixing_metrics(model_name: str, use_unmixing: bool = False,
+                         mode: str = 'TRAIN') -> Dict[str, object]:
     unmixing_metrics = {}
     if use_unmixing:
         try:
-            unmixing_metrics = UNMIXING_METRICS[mode][model_name.split('_')[-1]]
+            unmixing_metrics = UNMIXING_METRICS[mode][
+                model_name.split('_')[-1]]
         except KeyError:
-            print(f'The model name: {model_name} or mode: {mode} for unmixing is incorrect.')
+            print(f'The model name: {model_name} or'
+                  f'mode: {mode} for unmixing is incorrect.')
     return unmixing_metrics
 
 
-def calculate_unmixing_metrics(model_name: str, **kwargs) -> Dict[str, List[float]]:
+def calculate_unmixing_metrics(model_name: str,
+                               **kwargs) -> Dict[str, List[float]]:
     """
     Calculate the metrics for unmixing problem.
 
@@ -238,9 +266,12 @@ def calculate_unmixing_metrics(model_name: str, **kwargs) -> Dict[str, List[floa
     """
     model_metrics = {}
     print(kwargs['y_pred'].shape)
-    for f_name, f_metric in get_unmixing_metrics(model_name, True, 'TEST').items():
+    for f_name, f_metric in get_unmixing_metrics(model_name,
+                                                 True, 'TEST').items():
         model_metrics[f_name] = [float(convert_to_tensor(f_metric)
-                                       (y_true=kwargs['y_true'], y_pred=kwargs['y_pred']))]
+                                       (y_true=kwargs['y_true'],
+                                        y_pred=kwargs['y_pred']))]
+
     for class_idx, class_rmse in enumerate(convert_to_tensor(per_class_rmse)(
             y_true=kwargs['y_true'], y_pred=kwargs['y_pred'])):
         model_metrics[f'class{class_idx}RMSE'] = [float(class_rmse)]
@@ -248,9 +279,12 @@ def calculate_unmixing_metrics(model_name: str, **kwargs) -> Dict[str, List[floa
         # Calculate the reconstruction RMSE and SID losses:
         x_pred = np.matmul(kwargs['y_pred'], kwargs['endmembers'].T)
         model_metrics['rRMSE'] = [float(convert_to_tensor(dcae_rmse)
-                                        (y_true=kwargs['x_true'], y_pred=x_pred))]
-        model_metrics['rSID'] = [float(convert_to_tensor(spectral_information_divergence_loss)
-                                       (y_true=kwargs['x_true'], y_pred=x_pred))]
+                                        (y_true=kwargs['x_true'],
+                                         y_pred=x_pred))]
+        model_metrics['rSID'] = [float(convert_to_tensor(
+            spectral_information_divergence_loss)
+                                       (y_true=kwargs['x_true'],
+                                        y_pred=x_pred))]
     return model_metrics
 
 
@@ -260,7 +294,6 @@ def get_model_metrics(y_true, y_pred, metrics_to_compute: List = None) \
     Calculate provided metrics and store them in a Dict
     :param y_true: True labels
     :param y_pred: Predicted labels
-    :param inference_time: Prediction time, defaults to None
     :param metrics_to_compute: Metrics which will be computed, defaults to None
     :return: Dictionary with metric name as key and metric value as value
     """
@@ -268,7 +301,7 @@ def get_model_metrics(y_true, y_pred, metrics_to_compute: List = None) \
         metrics_to_compute
     model_metrics = compute_metrics(y_true=y_true,
                                     y_pred=y_pred,
-                                    metrics=metrics_to_compute)
+                                    metric_list=metrics_to_compute)
     if mean_per_class_accuracy.__name__ in model_metrics:
         per_class_acc = {'Class_' + str(i):
                              [item] for i, item in enumerate(
@@ -278,7 +311,8 @@ def get_model_metrics(y_true, y_pred, metrics_to_compute: List = None) \
     return model_metrics
 
 
-def get_fair_model_metrics(conf_matrix, labels_in_train) -> Dict[str, List[float]]:
+def get_fair_model_metrics(conf_matrix,
+                           labels_in_train) -> Dict[str, List[float]]:
     """
     Recalculate model metrics discarding classes which where not present in the
     training set
@@ -305,12 +339,15 @@ def get_fair_model_metrics(conf_matrix, labels_in_train) -> Dict[str, List[float
                              metrics_to_compute=DEFAULT_FAIR_METRICS)
 
 
-def get_checkpoint_monitor_quantity(use_unmixing: bool, is_autoencoder: bool) -> str:
+def get_checkpoint_monitor_quantity(use_unmixing: bool,
+                                    is_autoencoder: bool) -> str:
     """
     Get the monitor quantity:
-    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+    :param use_unmixing: Boolean indicating whether to
+        perform experiments on the unmixing datasets,
         where classes in each pixel are present as abundances fractions.
-    :param is_autoencoder: Boolean indicating whether the model is an autoencoder.
+    :param is_autoencoder: Boolean indicating whether
+        the model is an autoencoder.
     """
     if use_unmixing:
         if is_autoencoder:
