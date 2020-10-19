@@ -327,8 +327,3 @@ def unmixing_cube_based_dcae(n_classes: int, input_size: int,
     # and residual term (zero vector):
     model.layers[-1].trainable = False
     return model
-
-
-def check_for_autoencoder(model_name: str) -> bool:
-    return (model_name == unmixing_pixel_based_dcae.__name__ or
-            model_name == unmixing_cube_based_dcae.__name__)

@@ -1,7 +1,7 @@
 """
 All metrics that are calculated on the model's output.
 """
-from typing import Dict, List, Union
+from typing import Dict, List
 
 import numpy as np
 import tensorflow as tf
@@ -213,6 +213,7 @@ DEFAULT_FAIR_METRICS = [
     metrics.balanced_accuracy_score,
     metrics.cohen_kappa_score
 ]
+
 UNMIXING_TEST_METRICS = {
     'aRMSE': dcae_rmse,
     'aSAM': average_angle_spectral_mapper,
@@ -220,54 +221,17 @@ UNMIXING_TEST_METRICS = {
     'rmsAAD': overall_rms_abundance_angle_distance,
     'perClassSumRMSE': sum_per_class_rmse
 }
-UNMIXING_METRICS = {
-    'TRAIN': {'dcae': {spectral_information_divergence_loss.__name__:
-                           spectral_information_divergence_loss},
-              'cnn': {cnn_rmse.__name__: cnn_rmse,
-                      overall_rms_abundance_angle_distance.__name__:
-                          overall_rms_abundance_angle_distance,
-                      sum_per_class_rmse.__name__: sum_per_class_rmse}},
-    'TEST': {'dcae': UNMIXING_TEST_METRICS,
-             'cnn': UNMIXING_TEST_METRICS}
-}
-UNMIXING_LOSSES = {
-    'dcae': spectral_information_divergence_loss,
-    'cnn': 'mse'
-}
 
 
-def get_loss(model_name: str, use_unmixing: bool = True) -> Union[str, object]:
-    loss = 'categorical_crossentropy'
-    if use_unmixing:
-        loss = UNMIXING_LOSSES[model_name.split('_')[-1]]
-    return loss
-
-
-def get_unmixing_metrics(model_name: str, use_unmixing: bool = False,
-                         mode: str = 'TRAIN') -> Dict[str, object]:
-    unmixing_metrics = {}
-    if use_unmixing:
-        try:
-            unmixing_metrics = UNMIXING_METRICS[mode][
-                model_name.split('_')[-1]]
-        except KeyError:
-            print(f'The model name: {model_name} or'
-                  f'mode: {mode} for unmixing is incorrect.')
-    return unmixing_metrics
-
-
-def calculate_unmixing_metrics(model_name: str,
-                               **kwargs) -> Dict[str, List[float]]:
+def calculate_unmixing_metrics(**kwargs) -> Dict[str, List[float]]:
     """
     Calculate the metrics for unmixing problem.
 
-    :param model_name: Name of the unmixing model.
     :param kwargs: Additional keyword arguments.
     """
     model_metrics = {}
     print(kwargs['y_pred'].shape)
-    for f_name, f_metric in get_unmixing_metrics(model_name,
-                                                 True, 'TEST').items():
+    for f_name, f_metric in UNMIXING_TEST_METRICS.items():
         model_metrics[f_name] = [float(convert_to_tensor(f_metric)
                                        (y_true=kwargs['y_true'],
                                         y_pred=kwargs['y_pred']))]
@@ -337,23 +301,3 @@ def get_fair_model_metrics(conf_matrix,
     y_true = np.concatenate(all_targets, axis=0)
     return get_model_metrics(y_true, y_pred,
                              metrics_to_compute=DEFAULT_FAIR_METRICS)
-
-
-def get_checkpoint_monitor_quantity(use_unmixing: bool,
-                                    is_autoencoder: bool) -> str:
-    """
-    Get the monitor quantity:
-    :param use_unmixing: Boolean indicating whether to
-        perform experiments on the unmixing datasets,
-        where classes in each pixel are present as abundances fractions.
-    :param is_autoencoder: Boolean indicating whether
-        the model is an autoencoder.
-    """
-    if use_unmixing:
-        if is_autoencoder:
-            monitor = 'loss'
-        else:
-            monitor = 'val_loss'
-    else:
-        monitor = 'val_acc'
-    return monitor

@@ -27,16 +27,17 @@ def normalize_labels(labels: np.ndarray) -> np.ndarray:
 def reshape_cube_to_2d_samples(data: np.ndarray,
                                labels: np.ndarray,
                                channels_idx: int = 0,
-                               use_unmixing: bool = False) -> Tuple[
-    np.ndarray, np.ndarray]:
+                               use_unmixing: bool = False) -> \
+        Tuple[np.ndarray, np.ndarray]:
     """
-    Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to [PIXEL,CHANNELS, 1],
-    so it fits the 2D Convolutional modules.
+    Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to
+        [PIXEL,CHANNELS, 1], so it fits the 2D Convolutional modules.
     :param data: Data to reshape.
     :param labels: Corresponding labels.
     :param channels_idx: Index at which the channels are located in the
                          provided data file.
-    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
+    :param use_unmixing: Boolean indicating whether to perform
+            experiments on the unmixing datasets,
             where classes in each pixel are present as fractions.
     :return: Reshape data and labels
     :rtype: tuple with reshaped data and labels
@@ -44,10 +45,13 @@ def reshape_cube_to_2d_samples(data: np.ndarray,
     data = np.rollaxis(data, channels_idx, len(data.shape))
     height, width, channels = data.shape
     data = data.reshape(height * width, channels)
-    data = np.expand_dims(np.expand_dims(data, 1), 1) if use_unmixing else np.expand_dims(data, -1)
-    labels = labels.reshape(height * width, -1) if use_unmixing else labels.reshape(-1)
+    data = np.expand_dims(np.expand_dims(data, 1),
+                          1) if use_unmixing else np.expand_dims(data, -1)
+    labels = labels.reshape(height * width,
+                            -1) if use_unmixing else labels.reshape(-1)
     data = data.astype(np.float32)
-    labels = labels.astype(np.float32) if use_unmixing else labels.astype(np.uint8)
+    labels = labels.astype(np.float32) if use_unmixing else labels.astype(
+        np.uint8)
     return data, labels
 
 
@@ -66,17 +70,20 @@ def reshape_cube_to_3d_samples(data: np.ndarray,
                                neighborhood_size: int = 5,
                                background_label: int = 0,
                                channels_idx: int = 0,
-                               use_unmixing: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+                               use_unmixing: bool = False) -> \
+        Tuple[np.ndarray, np.ndarray]:
     """
-    Reshape data to a array of dimensionality: [N_SAMPLES, HEIGHT, WIDTH, CHANNELS]
-    and the labels to dimensionality of: [N_SAMPLES, N_CLASSES]
+    Reshape data to a array of dimensionality:
+        [N_SAMPLES, HEIGHT, WIDTH, CHANNELS] and the labels to
+        dimensionality of: [N_SAMPLES, N_CLASSES]
     :param data: Data passed as array.
     :param labels: Labels passed as array.
     :param neighborhood_size: Length of the spatial patch.
     :param background_label: Label to filter out the background.
     :param channels_idx: Index of the channels.
-    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
-            where classes in each pixel are present as abundances fractions.
+    :param use_unmixing: Boolean indicating whether to perform
+        experiments on the unmixing datasets,
+        where classes in each pixel are present as abundances fractions.
     :rtype: Tuple of data and labels reshaped to 3D format.
     """
     data = np.rollaxis(data, channels_idx, len(data.shape))
@@ -89,14 +96,17 @@ def reshape_cube_to_3d_samples(data: np.ndarray,
     data = data.astype(np.float32)
     for x, y in product(list(range(height)), list(range(width))):
         if use_unmixing or labels[x, y] != background_label:
-            samples.append(data[x:x + padding_size * 2 + 1, y:y + padding_size * 2 + 1])
+            samples.append(data[x:x + padding_size * 2 + 1,
+                           y:y + padding_size * 2 + 1])
             labels_3d.append(labels[x, y])
     samples = np.array(samples).astype(np.float32)
-    labels3d = np.array(labels_3d).astype(np.float32) if use_unmixing else np.array(labels_3d).astype(np.uint8)
+    labels3d = np.array(labels_3d).astype(np.float32) if \
+        use_unmixing else np.array(labels_3d).astype(np.uint8)
     return samples, labels3d
 
 
-def align_ground_truth(cube_2d_shape: Tuple[int, int], ground_truth: np.ndarray,
+def align_ground_truth(cube_2d_shape: Tuple[int, int],
+                       ground_truth: np.ndarray,
                        cube_to_gt_transform: np.ndarray) -> np.ndarray:
     """
     Align original labels to match the satellite hyperspectral cube using
@@ -108,7 +118,8 @@ def align_ground_truth(cube_2d_shape: Tuple[int, int], ground_truth: np.ndarray,
     """
     gt_to_chan_transform = np.linalg.inv(cube_to_gt_transform)
     gt_transformed = cv2.warpPerspective(ground_truth, gt_to_chan_transform,
-                                         cube_2d_shape, flags=cv2.INTER_NEAREST)
+                                         cube_2d_shape,
+                                         flags=cv2.INTER_NEAREST)
     return gt_transformed
 
 
@@ -142,33 +153,39 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     :param data: Data with the [SAMPLES, ...] dimensions
     :param labels: Vector with corresponding labels
     :param train_size: If float, should be between 0.0 and 1.0,
-                        if stratified = True, it represents percentage of each
-                        class to be extracted,
-                 If float and stratified = False, it represents percentage of the
-                    whole dataset to be extracted with samples drawn randomly,
-                    regardless of their class.
+                        if stratified = True, it represents percentage
+                        of each class to be extracted.
+                 If float and stratified = False, it represents percentage
+                    of the whole dataset to be extracted with samples
+                    drawn randomly, regardless of their class.
                  If int and stratified = True, it represents number of samples
                     to be drawn from each class.
                  If int and stratified = False, it represents overall number of
                     samples to be drawn regardless of their class, randomly.
                  Defaults to 0.8
-    :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
-                     each class from the training set to be extracted as a
+    :param val_size: Should be between 0.0 and 1.0. Represents the percentage
+                     of each class from the training set to be extracted as a
                      validation set, defaults to 0.1
     :param stratified: Indicated whether the extracted training set should be
                      stratified, defaults to True
     :param seed: Seed used for data shuffling
-    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
-            where classes in each pixel are present as abundance fractions.
+    :param use_unmixing: Boolean indicating whether to
+        perform experiments on the unmixing datasets,
+        where classes in each pixel are present as abundance fractions.
     :return: train_x, train_y, val_x, val_y, test_x, test_y
     :raises AssertionError: When wrong type is passed as train_size
     """
     shuffle_arrays_together([data, labels], seed=seed)
     if use_unmixing:
-        train_size = int(train_size * len(data)) if isinstance(train_size, float) else train_size
-        train_indices = np.random.choice(len(data), size=train_size, replace=False)
+        train_size = int(train_size * len(data)) if \
+            isinstance(train_size, float) else train_size
+        train_indices = np.random.choice(len(data),
+                                         size=train_size,
+                                         replace=False)
         val_size = int(val_size * len(train_indices))
-        val_indices = np.random.choice(train_indices, size=val_size, replace=False)
+        val_indices = np.random.choice(train_indices,
+                                       size=val_size,
+                                       replace=False)
     else:
         train_indices = _get_set_indices(train_size, labels, stratified)
         val_indices = _get_set_indices(val_size, labels[train_indices])
@@ -188,11 +205,12 @@ def _get_set_indices(size: Union[List, float, int],
     stratified parameters.
 
     :param labels: Vector with corresponding labels
-    :param size: If float, should be between 0.0 and 1.0, if stratified = True, it
-                    represents percentage of each class to be extracted,
-                 If float and stratified = False, it represents percentage of the
-                    whole dataset to be extracted with samples drawn randomly,
-                    regardless of their class.
+    :param size: If float, should be between 0.0 and 1.0,
+                    if stratified = True, it represents percentage
+                    of each class to be extracted.
+                 If float and stratified = False, it represents
+                    percentage of the whole dataset to be extracted
+                    with samples drawn randomly, regardless of their class.
                  If int and stratified = True, it represents number of samples
                     to be drawn from each class.
                  If int and stratified = False, it represents overall number of
@@ -210,8 +228,8 @@ def _get_set_indices(size: Union[List, float, int],
 def _(size: float,
       labels: np.ndarray,
       stratified: bool = True) -> np.ndarray:
-    label_indices, unique_labels = get_label_indices_per_class(labels,
-                                                               return_uniques=True)
+    label_indices, unique_labels = get_label_indices_per_class(
+        labels, return_uniques=True)
     assert 0 < size <= 1
     if stratified:
         for idx in range(len(unique_labels)):
@@ -227,8 +245,8 @@ def _(size: float,
 def _(size: int,
       labels: np.ndarray,
       stratified: bool = True) -> np.ndarray:
-    label_indices, unique_labels = get_label_indices_per_class(labels,
-                                                               return_uniques=True)
+    label_indices, unique_labels = get_label_indices_per_class(
+        labels, return_uniques=True)
     assert size >= 1
     if stratified:
         for label in range(len(unique_labels)):
@@ -243,8 +261,8 @@ def _(size: int,
 def _(size: List,
       labels: np.ndarray,
       _) -> np.ndarray:
-    label_indices, unique_labels = get_label_indices_per_class(labels,
-                                                               return_uniques=True)
+    label_indices, unique_labels = get_label_indices_per_class(
+        labels, return_uniques=True)
     if len(size) == 1:
         size = int(size[0])
     for n_samples, label in zip(size, range(len(unique_labels))):

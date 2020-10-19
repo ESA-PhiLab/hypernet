@@ -12,7 +12,6 @@ from clize.parameters import multi
 import ml_intuition.data.io as io
 import ml_intuition.data.preprocessing as preprocessing
 import ml_intuition.data.utils as utils
-from ml_intuition.models import check_for_autoencoder
 
 EXTENSION = 1
 
@@ -39,58 +38,63 @@ def main(*,
     :param train_size: If float, should be between 0.0 and 1.0,
                         if stratified = True, it represents percentage of each
                         class to be extracted,
-                 If float and stratified = False, it represents percentage of the
-                    whole dataset to be extracted with samples drawn randomly,
-                    regardless of their class.
+                 If float and stratified = False, it represents
+                    percentage of the whole dataset to be extracted
+                    with samples drawn randomly, regardless of their class.
                  If int and stratified = True, it represents number of samples
                     to be drawn from each class.
                  If int and stratified = False, it represents overall number of
                     samples to be drawn regardless of their class, randomly.
                  Defaults to 0.8
     :type train_size: float or int
-    :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
-                     each class from the training set to be extracted as a
-                     validation set, defaults to 0.1
+    :param val_size: Should be between 0.0 and 1.0. Represents the
+                     percentage of each class from the training set
+                     to be extracted as a validation set, defaults to 0.1
     :param stratified: Indicated whether the extracted training set should be
                      stratified, defaults to True
-    :param background_label: Label indicating the background in GT file
+    :param background_label: Label indicating the background in GT file.
+    :param neighborhood_size: Size of the spatial patch.
     :param channels_idx: Index specifying the channels position in the provided
                          data
     :param save_data: Whether to save data as .md5 or to return it as a dict
     :param seed: Seed used for data shuffling
-    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
-            where classes in each pixel are present as fractions.
+    :param use_unmixing: Boolean indicating whether to perform experiments
+        on the unmixing datasets, where classes in each pixel
+        are present as fractions.
     :param model_name: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
     :raises TypeError: When provided data or labels file is not supported
     """
     train_size = utils.parse_train_size(train_size)
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
-        data, labels = io.load_npy(data_file_path, ground_truth_path, use_unmixing)
-        if check_for_autoencoder(model_name):
-            # If the model is an autoencoder do not extract subsets, since it is trained and evaluated on the entire cube:
+        data, labels = io.load_npy(data_file_path, ground_truth_path,
+                                   use_unmixing)
+        if 'dcae' in model_name:
+            # If the model is an autoencoder do not extract subsets,
+            # since it is trained and evaluated on the entire cube:
             return {'data': data, 'labels': labels}
         if neighborhood_size is None:
-            data, labels = preprocessing.reshape_cube_to_2d_samples(data, labels, channels_idx, use_unmixing)
+            data, labels = preprocessing.reshape_cube_to_2d_samples(
+                data, labels, channels_idx, use_unmixing)
 
         else:
-            data, labels = preprocessing.reshape_cube_to_3d_samples(data,
-                                                                    labels,
-                                                                    neighborhood_size,
-                                                                    background_label,
-                                                                    channels_idx,
-                                                                    use_unmixing)
-    elif data_file_path.endswith('.h5') and ground_truth_path.endswith('.tiff'):
+            data, labels = preprocessing.reshape_cube_to_3d_samples(
+                data, labels, neighborhood_size,
+                background_label, channels_idx, use_unmixing)
+    elif data_file_path.endswith('.h5') and ground_truth_path.endswith(
+            '.tiff'):
         data, gt_transform_mat = io.load_satellite_h5(data_file_path)
         labels = io.load_tiff(ground_truth_path)
         data_2d_shape = data.shape[1:]
         labels = preprocessing.align_ground_truth(data_2d_shape, labels,
                                                   gt_transform_mat)
         if neighborhood_size is None:
-            data, labels = preprocessing.reshape_cube_to_2d_samples(data, labels, channels_idx)
+            data, labels = preprocessing.reshape_cube_to_2d_samples(
+                data, labels, channels_idx)
         else:
-            data, labels = preprocessing.reshape_cube_to_3d_samples(data, labels, neighborhood_size,
-                                                                    background_label, channels_idx)
+            data, labels = preprocessing.reshape_cube_to_3d_samples(
+                data, labels, neighborhood_size, background_label,
+                channels_idx)
     else:
         raise ValueError(
             "The following data file type is not supported: {}".format(
@@ -101,13 +105,16 @@ def main(*,
         labels = labels[labels != background_label]
         labels = preprocessing.normalize_labels(labels)
     train_x, train_y, val_x, val_y, test_x, test_y = \
-        preprocessing.train_val_test_split(data, labels, train_size, val_size, stratified, seed, use_unmixing)
+        preprocessing.train_val_test_split(data, labels, train_size, val_size,
+                                           stratified, seed, use_unmixing)
 
     if save_data:
-        io.save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y)
+        io.save_md5(output_path, train_x, train_y, val_x, val_y, test_x,
+                    test_y)
         return None
     else:
-        return utils.build_data_dict(train_x, train_y, val_x, val_y, test_x, test_y)
+        return utils.build_data_dict(train_x, train_y, val_x, val_y, test_x,
+                                     test_y)
 
 
 if __name__ == '__main__':

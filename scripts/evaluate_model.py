@@ -13,11 +13,9 @@ from sklearn.metrics import confusion_matrix
 from ml_intuition import enums
 from ml_intuition.data import io, transforms
 from ml_intuition.data.noise import get_noise_functions
-from ml_intuition.data.utils import get_central_pixel_spectrum
-from ml_intuition.evaluation.performance_metrics import get_model_metrics, get_unmixing_metrics, \
-    get_fair_model_metrics, calculate_unmixing_metrics
+from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
+    get_fair_model_metrics
 from ml_intuition.evaluation.time_metrics import timeit
-from ml_intuition.models import check_for_autoencoder
 
 
 def evaluate(*,
@@ -25,10 +23,7 @@ def evaluate(*,
              model_path: str,
              dest_path: str,
              n_classes: int,
-             neighborhood_size: int = None,
              batch_size: int = 1024,
-             use_unmixing: bool = False,
-             endmembers_path: str = None,
              noise: ('post', multi(min=0)),
              noise_sets: ('spost', multi(min=0)),
              noise_params: str = None):
@@ -39,12 +34,7 @@ def evaluate(*,
     :param data: Either path to the input data or the data dict.
     :param dest_path: Directory in which to store the calculated metrics
     :param n_classes: Number of classes.
-    :param neighborhood_size: Size of the spatial patch.
-    :param batch_size: Size of the batch for inference.
-    :param use_unmixing: Boolean indicating whether to perform experiments on the unmixing datasets,
-        where classes in each pixel are present as abundances fractions.
-    :param endmembers_path: Path to the endmembers file containing average reflectances for each class.
-        Used only when use_unmixing is true.
+    :param batch_size: Size of the batch for inference
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
     :param noise_sets: List of sets that are affected by the noise injection.
@@ -57,76 +47,56 @@ def evaluate(*,
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
     """
-    model_name = os.path.basename(model_path)
-    model = tf.keras.models.load_model(model_path, compile=True,
-                                       custom_objects=get_unmixing_metrics(model_name, use_unmixing, 'TRAIN'))
+    if type(data) is str:
+        test_dict = io.extract_set(data, enums.Dataset.TEST)
+    else:
+        test_dict = data[enums.Dataset.TEST]
+    min_max_path = os.path.join(os.path.dirname(model_path), "min-max.csv")
+    if os.path.exists(min_max_path):
+        min_value, max_value = io.read_min_max(min_max_path)
+    else:
+        min_value, max_value = data[enums.DataStats.MIN], \
+                               data[enums.DataStats.MAX]
+
+    transformations = [transforms.SpectralTransform(),
+                       transforms.OneHotEncode(n_classes=n_classes),
+                       transforms.MinMaxNormalize(min_=min_value,
+                                                  max_=max_value)]
+    transformations = transformations + \
+                      get_noise_functions(noise, noise_params) \
+        if enums.Dataset.TEST in noise_sets else transformations
+
+    test_dict = transforms.apply_transformations(test_dict, transformations)
+
+    model = tf.keras.models.load_model(model_path, compile=True)
+
     predict = timeit(model.predict)
+    y_pred, inference_time = predict(test_dict[enums.Dataset.DATA],
+                                     batch_size=batch_size)
 
-    is_autoencoder = check_for_autoencoder(model_name)
-    if not is_autoencoder:
-        if type(data) is str:
-            test_dict = io.extract_set(data, enums.Dataset.TEST)
-        else:
-            test_dict = data[enums.Dataset.TEST]
-        min_max_path = os.path.join(os.path.dirname(model_path), "min-max.csv")
-        if os.path.exists(min_max_path):
-            min_value, max_value = io.read_min_max(min_max_path)
-        else:
-            min_value, max_value = data[enums.DataStats.MIN], \
-                                   data[enums.DataStats.MAX]
-        transformations = [transforms.SpectralTransform()] if use_unmixing else [
-            transforms.OneHotEncode(n_classes=n_classes)]
+    y_pred = np.argmax(y_pred, axis=-1)
+    y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 
-        transformations += [transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
-
-        if '2d' in model_name or 'deep' in model_name:
-            transformations.append(transforms.SpectralTransform())
-
-        transformations = transformations + get_noise_functions(noise, noise_params) \
-            if enums.Dataset.TEST in noise_sets else transformations
-
-        test_dict = transforms.apply_transformations(test_dict, transformations)
-        x = test_dict[enums.Dataset.DATA]
-        y_true = test_dict[enums.Dataset.LABELS]
-
-    else:
-        model.pop()  # Drop the decoder of the already trained autoencoder
-        x = data['data']
-        y_true = data['labels']
-
-    y_pred, inference_time = predict(x, batch_size=batch_size)
-
-    if use_unmixing:
-        # Load the endmembers i.e., the decoder weights in the DCAE model, else None:
-        model_metrics = calculate_unmixing_metrics(model_name, **{
-            'endmembers': np.load(endmembers_path) if endmembers_path is not None else None,
-            'y_pred': y_pred, 'y_true': y_true,
-            'x_true': get_central_pixel_spectrum(x, neighborhood_size)
-        })
-    else:
-        y_pred = np.argmax(y_pred, axis=-1)
-        y_true = np.argmax(y_true, axis=-1)
-
-        model_metrics = get_model_metrics(y_true, y_pred)
-        conf_matrix = confusion_matrix(y_true, y_pred)
-        io.save_confusion_matrix(conf_matrix, dest_path)
-
-        if enums.Splits.GRIDS in model_path:
-            if type(data) is str:
-                train_dict = io.extract_set(data, enums.Dataset.TRAIN)
-                labels_in_train = np.unique(train_dict[enums.Dataset.LABELS])
-            else:
-                train_labels = data[enums.Dataset.TRAIN][enums.Dataset.LABELS]
-                if train_labels.ndim > 1:
-                    train_labels = np.argmax(train_labels, axis=-1)
-                labels_in_train = np.unique(train_labels)
-            fair_metrics = get_fair_model_metrics(conf_matrix, labels_in_train)
-            io.save_metrics(dest_path=dest_path,
-                            file_name=enums.Experiment.INFERENCE_FAIR_METRICS,
-                            metrics=fair_metrics)
-
+    model_metrics = get_model_metrics(y_true, y_pred)
     model_metrics['inference_time'] = [inference_time]
-    io.save_metrics(dest_path=dest_path, file_name=enums.Experiment.INFERENCE_METRICS, metrics=model_metrics)
+    conf_matrix = confusion_matrix(y_true, y_pred)
+    io.save_metrics(dest_path=dest_path,
+                    file_name=enums.Experiment.INFERENCE_METRICS,
+                    metrics=model_metrics)
+    io.save_confusion_matrix(conf_matrix, dest_path)
+    if enums.Splits.GRIDS in model_path:
+        if type(data) is str:
+            train_dict = io.extract_set(data, enums.Dataset.TRAIN)
+            labels_in_train = np.unique(train_dict[enums.Dataset.LABELS])
+        else:
+            train_labels = data[enums.Dataset.TRAIN][enums.Dataset.LABELS]
+            if train_labels.ndim > 1:
+                train_labels = np.argmax(train_labels, axis=-1)
+            labels_in_train = np.unique(train_labels)
+        fair_metrics = get_fair_model_metrics(conf_matrix, labels_in_train)
+        io.save_metrics(dest_path=dest_path,
+                        file_name=enums.Experiment.INFERENCE_FAIR_METRICS,
+                        metrics=fair_metrics)
 
 
 if __name__ == '__main__':
