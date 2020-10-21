@@ -20,12 +20,19 @@ from ml_intuition.evaluation.performance_metrics import \
     cnn_rmse, sum_per_class_rmse
 from ml_intuition.models import unmixing_cube_based_dcae, \
     unmixing_pixel_based_dcae, \
-    unmixing_cube_based_cnn, unmixing_pixel_based_cnn
+    unmixing_cube_based_cnn, unmixing_pixel_based_cnn, unmixing_rnn_supervised
+
+TRANSFORMS = {
+    unmixing_rnn_supervised.__name__: transforms.RNNSpectralInputTransform,
+    unmixing_pixel_based_cnn.__name__: transforms.SpectralTransform,
+    unmixing_cube_based_cnn.__name__: transforms.SpectralTransform
+
+}
 
 
 def train_dcae(model, data, **kwargs):
     """
-    Function for running experiments on convolutional neural network (CNN),
+    Function for running experiments on deep convolutional autoencoder (DCAE),
     given a set of hyperparameters.
     :param model: The model used for training.
     :param data: Either path to the input data or the data dict itself.
@@ -82,9 +89,9 @@ def train_dcae(model, data, **kwargs):
                     metrics=history.history)
 
 
-def train_cnn(model, data, **kwargs):
+def train_supervised(model, data, **kwargs):
     """
-    Function for running experiments on deep convolutional autoencoder (DCAE),
+    Function for running experiments on supervised unmixing models,
     given a set of hyperparameters.
     :param model: The model used for training.
     :param data: Either path to the input data or the data dict itself.
@@ -100,14 +107,17 @@ def train_cnn(model, data, **kwargs):
                  sum_per_class_rmse])
 
     time_history = time_metrics.TimeHistory()
+
     mcp_save = tf.keras.callbacks.ModelCheckpoint(
         os.path.join(kwargs['dest_path'], kwargs['model_name']),
         save_best_only=True,
         monitor='val_loss',
         mode='min')
+
     early_stopping = tf.keras.callbacks.EarlyStopping(
-        monitor='loss',
-        patience=kwargs['patience'], mode='min')
+        monitor='val_loss',
+        patience=kwargs['patience'],
+        mode='min')
 
     callbacks = [time_history, mcp_save, early_stopping]
 
@@ -116,7 +126,7 @@ def train_cnn(model, data, **kwargs):
 
     min_, max_ = data[enums.DataStats.MIN], data[enums.DataStats.MAX]
 
-    transformations = [transforms.SpectralTransform(),
+    transformations = [TRANSFORMS[kwargs['model_name']](),
                        transforms.MinMaxNormalize(min_=min_, max_=max_)]
 
     train_dict = transforms.apply_transformations(train_dict, transformations)
@@ -148,8 +158,10 @@ TRAIN_FUNCTIONS = {
     unmixing_cube_based_dcae.__name__: train_dcae,
     unmixing_pixel_based_dcae.__name__: train_dcae,
 
-    unmixing_cube_based_cnn.__name__: train_cnn,
-    unmixing_pixel_based_cnn.__name__: train_cnn
+    unmixing_cube_based_cnn.__name__: train_supervised,
+    unmixing_pixel_based_cnn.__name__: train_supervised,
+
+    unmixing_rnn_supervised.__name__: train_supervised
 }
 
 
@@ -171,7 +183,8 @@ def train(data: Dict[str, np.ndarray],
           endmembers_path: str = None,
           seed: int = 0):
     """
-    Function for running experiments given a set of hyper parameters.
+    Function for running experiments on various unmixing models,
+    given a set of hyper parameters.
     :param data: Either path to the input data or the data dict itself.
         First dimension of the dataset should be the number of samples.
     :param model_name: Name of the model, it serves as a key in the
@@ -214,7 +227,6 @@ def train(data: Dict[str, np.ndarray],
            'neighborhood_size': neighborhood_size,
            'endmembers': np.load(
                endmembers_path) if endmembers_path is not None else None})
-
     model.summary()
     # Run specific training function and pass specific hyperparameters.
     TRAIN_FUNCTIONS[model_name](

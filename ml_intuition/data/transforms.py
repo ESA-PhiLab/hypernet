@@ -29,7 +29,8 @@ class SpectralTransform(BaseTransform):
         """
         super().__init__()
 
-    def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[np.ndarray]:
+    def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[
+        np.ndarray]:
         """
         Transform 1D samples along the spectral axis.
         Only the spectral features are present for each sample in the dataset.
@@ -76,7 +77,8 @@ class MinMaxNormalize(BaseTransform):
         self.min_ = min_
         self.max_ = max_
 
-    def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[np.ndarray]:
+    def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[
+        np.ndarray]:
         """"
         Perform min-max normalization on incoming samples.
 
@@ -101,6 +103,22 @@ def apply_transformations(data: Dict,
     return data
 
 
+class RNNSpectralInputTransform(BaseTransform):
+
+    def __call__(self, sample: np.ndarray,
+                 label: np.ndarray) -> List[np.ndarray]:
+        """"
+        Transform the input samples for the recurrent
+        neural network (RNN) input.
+        This is performed for the pixel-based model.
+
+        :param sample: Input sample that will undergo transformation.
+        :param label: Class value for each sample.
+        :return: List containing the normalized sample and the class label.
+        """
+        return [np.expand_dims(np.squeeze(sample), -1), label]
+
+
 class PerBandMinMaxNormalization(BaseTransform):
     SPECTRAL_DIM = -1
 
@@ -108,7 +126,8 @@ class PerBandMinMaxNormalization(BaseTransform):
         self.min_ = min_
         self.max_ = max_
 
-    def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[np.ndarray]:
+    def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[
+        np.ndarray]:
         """
         Perform per-band min-max normalization. Each band is treated as a separate feature.
 
@@ -118,9 +137,12 @@ class PerBandMinMaxNormalization(BaseTransform):
         """
         sample, label = sample.astype(np.float32), label.astype(np.float32)
         sample_shape = sample.shape
-        sample = sample.reshape(-1, sample.shape[PerBandMinMaxNormalization.SPECTRAL_DIM])
-        for band_index, (min_val, max_val) in enumerate(zip(self.min_, self.max_)):
-            sample[..., band_index] = (sample[..., band_index] - min_val) / (max_val - min_val)
+        sample = sample.reshape(-1, sample.shape[
+            PerBandMinMaxNormalization.SPECTRAL_DIM])
+        for band_index, (min_val, max_val) in enumerate(
+                zip(self.min_, self.max_)):
+            sample[..., band_index] = (sample[..., band_index] - min_val) / (
+                    max_val - min_val)
         return [sample.reshape(sample_shape), label]
 
     @staticmethod
@@ -131,5 +153,7 @@ class PerBandMinMaxNormalization(BaseTransform):
         :param data_cube: Hyperspectral data cube, with bands in the last dimension.
         :return: Dictionary containing the min as well as the max vectors for each band.
         """
-        data_cube = data_cube.reshape(-1, data_cube.shape[PerBandMinMaxNormalization.SPECTRAL_DIM])
-        return {'min_': np.amin(data_cube, axis=0), 'max_': np.amax(data_cube, axis=0)}
+        data_cube = data_cube.reshape(-1, data_cube.shape[
+            PerBandMinMaxNormalization.SPECTRAL_DIM])
+        return {'min_': np.amin(data_cube, axis=0),
+                'max_': np.amax(data_cube, axis=0)}

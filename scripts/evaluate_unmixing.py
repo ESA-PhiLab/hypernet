@@ -18,7 +18,14 @@ from ml_intuition.evaluation.performance_metrics import \
     spectral_information_divergence_loss
 from ml_intuition.evaluation.time_metrics import timeit
 from ml_intuition.models import unmixing_pixel_based_dcae, \
-    unmixing_cube_based_dcae, unmixing_cube_based_cnn, unmixing_pixel_based_cnn
+    unmixing_cube_based_dcae, unmixing_cube_based_cnn, \
+    unmixing_pixel_based_cnn, unmixing_rnn_supervised
+
+SUPERVISED_TRANSFORMS = {
+    unmixing_pixel_based_cnn.__name__: transforms.SpectralTransform,
+    unmixing_cube_based_cnn.__name__: transforms.SpectralTransform,
+    unmixing_rnn_supervised.__name__: transforms.RNNSpectralInputTransform
+}
 
 
 def evaluate_dcae(**kwargs):
@@ -51,9 +58,9 @@ def evaluate_dcae(**kwargs):
                     metrics=model_metrics)
 
 
-def evaluate_cnn(**kwargs):
+def evaluate_supervised(**kwargs):
     """
-    Evaluate the convolutional neural network (CNN).
+    Evaluate the supervised models.
 
     :param kwargs: The keyword arguments containing specific
         hyperparameters and data.
@@ -66,19 +73,14 @@ def evaluate_cnn(**kwargs):
                         sum_per_class_rmse.__name__: sum_per_class_rmse})
 
     test_dict = kwargs['data'][enums.Dataset.TEST]
-    min_max_path = os.path.join(os.path.dirname(kwargs['model_path']),
-                                'min-max.csv')
-    if os.path.exists(min_max_path):
-        min_value, max_value = io.read_min_max(min_max_path)
-    else:
-        min_value, max_value = kwargs['data'][enums.DataStats.MIN], \
-                               kwargs['data'][enums.DataStats.MAX]
 
-    transformations = [transforms.SpectralTransform(),
-                       transforms.MinMaxNormalize(min_=min_value,
-                                                  max_=max_value)]
+    min_value, max_value = io.read_min_max(os.path.join(
+        os.path.dirname(kwargs['model_path']), 'min-max.csv'))
 
-    test_dict = transforms.apply_transformations(test_dict, transformations)
+    test_dict = transforms.apply_transformations(
+        test_dict, [SUPERVISED_TRANSFORMS[kwargs['model_name']](),
+                    transforms.MinMaxNormalize(min_=min_value,
+                                               max_=max_value)])
     predict = timeit(model.predict)
     y_pred, inference_time = predict(test_dict[enums.Dataset.DATA],
                                      batch_size=kwargs['batch_size'])
@@ -96,8 +98,9 @@ def evaluate_cnn(**kwargs):
 EVALUATE_FUNCTION = {
     unmixing_cube_based_dcae.__name__: evaluate_dcae,
     unmixing_pixel_based_dcae.__name__: evaluate_dcae,
-    unmixing_cube_based_cnn.__name__: evaluate_cnn,
-    unmixing_pixel_based_cnn.__name__: evaluate_cnn
+    unmixing_cube_based_cnn.__name__: evaluate_supervised,
+    unmixing_pixel_based_cnn.__name__: evaluate_supervised,
+    unmixing_rnn_supervised.__name__: evaluate_supervised
 }
 
 

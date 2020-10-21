@@ -327,3 +327,22 @@ def unmixing_cube_based_dcae(n_classes: int, input_size: int,
     # and residual term (zero vector):
     model.layers[-1].trainable = False
     return model
+
+
+def unmixing_rnn_supervised(n_classes: int, **kwargs) -> tf.keras.Sequential:
+    """
+    Model for the unmixing which utilizes a recurrent neural network (RNN)
+    for extracting valuable information from the spectral domain
+    in an supervised manner.
+
+    :param n_classes: Number of classes.
+    :param kwargs: Additional arguments.
+    :return: Model proposed in the publication listed above.
+    """
+    model = tf.keras.Sequential()
+    model.add(
+        tf.keras.layers.GRU(units=64, input_shape=(kwargs['input_size'], 1),
+                            return_sequences=False))
+    model.add(tf.keras.layers.Dense(16, activation='relu'))
+    model.add(tf.keras.layers.Dense(n_classes, activation='softmax'))
+    return model
