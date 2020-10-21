@@ -341,8 +341,11 @@ def unmixing_rnn_supervised(n_classes: int, **kwargs) -> tf.keras.Sequential:
     """
     model = tf.keras.Sequential()
     model.add(
-        tf.keras.layers.GRU(units=64, input_shape=(kwargs['input_size'], 1),
-                            return_sequences=False))
-    model.add(tf.keras.layers.Dense(16, activation='relu'))
+        tf.keras.layers.GRU(units=8, input_shape=(kwargs['input_size'], 1),
+                            return_sequences=True))
+    model.add(tf.keras.layers.GRU(units=32, return_sequences=True))
+    model.add(tf.keras.layers.GRU(units=128, return_sequences=True))
+    model.add(tf.keras.layers.GRU(units=512, return_sequences=False))
+
     model.add(tf.keras.layers.Dense(n_classes, activation='softmax'))
     return model
