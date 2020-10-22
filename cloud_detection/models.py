@@ -1,0 +1,85 @@
+""" Keras models for cloud detection. """
+
+import tensorflow as tf
+
+
+def unet(input_size: int, n_classes: int, bn_momentum: float) -> tf.keras.Model:
+    """
+    Simple U-Net model consisting of 3 contract blocks and 3 expand blocks.
+
+    :param input_size: Number of input channels, i.e., the number of spectral bands.
+    :param n_classes: Number of classes.
+    :param bn_momentum: Momentum of the batch normalization layer.
+    """
+    def contract_block(x: tf.Tensor,
+                       filters: int,
+                       kernel_size: int,
+                       bn_momentum: float) -> tf.Tensor:
+        """
+        Contracting block of the U-Net.
+
+        :param x: Input to the block.
+        :param filters: Number of filters of convolutional layers.
+        :param kernel_size: Kernel size of convolutional layers.
+        :param bn_momentum: Momentum of the batch normalization layer.
+        """
+        x = tf.keras.layers.Conv2D(filters=filters,
+                                   kernel_size=kernel_size,
+                                   padding="same",
+                                   activation="relu")(x)
+        x = tf.keras.layers.BatchNormalization(momentum=bn_momentum)(x)
+        x = tf.keras.layers.Conv2D(filters=filters,
+                                   kernel_size=kernel_size,
+                                   padding="same",
+                                   activation="relu")(x)
+        x = tf.keras.layers.BatchNormalization(momentum=bn_momentum)(x)
+        x = tf.keras.layers.MaxPool2D(pool_size=3,
+                                      strides=2,
+                                      padding="same")(x)
+        return x
+
+    def expand_block(x: tf.Tensor,
+                     filters: int,
+                     kernel_size: int,
+                     bn_momentum: float) -> tf.Tensor:
+        """
+        Expanding block of the U-Net.
+
+        :param x: Input to the block.
+        :param filters: Number of filters of convolutional layers.
+        :param kernel_size: Kernel size of convolutional layers.
+        :param bn_momentum: Momentum of the batch normalization layer.
+        """
+        x = tf.keras.layers.Conv2D(filters=filters,
+                                   kernel_size=kernel_size,
+                                   padding="same",
+                                   activation="relu")(x)
+        x = tf.keras.layers.BatchNormalization(momentum=bn_momentum)(x)
+        x = tf.keras.layers.Conv2D(filters=filters,
+                                   kernel_size=kernel_size,
+                                   padding="same",
+                                   activation="relu")(x)
+        x = tf.keras.layers.BatchNormalization(momentum=bn_momentum)(x)
+        x = tf.keras.layers.Conv2DTranspose(filters=filters,
+                                            kernel_size=3,
+                                            strides=2,
+                                            padding="same")(x)
+        return x
+
+    input_ = tf.keras.layers.Input(shape=(384, 384, input_size))
+    concat = tf.keras.layers.Concatenate(axis=-1)
+
+    cont1 = contract_block(input_, 32, 7, bn_momentum)
+    cont2 = contract_block(cont1, 64, 3, bn_momentum)
+    cont3 = contract_block(cont2, 128, 3, bn_momentum)
+
+    exp1 = expand_block(cont3, 64, 3, bn_momentum)
+    exp1cont2 = concat([exp1, cont2])
+    exp2 = expand_block(exp1cont2, 32, 3, bn_momentum)
+    exp2cont1 = concat([exp2, cont1])
+    exp3 = expand_block(exp2cont1, n_classes, 3, bn_momentum)
+    out = tf.keras.layers.Activation(activation="softmax")(exp3)
+
+    model = tf.keras.Model(input_, out)
+
+    return model
