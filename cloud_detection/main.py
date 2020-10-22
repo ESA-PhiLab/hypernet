@@ -49,15 +49,17 @@ def main(c: Dict):
         generator=traingen,
         steps_per_epoch=c["steps_per_epoch"],
         epochs=c["epochs"],
+        validation_data=testgen,
+        validation_steps=c["steps_per_epoch"],
         verbose=1
         )
-    # Test model
-    test_loss, test_acc = model.evaluate_generator(
-        generator=testgen,
-        steps=c["steps_per_epoch"],
-        verbose=1
-        )
-    mlflow.log_metrics({"test loss": test_loss, "test acc": test_acc})
+    # # Test model
+    # test_loss, test_acc = model.evaluate_generator(
+    #     generator=testgen,
+    #     steps=c["steps_per_epoch"],
+    #     verbose=1
+    #     )
+    # mlflow.log_metrics({"test loss": test_loss, "test acc": test_acc})
     # # Show sample prediction
     # x, y = next(iter(testgen))
     # y_pred = model.predict(x)
@@ -73,11 +75,11 @@ def main(c: Dict):
 if __name__ == "__main__":
     params = {
         "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_training"),
-        "train_size": 0.1,
+        "train_size": 0.5,
         "batch_size": 8,
         "learning_rate": .01,
         "bn_momentum": .9,
-        "epochs": 5,
-        "steps_per_epoch": 2
+        "epochs": 200,
+        "steps_per_epoch": 10
         }
     main(params)
