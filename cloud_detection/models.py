@@ -5,7 +5,10 @@ import tensorflow as tf
 
 def unet(input_size: int, n_classes: int, bn_momentum: float) -> tf.keras.Model:
     """
-    Simple U-Net model consisting of 3 contract blocks and 3 expand blocks.
+    Simple U-Net model based on model from
+    https://medium.com/analytics-vidhya/creating-a-very-simple-u-net-model-with-pytorch \
+    -for-semantic-segmentation-of-satellite-images-223aa216e705
+    consisting of 3 contract blocks and 3 expand blocks.
 
     :param input_size: Number of input channels, i.e., the number of spectral bands.
     :param n_classes: Number of classes.
