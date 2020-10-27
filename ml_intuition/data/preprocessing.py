@@ -5,6 +5,7 @@ from typing import Tuple, Union, List
 import cv2
 import numpy as np
 
+from ml_intuition.data.transforms import PerBandMinMaxNormalization
 from ml_intuition.data.utils import shuffle_arrays_together, \
     get_label_indices_per_class
 
@@ -63,6 +64,39 @@ def get_padded_cube(data: np.ndarray, padding_size: int):
     data = np.hstack((h_padding, data))
     data = np.hstack((data, h_padding))
     return data
+
+
+def spectral_angle_mapper(data: np.ndarray,
+                          endmembers: np.ndarray,
+                          channel_idx: int) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Calculate the spectral angle mapper between the HSI pixels and endmembers.
+    :param data: Data cube.
+    :param endmembers: The matrix containing the spectra for each class of
+        dimensionality [n_classes, n_bands].
+    :param channel_idx: Index of bands in HSI.
+    :return: The tuple of both, normalized and unnormalized angle matrix
+        for each pixel in HSI.
+    """
+    if data.min() < 0 or data.max() > 1:
+        transform = PerBandMinMaxNormalization(
+            **PerBandMinMaxNormalization.get_min_max_vectors(
+                data
+            ))
+        data = next(iter(transform(data, np.zeros((1)))))
+    data = data.reshape(-1, data.shape[channel_idx])
+    adj_matrix = np.empty((data.shape[0], endmembers.shape[0]))
+    for pixel_idx in range(data.shape[0]):
+        for spectra_idx in range(endmembers.shape[0]):
+            numerator = np.dot(data[pixel_idx], endmembers[spectra_idx])
+            denominator = np.sqrt(np.dot(data[pixel_idx], data[pixel_idx]) *
+                                  np.dot(endmembers[spectra_idx],
+                                         endmembers[spectra_idx]))
+            alpha = np.arccos(np.clip(numerator / denominator, -1, 1))
+            adj_matrix[pixel_idx, spectra_idx] = alpha
+    adj_matrix = adj_matrix.astype(np.float32)
+    norm_adj_matrix = adj_matrix / np.expand_dims(adj_matrix.sum(axis=1), -1)
+    return adj_matrix, norm_adj_matrix
 
 
 def reshape_cube_to_3d_samples(data: np.ndarray,

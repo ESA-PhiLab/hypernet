@@ -28,7 +28,7 @@ def spectral_information_divergence_loss(y_true: tf.Tensor,
                                          y_pred: tf.Tensor) -> tf.Tensor:
     """
     Calculate the spectral information divergence loss,
-        which is based on the divergence in information theory.
+    which is based on the divergence in information theory.
 
     Khajehrayeni, Farshid, and Hassan Ghassemian.
     "Hyperspectral unmixing using deep convolutional
