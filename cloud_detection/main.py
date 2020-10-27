@@ -9,6 +9,8 @@ from tensorflow import keras
 from data_gen import DataGenerator, load_image_paths
 from models import unet
 
+from losses import jaccard_index
+
 
 def main(c: Dict):
     """
@@ -20,6 +22,7 @@ def main(c: Dict):
     mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
     mlflow.set_experiment("cloud_detection")
     mlflow.log_params(c)
+
     # Load data
     train_files, test_files = load_image_paths(
         c["dpath"],
@@ -33,16 +36,30 @@ def main(c: Dict):
         files=test_files,
         batch_size=c["batch_size"]
         )
+
     # Create model
     model = unet(input_size=4,
                 bn_momentum=c["bn_momentum"]
                 )
     model.compile(
         optimizer=keras.optimizers.Adam(lr=c["learning_rate"]),
-        loss='categorical_crossentropy',
-        metrics=[keras.metrics.categorical_accuracy]
-        )
+        loss=jaccard_index(),
+        metrics=[
+            keras.metrics.binary_crossentropy,
+            keras.metrics.binary_accuracy,
+            keras.metrics.AUC(),
+            keras.metrics.Precision(),
+            keras.metrics.Recall(),
+            keras.metrics.AUC()
+        ]
+    )
     mlflow.tensorflow.autolog(every_n_iter=1)
+
+    # Prepare training
+    callbacks = [
+        keras.callbacks.EarlyStopping()
+    ]
+
     # Train model
     model.fit_generator(
         generator=traingen,
@@ -50,8 +67,10 @@ def main(c: Dict):
         epochs=c["epochs"],
         validation_data=testgen,
         validation_steps=c["steps_per_epoch"],
+        callbacks=callbacks,
         verbose=1
         )
+
     # # Test model
     # test_loss, test_acc = model.evaluate_generator(
     #     generator=testgen,
