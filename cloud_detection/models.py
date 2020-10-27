@@ -3,7 +3,7 @@
 import tensorflow as tf
 
 
-def unet(input_size: int, n_classes: int, bn_momentum: float) -> tf.keras.Model:
+def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
     """
     Simple U-Net model based on model from
     https://medium.com/analytics-vidhya/creating-a-very-simple-u-net-model-with-pytorch \
@@ -11,7 +11,6 @@ def unet(input_size: int, n_classes: int, bn_momentum: float) -> tf.keras.Model:
     consisting of 3 contract blocks and 3 expand blocks.
 
     :param input_size: Number of input channels, i.e., the number of spectral bands.
-    :param n_classes: Number of classes.
     :param bn_momentum: Momentum of the batch normalization layer.
     """
     def contract_block(x: tf.Tensor,
@@ -80,7 +79,7 @@ def unet(input_size: int, n_classes: int, bn_momentum: float) -> tf.keras.Model:
     exp1cont2 = concat([exp1, cont2])
     exp2 = expand_block(exp1cont2, 32, 3, bn_momentum)
     exp2cont1 = concat([exp2, cont1])
-    exp3 = expand_block(exp2cont1, n_classes, 3, bn_momentum)
+    exp3 = expand_block(exp2cont1, 1, 3, bn_momentum)
     out = tf.keras.layers.Activation(activation="softmax")(exp3)
 
     model = tf.keras.Model(input_, out)

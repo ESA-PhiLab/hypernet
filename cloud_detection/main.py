@@ -35,7 +35,6 @@ def main(c: Dict):
         )
     # Create model
     model = unet(input_size=4,
-                n_classes=2,
                 bn_momentum=c["bn_momentum"]
                 )
     model.compile(

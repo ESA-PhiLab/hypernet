@@ -21,11 +21,11 @@ def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
 
 def strip_category(mask_img: np.ndarray) -> np.ndarray:
     """
-    Strip additional mask dimension, so it can be dsiaplyed.
+    Strip additional mask dimension, so it can be displayed.
     param mask_img: image mask with shape (x, y, 2).
-    return: image mask with shape (x, y).
+    return: image mask with shape (x, y), where 1 is cloud.
     """
-    return mask_img[:,:,0]
+    return mask_img[:,:,1]
 
 
 def load_image_paths(base_path: Path, split_ratios: List[float]=[1.0]) \
@@ -131,7 +131,8 @@ class DataGenerator(keras.utils.Sequence):
         :param channel_files: Dict with paths to files containing each channel of
             an image, must contain key 'gt'.
         """
-        return load_img(channel_files['gt'], color_mode="grayscale")
+        masks = np.array(load_img(channel_files['gt'], color_mode="grayscale"))
+        return masks/255 
 
 
     def _data_generation(self, file_indexes_to_gen: np.arange) -> Tuple:
@@ -143,15 +144,11 @@ class DataGenerator(keras.utils.Sequence):
             y is set of corresponding cloud masks.
         """
         x = np.empty((self._batch_size, *self._dim, 4))
-        y = np.empty((self._batch_size, *self._dim, 2))
+        y = np.empty((self._batch_size, *self._dim))
 
         for i, file_index in enumerate(file_indexes_to_gen):
             x[i] = self._open_as_array(self._files[file_index])
-            gt = self._open_mask(self._files[file_index])
-            gt = np.array(gt)
-            gt = np.expand_dims(gt, axis=-1)
-            gt[gt==255] = 1
-            y[i] = keras.utils.to_categorical(gt, num_classes=2)
+            y[i] = self._open_mask(self._files[file_index])
 
         return x, y
 
@@ -194,7 +191,7 @@ def main():
         plt.imshow(strip_nir(sample_batch_x[0]))
         plt.title(f"Split: { name }, sample image")
         plt.figure()
-        plt.imshow(strip_category(sample_batch_y[0]))
+        plt.imshow(sample_batch_y[0])
         plt.title(f"Split: { name }, sample ground truth mask")
 
     plt.show()
