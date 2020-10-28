@@ -80,7 +80,7 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
     exp2 = expand_block(exp1cont2, 32, 3, bn_momentum)
     exp2cont1 = concat([exp2, cont1])
     exp3 = expand_block(exp2cont1, 1, 3, bn_momentum)
-    out = tf.keras.layers.Activation(activation="softmax")(exp3)
+    out = tf.keras.layers.Activation(activation="sigmoid")(exp3)
 
     model = tf.keras.Model(input_, out)
 
