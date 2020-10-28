@@ -47,7 +47,6 @@ def main(c: Dict):
         metrics=[
             keras.metrics.binary_crossentropy,
             keras.metrics.binary_accuracy,
-            keras.metrics.AUC(),
             keras.metrics.Precision(),
             keras.metrics.Recall(),
             keras.metrics.AUC()
@@ -58,7 +57,7 @@ def main(c: Dict):
     # Prepare training
     callbacks = [
         keras.callbacks.EarlyStopping(
-            patience=3,
+            patience=10,
             verbose=1
         )
     ]
