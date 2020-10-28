@@ -57,7 +57,10 @@ def main(c: Dict):
 
     # Prepare training
     callbacks = [
-        keras.callbacks.EarlyStopping()
+        keras.callbacks.EarlyStopping(
+            patience=3,
+            verbose=1
+        )
     ]
 
     # Train model
