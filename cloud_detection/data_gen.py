@@ -132,7 +132,7 @@ class DataGenerator(keras.utils.Sequence):
             an image, must contain key 'gt'.
         """
         masks = np.array(load_img(channel_files['gt'], color_mode="grayscale"))
-        return masks/255 
+        return np.expand_dims(masks/255, axis=-1)
 
 
     def _data_generation(self, file_indexes_to_gen: np.arange) -> Tuple:
@@ -144,7 +144,7 @@ class DataGenerator(keras.utils.Sequence):
             y is set of corresponding cloud masks.
         """
         x = np.empty((self._batch_size, *self._dim, 4))
-        y = np.empty((self._batch_size, *self._dim))
+        y = np.empty((self._batch_size, *self._dim, 1))
 
         for i, file_index in enumerate(file_indexes_to_gen):
             x[i] = self._open_as_array(self._files[file_index])
