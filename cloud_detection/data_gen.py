@@ -9,6 +9,7 @@ from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 from typing import Dict, List, Tuple
 
+from utils import overlay_mask
 
 def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
     """
@@ -108,7 +109,7 @@ class DataGenerator(keras.utils.Sequence):
         self._file_indexes = np.arange(len(self._files))
 
 
-    def _open_as_array(self, channel_files: Dict[str, Path]) -> np.array:
+    def _open_as_array(self, channel_files: Dict[str, Path]) -> np.ndarray:
         """
         Load image as array from given files.
         param channel_files: Dict with paths to files containing each channel of
@@ -125,7 +126,7 @@ class DataGenerator(keras.utils.Sequence):
         return (array_img / np.iinfo(array_img.dtype).max)
 
 
-    def _open_mask(self, channel_files: Dict [str, Path]) -> np.array:
+    def _open_mask(self, channel_files: Dict [str, Path]) -> np.ndarray:
         """
         Load ground truth mask as array from given files.
         :param channel_files: Dict with paths to files containing each channel of
@@ -187,12 +188,20 @@ def main():
     for name, split in zip(split_names, splits):
         dg = DataGenerator(split, 16)
         sample_batch_x, sample_batch_y = dg[3]
+
         plt.figure()
+
+        plt.subplot(1, 3, 1)
         plt.imshow(strip_nir(sample_batch_x[0]))
-        plt.title(f"Split: { name }, sample image")
-        plt.figure()
+        plt.title(f"Split: { name }\n sample image")
+
+        plt.subplot(1, 3, 2)
         plt.imshow(sample_batch_y[0])
-        plt.title(f"Split: { name }, sample ground truth mask")
+        plt.title(f"Split: { name }\n sample gt mask")
+
+        plt.subplot(1, 3, 3)
+        plt.imshow(overlay_mask(strip_nir(sample_batch_x[0]), sample_batch_y[0]))
+        plt.title(f"Split: { name }\n sample gt mask overlay")
 
     plt.show()
 
