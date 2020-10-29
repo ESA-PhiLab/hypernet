@@ -47,9 +47,6 @@ def main(c: Dict):
         metrics=[
             keras.metrics.binary_crossentropy,
             keras.metrics.binary_accuracy,
-            keras.metrics.Precision(),
-            keras.metrics.Recall(),
-            keras.metrics.AUC()
         ]
     )
     mlflow.tensorflow.autolog(every_n_iter=1)
