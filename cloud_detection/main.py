@@ -61,7 +61,7 @@ def main(c: Dict):
     # Prepare training
     callbacks = [
         keras.callbacks.EarlyStopping(
-            patience=10,
+            patience=c["stopping_patience"],
             verbose=1
         )
     ]
@@ -105,12 +105,13 @@ if __name__ == "__main__":
 
     params = {
         "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_training"),
-        "train_size": 0.5,
+        "train_size": 0.8,
         "batch_size": 8,
         "learning_rate": .01,
         "bn_momentum": .9,
         "epochs": 200,
         "steps_per_epoch": 10,
+        "stopping_patience": 20,
         "mlflow": args.f
         }
     main(params)
