@@ -1,5 +1,7 @@
 """ Functions to train and test the models for cloud detection. """
 
+import argparse
+
 import matplotlib.pyplot as plt
 import mlflow
 import mlflow.tensorflow
@@ -12,6 +14,13 @@ from models import unet
 from losses import jaccard_index
 
 
+def setup_mlflow(c):
+     mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
+     mlflow.set_experiment("cloud_detection")
+     mlflow.tensorflow.autolog(every_n_iter=1)
+     mlflow.log_params(c)
+
+
 def main(c: Dict):
     """
     Train and test the U-Net model using 38-Cloud dataset.
@@ -19,9 +28,8 @@ def main(c: Dict):
     :param c: Dict of params.
     """
     # Configure MLFlow
-    mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
-    mlflow.set_experiment("cloud_detection")
-    mlflow.log_params(c)
+    if c['mlflow'] == True:
+        setup_mlflow(c)
 
     # Load data
     train_files, test_files = load_image_paths(
@@ -47,17 +55,13 @@ def main(c: Dict):
         metrics=[
             keras.metrics.binary_crossentropy,
             keras.metrics.binary_accuracy,
-            keras.metrics.Precision(),
-            keras.metrics.Recall(),
-            keras.metrics.AUC()
         ]
     )
-    mlflow.tensorflow.autolog(every_n_iter=1)
 
     # Prepare training
     callbacks = [
         keras.callbacks.EarlyStopping(
-            patience=10,
+            patience=c["stopping_patience"],
             verbose=1
         )
     ]
@@ -93,13 +97,21 @@ def main(c: Dict):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
+
+    args = parser.parse_args()
+
     params = {
         "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_training"),
-        "train_size": 0.5,
+        "train_size": 0.8,
         "batch_size": 8,
         "learning_rate": .01,
         "bn_momentum": .9,
         "epochs": 200,
-        "steps_per_epoch": 10
+        "steps_per_epoch": 10,
+        "stopping_patience": 20,
+        "mlflow": args.f
         }
     main(params)
