@@ -133,7 +133,7 @@ dependencies:
     - joblib==0.14.1
     - jsonpath-ng==1.4.3
     - kiwisolver==1.1.0
-    - mlflow
+    - mlflow==1.8.0
     - markdown==3.1.1
     - matplotlib==3.2.0
     - nanotime==0.5.2
