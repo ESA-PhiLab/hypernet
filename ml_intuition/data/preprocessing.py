@@ -176,8 +176,7 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
                          train_size: Union[List, float, int] = 0.8,
                          val_size: float = 0.1,
                          stratified: bool = True,
-                         seed: int = 0,
-                         use_unmixing: bool = False) -> Tuple[
+                         seed: int = 0) -> Tuple[
     np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Split the data into train, val and test sets. The size of the training set
@@ -203,27 +202,13 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
     :param stratified: Indicated whether the extracted training set should be
                      stratified, defaults to True
     :param seed: Seed used for data shuffling
-    :param use_unmixing: Boolean indicating whether to
-        perform experiments on the unmixing datasets,
-        where classes in each pixel are present as abundance fractions.
     :return: train_x, train_y, val_x, val_y, test_x, test_y
     :raises AssertionError: When wrong type is passed as train_size
     """
     shuffle_arrays_together([data, labels], seed=seed)
-    if use_unmixing:
-        train_size = int(train_size * len(data)) if \
-            isinstance(train_size, float) else train_size
-        train_indices = np.random.choice(len(data),
-                                         size=train_size,
-                                         replace=False)
-        val_size = int(val_size * len(train_indices))
-        val_indices = np.random.choice(train_indices,
-                                       size=val_size,
-                                       replace=False)
-    else:
-        train_indices = _get_set_indices(train_size, labels, stratified)
-        val_indices = _get_set_indices(val_size, labels[train_indices])
-        val_indices = train_indices[val_indices]
+    train_indices = _get_set_indices(train_size, labels, stratified)
+    val_indices = _get_set_indices(val_size, labels[train_indices], stratified)
+    val_indices = train_indices[val_indices]
     test_indices = np.setdiff1d(np.arange(len(data)), train_indices)
     train_indices = np.setdiff1d(train_indices, val_indices)
     return data[train_indices], labels[train_indices], data[val_indices], \
@@ -262,10 +247,10 @@ def _get_set_indices(size: Union[List, float, int],
 def _(size: float,
       labels: np.ndarray,
       stratified: bool = True) -> np.ndarray:
-    label_indices, unique_labels = get_label_indices_per_class(
-        labels, return_uniques=True)
     assert 0 < size <= 1
     if stratified:
+        label_indices, unique_labels = get_label_indices_per_class(
+            labels, return_uniques=True)
         for idx in range(len(unique_labels)):
             samples_per_label = int(len(label_indices[idx]) * size)
             label_indices[idx] = label_indices[idx][:samples_per_label]
@@ -279,10 +264,10 @@ def _(size: float,
 def _(size: int,
       labels: np.ndarray,
       stratified: bool = True) -> np.ndarray:
-    label_indices, unique_labels = get_label_indices_per_class(
-        labels, return_uniques=True)
     assert size >= 1
     if stratified:
+        label_indices, unique_labels = get_label_indices_per_class(
+            labels, return_uniques=True)
         for label in range(len(unique_labels)):
             label_indices[label] = label_indices[label][:int(size)]
         train_indices = np.concatenate(label_indices, axis=0)

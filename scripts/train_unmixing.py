@@ -34,6 +34,7 @@ def train_dcae(model, data, **kwargs):
     """
     Function for running experiments on deep convolutional autoencoder (DCAE),
     given a set of hyperparameters.
+
     :param model: The model used for training.
     :param data: Either path to the input data or the data dict itself.
         First dimension of the dataset should be the number of samples.
@@ -93,6 +94,7 @@ def train_supervised(model, data, **kwargs):
     """
     Function for running experiments on supervised unmixing models,
     given a set of hyperparameters.
+
     :param model: The model used for training.
     :param data: Either path to the input data or the data dict itself.
         First dimension of the dataset should be the number of samples.
@@ -155,11 +157,11 @@ def train_supervised(model, data, **kwargs):
 
 
 TRAIN_FUNCTIONS = {
-    unmixing_cube_based_dcae.__name__: train_dcae,
     unmixing_pixel_based_dcae.__name__: train_dcae,
+    unmixing_cube_based_dcae.__name__: train_dcae,
 
-    unmixing_cube_based_cnn.__name__: train_supervised,
     unmixing_pixel_based_cnn.__name__: train_supervised,
+    unmixing_cube_based_cnn.__name__: train_supervised,
 
     unmixing_rnn_supervised.__name__: train_supervised
 }
@@ -170,18 +172,15 @@ def train(data: Dict[str, np.ndarray],
           dest_path: str,
           sample_size: int,
           n_classes: int,
-          neighborhood_size: int = None,
-          kernel_size: int = 5,
-          n_kernels: int = 200,
-          n_layers: int = 1,
-          lr: float = 0.001,
-          batch_size: int = 128,
-          epochs: int = 200,
-          verbose: int = 2,
-          shuffle: bool = True,
-          patience: int = 15,
-          endmembers_path: str = None,
-          seed: int = 0):
+          neighborhood_size: int,
+          lr: float,
+          batch_size: int,
+          epochs: int,
+          verbose: int,
+          shuffle: bool,
+          patience: int,
+          endmembers_path: str,
+          seed: int):
     """
     Function for running experiments on various unmixing models,
     given a set of hyper parameters.
@@ -194,9 +193,6 @@ def train(data: Dict[str, np.ndarray],
     :param sample_size: Size of the input sample.
     :param n_classes: Number of classes.
     :param neighborhood_size: Size of the spatial patch.
-    :param kernel_size: Size of ech kernel in each layer.
-    :param n_kernels: Number of kernels in each layer.
-    :param n_layers: Number of layers in the model.
     :param lr: Learning rate for the model, i.e., regulates
         the size of the step in the gradient descent process.
     :param batch_size: Size of the batch used in training phase,
@@ -219,16 +215,13 @@ def train(data: Dict[str, np.ndarray],
 
     model = models.get_model(
         model_key=model_name,
-        **{'kernel_size': kernel_size,
-           'n_kernels': n_kernels,
-           'n_layers': n_layers,
-           'input_size': sample_size,
+        **{'input_size': sample_size,
            'n_classes': n_classes,
            'neighborhood_size': neighborhood_size,
            'endmembers': np.load(
                endmembers_path) if endmembers_path is not None else None})
     model.summary()
-    # Run specific training function and pass specific hyperparameters.
+    # Run specific training function and pass specific hyperparameters:
     TRAIN_FUNCTIONS[model_name](
         model, data,
         **{'dest_path': dest_path,

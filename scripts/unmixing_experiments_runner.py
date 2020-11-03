@@ -12,9 +12,26 @@ from clize.parameters import multi
 
 from ml_intuition import enums
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
-from ml_intuition.data.utils import parse_train_size
+from ml_intuition.data.utils import parse_train_size, subsample_test_set
 from scripts import prepare_data, train_unmixing, evaluate_unmixing, \
     artifacts_reporter
+from ml_intuition.models import unmixing_pixel_based_dcae, \
+    unmixing_pixel_based_cnn, \
+    unmixing_cube_based_cnn, \
+    unmixing_cube_based_dcae
+
+NEIGHBORHOOD_SIZE = {
+    unmixing_cube_based_dcae.__name__: 5,
+    unmixing_cube_based_cnn.__name__: 3
+}
+
+LEARNING_RATES = {
+    unmixing_pixel_based_dcae.__name__: 0.001,
+    unmixing_cube_based_dcae.__name__: 0.0005,
+
+    unmixing_pixel_based_cnn.__name__: 0.01,
+    unmixing_cube_based_cnn.__name__: 0.001
+}
 
 
 def run_experiments(*,
@@ -22,27 +39,23 @@ def run_experiments(*,
                     ground_truth_path: str = None,
                     train_size: ('train_size', multi(min=0)),
                     val_size: float = 0.1,
-                    stratified: bool = True,
+                    sub_test_size: int = None,
                     background_label: int = 0,
-                    channels_idx: int = 0,
+                    channels_idx: int = -1,
                     neighborhood_size: int = None,
-                    n_runs: int,
+                    n_runs: int = 1,
                     model_name: str,
-                    kernel_size: int = 5,
-                    n_kernels: int = 200,
                     save_data: bool = 0,
-                    n_layers: int = 1,
                     dest_path: str = None,
                     sample_size: int,
                     n_classes: int,
-                    lr: float = 0.001,
-                    batch_size: int = 128,
-                    epochs: int = 200,
+                    lr: float = None,
+                    batch_size: int = 256,
+                    epochs: int = 100,
                     verbose: int = 2,
                     shuffle: bool = True,
                     patience: int = 15,
                     use_mlflow: bool = False,
-                    use_unmixing: bool = False,
                     endmembers_path: str = None,
                     experiment_name: str = None,
                     run_name: str = None):
@@ -64,8 +77,8 @@ def run_experiments(*,
     :param val_size: Should be between 0.0 and 1.0. Represents the
         percentage of each class from the training set to be
         extracted as a validation set, defaults to 0.1
-    :param stratified: Indicated whether the extracted training set should be
-                     stratified, defaults to True
+    :param sub_test_size: Number of pixels to subsample the test set
+        instead of performing the inference on all untrained samples.
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
                          data.
@@ -74,9 +87,6 @@ def run_experiments(*,
     :param n_runs: Number of total experiment runs.
     :param model_name: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
-    :param kernel_size: Size of ech kernel in each layer.
-    :param n_kernels: Number of kernels in each layer.
-    :param n_layers: Number of layers in the model.
     :param dest_path: Path to where all experiment runs will be saved as
         subdirectories in this directory.
     :param sample_size: Size of the input sample.
@@ -92,9 +102,6 @@ def run_experiments(*,
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
     :param use_mlflow: Whether to log metrics and artifacts to mlflow.
-    :param use_unmixing: Boolean indicating whether to perform experiments
-        on the unmixing datasets, where classes in each pixel
-        are present as abundances fractions.
     :param endmembers_path: Path to the endmembers file containing
         average reflectances for each class.
         Used only when use_unmixing is true.
@@ -119,23 +126,27 @@ def run_experiments(*,
             '{}_{}'.format(enums.Experiment.EXPERIMENT, str(experiment_id)))
 
         os.makedirs(experiment_dest_path, exist_ok=True)
+
+        # Get the publication's hyperparameters:
+        if model_name in NEIGHBORHOOD_SIZE:
+            neighborhood_size = NEIGHBORHOOD_SIZE[model_name]
+        if model_name in LEARNING_RATES:
+            lr = LEARNING_RATES[model_name]
+
         data = prepare_data.main(data_file_path=data_file_path,
                                  ground_truth_path=ground_truth_path,
                                  train_size=parse_train_size(train_size),
                                  val_size=val_size,
-                                 stratified=stratified,
+                                 stratified=False,
                                  background_label=background_label,
                                  channels_idx=channels_idx,
                                  neighborhood_size=neighborhood_size,
                                  save_data=save_data,
                                  seed=experiment_id,
-                                 use_unmixing=use_unmixing,
-                                 model_name=model_name)
-
+                                 use_unmixing=True)
+        if sub_test_size is not None:
+            subsample_test_set(data[enums.Dataset.TEST], sub_test_size)
         train_unmixing.train(model_name=model_name,
-                             kernel_size=kernel_size,
-                             n_kernels=n_kernels,
-                             n_layers=n_layers,
                              dest_path=experiment_dest_path,
                              data=data,
                              sample_size=sample_size,
@@ -147,7 +158,8 @@ def run_experiments(*,
                              verbose=verbose,
                              shuffle=shuffle,
                              patience=patience,
-                             endmembers_path=endmembers_path)
+                             endmembers_path=endmembers_path,
+                             seed=experiment_id)
 
         evaluate_unmixing.evaluate(
             model_path=os.path.join(experiment_dest_path, model_name),

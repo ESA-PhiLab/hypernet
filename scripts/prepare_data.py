@@ -28,8 +28,7 @@ def main(*,
          channels_idx: int = 0,
          save_data: bool = False,
          seed: int = 0,
-         use_unmixing: bool = False,
-         model_name=None):
+         use_unmixing: bool = False):
     """
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the data file.
@@ -61,18 +60,12 @@ def main(*,
     :param use_unmixing: Boolean indicating whether to perform experiments
         on the unmixing datasets, where classes in each pixel
         are present as fractions.
-    :param model_name: Name of the model, it serves as a key in the
-        dictionary holding all functions returning models.
     :raises TypeError: When provided data or labels file is not supported
     """
     train_size = utils.parse_train_size(train_size)
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
         data, labels = io.load_npy(data_file_path, ground_truth_path,
                                    use_unmixing)
-        if 'dcae' in model_name:
-            # If the model is an autoencoder do not extract subsets,
-            # since it is trained and evaluated on the entire cube:
-            return {'data': data, 'labels': labels}
         if neighborhood_size is None:
             data, labels = preprocessing.reshape_cube_to_2d_samples(
                 data, labels, channels_idx, use_unmixing)
@@ -106,7 +99,7 @@ def main(*,
         labels = preprocessing.normalize_labels(labels)
     train_x, train_y, val_x, val_y, test_x, test_y = \
         preprocessing.train_val_test_split(data, labels, train_size, val_size,
-                                           stratified, seed, use_unmixing)
+                                           stratified, seed)
 
     if save_data:
         io.save_md5(output_path, train_x, train_y, val_x, val_y, test_x,
