@@ -11,12 +11,22 @@ from models import unet
 from losses import jaccard_index, dice_coef, recall, precision, specificity, f1_score
 
 
-def train_model(dpath, train_size, batch_size, bn_momentum, learning_rate,
-                stopping_patience, steps_per_epoch, epochs):
+def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: float,
+                learning_rate: float, stopping_patience: int, steps_per_epoch: int,
+                epochs: int) -> keras.Model:
     """
     Train the U-Net model using 38-Cloud dataset.
 
-    :param c: Dict of params.
+    param dpath: path to dataset.
+    param train_size: proportion of the training set (the rest goes to validation set).
+    param batch_size: size of generated batches, only one batch is loaded 
+          to memory at a time.
+    param bn_momentum: momentum of the batch normalization layer.
+    param learning_rate: learning rate for training.
+    param stopping_patience: patience param for early stopping.
+    param steps_per_epoch: number of processed batches per epoch.
+    param epochs: number of epochs.
+    return: trained model.
     """
     # Load data
     train_files, val_files = load_image_paths(
