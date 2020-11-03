@@ -29,12 +29,14 @@ def strip_category(mask_img: np.ndarray) -> np.ndarray:
     return mask_img[:,:,1]
 
 
-def load_image_paths(base_path: Path, split_ratios: List[float]=[1.0]) \
-    -> List[List[Dict[str, Path]]]:
+def load_image_paths(base_path: Path,
+                     split_ratios: List[float]=[1.0],
+                     img_id: str=None) -> List[List[Dict[str, Path]]]:
     """
     Build paths to all files containg image channels. 
     param base_path: root path containing directories with image channels.
     param split_ratios: list containg split ratios, splits should add up to one.
+    param img_id: image ID; if specified, load paths for this image only.
     return: list with paths to image files, separated into splits.
         Structured as: list_of_splits[list_of_files['file_channel', Path]]
     """
@@ -55,19 +57,23 @@ def load_image_paths(base_path: Path, split_ratios: List[float]=[1.0]) \
         }
 
 
-    def build_paths(base_path: Path) -> List[Dict[str, Path]]: 
+    def build_paths(base_path: Path, img_id: str) -> List[Dict[str, Path]]: 
         """
         Build paths to all files containg image channels. 
         param base_path: root path containing directories with image channels.
+        param img_id: image ID; if specified, load paths for this image only.
         return: list of dicts containing paths to files with image channles.
         """
         # Get red channel filenames
-        red_files = list(base_path.glob("*red/*.TIF"))
+        if img_id is None:
+            red_files = list(base_path.glob("*red/*.TIF"))
+        else:
+            red_files = list(base_path.glob(f"*red/*{img_id}.TIF"))
         # Get other channels in accordance to the red channel filenames
         return [combine_channel_files(red_file) for red_file in red_files]
 
 
-    files = build_paths(base_path)
+    files = build_paths(base_path, img_id)
     print(f"Loaded paths for images of { len(files) } samples")
 
     if sum(split_ratios) != 1:
@@ -75,7 +81,7 @@ def load_image_paths(base_path: Path, split_ratios: List[float]=[1.0]) \
 
     split_beg = 0
     splits = []
-    for i, ratio in enumerate(split_ratios):
+    for ratio in split_ratios:
         split_end = split_beg + math.floor(ratio * len(files))
         splits.append(files[split_beg:split_end])
         split_beg=split_end
@@ -93,6 +99,7 @@ class DataGenerator(keras.utils.Sequence):
                  batch_size: int,
                  dim: Tuple[int, int]=(384, 384),
                  shuffle: bool=True,
+                 with_gt: bool=True
                  ):
         """
         Prepare generator and init paths to files containing image channels.
@@ -100,10 +107,12 @@ class DataGenerator(keras.utils.Sequence):
               to memory at a time.
         param dim: Tuple with x, y image dimensions.
         param shuffle: if True shuffles dataset on each epoch end.
+        param with_gt: if True returns y along with x.
         """
         self._batch_size: int = batch_size
         self._dim: Tuple[int, int] = dim
         self._shuffle: bool = shuffle
+        self._with_gt: bool = with_gt
 
         self._files = files
         self._file_indexes = np.arange(len(self._files))
@@ -141,15 +150,19 @@ class DataGenerator(keras.utils.Sequence):
         Generates data containing batch_size samples.
         param file_indexes_to_gen: Sequence of indexes of files from which images
             should be loaded.
-        return: x, y data for one batch, where x is set of RGB + nir images and
-            y is set of corresponding cloud masks.
+        return: (x, y) (or (x, None) if with_gt is False) data for one batch, where x is
+            set of RGB + nir images and y is set of corresponding cloud masks.
         """
-        x = np.empty((self._batch_size, *self._dim, 4))
-        y = np.empty((self._batch_size, *self._dim, 1))
+        x = np.empty((len(file_indexes_to_gen), *self._dim, 4))
+        if self._with_gt == True:
+            y = np.empty((len(file_indexes_to_gen), *self._dim, 1))
+        else:
+            y = None
 
         for i, file_index in enumerate(file_indexes_to_gen):
             x[i] = self._open_as_array(self._files[file_index])
-            y[i] = self._open_mask(self._files[file_index])
+            if self._with_gt == True:
+                y[i] = self._open_mask(self._files[file_index])
 
         return x, y
 
@@ -162,14 +175,14 @@ class DataGenerator(keras.utils.Sequence):
 
     def __len__(self):
         """ Denotes the number of batches per epoch. """
-        return int(np.floor(len(self._file_indexes) / self._batch_size))
+        return int(np.ceil(len(self._file_indexes) / self._batch_size))
 
 
     def __getitem__(self, index: int):
         """
         Generates one batch of data.
-        return: x, y data for one batch, where x is set of RGB + nir images and
-                y is set of corresponding cloud masks.
+        return: (x, y) (or (x, None) if with_gt is False) data for one batch, where x is
+            set of RGB + nir images and y is set of corresponding cloud masks.
         """ 
         # Generate indexes of the batch
         indexes_in_batch = self._file_indexes[index*self._batch_size:(index+1)*self._batch_size]

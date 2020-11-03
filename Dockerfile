@@ -28,6 +28,7 @@ RUN mkdir /workspace
 WORKDIR /workspace
 
 ADD ml_intuition ml_intuition
+ADD cloud_detection cloud_detection
 ADD scripts scripts
 ADD tests tests
 ADD datasets datasets
