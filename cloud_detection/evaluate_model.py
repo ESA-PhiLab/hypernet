@@ -101,17 +101,16 @@ def get_metrics(gt: np.ndarray, pred: np.ndarray) -> Tuple:
     return (jaccard, )
 
 
-def main(mpath: Path, dpath: Path, gtpath: Path, batch_size: int) -> Tuple:
+def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, batch_size: int) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
-    param mpath: path to trained model.
+    param model: trained model to make predictions.
     param dpath: path to dataset.
     param gtpath: path to dataset ground truths.
     param batch_size: size of generated batches, only one batch is loaded 
           to memory at a time.
     return: evaluation metrics.
     """
-    model = keras.models.load_model(mpath)
     metrics = {}
     for fname in os.listdir(gtpath):
         img_id = fname[fname.find("LC08"):fname.find(".TIF")]
@@ -125,8 +124,11 @@ def main(mpath: Path, dpath: Path, gtpath: Path, batch_size: int) -> Tuple:
 if __name__ == "__main__":
     mpath = Path("/media/ML/mlflow/beetle/artifacts/34/65ce8b36dffb4b7999155b3694910431/"
                  + "artifacts/model/data/model.h5")
-    dpath = Path("../datasets/clouds/38-Cloud/38-Cloud_test")
-    gtpath = dpath / "Entire_scene_gts"
-    batch_size = 10
-
-    metrics = main(mpath, dpath, gtpath, batch_size)
+    model = keras.models.load_model(mpath)
+    params = {
+        "model": model,
+        "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
+        "gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
+        "batch_size": 10
+        }
+    evaluate_model(**params)
