@@ -101,7 +101,8 @@ def get_metrics(gt: np.ndarray, pred: np.ndarray) -> Tuple:
     return (jaccard, )
 
 
-def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, batch_size: int) -> Tuple:
+def evaluate_model(model: keras.Model, dpath: Path,
+                   gtpath: Path, batch_size: int) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
