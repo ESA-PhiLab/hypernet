@@ -1,4 +1,5 @@
 import tensorflow.keras.backend as K
+from tensorflow.keras.metrics import binary_crossentropy, binary_accuracy
 
 
 def jaccard_index(smooth: float = 0.0000001):

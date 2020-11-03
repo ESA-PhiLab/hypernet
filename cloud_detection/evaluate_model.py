@@ -3,12 +3,14 @@
 import os
 import re
 import numpy as np
+import tensorflow.keras.backend as K
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, Callable
 from sklearn.metrics import jaccard_score
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 
+import losses
 from data_gen import load_image_paths, DataGenerator
 
 
@@ -59,7 +61,7 @@ def get_img_pred_shape(files: List[Dict[str, Path]],
         row, col = int(row), int(col)
         row_max = max(row_max, row)
         col_max = max(col_max, col)
-    return (patch_size*row_max, patch_size*col_max, 2)
+    return (patch_size*row_max, patch_size*col_max, 1)
 
 
 def unpad(img: np.ndarray, gt_shape: Tuple) -> np.ndarray:
@@ -87,18 +89,25 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
     return np.expand_dims(img/255, axis=-1)
 
 
-def get_metrics(gt: np.ndarray, pred: np.ndarray) -> Tuple:
+def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) -> Dict:
     """
     Calculates evaluation metrics for a given image predictions.
     param gt: image ground truth.
     param pred: image predictions.
+    param metric_fns: list of metric functions.
     return: evaluation metrics.
     """
-    gt = gt.reshape(-1)
-    pred = pred[:, :, -1].reshape(-1)
-    pred = np.where(pred > 0.5, 1, 0)
-    jaccard = jaccard_score(gt, pred)
-    return (jaccard, )
+    gt = K.constant(gt)
+    pred = K.constant(pred)
+    metrics = {}
+    for metric_fn in metric_fns:
+        if type(metric_fn) is str:
+            metric_name = metric_fn
+            metric_fn = getattr(losses, metric_fn)
+        else:
+            metric_name = metric_fn.__name__
+        metrics[f"test_{metric_name}"] = K.eval(K.mean(metric_fn(gt, pred)))
+    return metrics
 
 
 def evaluate_model(model: keras.Model, dpath: Path,
@@ -113,19 +122,32 @@ def evaluate_model(model: keras.Model, dpath: Path,
     return: evaluation metrics.
     """
     metrics = {}
+    for metric_fn in model.metrics:
+        if type(metric_fn) is str:
+            metric_name = metric_fn
+        else:
+            metric_name = metric_fn.__name__
+        metrics[f"test_{metric_name}"] = {}
     for fname in os.listdir(gtpath):
         img_id = fname[fname.find("LC08"):fname.find(".TIF")]
         print(f"Processing {img_id}")
         img_gt = load_img_gt(gtpath, fname)
         img_pred = get_img_pred(dpath, img_id, model, batch_size)
         img_pred = unpad(img_pred, img_gt.shape)
-        metrics[img_id] = get_metrics(img_gt, img_pred)
+        img_metrics = get_metrics(img_gt, img_pred, model.metrics)
+        for metric_fn in model.metrics:
+            if type(metric_fn) is str:
+                metric_name = metric_fn
+            else:
+                metric_name = metric_fn.__name__
+            metrics[f"test_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
     return metrics
 
 if __name__ == "__main__":
-    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/65ce8b36dffb4b7999155b3694910431/"
+    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/f2e7e345d95e42c7b9f213f5c4af54db/"
                  + "artifacts/model/data/model.h5")
-    model = keras.models.load_model(mpath)
+    model = keras.models.load_model(mpath,
+                                    custom_objects={"loss": losses.jaccard_index()})
     params = {
         "model": model,
         "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),

@@ -1,5 +1,6 @@
 """ Train and test the models for cloud detection. """
 
+import numpy as np
 import argparse
 from pathlib import Path
 from mlflow import log_metrics
@@ -16,8 +17,11 @@ def main(c):
                         c["bn_momentum"], c["learning_rate"], c["stopping_patience"],
                         c["steps_per_epoch"], c["epochs"])
     metrics = evaluate_model(model, c["test_path"], c["gtpath"], c["batch_size"])
+    mean_metrics = {}
+    for key, value in metrics.items():
+        mean_metrics[key] = np.mean(list(value.values()))
     if c["mlflow"] == True:
-        log_metrics(metrics)
+        log_metrics(mean_metrics)
 
 
 if __name__ == "__main__":
