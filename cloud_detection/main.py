@@ -11,7 +11,7 @@ from tensorflow import keras
 from data_gen import DataGenerator, load_image_paths
 from models import unet
 
-from losses import jaccard_index
+from losses import jaccard_index, dice_coef, recall, precision, specificity, f1_score
 
 
 def setup_mlflow(c):
@@ -55,6 +55,12 @@ def main(c: Dict):
         metrics=[
             keras.metrics.binary_crossentropy,
             keras.metrics.binary_accuracy,
+            jaccard_index(),
+            dice_coef(),
+            recall,
+            precision,
+            specificity,
+            f1_score
         ]
     )
 
