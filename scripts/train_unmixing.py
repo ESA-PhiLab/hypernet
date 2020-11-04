@@ -10,9 +10,6 @@ import tensorflow as tf
 
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms
-from ml_intuition.data.preprocessing import reshape_cube_to_2d_samples, \
-    reshape_cube_to_3d_samples
-from ml_intuition.data.utils import get_central_pixel_spectrum
 from ml_intuition.evaluation import time_metrics
 from ml_intuition.evaluation.performance_metrics import \
     spectral_information_divergence_loss, \
@@ -23,147 +20,42 @@ from ml_intuition.models import unmixing_cube_based_dcae, \
     unmixing_cube_based_cnn, unmixing_pixel_based_cnn, unmixing_rnn_supervised
 
 TRANSFORMS = {
-    unmixing_rnn_supervised.__name__: transforms.RNNSpectralInputTransform,
-    unmixing_pixel_based_cnn.__name__: transforms.SpectralTransform,
-    unmixing_cube_based_cnn.__name__: transforms.SpectralTransform
+    unmixing_pixel_based_dcae.__name__:
+        [transforms.ExtractCentralPixelSpectrumTransform,
+         transforms.SpectralTransform],
+    unmixing_cube_based_dcae.__name__:
+        [transforms.ExtractCentralPixelSpectrumTransform,
+         transforms.SpectralTransform],
 
+    unmixing_pixel_based_cnn.__name__: [transforms.SpectralTransform],
+    unmixing_cube_based_cnn.__name__: [transforms.SpectralTransform],
+
+    unmixing_rnn_supervised.__name__: [transforms.RNNSpectralInputTransform]
 }
 
+LOSSES = {
+    unmixing_pixel_based_dcae.__name__: spectral_information_divergence_loss,
+    unmixing_cube_based_dcae.__name__: spectral_information_divergence_loss,
 
-def train_dcae(model, data, **kwargs):
-    """
-    Function for running experiments on deep convolutional autoencoder (DCAE),
-    given a set of hyperparameters.
+    unmixing_pixel_based_cnn.__name__: 'mse',
+    unmixing_cube_based_cnn.__name__: 'mse',
 
-    :param model: The model used for training.
-    :param data: Either path to the input data or the data dict itself.
-        First dimension of the dataset should be the number of samples.
-    :param kwargs: The keyword arguments containing additional hyperparameters
-        dependent on the type of the network architecture.
-    """
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(lr=kwargs['lr']),
-        loss=spectral_information_divergence_loss,
-        metrics=[spectral_information_divergence_loss])
+    unmixing_rnn_supervised.__name__: 'mse'
+}
+METRICS = {
+    unmixing_pixel_based_dcae.__name__: [spectral_information_divergence_loss],
+    unmixing_cube_based_dcae.__name__: [spectral_information_divergence_loss],
 
-    time_history = time_metrics.TimeHistory()
+    unmixing_pixel_based_cnn.__name__: [cnn_rmse,
+                                        overall_rms_abundance_angle_distance,
+                                        sum_per_class_rmse],
+    unmixing_cube_based_cnn.__name__: [cnn_rmse,
+                                       overall_rms_abundance_angle_distance,
+                                       sum_per_class_rmse],
 
-    mcp_save = tf.keras.callbacks.ModelCheckpoint(
-        os.path.join(kwargs['dest_path'], kwargs['model_name']),
-        save_best_only=True,
-        monitor='loss',
-        mode='min')
-
-    train_early_stopping = tf.keras.callbacks.EarlyStopping(
-        monitor='loss',
-        patience=kwargs['patience'], mode='min')
-
-    data = transforms.apply_transformations(data, [
-        transforms.PerBandMinMaxNormalization(
-            **transforms.PerBandMinMaxNormalization.get_min_max_vectors(
-                (data['data'])))])
-
-    if kwargs['neighborhood_size'] is None:
-        data['data'], data['labels'] = reshape_cube_to_2d_samples(
-            data['data'], data['labels'], -1, True)
-
-    else:
-        data['data'], data['labels'] = reshape_cube_to_3d_samples(
-            data['data'], data['labels'],
-            kwargs['neighborhood_size'], -1, -1, True)
-    data['data'] = np.expand_dims(data['data'], -1)
-    history = model.fit(
-        x=data['data'],
-        y=get_central_pixel_spectrum(data['data'],
-                                     kwargs['neighborhood_size']),
-        epochs=kwargs['epochs'],
-        verbose=kwargs['verbose'],
-        shuffle=kwargs['shuffle'],
-        callbacks=[time_history, mcp_save, train_early_stopping],
-        batch_size=kwargs['batch_size'])
-
-    history.history[time_metrics.TimeHistory.__name__] = \
-        time_history.average
-
-    io.save_metrics(dest_path=kwargs['dest_path'],
-                    file_name='training_metrics.csv',
-                    metrics=history.history)
-
-
-def train_supervised(model, data, **kwargs):
-    """
-    Function for running experiments on supervised unmixing models,
-    given a set of hyperparameters.
-
-    :param model: The model used for training.
-    :param data: Either path to the input data or the data dict itself.
-        First dimension of the dataset should be the number of samples.
-    :param kwargs: The keyword arguments containing additional hyperparameters
-        dependent on the type of the network architecture.
-    """
-    model.compile(
-        optimizer=tf.keras.optimizers.Adam(lr=kwargs['lr']),
-        loss='mse',
-        metrics=[cnn_rmse,
-                 overall_rms_abundance_angle_distance,
-                 sum_per_class_rmse])
-
-    time_history = time_metrics.TimeHistory()
-
-    mcp_save = tf.keras.callbacks.ModelCheckpoint(
-        os.path.join(kwargs['dest_path'], kwargs['model_name']),
-        save_best_only=True,
-        monitor='val_loss',
-        mode='min')
-
-    early_stopping = tf.keras.callbacks.EarlyStopping(
-        monitor='val_loss',
-        patience=kwargs['patience'],
-        mode='min')
-
-    callbacks = [time_history, mcp_save, early_stopping]
-
-    train_dict = data[enums.Dataset.TRAIN]
-    val_dict = data[enums.Dataset.VAL]
-
-    min_, max_ = data[enums.DataStats.MIN], data[enums.DataStats.MAX]
-
-    transformations = [TRANSFORMS[kwargs['model_name']](),
-                       transforms.MinMaxNormalize(min_=min_, max_=max_)]
-
-    train_dict = transforms.apply_transformations(train_dict, transformations)
-    val_dict = transforms.apply_transformations(val_dict, transformations)
-
-    history = model.fit(
-        x=train_dict[enums.Dataset.DATA],
-        y=train_dict[enums.Dataset.LABELS],
-        epochs=kwargs['epochs'],
-        verbose=kwargs['verbose'],
-        shuffle=kwargs['shuffle'],
-        validation_data=(val_dict[enums.Dataset.DATA],
-                         val_dict[enums.Dataset.LABELS]),
-        callbacks=callbacks,
-        batch_size=kwargs['batch_size'])
-
-    np.savetxt(os.path.join(kwargs['dest_path'],
-                            'min-max.csv'), np.array([min_, max_]),
-               delimiter=',', fmt='%f')
-
-    history.history[time_metrics.TimeHistory.__name__] = time_history.average
-
-    io.save_metrics(dest_path=kwargs['dest_path'],
-                    file_name='training_metrics.csv',
-                    metrics=history.history)
-
-
-TRAIN_FUNCTIONS = {
-    unmixing_pixel_based_dcae.__name__: train_dcae,
-    unmixing_cube_based_dcae.__name__: train_dcae,
-
-    unmixing_pixel_based_cnn.__name__: train_supervised,
-    unmixing_cube_based_cnn.__name__: train_supervised,
-
-    unmixing_rnn_supervised.__name__: train_supervised
+    unmixing_rnn_supervised.__name__: [cnn_rmse,
+                                       overall_rms_abundance_angle_distance,
+                                       sum_per_class_rmse]
 }
 
 
@@ -221,15 +113,55 @@ def train(data: Dict[str, np.ndarray],
            'endmembers': np.load(
                endmembers_path) if endmembers_path is not None else None})
     model.summary()
-    # Run specific training function and pass specific hyperparameters:
-    TRAIN_FUNCTIONS[model_name](
-        model, data,
-        **{'dest_path': dest_path,
-           'model_name': model_name,
-           'batch_size': batch_size,
-           'epochs': epochs,
-           'shuffle': shuffle,
-           'verbose': verbose,
-           'lr': lr,
-           'patience': patience,
-           'neighborhood_size': neighborhood_size})
+    model.compile(
+        optimizer=tf.keras.optimizers.Adam(lr=lr),
+        loss=LOSSES[model_name],
+        metrics=METRICS[model_name])
+
+    time_history = time_metrics.TimeHistory()
+
+    mcp_save = tf.keras.callbacks.ModelCheckpoint(
+        os.path.join(dest_path, model_name),
+        save_best_only=True,
+        monitor='val_loss',
+        mode='min')
+
+    early_stopping = tf.keras.callbacks.EarlyStopping(
+        monitor='val_loss',
+        patience=patience,
+        mode='min')
+
+    callbacks = [time_history, mcp_save, early_stopping]
+
+    train_dict = data[enums.Dataset.TRAIN]
+    val_dict = data[enums.Dataset.VAL]
+
+    min_, max_ = data[enums.DataStats.MIN], data[enums.DataStats.MAX]
+
+    transformations = [transforms.MinMaxNormalize(min_=min_, max_=max_)]
+    transformations += [t(**{'neighborhood_size': neighborhood_size}) for t
+                        in TRANSFORMS[model_name]]
+
+    train_dict = transforms.apply_transformations(train_dict, transformations)
+    val_dict = transforms.apply_transformations(val_dict, transformations)
+
+    history = model.fit(
+        x=train_dict[enums.Dataset.DATA],
+        y=train_dict[enums.Dataset.LABELS],
+        epochs=epochs,
+        verbose=verbose,
+        shuffle=shuffle,
+        validation_data=(val_dict[enums.Dataset.DATA],
+                         val_dict[enums.Dataset.LABELS]),
+        callbacks=callbacks,
+        batch_size=batch_size)
+
+    np.savetxt(os.path.join(dest_path,
+                            'min-max.csv'), np.array([min_, max_]),
+               delimiter=',', fmt='%f')
+
+    history.history[time_metrics.TimeHistory.__name__] = time_history.average
+
+    io.save_metrics(dest_path=dest_path,
+                    file_name='training_metrics.csv',
+                    metrics=history.history)

@@ -166,7 +166,6 @@ def run_experiments(*,
             data=data,
             dest_path=experiment_dest_path,
             neighborhood_size=neighborhood_size,
-            n_classes=n_classes,
             batch_size=batch_size,
             endmembers_path=endmembers_path)
 
