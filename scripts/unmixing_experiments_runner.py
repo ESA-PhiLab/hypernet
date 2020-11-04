@@ -20,7 +20,8 @@ from ml_intuition.models import unmixing_pixel_based_dcae, \
     unmixing_cube_based_cnn, \
     unmixing_cube_based_dcae
 
-NEIGHBORHOOD_SIZE = {
+# Literature hyperparameters settings:
+NEIGHBORHOOD_SIZES = {
     unmixing_cube_based_dcae.__name__: 5,
     unmixing_cube_based_cnn.__name__: 3
 }
@@ -40,7 +41,6 @@ def run_experiments(*,
                     train_size: ('train_size', multi(min=0)),
                     val_size: float = 0.1,
                     sub_test_size: int = None,
-                    background_label: int = 0,
                     channels_idx: int = -1,
                     neighborhood_size: int = None,
                     n_runs: int = 1,
@@ -79,7 +79,6 @@ def run_experiments(*,
         extracted as a validation set, defaults to 0.1
     :param sub_test_size: Number of pixels to subsample the test set
         instead of performing the inference on all untrained samples.
-    :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
                          data.
     :param neighborhood_size: Size of the spatial patch.
@@ -128,9 +127,9 @@ def run_experiments(*,
         os.makedirs(experiment_dest_path, exist_ok=True)
 
         # Get the publication's hyperparameters:
-        if model_name in NEIGHBORHOOD_SIZE:
-            neighborhood_size = NEIGHBORHOOD_SIZE[model_name]
-        if model_name in LEARNING_RATES:
+        if neighborhood_size is None and model_name in NEIGHBORHOOD_SIZES:
+            neighborhood_size = NEIGHBORHOOD_SIZES[model_name]
+        if lr is None and model_name in LEARNING_RATES:
             lr = LEARNING_RATES[model_name]
 
         data = prepare_data.main(data_file_path=data_file_path,
@@ -138,7 +137,7 @@ def run_experiments(*,
                                  train_size=parse_train_size(train_size),
                                  val_size=val_size,
                                  stratified=False,
-                                 background_label=background_label,
+                                 background_label=-1,
                                  channels_idx=channels_idx,
                                  neighborhood_size=neighborhood_size,
                                  save_data=save_data,
