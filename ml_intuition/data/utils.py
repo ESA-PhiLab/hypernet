@@ -22,8 +22,10 @@ def subsample_test_set(data: Dict, test_size: int):
     :param data: The test data dictionary.
     :param test_size: Size of the test samples to remain.
     """
-    data[enums.Dataset.DATA] = data[enums.Dataset.DATA][:test_size]
-    data[enums.Dataset.LABELS] = data[enums.Dataset.LABELS][:test_size]
+    assert data[enums.Dataset.DATA].shape[SAMPLES_DIM] >= test_size and \
+           data[enums.Dataset.LABELS].shape[SAMPLES_DIM] >= test_size
+    data[enums.Dataset.DATA] = data[enums.Dataset.DATA][-test_size:]
+    data[enums.Dataset.LABELS] = data[enums.Dataset.LABELS][-test_size:]
 
 
 def create_tf_dataset(batch_size: int,
