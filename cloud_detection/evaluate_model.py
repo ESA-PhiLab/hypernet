@@ -138,13 +138,13 @@ def save_vis(img_id, vpath, img_pred, img_gt):
     img_pred = np.round(img_pred)
 
     plt.figure()
-    plt.imshow(img_gt, cmap='gray')
+    plt.imshow(img_gt[:,:,0], cmap='gray')
     plt.tight_layout()
     plt.title(img_id + " gt")
     plt.savefig("artifacts/" + img_id + "_gt.TIF", dpi=1200)
 
     plt.figure()
-    plt.imshow(img_pred, cmap='gray')
+    plt.imshow(img_pred[:,:,0], cmap='gray')
     plt.tight_layout()
     plt.title(img_id + " pred")
     plt.savefig("artifacts/" + img_id + "_pred.TIF", dpi=1200)
