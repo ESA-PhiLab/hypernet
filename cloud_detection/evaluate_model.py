@@ -134,9 +134,8 @@ def save_vis(img_id, vpath, img_pred, img_gt):
     if not os.path.exists("artifacts"):
         os.makedirs("artifacts")
 
-    img_pred = np.array(K.round(img_pred))
     fsi = get_full_scene_img(vpath, img_id)
-    img_pred = np.array(img_pred)
+    img_pred = np.round(img_pred)
 
     plt.figure()
     plt.imshow(img_gt, cmap='gray')
