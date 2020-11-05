@@ -52,6 +52,7 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
         metrics=[
             keras.metrics.binary_crossentropy,
             keras.metrics.binary_accuracy,
+            Jaccard_index_loss(),
             Jaccard_index_metric(),
             Dice_coef_metric(),
             recall,
