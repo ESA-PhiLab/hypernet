@@ -178,7 +178,8 @@ def evaluate_model(model: keras.Model, dpath: Path,
         else:
             metric_name = metric_fn.__name__
         metrics[f"test_{metric_name}"] = {}
-    for fname in os.listdir(gtpath):
+
+    for i, fname in enumerate(os.listdir(gtpath)):
         img_id = fname[fname.find("LC08"):fname.find(".TIF")]
         print(f"Processing {img_id}")
         img_gt = load_img_gt(gtpath, fname)
@@ -192,7 +193,8 @@ def evaluate_model(model: keras.Model, dpath: Path,
                 metric_name = metric_fn.__name__
             metrics[f"test_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
 
-        save_vis(img_id, vpath, img_pred, img_gt)
+        if i == 0:
+            save_vis(img_id, vpath, img_pred, img_gt)
 
     return metrics
 
