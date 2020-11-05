@@ -1,5 +1,4 @@
 import tensorflow.keras.backend as K
-from tensorflow.keras.metrics import binary_crossentropy, binary_accuracy
 
 
 def jaccard_index(smooth: float = 0.0000001):
@@ -12,7 +11,7 @@ def jaccard_index(smooth: float = 0.0000001):
         intersection = K.sum(y_true * y_pred, axis=(1, 2))
         y_true_sum = K.sum(y_true, axis=(1, 2))
         y_pred_sum = K.sum(y_pred, axis=(1, 2))
-        
+
         jaccard = (intersection + smooth) / (y_true_sum + y_pred_sum - intersection + smooth)
         return 1 - jaccard
 
@@ -22,7 +21,7 @@ def jaccard_index(smooth: float = 0.0000001):
 def dice_coef():
     '''
     Dice coefficient training loss for segmentation like tasks.
-    Internally uses Jaccard index. For 
+    Internally uses Jaccard index.
     '''
     ji = jaccard_index(smooth=0)
 
@@ -31,6 +30,14 @@ def dice_coef():
         return 2 * ji_score / (ji_score + 1)
 
     return loss
+
+
+def jaccard_metric(y_true, y_pred):
+    intersection = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)), axis=(1, 2))
+    y_true_sum = K.sum(K.round(y_true), axis=(1, 2))
+    y_pred_sum = K.sum(K.round(y_pred), axis=(1, 2))
+
+    return intersection / (y_true_sum + y_pred_sum - intersection)
 
 
 def recall(y_true, y_pred):

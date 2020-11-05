@@ -8,7 +8,7 @@ from tensorflow import keras
 
 from data_gen import DataGenerator, load_image_paths
 from models import unet
-from losses import jaccard_index, dice_coef, recall, precision, specificity, f1_score
+from losses import jaccard_index, dice_coef, jaccard_metric, recall, precision, specificity, f1_score
 
 
 def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: float,
@@ -52,8 +52,8 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
         metrics=[
             keras.metrics.binary_crossentropy,
             keras.metrics.binary_accuracy,
-            jaccard_index(),
             dice_coef(),
+            jaccard_metric,
             recall,
             precision,
             specificity,
