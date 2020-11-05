@@ -8,7 +8,7 @@ from tensorflow import keras
 
 from data_gen import DataGenerator, load_image_paths
 from models import unet
-from losses import jaccard_index, dice_coef, jaccard_metric, recall, precision, specificity, f1_score
+from losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
 
 
 def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: float,
@@ -48,12 +48,12 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
                 )
     model.compile(
         optimizer=keras.optimizers.Adam(lr=learning_rate),
-        loss=jaccard_index(),
+        loss=Jaccard_index_loss(),
         metrics=[
             keras.metrics.binary_crossentropy,
             keras.metrics.binary_accuracy,
-            dice_coef(),
-            jaccard_metric,
+            Jaccard_index_metric(),
+            Dice_coef_metric(),
             recall,
             precision,
             specificity,

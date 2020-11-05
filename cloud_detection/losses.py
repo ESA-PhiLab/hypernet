@@ -1,13 +1,13 @@
 import tensorflow.keras.backend as K
 
 
-def jaccard_index(smooth: float = 0.0000001):
+def Jaccard_index_loss(smooth: float = 0.0000001):
     '''
     Jaccard index training loss for segmentation like tasks. 
     Default smoothness coefficient comes from Cloud-Net example.
     '''
 
-    def loss(y_true, y_pred):
+    def jaccard_index_loss(y_true, y_pred):
         intersection = K.sum(y_true * y_pred, axis=(1, 2))
         y_true_sum = K.sum(y_true, axis=(1, 2))
         y_pred_sum = K.sum(y_pred, axis=(1, 2))
@@ -15,29 +15,33 @@ def jaccard_index(smooth: float = 0.0000001):
         jaccard = (intersection + smooth) / (y_true_sum + y_pred_sum - intersection + smooth)
         return 1 - jaccard
 
-    return loss
+    return jaccard_index_loss
 
 
-def dice_coef():
+def Jaccard_index_metric(smooth: float = 0.0000001):
+
+    def jaccard_index_metric(y_true, y_pred):
+        intersection = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)), axis=(1, 2))
+        y_true_sum = K.sum(K.round(y_true), axis=(1, 2))
+        y_pred_sum = K.sum(K.round(y_pred), axis=(1, 2))
+
+        return (intersection + smooth) / (y_true_sum + y_pred_sum - intersection + smooth)
+
+    return jaccard_index_metric
+
+
+def Dice_coef_metric():
     '''
     Dice coefficient training loss for segmentation like tasks.
     Internally uses Jaccard index.
     '''
-    ji = jaccard_index(smooth=0)
+    ji = Jaccard_index_metric()
 
-    def loss(y_true, y_pred):
+    def dice_coeff_metric(y_true, y_pred):
         ji_score = ji(y_true, y_pred)
         return 2 * ji_score / (ji_score + 1)
 
-    return loss
-
-
-def jaccard_metric(y_true, y_pred):
-    intersection = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)), axis=(1, 2))
-    y_true_sum = K.sum(K.round(y_true), axis=(1, 2))
-    y_pred_sum = K.sum(K.round(y_pred), axis=(1, 2))
-
-    return intersection / (y_true_sum + y_pred_sum - intersection)
+    return dice_coeff_metric
 
 
 def recall(y_true, y_pred):
