@@ -16,7 +16,7 @@ def main(c):
     model = train_model(c["train_path"], c["train_size"], c["batch_size"],
                         c["bn_momentum"], c["learning_rate"], c["stopping_patience"],
                         c["steps_per_epoch"], c["epochs"])
-    metrics = evaluate_model(model, c["test_path"], c["gtpath"], c["vpath"], c["batch_size"])
+    metrics = evaluate_model(model, c["test_path"], c["gtpath"], c["vpath"], c["vids"], c["batch_size"])
     mean_metrics = {}
     for key, value in metrics.items():
         mean_metrics[key] = np.mean(list(value.values()))
@@ -37,6 +37,7 @@ if __name__ == "__main__":
         "test_path": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
         "gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
         "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
+        "vids": ('LC08_L1TP_003052_20160120_20170405_01_T1'),
         "train_size": 0.8,
         "batch_size": 8,
         "learning_rate": .01,
