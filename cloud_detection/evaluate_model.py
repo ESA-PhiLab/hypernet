@@ -160,7 +160,7 @@ def save_vis(img_id, vpath, img_pred, img_gt):
 
 
 def evaluate_model(model: keras.Model, dpath: Path,
-                   gtpath: Path, vpath: Path, batch_size: int) -> Tuple:
+                   gtpath: Path, vpath: Path, vids: Tuple[str], batch_size: int) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
@@ -193,7 +193,7 @@ def evaluate_model(model: keras.Model, dpath: Path,
                 metric_name = metric_fn.__name__
             metrics[f"test_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
 
-        if i == 0:
+        if img_id in vids:
             save_vis(img_id, vpath, img_pred, img_gt)
 
     return metrics
@@ -208,6 +208,7 @@ if __name__ == "__main__":
         "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
         "gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
         "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
+        "vids": ('LC08_L1TP_003052_20160120_20170405_01_T1')
         "batch_size": 10
         }
     evaluate_model(**params)
