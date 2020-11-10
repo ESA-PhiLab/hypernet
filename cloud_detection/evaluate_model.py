@@ -160,13 +160,12 @@ def save_vis(img_id, vpath, img_pred, img_gt):
 
 
 def evaluate_model(model: keras.Model, dpath: Path,
-                   gtpath: Path, vpath: Path, vids: Tuple[str], batch_size: int) -> Tuple:
+                   gtpath: Path, batch_size: int) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
     param dpath: path to dataset.
     param gtpath: path to dataset ground truths.
-    param vpath: path do dataset visualisation images.
     param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
     return: evaluation metrics.
@@ -193,10 +192,30 @@ def evaluate_model(model: keras.Model, dpath: Path,
                 metric_name = metric_fn.__name__
             metrics[f"test_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
 
+    return metrics
+
+
+def visualise_model(model: keras.Model, dpath: Path,
+                   gtpath: Path, vpath: Path, vids: Tuple[str], batch_size: int) -> Tuple:
+    """
+    Get evaluation metrics for given model on 38-Cloud testset.
+    param model: trained model to make predictions.
+    param dpath: path to dataset.
+    param gtpath: path to dataset ground truths.
+    param vpath: path do dataset visualisation images.
+    param batch_size: size of generated batches, only one batch is loaded
+          to memory at a time.
+    return: evaluation metrics.
+    """
+    for fname in os.listdir(gtpath):
+        img_id = fname[fname.find("LC08"):fname.find(".TIF")]
         if img_id in vids:
+            print(f"Creating visualisation for {img_id}")
+            img_gt = load_img_gt(gtpath, fname)
+            img_pred = get_img_pred(dpath, img_id, model, batch_size)
+            img_pred = unpad(img_pred, img_gt.shape)
             save_vis(img_id, vpath, img_pred, img_gt)
 
-    return metrics
 
 if __name__ == "__main__":
     mpath = Path("/media/ML/mlflow/beetle/artifacts/34/f2e7e345d95e42c7b9f213f5c4af54db/"
