@@ -2,6 +2,7 @@
 
 import os
 import re
+import time
 import numpy as np
 import tensorflow.keras.backend as K
 from pathlib import Path
@@ -46,6 +47,7 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
     param patch_size: size of the image patches.
     return: prediction for a given image.
     """
+    patch_times = []
     test_files, = load_image_paths(path, [1.0], img_id)
     testgen = DataGenerator(
         files=test_files,
@@ -53,7 +55,11 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
         shuffle=False,
         with_gt=False
         )
+    tbeg = time.time()
     pred = model.predict_generator(testgen)
+    scene_time = time.time() - tbeg
+    print(f"Scene prediction took { scene_time } seconds")
+
     img_shape = get_img_pred_shape(test_files, patch_size)
     img = np.full(img_shape, np.inf)
     for i, fnames in enumerate(test_files):
@@ -62,7 +68,7 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
         row, col = int(row), int(col)
         img[(row-1)*patch_size:row*patch_size,
             (col-1)*patch_size:col*patch_size] = pred[i]
-    return img
+    return img, scene_time
 
 
 def get_img_pred_shape(files: List[Dict[str, Path]],
@@ -171,6 +177,7 @@ def evaluate_model(model: keras.Model, dpath: Path,
     return: evaluation metrics.
     """
     metrics = {}
+    scene_times = []
     for metric_fn in model.metrics:
         if type(metric_fn) is str:
             metric_name = metric_fn
@@ -182,7 +189,8 @@ def evaluate_model(model: keras.Model, dpath: Path,
         img_id = fname[fname.find("LC08"):fname.find(".TIF")]
         print(f"Processing {img_id}")
         img_gt = load_img_gt(gtpath, fname)
-        img_pred = get_img_pred(dpath, img_id, model, batch_size)
+        img_pred, scene_time = get_img_pred(dpath, img_id, model, batch_size)
+        scene_times.append(scene_time)
         img_pred = unpad(img_pred, img_gt.shape)
         img_metrics = get_metrics(img_gt, img_pred, model.metrics)
         for metric_fn in model.metrics:
@@ -191,6 +199,7 @@ def evaluate_model(model: keras.Model, dpath: Path,
             else:
                 metric_name = metric_fn.__name__
             metrics[f"test_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
+        print(f"Average inference time: { sum(scene_times) / len(scene_times) } seconds")
 
     return metrics
 
@@ -212,7 +221,7 @@ def visualise_model(model: keras.Model, dpath: Path,
         if img_id in vids:
             print(f"Creating visualisation for {img_id}")
             img_gt = load_img_gt(gtpath, fname)
-            img_pred = get_img_pred(dpath, img_id, model, batch_size)
+            img_pred, _ = get_img_pred(dpath, img_id, model, batch_size)
             img_pred = unpad(img_pred, img_gt.shape)
             save_vis(img_id, vpath, img_pred, img_gt)
 
