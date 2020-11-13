@@ -1,5 +1,5 @@
 numpy==1.18.1
-tensorflow==1.12.0
+tensorflow==2.3.1
 opencv_python==4.1.2.30
 h5py==2.10.0
 clize==4.1.1
