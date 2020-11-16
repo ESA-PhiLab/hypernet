@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Callable
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
-from matplotlib import pyplot as plt
+from skimage import io
 
 import losses
 from data_gen import load_image_paths, DataGenerator
@@ -140,29 +140,15 @@ def save_vis(img_id, vpath, img_pred, img_gt):
     if not os.path.exists("artifacts"):
         os.makedirs("artifacts")
 
-    fsi = get_full_scene_img(vpath, img_id)
     img_pred = np.round(img_pred)
+    io.imsave("artifacts/" + img_id + "_gt.TIF", img_gt[:,:,0])
+    io.imsave("artifacts/" + img_id + "_pred.TIF", img_pred[:,:,0])
 
-    plt.figure()
-    plt.imshow(img_gt[:,:,0], cmap='gray')
-    plt.tight_layout()
-    plt.title(img_id + " gt")
-    plt.savefig("artifacts/" + img_id + "_gt.TIF", dpi=1200)
-
-    plt.figure()
-    plt.imshow(img_pred[:,:,0], cmap='gray')
-    plt.tight_layout()
-    plt.title(img_id + " pred")
-    plt.savefig("artifacts/" + img_id + "_pred.TIF", dpi=1200)
-
+    fsi = get_full_scene_img(vpath, img_id)
     mask_vis = overlay_mask(fsi, true_positives(img_gt, img_pred), 1)
     mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), 0)
     mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), 2)
-    plt.figure()
-    plt.imshow(mask_vis)
-    plt.tight_layout()
-    plt.title(img_id + " masks\nTP-green, FP-red, FN-blue")
-    plt.savefig("artifacts/" + img_id + "_masks.TIF", dpi=1200)
+    io.imsave("artifacts/" + img_id + "_masks.TIF", mask_vis)
 
 
 def evaluate_model(model: keras.Model, dpath: Path,

@@ -5,10 +5,9 @@ import mlflow.tensorflow
 
 def overlay_mask(image: np.ndarray, mask: np.ndarray, channel_no, overlay_intensity: float=0.3) -> np.ndarray:
     """ Overlay a mask on image for visualization purposes. """
-    ret = np.copy(image)
-    mask_channel = ret[:,:,channel_no]
+    mask_channel = image[:,:,channel_no]
     mask_channel += overlay_intensity * mask[:,:,0]
-    return np.clip(ret, 0, 1)
+    return np.clip(image, 0, 1)
 
 
 def setup_mlflow(c):
