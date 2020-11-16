@@ -40,7 +40,7 @@ if __name__ == "__main__":
         "test_path": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
         "gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
         "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
-        "vids": ('LC08_L1TP_003052_20160120_20170405_01_T1'),
+        "vids": ('*'),
         "train_size": 0.8,
         "batch_size": 8,
         "learning_rate": .01,

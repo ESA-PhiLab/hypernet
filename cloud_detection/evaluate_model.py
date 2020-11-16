@@ -204,7 +204,7 @@ def visualise_model(model: keras.Model, dpath: Path,
     """
     for fname in os.listdir(gtpath):
         img_id = fname[fname.find("LC08"):fname.find(".TIF")]
-        if img_id in vids:
+        if img_id in vids or '*' in vids:
             print(f"Creating visualisation for {img_id}")
             img_gt = load_img_gt(gtpath, fname)
             img_pred, _ = get_img_pred(dpath, img_id, model, batch_size)
