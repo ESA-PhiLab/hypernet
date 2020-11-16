@@ -141,14 +141,14 @@ def save_vis(img_id, vpath, img_pred, img_gt):
         os.makedirs("artifacts")
 
     img_pred = np.round(img_pred)
-    io.imsave("artifacts/" + img_id + "_gt.TIF", img_gt[:,:,0])
-    io.imsave("artifacts/" + img_id + "_pred.TIF", img_pred[:,:,0])
+    io.imsave("artifacts/" + img_id + "_gt.png", img_gt[:,:,0])
+    io.imsave("artifacts/" + img_id + "_pred.png", img_pred[:,:,0])
 
     fsi = get_full_scene_img(vpath, img_id)
     mask_vis = overlay_mask(fsi, true_positives(img_gt, img_pred), 1)
     mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), 0)
     mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), 2)
-    io.imsave("artifacts/" + img_id + "_masks.TIF", mask_vis)
+    io.imsave("artifacts/" + img_id + "_masks.png", mask_vis)
 
 
 def evaluate_model(model: keras.Model, dpath: Path,
