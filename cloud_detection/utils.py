@@ -1,12 +1,16 @@
+from typing import Tuple
+
 import numpy as np
 import mlflow
 import mlflow.tensorflow
 
 
-def overlay_mask(image: np.ndarray, mask: np.ndarray, channel_no, overlay_intensity: float=0.3) -> np.ndarray:
+def overlay_mask(image: np.ndarray, mask: np.ndarray, rgb_color: Tuple[float], overlay_intensity: float=0.001) -> np.ndarray:
     """ Overlay a mask on image for visualization purposes. """
-    mask_channel = image[:,:,channel_no]
-    mask_channel += overlay_intensity * mask[:,:,0]
+    for i, color in enumerate(rgb_color):
+        channel = image[:,:,i]
+        channel += overlay_intensity * color *  mask[:,:,0]
+
     return np.clip(image, 0, 1)
 
 

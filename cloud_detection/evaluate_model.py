@@ -145,9 +145,9 @@ def save_vis(img_id, vpath, img_pred, img_gt):
     io.imsave("artifacts/" + img_id + "_pred.png", img_pred[:,:,0])
 
     fsi = get_full_scene_img(vpath, img_id)
-    mask_vis = overlay_mask(fsi, true_positives(img_gt, img_pred), 1)
-    mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), 0)
-    mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), 2)
+    mask_vis = overlay_mask(fsi, true_positives(img_gt, img_pred), (255, 255, 0))
+    mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), (255, 0, 0))
+    mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), (255, 0, 255))
     io.imsave("artifacts/" + img_id + "_masks.png", mask_vis)
 
 
