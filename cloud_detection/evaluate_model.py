@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Dict, List, Tuple, Callable
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
-from skimage import io
+from skimage import io, img_as_ubyte
 
 import losses
 from data_gen import load_image_paths, DataGenerator
@@ -141,14 +141,14 @@ def save_vis(img_id, vpath, img_pred, img_gt):
         os.makedirs("artifacts")
 
     img_pred = np.round(img_pred)
-    io.imsave("artifacts/" + img_id + "_gt.png", img_gt[:,:,0])
-    io.imsave("artifacts/" + img_id + "_pred.png", img_pred[:,:,0])
+    io.imsave("artifacts/" + img_id + "_gt.png", img_as_ubyte(img_gt[:,:,0]))
+    io.imsave("artifacts/" + img_id + "_pred.png", img_as_ubyte(img_pred[:,:,0]))
 
-    fsi = get_full_scene_img(vpath, img_id)
-    mask_vis = overlay_mask(fsi, true_positives(img_gt, img_pred), (255, 255, 0))
-    mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), (255, 0, 0))
-    mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), (255, 0, 255))
-    io.imsave("artifacts/" + img_id + "_masks.png", mask_vis)
+    fsi = 0.7 * get_full_scene_img(vpath, img_id)
+    mask_vis = overlay_mask(fsi, true_positives(img_gt, img_pred), (1, 1,  0))
+    mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), (1, 0, 0))
+    mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), (1, 0, 1))
+    io.imsave("artifacts/" + img_id + "_masks.png", img_as_ubyte(mask_vis))
 
 
 def evaluate_model(model: keras.Model, dpath: Path,

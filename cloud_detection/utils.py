@@ -5,7 +5,7 @@ import mlflow
 import mlflow.tensorflow
 
 
-def overlay_mask(image: np.ndarray, mask: np.ndarray, rgb_color: Tuple[float], overlay_intensity: float=0.001) -> np.ndarray:
+def overlay_mask(image: np.ndarray, mask: np.ndarray, rgb_color: Tuple[float], overlay_intensity: float=0.5) -> np.ndarray:
     """ Overlay a mask on image for visualization purposes. """
     for i, color in enumerate(rgb_color):
         channel = image[:,:,i]
