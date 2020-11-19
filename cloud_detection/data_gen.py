@@ -3,13 +3,14 @@
 import math
 
 import numpy as np
+from einops import rearrange
 from matplotlib import pyplot as plt
 from pathlib import Path
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 from typing import Dict, List, Tuple
 
-from utils import overlay_mask
+from utils import overlay_mask, pad
 
 def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
     """
@@ -189,6 +190,79 @@ class DataGenerator(keras.utils.Sequence):
 
         # Generate data
         return self._data_generation(indexes_in_batch)
+
+
+class DataGenerator_L8CCA(keras.utils.Sequence):
+    """
+    Data generator for Cloud38 clouds segmentation dataset.
+    Works with Keras generators.
+    """
+    def __init__(self,
+                 img_path: Path,
+                 img_name: str,
+                 batch_size: int,
+                 patch_size: int=384,
+                 shuffle: bool=True
+                 ):
+        """
+        Prepare generator and init paths to files containing image channels.
+        param batch_size: size of generated batches, only one batch is loaded
+              to memory at a time.
+        param patch_size: size of the patches.
+        param shuffle: if True shuffles dataset on each epoch end.
+        """
+        self._batch_size: int = batch_size
+        self._patch_size: int = patch_size
+        self._shuffle: bool = shuffle
+
+        channel_files = {}
+        channel_files['red'] = img_path / img_name / f'{img_name}_B4.TIF'
+        channel_files['green'] = img_path / img_name / f'{img_name}_B3.TIF'
+        channel_files['blue'] = img_path / img_name / f'{img_name}_B2.TIF'
+        channel_files['nir'] = img_path / img_name / f'{img_name}_B5.TIF'
+        img = self._open_as_array(channel_files)
+        img = pad(img, patch_size)
+        self.img_shape = img.shape
+        self.patches = rearrange(img, '(r dr) (c dc) b -> (r c) dr dc b',
+                                 dr=patch_size, dc=patch_size)
+        del img
+
+
+    def _open_as_array(self, channel_files: Dict[str, Path]) -> np.ndarray:
+        """
+        Load image as array from given files.
+        param channel_files: Dict with paths to files containing each channel of
+            an image, keyed as 'red', 'green', 'blue', 'nir'.
+        """
+        array_img = np.stack([
+            np.array(load_img(channel_files['red'], color_mode="grayscale")),
+            np.array(load_img(channel_files['green'], color_mode="grayscale")),
+            np.array(load_img(channel_files['blue'], color_mode="grayscale")),
+            np.array(load_img(channel_files['nir'], color_mode="grayscale"))
+            ], axis=2)
+
+        # Return normalized
+        return (array_img / np.iinfo(array_img.dtype).max)
+
+
+    def on_epoch_end(self):
+        """ Triggered after each epoch, if shuffle is randomises file indexing. """
+        if self._shuffle == True:
+            np.random.shuffle(self.patches)
+
+
+    def __len__(self):
+        """ Denotes the number of batches per epoch. """
+        return int(np.ceil(len(self.patches) / self._batch_size))
+
+
+    def __getitem__(self, index: int):
+        """
+        Generates one batch of data.
+        return: (x, y) (or (x, None) if with_gt is False) data for one batch, where x is
+            set of RGB + nir images and y is set of corresponding cloud masks.
+        """
+        return self.patches[index*self._batch_size:(index+1)*self._batch_size], None
 
 
 def main():
