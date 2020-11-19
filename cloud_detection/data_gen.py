@@ -31,6 +31,7 @@ def strip_category(mask_img: np.ndarray) -> np.ndarray:
 
 def load_image_paths(base_path: Path,
                      split_ratios: List[float]=[1.0],
+                     shuffle: bool=True,
                      img_id: str=None) -> List[List[Dict[str, Path]]]:
     """
     Build paths to all files containg image channels. 
@@ -75,6 +76,12 @@ def load_image_paths(base_path: Path,
 
     files = build_paths(base_path, img_id)
     print(f"Loaded paths for images of { len(files) } samples")
+
+    if shuffle:
+        saved_seed = np.random.get_state()
+        np.random.seed(42)
+        np.random.shuffle(files)
+        np.random.set_state(saved_seed)
 
     if sum(split_ratios) != 1:
         raise RuntimeError("Split ratios don't sum up to one.")
