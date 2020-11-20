@@ -48,7 +48,7 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
     return: prediction for a given image.
     """
     patch_times = []
-    test_files, = load_image_paths(path, [1.0], img_id)
+    test_files, = load_image_paths(path, [1.0], False, img_id)
     testgen = DataGenerator(
         files=test_files,
         batch_size=batch_size,
