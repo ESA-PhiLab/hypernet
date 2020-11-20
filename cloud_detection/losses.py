@@ -1,4 +1,7 @@
 import tensorflow.keras.backend as K
+
+# Import all other metrics used by the model
+# to enable testing it.
 from tensorflow.keras.metrics import binary_crossentropy, binary_accuracy
 
 
