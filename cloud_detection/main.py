@@ -18,7 +18,7 @@ def main(c):
     model = train_model(c["train_path"], c["train_size"], c["batch_size"],
                         c["bn_momentum"], c["learning_rate"], c["stopping_patience"],
                         c["steps_per_epoch"], c["epochs"])
-    visualise_model(model, c["test_path"], c["gtpath"], c["vpath"], c["vids"], c["batch_size"])
+    visualise_model(model, c["38Cloud_path"], c["38Cloud_gtpath"], c["vpath"], c["vids"], c["batch_size"])
     metrics_38Cloud = test_38Cloud(model, c["38Cloud_path"], c["38Cloud_gtpath"], c["batch_size"])
     mean_metrics_38Cloud = {}
     for key, value in metrics_38Cloud.items():
@@ -52,7 +52,7 @@ if __name__ == "__main__":
         "batch_size": 8,
         "learning_rate": .01,
         "bn_momentum": .9,
-        "epochs": 200,
+        "epochs": 2,
         "steps_per_epoch": 10,
         "stopping_patience": 20,
         "mlflow": args.f
