@@ -90,7 +90,7 @@ def load_image_paths(base_path: Path,
     return splits
 
 
-class DataGenerator(keras.utils.Sequence):
+class DG_38Cloud(keras.utils.Sequence):
     """
     Data generator for Cloud38 clouds segmentation dataset.
     Works with Keras generators.
@@ -192,7 +192,7 @@ class DataGenerator(keras.utils.Sequence):
         return self._data_generation(indexes_in_batch)
 
 
-class DataGenerator_L8CCA(keras.utils.Sequence):
+class DG_L8CCA(keras.utils.Sequence):
     """
     Data generator for Cloud38 clouds segmentation dataset.
     Works with Keras generators.
@@ -273,7 +273,7 @@ def main():
     splits = load_image_paths(base_path, (0.1, 0.2, 0.7))
     
     for name, split in zip(split_names, splits):
-        dg = DataGenerator(split, 16)
+        dg = DG_38Cloud(split, 16)
         sample_batch_x, sample_batch_y = dg[3]
 
         plt.figure()

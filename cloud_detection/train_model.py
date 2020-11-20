@@ -6,7 +6,7 @@ from typing import Dict
 from pathlib import Path
 from tensorflow import keras
 
-from data_gen import DataGenerator, load_image_paths
+from data_gen import DG_38Cloud, load_image_paths
 from models import unet
 from losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
 
@@ -33,11 +33,11 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
         dpath,
         (train_size, 1-train_size)
         )
-    traingen = DataGenerator(
+    traingen = DG_38Cloud(
         files=train_files,
         batch_size=batch_size
         )
-    valgen = DataGenerator(
+    valgen = DG_38Cloud(
         files=val_files,
         batch_size=batch_size
         )

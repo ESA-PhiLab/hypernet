@@ -11,7 +11,7 @@ from tensorflow.keras.preprocessing.image import load_img
 from skimage import io, img_as_ubyte
 
 import losses
-from data_gen import load_image_paths, DataGenerator
+from data_gen import load_image_paths, DG_38Cloud
 from utils import overlay_mask, unpad, get_metrics
 
 
@@ -47,7 +47,7 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
     return: prediction for a given image.
     """
     test_files, = load_image_paths(path, [1.0], img_id)
-    testgen = DataGenerator(
+    testgen = DG_38Cloud(
         files=test_files,
         batch_size=batch_size,
         shuffle=False,
@@ -132,7 +132,7 @@ def evaluate_model(model: keras.Model, dpath: Path,
             metric_name = metric_fn
         else:
             metric_name = metric_fn.__name__
-        metrics[f"test_{metric_name}"] = {}
+        metrics[f"38Cloud_{metric_name}"] = {}
 
     for fname in os.listdir(gtpath):
         img_id = fname[fname.find("LC08"):fname.find(".TIF")]
@@ -147,14 +147,14 @@ def evaluate_model(model: keras.Model, dpath: Path,
                 metric_name = metric_fn
             else:
                 metric_name = metric_fn.__name__
-            metrics[f"test_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
+            metrics[f"38Cloud_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
         print(f"Average inference time: { sum(scene_times) / len(scene_times) } seconds")
 
     return metrics
 
 
 def visualise_model(model: keras.Model, dpath: Path,
-                   gtpath: Path, vpath: Path, vids: Tuple[str], batch_size: int) -> Tuple:
+                    gtpath: Path, vpath: Path, vids: Tuple[str], batch_size: int) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
@@ -190,8 +190,8 @@ if __name__ == "__main__":
             })
     params = {
         "model": model,
-        "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
-        "gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
+        "dpath": Path("datasets/clouds/38-Cloud/38-Cloud_test"),
+        "gtpath": Path("datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
         "batch_size": 10
         }
     evaluate_model(**params)

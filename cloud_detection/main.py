@@ -6,6 +6,9 @@ from pathlib import Path
 from mlflow import log_metrics, log_artifacts
 
 from train_model import train_model
+from evaluate_38Cloud import visualise_model
+from evaluate_38Cloud import evaluate_model as test_38Cloud
+from evaluate_L8CCA import evaluate_model as test_L8CCA
 from evaluate_model import evaluate_model, visualise_model
 from utils import setup_mlflow
 
@@ -17,14 +20,18 @@ def main(c):
                         c["bn_momentum"], c["learning_rate"], c["stopping_patience"],
                         c["steps_per_epoch"], c["epochs"])
     visualise_model(model, c["test_path"], c["gtpath"], c["vpath"], c["vids"], c["batch_size"])
-    metrics = evaluate_model(model, c["test_path"], c["gtpath"], c["batch_size"])
-    mean_metrics = {}
-    for key, value in metrics.items():
-        mean_metrics[key] = np.mean(list(value.values()))
-
-
+    metrics_38Cloud = test_38Cloud(model, c["38Cloud_path"], c["38Cloud_gtpath"], c["batch_size"])
+    mean_metrics_38Cloud = {}
+    for key, value in metrics_38Cloud.items():
+        mean_metrics_38Cloud[key] = np.mean(list(value.values()))
     if c["mlflow"] == True:
-        log_metrics(mean_metrics)
+        log_metrics(mean_metrics_38Cloud)
+    metrics_L8CCA = test_L8CCA(model, c["L8CCA_path"], c["batch_size"])
+    mean_metrics_L8CCA = {}
+    for key, value in metrics_L8CCA.items():
+        mean_metrics_L8CCA[key] = np.mean(list(value.values()))
+    if c["mlflow"] == True:
+        log_metrics(mean_metrics_L8CCA)
         log_artifacts("artifacts")
 
 
@@ -37,8 +44,9 @@ if __name__ == "__main__":
 
     params = {
         "train_path": Path("../datasets/clouds/38-Cloud/38-Cloud_training"),
-        "test_path": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
-        "gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
+        "38Cloud_path": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
+        "38Cloud_gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
+        "L8CCA_path": Path("../datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"),
         "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
         "vids": ('*'),
         "train_size": 0.8,

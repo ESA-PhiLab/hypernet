@@ -10,7 +10,7 @@ from typing import Tuple
 from tensorflow import keras
 
 import losses
-from data_gen import DataGenerator_L8CCA
+from data_gen import DG_L8CCA
 from utils import unpad, get_metrics
 
 
@@ -26,7 +26,7 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
     param patch_size: size of the image patches.
     return: prediction for a given image.
     """
-    testgen = DataGenerator_L8CCA(
+    testgen = DG_L8CCA(
         img_path=path,
         img_name=img_id,
         batch_size=batch_size,
@@ -79,7 +79,7 @@ def evaluate_model(model: keras.Model, dpath: Path,
             metric_name = metric_fn
         else:
             metric_name = metric_fn.__name__
-        metrics[f"test_{metric_name}"] = {}
+        metrics[f"L8CCA_{metric_name}"] = {}
 
     for tname in os.listdir(dpath):
         tpath = dpath / tname
@@ -99,7 +99,7 @@ def evaluate_model(model: keras.Model, dpath: Path,
                     metric_name = metric_fn
                 else:
                     metric_name = metric_fn.__name__
-                metrics[f"test_{metric_name}"][img_id] = \
+                metrics[f"L8CCA_{metric_name}"][img_id] = \
                     img_metrics[f"test_{metric_name}"]
             print("Average inference time: "
                   + f"{ sum(scene_times) / len(scene_times) } seconds")
