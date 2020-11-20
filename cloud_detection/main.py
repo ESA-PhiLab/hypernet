@@ -9,7 +9,6 @@ from train_model import train_model
 from evaluate_38Cloud import visualise_model
 from evaluate_38Cloud import evaluate_model as test_38Cloud
 from evaluate_L8CCA import evaluate_model as test_L8CCA
-from evaluate_model import evaluate_model, visualise_model
 from utils import setup_mlflow
 
 
