@@ -61,8 +61,8 @@ def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) ->
     param metric_fns: list of metric functions.
     return: evaluation metrics.
     """
-    gt = K.constant(gt)
-    pred = K.constant(pred)
+    gt_ph = K.placeholder(ndim=3)
+    pred_ph = K.placeholder(ndim=3)
     metrics = {}
     for metric_fn in metric_fns:
         if type(metric_fn) is str:
@@ -70,5 +70,8 @@ def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) ->
             metric_fn = getattr(losses, metric_fn)
         else:
             metric_name = metric_fn.__name__
-        metrics[f"test_{metric_name}"] = K.eval(K.mean(metric_fn(gt, pred)))
+        loss = K.mean(metric_fn(gt_ph, pred_ph))
+        metrics[f"test_{metric_name}"] = loss.eval(session=K.get_session(),
+                                                   feed_dict={gt_ph: gt,
+                                                              pred_ph: pred})
     return metrics
