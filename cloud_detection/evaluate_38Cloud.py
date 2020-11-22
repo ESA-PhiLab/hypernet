@@ -149,8 +149,6 @@ def evaluate_model(model: keras.Model, dpath: Path,
                 metric_name = metric_fn.__name__
             metrics[f"38Cloud_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
         print(f"Average inference time: { sum(scene_times) / len(scene_times) } seconds")
-        del img_pred
-        del img_gt
 
     return metrics
 
@@ -175,8 +173,6 @@ def visualise_model(model: keras.Model, dpath: Path,
             img_gt = load_img_gt(gtpath, fname)
             img_pred = unpad(img_pred, img_gt.shape)
             save_vis(img_id, vpath, img_pred, img_gt)
-            del img_pred
-            del img_gt
 
 
 if __name__ == "__main__":

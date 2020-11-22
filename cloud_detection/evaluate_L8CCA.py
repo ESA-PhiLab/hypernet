@@ -103,8 +103,6 @@ def evaluate_model(model: keras.Model, dpath: Path,
                     img_metrics[f"test_{metric_name}"]
             print("Average inference time: "
                   + f"{ sum(scene_times) / len(scene_times) } seconds")
-            del img_pred
-            del img_gt
 
     return metrics
 
