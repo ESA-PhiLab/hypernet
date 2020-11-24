@@ -7,7 +7,6 @@ from typing import Dict, List, NamedTuple
 
 import yaml
 import numpy as np
-import tensorflow as tf
 
 from ml_intuition.enums import Dataset, Sample
 

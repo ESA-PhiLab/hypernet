@@ -3,11 +3,14 @@ All models that are used for training.
 """
 
 import sys
+import functools
+from copy import deepcopy
 from typing import Union, List
 
 import numpy as np
 import tensorflow as tf
 from scipy.stats import mode
+from sklearn.ensemble import RandomForestClassifier
 
 
 def model_2d(kernel_size: int,
@@ -116,7 +119,9 @@ def get_model(model_key: str, kernel_size: int, n_kernels: int,
 
 
 class Ensemble:
-    def __init__(self, models: Union[List[tf.keras.Sequential], List[str]],
+    def __init__(self, models: Union[List[tf.keras.Sequential],
+                                     List[str],
+                                     tf.keras.models.Sequential],
                  voting: str = 'hard'):
         """
         Ensemble for using multiple models for prediction
@@ -126,7 +131,9 @@ class Ensemble:
             voting. Else if ‘soft’, predicts the class label based on the argmax
             of the sums of the predicted probabilities.
         """
-        if all(type(model) is str for model in models):
+        if type(models) is tf.keras.models.Sequential:
+            self.models = models
+        elif all(type(model) is str for model in models):
             self.models = [tf.keras.models.load_model(model) for model in
                            models]
         elif all(type(model) is tf.keras.models.Sequential for model in models):
@@ -135,6 +142,83 @@ class Ensemble:
             raise TypeError("Wrong type of models provided, pass either path "
                             "or the model itself")
         self.voting = voting
+        self.predictor = None
+
+    def generate_models_with_noise(self, copies: int = 5, mean: float = None,
+                                   std: float = None, seed=None):
+        """
+        Generate new models by injecting Gaussian noise into the original
+        model's weights.
+        :param copies: Number of models to generate
+        :param mean: Mean used to draw noise from normal distribution.
+            If None, it will be calculated from the layer itself.
+        :param std: Standard deviation used to draw noise from normal
+            distribution. If None, it will be calculated from the layer itself.
+        :param seed: Seed for random number generator.
+        :return: None
+        """
+        assert type(self.models) is tf.keras.models.Sequential, \
+            "self.models must be a single model"
+        models = [self.models]
+        for copy_id in range(copies):
+            np.random.seed(seed + copy_id)
+            original_weights = deepcopy(self.models.get_weights())
+            modified_weights = self.inject_noise_to_weights(original_weights,
+                                                            mean, std)
+            modified_model = tf.keras.models.clone_model(self.models)
+            modified_model.set_weights(modified_weights)
+            models.append(modified_model)
+        self.models = models
+
+    @staticmethod
+    def inject_noise_to_weights(weights: List[np.ndarray], mean: float,
+                                std: float):
+        """
+        Inject noise into all layers
+        :param weights: List of weights for each layer
+        :param mean: Mean used to draw noise from normal distribution.
+        :param std: Std used to draw noise from normal distribution.
+        :return: Modified list of weights
+        """
+        for layer_number, layer_weights in enumerate(weights):
+            mean = np.mean(layer_weights) if mean is None else mean
+            std = np.std(layer_weights) if std is None else std
+            noise = np.random.normal(loc=mean, scale=std * 0.1,
+                                     size=layer_weights.shape)
+            weights[layer_number] += noise
+        return weights
+
+    def _vote(self, voting_method: str, predictions: np.ndarray) -> np.ndarray:
+        """
+        Perform voting process on provided predictions
+        :param voting_method: If ‘hard’, uses predicted class labels for majority rule
+            voting. If ‘soft’, predicts the class label based on the argmax
+            of the sums of the predicted probabilities. If 'classify', uses a
+            classifier which is trained on probabilities
+        :param predictions:
+        :return:
+        """
+        pass
+
+    def predict_probabilities(self, data: Union[np.ndarray, List[np.ndarray]],
+                              batch_size: int = 1024):
+        """
+        Return predicted classes
+        :param data: Either a single dataset which will be fed into all of the
+            models, or a list of datasets, unique for each model
+        :param batch_size: Size of the batch used for prediction
+        :return: Predicted probabilities for each model and class.
+            Shape: [Models, Samples, Classes]
+        """
+        predictions = []
+        if type(data) is list:
+            for model, dataset in zip(self.models, data):
+                predictions.append(model.predict(dataset,
+                                                 batch_size=batch_size))
+        else:
+            for model in self.models:
+                predictions.append(model.predict(data, batch_size=batch_size))
+        return np.array(predictions)
 
     def predict(self, data: Union[np.ndarray, List[np.ndarray]],
                 batch_size: int = 1024) -> np.ndarray:
@@ -145,20 +229,23 @@ class Ensemble:
         :param batch_size: Size of the batch used for prediction
         :return: Predicted classes
         """
-        predictions = []
-        if type(data) is list:
-            for model, dataset in zip(self.models, data):
-                predictions.append(model.predict(dataset,
-                                                 batch_size=batch_size))
-            predictions = np.array(predictions)
-        else:
-            for model in self.models:
-                predictions.append(model.predict(data, batch_size=batch_size))
-            predictions = np.array(predictions)
+        predictions = self.predict_probabilities(data, batch_size)
         if self.voting == 'hard':
             predictions = np.argmax(predictions, axis=-1)
-            return mode(predictions, axis=0)[0][:, 0]
+            return mode(predictions, axis=0).mode[0, :]
         elif self.voting == 'soft':
             predictions = np.sum(predictions, axis=0)
             predictions = np.argmax(predictions, axis=-1)
+        elif self.voting == 'classifier':
+            models_count, samples, classes = predictions.shape
+            predictions = predictions.swapaxes(0, 1).reshape(samples,
+                                                      models_count * classes)
+            predictions = self.predictor.predict(predictions)
         return predictions
+
+    def train_ensemble_predictor(self, data: np.ndarray, labels: np.ndarray):
+        predictor = RandomForestClassifier()
+        models_count, samples, classes = data.shape
+        data = data.swapaxes(0, 1).reshape(samples, models_count * classes)
+        predictor.fit(data, np.argmax(labels, axis=-1))
+        self.predictor = predictor

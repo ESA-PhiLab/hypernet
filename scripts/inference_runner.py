@@ -31,6 +31,9 @@ def run_experiments(*,
                     dest_path: str,
                     models_path: str,
                     n_classes: int,
+                    use_ensemble: bool = False,
+                    ensemble_copies: int = 5,
+                    voting: str = 'hard',
                     batch_size: int = 1024,
                     post_noise_sets: ('spost', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
@@ -69,6 +72,11 @@ def run_experiments(*,
     :param models_path: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
     :param n_classes: Number of classes.
+    :param use_ensemble: Use ensemble for prediction.
+    :param ensemble_copies: Number of model copies for the ensemble.
+    :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
+        labels for majority rule voting. Else if ‘soft’, predicts the class
+        label based on the argmax of the sums of the predicted probabilities.
     :param batch_size: Size of the batch for the inference
     :param post_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
@@ -129,10 +137,14 @@ def run_experiments(*,
             data=data_source,
             dest_path=experiment_dest_path,
             n_classes=n_classes,
+            use_ensemble=use_ensemble,
+            ensemble_copies=ensemble_copies,
+            voting=voting,
             noise=post_noise,
             noise_sets=post_noise_sets,
             noise_params=noise_params,
-            batch_size=batch_size)
+            batch_size=batch_size,
+            seed=experiment_id)
 
         tf.keras.backend.clear_session()
 
