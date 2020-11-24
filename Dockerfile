@@ -27,10 +27,10 @@ RUN apt-get -y update && apt-get install -y --force-yes libgomp1 jq
 RUN mkdir /workspace
 WORKDIR /workspace
 
+ADD datasets datasets
 ADD ml_intuition ml_intuition
 ADD scripts scripts
 ADD tests tests
-ADD datasets datasets
 VOLUME "/workspace/parameters"
 
 ENV PARAMETERS_DIR "/workspace/parameters"

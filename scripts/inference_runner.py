@@ -4,6 +4,7 @@ Run experiments given set of hyperparameters.
 
 import os
 import shutil
+import re
 
 import clize
 import mlflow
@@ -26,6 +27,7 @@ def run_experiments(*,
                     stratified: bool = True,
                     background_label: int = 0,
                     channels_idx: int = 0,
+                    neighborhood_size: int = None,
                     save_data: bool = False,
                     n_runs: int,
                     dest_path: str,
@@ -106,9 +108,10 @@ def run_experiments(*,
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))
-        model_path = os.path.join(models_path,
-                                  'experiment_' + str(experiment_id),
-                                  'model_2d')
+        model_name_regex = re.compile('model_.*')
+        model_dir = os.path.join(models_path, f'experiment_{experiment_id}')
+        model_name = list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
+        model_path = os.path.join(model_dir, model_name)
         if dataset_path is None:
             data_source = os.path.join(models_path,
                                        'experiment_' + str(experiment_id),
@@ -117,7 +120,7 @@ def run_experiments(*,
             data_source = dataset_path
         os.makedirs(experiment_dest_path, exist_ok=True)
 
-        if data_file_path.endswith('.h5') and ground_truth_path is None:
+        if data_file_path.endswith('.h5') and ground_truth_path is None and 'patches' not in data_file_path:
             data_source = load_processed_h5(data_file_path=data_file_path)
 
         elif not os.path.exists(data_source):
@@ -129,6 +132,7 @@ def run_experiments(*,
                                             stratified=stratified,
                                             background_label=background_label,
                                             channels_idx=channels_idx,
+                                            neighborhood_size=neighborhood_size,
                                             save_data=save_data,
                                             seed=experiment_id)
 

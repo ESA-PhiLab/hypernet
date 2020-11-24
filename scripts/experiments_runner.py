@@ -27,21 +27,22 @@ def run_experiments(*,
                     stratified: bool = True,
                     background_label: int = 0,
                     channels_idx: int = 0,
+                    neighborhood_size: int = None,
                     n_runs: int,
                     model_name: str,
-                    kernel_size: int = 3,
-                    n_kernels: int = 16,
+                    kernel_size: int = 5,
+                    n_kernels: int = 200,
                     save_data: bool = 0,
                     n_layers: int = 1,
                     dest_path: str = None,
                     sample_size: int,
                     n_classes: int,
-                    lr: float = 0.005,
-                    batch_size: int = 150,
-                    epochs: int = 10,
+                    lr: float = 0.001,
+                    batch_size: int = 128,
+                    epochs: int = 200,
                     verbose: int = 2,
                     shuffle: bool = True,
-                    patience: int = 3,
+                    patience: int = 15,
                     pre_noise: ('pre', multi(min=0)),
                     pre_noise_sets: ('spre', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
@@ -134,7 +135,7 @@ def run_experiments(*,
             data_source = None
 
         os.makedirs(experiment_dest_path, exist_ok=True)
-        if data_file_path.endswith('.h5') and ground_truth_path is None:
+        if data_file_path.endswith('.h5') and ground_truth_path is None and 'patches' not in data_file_path:
             data = load_processed_h5(data_file_path=data_file_path)
         else:
             data = prepare_data.main(data_file_path=data_file_path,
@@ -145,6 +146,7 @@ def run_experiments(*,
                                      stratified=stratified,
                                      background_label=background_label,
                                      channels_idx=channels_idx,
+                                     neighborhood_size=neighborhood_size,
                                      save_data=save_data,
                                      seed=experiment_id)
         if not save_data:

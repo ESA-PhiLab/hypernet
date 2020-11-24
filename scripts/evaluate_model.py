@@ -69,11 +69,12 @@ def evaluate(*,
     else:
         min_value, max_value = data[enums.DataStats.MIN], \
                                data[enums.DataStats.MAX]
+    transformations = [transforms.OneHotEncode(n_classes=n_classes),
+                       transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
 
-    transformations = [transforms.SpectralTransform(),
-                       transforms.OneHotEncode(n_classes=n_classes),
-                       transforms.MinMaxNormalize(min_=min_value,
-                                                  max_=max_value)]
+    if '2d' in os.path.basename(model_path) or 'deep' in os.path.basename(model_path):
+        transformations.append(transforms.SpectralTransform())
+
     transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.TEST in noise_sets else transformations
 

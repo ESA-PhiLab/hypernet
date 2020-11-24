@@ -17,7 +17,8 @@ def model_2d(kernel_size: int,
              n_kernels: int,
              n_layers: int,
              input_size: int,
-             n_classes: int) -> tf.keras.Sequential:
+             n_classes: int,
+             **kwargs) -> tf.keras.Sequential:
     """
     2D model which consists of 2D convolutional blocks.
 
@@ -65,7 +66,8 @@ def pool_model_2d(kernel_size: int,
                   n_kernels: int,
                   n_layers: int,
                   input_size: int,
-                  n_classes: int) -> tf.keras.Sequential:
+                  n_classes: int,
+                  **kwargs) -> tf.keras.Sequential:
     """
     2D model which consists of 2D convolutional layers and 2D pooling layers.
 
@@ -97,25 +99,18 @@ def pool_model_2d(kernel_size: int,
     return model
 
 
-def get_model(model_key: str, kernel_size: int, n_kernels: int,
-              n_layers: int, input_size: int, n_classes: int):
+def get_model(model_key: str, **kwargs):
     """
     Get a given instance of model specified by model_key.
 
     :param model_key: Specifies which model to use.
-    :param kernel_size: Size of the convolutional kernel.
-    :param n_kernels: Number of kernels, i.e., the activation maps in each layer.
-    :param n_layers: Number of layers in the network.
-    :param input_size: Number of input channels, i.e., the number of spectral bands.
-    :param n_classes: Number of classes.
+    :param kwargs: Any keyword arguments that the model accepts.
     """
     # Get the list of all model creating functions and their name as the key:
     all_ = {
         str(f): eval(f) for f in dir(sys.modules[__name__])
     }
-    return all_[model_key](kernel_size=kernel_size,
-                           n_kernels=n_kernels, n_layers=n_layers,
-                           input_size=input_size, n_classes=n_classes)
+    return all_[model_key](**kwargs)
 
 
 class Ensemble:
@@ -249,3 +244,45 @@ class Ensemble:
         data = data.swapaxes(0, 1).reshape(samples, models_count * classes)
         predictor.fit(data, np.argmax(labels, axis=-1))
         self.predictor = predictor
+
+
+
+def model_3d_mfl(kernel_size: int,
+                 n_kernels: int,
+                 n_classes: int,
+                 input_size: int,
+                 **kwargs):
+
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Conv2D(filters=n_kernels,
+                                     kernel_size=kernel_size - 3,
+                                     strides=(1, 1),
+                                     input_shape=(kernel_size, kernel_size,
+                                                  input_size),
+                                     data_format='channels_last',
+                                     padding='valid'))
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2),
+                                           padding='valid'))
+    model.add(tf.keras.layers.Conv2D(filters=n_kernels,
+                                     kernel_size=(2, 2),
+                                     padding='same',
+                                     activation='relu'))
+    model.add(tf.keras.layers.Conv2D(filters=n_classes,
+                                     kernel_size=(2, 2),
+                                     padding='valid'))
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Softmax())
+    return model
+
+
+def model_3d_deep(n_classes: int, input_size: int, **kwargs):
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu', input_shape=(7, 7, input_size, 1), data_format='channels_last'))
+    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu'))
+    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu'))
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=256, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=128, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
+    return model

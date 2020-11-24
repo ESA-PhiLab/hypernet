@@ -86,9 +86,10 @@ def train(*,
         min_, max_ = data[enums.DataStats.MIN], \
             data[enums.DataStats.MAX]
 
-    transformations = [transforms.SpectralTransform(),
-                       transforms.OneHotEncode(n_classes=n_classes),
+    transformations = [transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_, max_=max_)]
+    if '2d' in model_name or 'deep' in model_name:
+        transformations.append(transforms.SpectralTransform())
 
     tr_transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.TRAIN in noise_sets else transformations
@@ -98,9 +99,12 @@ def train(*,
     train_dict = transforms.apply_transformations(train_dict, tr_transformations)
     val_dict = transforms.apply_transformations(val_dict, val_transformations)
 
-    model = models.get_model(model_key=model_name, kernel_size=kernel_size,
-                             n_kernels=n_kernels, n_layers=n_layers,
-                             input_size=sample_size, n_classes=n_classes)
+    model_kwargs = {'kernel_size': kernel_size,
+                    'n_kernels': n_kernels,
+                    'n_layers': n_layers,
+                    'input_size': sample_size,
+                    'n_classes': n_classes}
+    model = models.get_model(model_key=model_name, **model_kwargs)
     model.summary()
     model.compile(tf.keras.optimizers.Adam(lr=lr),
                   'categorical_crossentropy',
@@ -109,7 +113,7 @@ def train(*,
     time_history = time_metrics.TimeHistory()
     mcp_save = tf.keras.callbacks.ModelCheckpoint(
         os.path.join(dest_path, model_name), save_best_only=True,
-        monitor='val_loss', mode='min')
+        monitor='val_acc', mode='max')
     early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss',
                                                       patience=patience)
     callbacks = [time_history, mcp_save, early_stopping]
