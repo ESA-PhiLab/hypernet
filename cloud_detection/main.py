@@ -23,7 +23,7 @@ def main(c):
         mean_metrics_38Cloud[key] = np.mean(list(value.values()))
     if c["mlflow"] == True:
         log_metrics(mean_metrics_38Cloud)
-    metrics_L8CCA = test_L8CCA(model, c["L8CCA_path"], c["batch_size"])
+    metrics_L8CCA = test_L8CCA(model, c["L8CCA_path"], c["vids"], c["batch_size"])
     mean_metrics_L8CCA = {}
     for key, value in metrics_L8CCA.items():
         mean_metrics_L8CCA[key] = np.mean(list(value.values()))
