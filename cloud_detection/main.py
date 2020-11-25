@@ -50,7 +50,7 @@ if __name__ == "__main__":
         "batch_size": 8,
         "learning_rate": .01,
         "bn_momentum": .9,
-        "epochs": 1,
+        "epochs": 200,
         "steps_per_epoch": 10,
         "stopping_patience": 20,
         "mlflow": args.f
