@@ -99,6 +99,47 @@ def pool_model_2d(kernel_size: int,
     return model
 
 
+def model_3d_mfl(kernel_size: int,
+                 n_kernels: int,
+                 n_classes: int,
+                 input_size: int,
+                 **kwargs):
+
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Conv2D(filters=n_kernels,
+                                     kernel_size=kernel_size - 3,
+                                     strides=(1, 1),
+                                     input_shape=(kernel_size, kernel_size,
+                                                  input_size),
+                                     data_format='channels_last',
+                                     padding='valid'))
+    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2),
+                                           padding='valid'))
+    model.add(tf.keras.layers.Conv2D(filters=n_kernels,
+                                     kernel_size=(2, 2),
+                                     padding='same',
+                                     activation='relu'))
+    model.add(tf.keras.layers.Conv2D(filters=n_classes,
+                                     kernel_size=(2, 2),
+                                     padding='valid'))
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Softmax())
+    return model
+
+
+def model_3d_deep(n_classes: int, input_size: int, **kwargs):
+    model = tf.keras.Sequential()
+    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu', input_shape=(7, 7, input_size, 1), data_format='channels_last'))
+    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu'))
+    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu'))
+    model.add(tf.keras.layers.Flatten())
+    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=256, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=128, activation='relu'))
+    model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
+    return model
+
+
 def get_model(model_key: str, **kwargs):
     """
     Get a given instance of model specified by model_key.
@@ -116,7 +157,8 @@ def get_model(model_key: str, **kwargs):
 class Ensemble:
     def __init__(self, models: Union[List[tf.keras.Sequential],
                                      List[str],
-                                     tf.keras.models.Sequential],
+                                     tf.keras.models.Sequential,
+                                     None] = None,
                  voting: str = 'hard'):
         """
         Ensemble for using multiple models for prediction
@@ -126,16 +168,7 @@ class Ensemble:
             voting. Else if ‘soft’, predicts the class label based on the argmax
             of the sums of the predicted probabilities.
         """
-        if type(models) is tf.keras.models.Sequential:
-            self.models = models
-        elif all(type(model) is str for model in models):
-            self.models = [tf.keras.models.load_model(model) for model in
-                           models]
-        elif all(type(model) is tf.keras.models.Sequential for model in models):
-            self.models = models
-        else:
-            raise TypeError("Wrong type of models provided, pass either path "
-                            "or the model itself")
+        self.models = models
         self.voting = voting
         self.predictor = None
 
@@ -183,17 +216,23 @@ class Ensemble:
             weights[layer_number] += noise
         return weights
 
-    def _vote(self, voting_method: str, predictions: np.ndarray) -> np.ndarray:
+    def vote(self, predictions: np.ndarray) -> np.ndarray:
         """
         Perform voting process on provided predictions
-        :param voting_method: If ‘hard’, uses predicted class labels for majority rule
-            voting. If ‘soft’, predicts the class label based on the argmax
-            of the sums of the predicted probabilities. If 'classify', uses a
-            classifier which is trained on probabilities
-        :param predictions:
-        :return:
+        :param predictions: Predictions of all models
+        :return: Predicted classes
         """
-        pass
+        if self.voting == 'hard':
+            predictions = np.argmax(predictions, axis=-1)
+            return mode(predictions, axis=0).mode[0, :]
+        elif self.voting == 'soft':
+            predictions = np.sum(predictions, axis=0)
+            return np.argmax(predictions, axis=-1)
+        elif self.voting == 'classifier':
+            models_count, samples, classes = predictions.shape
+            predictions = predictions.swapaxes(0, 1).reshape(samples,
+                                                             models_count * classes)
+            return self.predictor.predict(predictions)
 
     def predict_probabilities(self, data: Union[np.ndarray, List[np.ndarray]],
                               batch_size: int = 1024):
@@ -225,18 +264,7 @@ class Ensemble:
         :return: Predicted classes
         """
         predictions = self.predict_probabilities(data, batch_size)
-        if self.voting == 'hard':
-            predictions = np.argmax(predictions, axis=-1)
-            return mode(predictions, axis=0).mode[0, :]
-        elif self.voting == 'soft':
-            predictions = np.sum(predictions, axis=0)
-            predictions = np.argmax(predictions, axis=-1)
-        elif self.voting == 'classifier':
-            models_count, samples, classes = predictions.shape
-            predictions = predictions.swapaxes(0, 1).reshape(samples,
-                                                      models_count * classes)
-            predictions = self.predictor.predict(predictions)
-        return predictions
+        return self.vote(predictions)
 
     def train_ensemble_predictor(self, data: np.ndarray, labels: np.ndarray):
         predictor = RandomForestClassifier()
@@ -244,45 +272,3 @@ class Ensemble:
         data = data.swapaxes(0, 1).reshape(samples, models_count * classes)
         predictor.fit(data, np.argmax(labels, axis=-1))
         self.predictor = predictor
-
-
-
-def model_3d_mfl(kernel_size: int,
-                 n_kernels: int,
-                 n_classes: int,
-                 input_size: int,
-                 **kwargs):
-
-    model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Conv2D(filters=n_kernels,
-                                     kernel_size=kernel_size - 3,
-                                     strides=(1, 1),
-                                     input_shape=(kernel_size, kernel_size,
-                                                  input_size),
-                                     data_format='channels_last',
-                                     padding='valid'))
-    model.add(tf.keras.layers.MaxPooling2D(pool_size=(2, 2),
-                                           padding='valid'))
-    model.add(tf.keras.layers.Conv2D(filters=n_kernels,
-                                     kernel_size=(2, 2),
-                                     padding='same',
-                                     activation='relu'))
-    model.add(tf.keras.layers.Conv2D(filters=n_classes,
-                                     kernel_size=(2, 2),
-                                     padding='valid'))
-    model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Softmax())
-    return model
-
-
-def model_3d_deep(n_classes: int, input_size: int, **kwargs):
-    model = tf.keras.Sequential()
-    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu', input_shape=(7, 7, input_size, 1), data_format='channels_last'))
-    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu'))
-    model.add(tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu'))
-    model.add(tf.keras.layers.Flatten())
-    model.add(tf.keras.layers.Dense(units=512, activation='relu'))
-    model.add(tf.keras.layers.Dense(units=256, activation='relu'))
-    model.add(tf.keras.layers.Dense(units=128, activation='relu'))
-    model.add(tf.keras.layers.Dense(units=n_classes, activation='softmax'))
-    return model

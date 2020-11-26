@@ -11,7 +11,8 @@ import mlflow
 import tensorflow as tf
 from clize.parameters import multi
 
-from scripts import evaluate_model, prepare_data, artifacts_reporter
+from scripts import prepare_data, artifacts_reporter, predict_with_model
+from scripts.ensemble import evaluate_with_ensemble
 from ml_intuition.enums import Splits, Experiment
 from ml_intuition.data.io import load_processed_h5
 from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
@@ -19,19 +20,19 @@ from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 
 
 def run_experiments(*,
-                    data_file_path: str = None,
-                    ground_truth_path: str = None,
-                    dataset_path: str = None,
+                    data_file_paths: ('d', multi(min=1)) ,
+                    ground_truth_paths: str = None,
                     train_size: ('train_size', multi(min=0)),
                     val_size: float = 0.1,
                     stratified: bool = True,
                     background_label: int = 0,
                     channels_idx: int = 0,
-                    neighborhood_size: int = None,
+                    neighborhood_sizes: int = None,
                     save_data: bool = False,
                     n_runs: int,
                     dest_path: str,
-                    models_path: str,
+                    model_paths: str,
+                    model_experiment_names: str,
                     n_classes: int,
                     use_ensemble: bool = False,
                     ensemble_copies: int = None,
@@ -44,10 +45,9 @@ def run_experiments(*,
                     experiment_name: str = None,
                     run_name: str = None):
     """
-    Function for running experiments given a set of hyperparameters.
-    :param data_file_path: Path to the data file. Supported types are: .npy
-    :param ground_truth_path: Path to the ground-truth data file.
-    :param dataset_path: Path to the already extracted .h5 dataset
+    Function for running experiments given a set of hyper parameters.
+    :param data_file_paths: Path to the data file. Supported types are: .npy
+    :param ground_truth_paths: Path to the ground-truth data file.
     :param train_size: If float, should be between 0.0 and 1.0,
                         if stratified = True, it represents percentage of each
                         class to be extracted,
@@ -103,54 +103,60 @@ def run_experiments(*,
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
         log_tags_to_mlflow(args['run_name'])
-        models_path = get_mlflow_artifacts_path(models_path)
 
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))
-        model_name_regex = re.compile('model_.*')
-        model_dir = os.path.join(models_path, f'experiment_{experiment_id}')
-        model_name = list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
-        model_path = os.path.join(model_dir, model_name)
-        if dataset_path is None:
-            data_source = os.path.join(models_path,
-                                       'experiment_' + str(experiment_id),
-                                       'data.h5')
-        else:
-            data_source = dataset_path
+
         os.makedirs(experiment_dest_path, exist_ok=True)
+        y_pred = []
 
-        if data_file_path.endswith('.h5') and ground_truth_path is None and 'patches' not in data_file_path:
-            data_source = load_processed_h5(data_file_path=data_file_path)
+        for data_file_path, ground_truth_path, model_path, model_experiment_name, neighborhood_size in \
+                zip(
+                    data_file_paths,
+                    ground_truth_paths,
+                    model_paths,
+                    model_experiment_names,
+                    neighborhood_sizes):
+            model_path = get_mlflow_artifacts_path(model_path, model_experiment_name)
+            model_name_regex = re.compile('model_.*')
+            model_dir = os.path.join(model_path, f'experiment_{experiment_id}')
+            model_name = \
+                list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
+            model_path = os.path.join(model_dir, model_name)
+            if data_file_path.endswith(
+                    '.h5') and ground_truth_path is None and 'patches' not in data_file_path:
+                data_source = load_processed_h5(data_file_path=data_file_path)
+            else:
+                data_source = prepare_data.main(data_file_path=data_file_path,
+                                                ground_truth_path=ground_truth_path,
+                                                train_size=train_size,
+                                                val_size=val_size,
+                                                stratified=stratified,
+                                                background_label=background_label,
+                                                channels_idx=channels_idx,
+                                                neighborhood_size=neighborhood_size,
+                                                save_data=save_data,
+                                                seed=experiment_id)
 
-        elif not os.path.exists(data_source):
-            data_source = prepare_data.main(data_file_path=data_file_path,
-                                            ground_truth_path=ground_truth_path,
-                                            output_path=data_source,
-                                            train_size=train_size,
-                                            val_size=val_size,
-                                            stratified=stratified,
-                                            background_label=background_label,
-                                            channels_idx=channels_idx,
-                                            neighborhood_size=neighborhood_size,
-                                            save_data=save_data,
-                                            seed=experiment_id)
+            predictions = predict_with_model.predict(
+                model_path=model_path,
+                data=data_source,
+                n_classes=n_classes,
+                noise=post_noise,
+                noise_sets=post_noise_sets,
+                noise_params=noise_params,
+                batch_size=batch_size,
+            )
+            y_pred.append(predictions)
 
-        evaluate_model.evaluate(
+            tf.keras.backend.clear_session()
+
+        evaluate_with_ensemble.evaluate(
             model_path=model_path,
             data=data_source,
             dest_path=experiment_dest_path,
-            n_classes=n_classes,
-            use_ensemble=use_ensemble,
-            ensemble_copies=ensemble_copies,
-            voting=voting,
-            noise=post_noise,
-            noise_sets=post_noise_sets,
-            noise_params=noise_params,
-            batch_size=batch_size,
-            seed=experiment_id)
-
-        tf.keras.backend.clear_session()
+            voting=voting)
 
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
                                                 dest_path=dest_path,
@@ -162,6 +168,7 @@ def run_experiments(*,
                                                     filename=Experiment.INFERENCE_FAIR_METRICS,
                                                     use_mlflow=use_mlflow)
     if use_mlflow:
+        mlflow.set_experiment(experiment_name)
         mlflow.log_artifacts(dest_path, artifact_path=dest_path)
         shutil.rmtree(dest_path)
 

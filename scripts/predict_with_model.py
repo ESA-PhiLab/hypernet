@@ -20,19 +20,14 @@ from ml_intuition.evaluation.time_metrics import timeit
 from ml_intuition.models import Ensemble
 
 
-def evaluate(*,
-             data,
-             model_path: str,
-             dest_path: str,
-             n_classes: int,
-             batch_size: int = 1024,
-             use_ensemble: bool = False,
-             ensemble_copies: int,
-             voting: str = 'hard',
-             noise: ('post', multi(min=0)),
-             noise_sets: ('spost', multi(min=0)),
-             noise_params: str = None,
-             seed: int = 0):
+def predict(*,
+            data,
+            model_path: str,
+            n_classes: int,
+            batch_size: int = 1024,
+            noise: ('post', multi(min=0)),
+            noise_sets: ('spost', multi(min=0)),
+            noise_params: str = None):
     """
     Function for evaluating the trained model.
 
@@ -70,9 +65,11 @@ def evaluate(*,
         min_value, max_value = data[enums.DataStats.MIN], \
                                data[enums.DataStats.MAX]
     transformations = [transforms.OneHotEncode(n_classes=n_classes),
-                       transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
+                       transforms.MinMaxNormalize(min_=min_value,
+                                                  max_=max_value)]
 
-    if '2d' in os.path.basename(model_path) or 'deep' in os.path.basename(model_path):
+    if '2d' in os.path.basename(model_path) or 'deep' in os.path.basename(
+            model_path):
         transformations.append(transforms.SpectralTransform())
 
     transformations = transformations + get_noise_functions(noise, noise_params) \
@@ -81,47 +78,13 @@ def evaluate(*,
     test_dict = transforms.apply_transformations(test_dict, transformations)
 
     model = tf.keras.models.load_model(model_path, compile=True)
-    if use_ensemble:
-        model = Ensemble(model, voting=voting)
 
-        if ensemble_copies is not None:
-            noise_params = yaml.load(noise_params)
-            model.generate_models_with_noise(copies=ensemble_copies,
-                                             mean=noise_params['mean'],
-                                             seed=seed)
-        if voting == 'classifier':
-            train_dict = io.extract_set(data, enums.Dataset.TRAIN)
-            train_dict = transforms.apply_transformations(train_dict, transformations)
-            train_probabilities = model.predict_probabilities(train_dict[enums.Dataset.DATA])
-            model.train_ensemble_predictor(train_probabilities, train_dict[enums.Dataset.LABELS])
-
-    predict = timeit(model.predict)
-    y_pred, inference_time = predict(test_dict[enums.Dataset.DATA],
-                                     batch_size=batch_size)
+    y_pred = model.predict(test_dict[enums.Dataset.DATA],
+                           batch_size=batch_size)
 
     # y_pred = np.argmax(y_pred, axis=-1)
-    y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 
-    model_metrics = get_model_metrics(y_true, y_pred)
-    model_metrics['inference_time'] = [inference_time]
-    conf_matrix = confusion_matrix(y_true, y_pred)
-    io.save_metrics(dest_path=dest_path,
-                    file_name=enums.Experiment.INFERENCE_METRICS,
-                    metrics=model_metrics)
-    io.save_confusion_matrix(conf_matrix, dest_path)
-    if enums.Splits.GRIDS in model_path:
-        if type(data) is str:
-            train_dict = io.extract_set(data, enums.Dataset.TRAIN)
-            labels_in_train = np.unique(train_dict[enums.Dataset.LABELS])
-        else:
-            train_labels = data[enums.Dataset.TRAIN][enums.Dataset.LABELS]
-            if train_labels.ndim > 1:
-                train_labels = np.argmax(train_labels, axis=-1)
-            labels_in_train = np.unique(train_labels)
-        fair_metrics = get_fair_model_metrics(conf_matrix, labels_in_train)
-        io.save_metrics(dest_path=dest_path,
-                        file_name=enums.Experiment.INFERENCE_FAIR_METRICS,
-                        metrics=fair_metrics)
+    return y_pred
 
 
 if __name__ == '__main__':

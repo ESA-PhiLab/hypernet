@@ -21,18 +21,12 @@ from ml_intuition.models import Ensemble
 
 
 def evaluate(*,
+             y_pred,
+             y_true,
              data,
-             model_path: str,
              dest_path: str,
-             n_classes: int,
-             batch_size: int = 1024,
-             use_ensemble: bool = False,
-             ensemble_copies: int,
-             voting: str = 'hard',
-             noise: ('post', multi(min=0)),
-             noise_sets: ('spost', multi(min=0)),
-             noise_params: str = None,
-             seed: int = 0):
+             model_path: str,
+             voting: str = 'hard'):
     """
     Function for evaluating the trained model.
 
@@ -59,51 +53,12 @@ def evaluate(*,
         refer to the ml_intuition/data/noise.py module.
     :param seed: Seed for RNG
     """
-    if type(data) is str:
-        test_dict = io.extract_set(data, enums.Dataset.TEST)
-    else:
-        test_dict = data[enums.Dataset.TEST]
-    min_max_path = os.path.join(os.path.dirname(model_path), "min-max.csv")
-    if os.path.exists(min_max_path):
-        min_value, max_value = io.read_min_max(min_max_path)
-    else:
-        min_value, max_value = data[enums.DataStats.MIN], \
-                               data[enums.DataStats.MAX]
-    transformations = [transforms.OneHotEncode(n_classes=n_classes),
-                       transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
-
-    if '2d' in os.path.basename(model_path) or 'deep' in os.path.basename(model_path):
-        transformations.append(transforms.SpectralTransform())
-
-    transformations = transformations + get_noise_functions(noise, noise_params) \
-        if enums.Dataset.TEST in noise_sets else transformations
-
-    test_dict = transforms.apply_transformations(test_dict, transformations)
-
-    model = tf.keras.models.load_model(model_path, compile=True)
-    if use_ensemble:
-        model = Ensemble(model, voting=voting)
-
-        if ensemble_copies is not None:
-            noise_params = yaml.load(noise_params)
-            model.generate_models_with_noise(copies=ensemble_copies,
-                                             mean=noise_params['mean'],
-                                             seed=seed)
-        if voting == 'classifier':
-            train_dict = io.extract_set(data, enums.Dataset.TRAIN)
-            train_dict = transforms.apply_transformations(train_dict, transformations)
-            train_probabilities = model.predict_probabilities(train_dict[enums.Dataset.DATA])
-            model.train_ensemble_predictor(train_probabilities, train_dict[enums.Dataset.LABELS])
-
-    predict = timeit(model.predict)
-    y_pred, inference_time = predict(test_dict[enums.Dataset.DATA],
-                                     batch_size=batch_size)
-
-    # y_pred = np.argmax(y_pred, axis=-1)
-    y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
+    ensemble = Ensemble(voting=voting)
+    vote = timeit(ensemble.vote)
+    y_pred, voting_time = vote(y_pred)
 
     model_metrics = get_model_metrics(y_true, y_pred)
-    model_metrics['inference_time'] = [inference_time]
+    model_metrics['inference_time'] = [voting_time]
     conf_matrix = confusion_matrix(y_true, y_pred)
     io.save_metrics(dest_path=dest_path,
                     file_name=enums.Experiment.INFERENCE_METRICS,

@@ -209,12 +209,16 @@ def list_to_string(list_to_convert: List) -> str:
     return ",".join(map(str, list_to_convert))
 
 
-def get_mlflow_artifacts_path(artifacts_storage_path: str) -> str:
+def get_mlflow_artifacts_path(artifacts_storage_path: str,
+                              experiment_name: str = None) -> str:
     """
     Find full local artifacts storage path relative artifacts storage path
     :param artifacts_storage_path: Relative artifacts storage path
+    :param experiment_name: Name of the experiment to search in
     :return: Full local path to artifacts
     """
+    if experiment_name is not None:
+        mlflow.set_experiment(experiment_name)
     filter_string = 'parameters.artifacts_storage = \'{}\''.format(artifacts_storage_path)
     result = mlflow.search_runs(filter_string=filter_string)['artifact_uri'][0]
     return os.path.join(result, artifacts_storage_path)
