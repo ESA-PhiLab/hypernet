@@ -143,3 +143,6 @@ cython_debug/
 
 # DVC
 .dvc/
+
+# Specific datasets
+datasets/clouds
