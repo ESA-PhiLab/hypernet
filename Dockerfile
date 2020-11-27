@@ -17,17 +17,17 @@ RUN wget -O cudnn-10.0-linux-x64-v7.4.1.5.tgz -nv "https://jug.kplabs.pl/file/kU
     && chmod a+r usr/local/cuda-10.0/include/cudnn.h /usr/local/cuda-10.0/lib64/libcudnn*
 
 # Download DNNDK and install it
-RUN wget -O xilinx_dnndk_v3.1.tar.gz -nv "https://jug.kplabs.pl/file/cZfqhhaqYz/I53ZXbZyA1" \
-    && tar -xf xilinx_dnndk_v3.1.tar.gz && rm -rf xilinx_dnndk_v3.1.tar.gz \
-    && pip install xilinx_dnndk_v3.1/host_x86/decent-tf/ubuntu18.04/tensorflow_gpu-1.12.0-cp36-cp36m-linux_x86_64.whl \
-    && cd xilinx_dnndk_v3.1/host_x86 && ./install.sh \
-    && apt-get -y update && apt-get install -y --force-yes libgomp1 jq
+#RUN wget -O xilinx_dnndk_v3.1.tar.gz -nv "https://jug.kplabs.pl/file/cZfqhhaqYz/I53ZXbZyA1" \
+#    && tar -xf xilinx_dnndk_v3.1.tar.gz && rm -rf xilinx_dnndk_v3.1.tar.gz \
+#    && pip install xilinx_dnndk_v3.1/host_x86/decent-tf/ubuntu18.04/tensorflow_gpu-1.12.0-cp36-cp36m-linux_x86_64.whl \
+#    && cd xilinx_dnndk_v3.1/host_x86 && ./install.sh \
+#    && apt-get -y update && apt-get install -y --force-yes libgomp1 jq
 
 # Create workspace
 RUN mkdir /workspace
 WORKDIR /workspace
 
-ADD datasets datasets
+ADD datasets/pavia datasets/pavia
 ADD ml_intuition ml_intuition
 ADD scripts scripts
 ADD tests tests
