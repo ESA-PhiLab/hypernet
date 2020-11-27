@@ -22,7 +22,6 @@ from ml_intuition.models import Ensemble
 
 def evaluate(*,
              y_pred,
-             y_true,
              data,
              dest_path: str,
              model_path: str,
@@ -57,6 +56,8 @@ def evaluate(*,
     vote = timeit(ensemble.vote)
     y_pred, voting_time = vote(y_pred)
 
+    y_true = data[enums.Dataset.TEST][enums.Dataset.LABELS]
+    y_true = np.argmax(y_true, axis=-1)
     model_metrics = get_model_metrics(y_true, y_pred)
     model_metrics['inference_time'] = [voting_time]
     conf_matrix = confusion_matrix(y_true, y_pred)

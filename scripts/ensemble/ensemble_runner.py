@@ -8,6 +8,7 @@ import re
 
 import clize
 import mlflow
+import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
 
@@ -21,18 +22,17 @@ from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 
 def run_experiments(*,
                     data_file_paths: ('d', multi(min=1)) ,
-                    ground_truth_paths: str = None,
                     train_size: ('train_size', multi(min=0)),
                     val_size: float = 0.1,
                     stratified: bool = True,
                     background_label: int = 0,
                     channels_idx: int = 0,
-                    neighborhood_sizes: int = None,
+                    neighborhood_sizes: ('n', multi(min=1)),
                     save_data: bool = False,
                     n_runs: int,
                     dest_path: str,
-                    model_paths: str,
-                    model_experiment_names: str,
+                    model_paths: ('m', multi(min=1)),
+                    model_experiment_names: ('e', multi(min=1)),
                     n_classes: int,
                     use_ensemble: bool = False,
                     ensemble_copies: int = None,
@@ -111,10 +111,9 @@ def run_experiments(*,
         os.makedirs(experiment_dest_path, exist_ok=True)
         y_pred = []
 
-        for data_file_path, ground_truth_path, model_path, model_experiment_name, neighborhood_size in \
+        for data_file_path, model_path, model_experiment_name, neighborhood_size in \
                 zip(
                     data_file_paths,
-                    ground_truth_paths,
                     model_paths,
                     model_experiment_names,
                     neighborhood_sizes):
@@ -124,18 +123,17 @@ def run_experiments(*,
             model_name = \
                 list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
             model_path = os.path.join(model_dir, model_name)
-            if data_file_path.endswith(
-                    '.h5') and ground_truth_path is None and 'patches' not in data_file_path:
+            if data_file_path.endswith('.h5') and 'patches' not in data_file_path:
                 data_source = load_processed_h5(data_file_path=data_file_path)
             else:
                 data_source = prepare_data.main(data_file_path=data_file_path,
-                                                ground_truth_path=ground_truth_path,
+                                                ground_truth_path='',
                                                 train_size=train_size,
                                                 val_size=val_size,
                                                 stratified=stratified,
                                                 background_label=background_label,
                                                 channels_idx=channels_idx,
-                                                neighborhood_size=neighborhood_size,
+                                                neighborhood_size=int(neighborhood_size),
                                                 save_data=save_data,
                                                 seed=experiment_id)
 
@@ -153,6 +151,7 @@ def run_experiments(*,
             tf.keras.backend.clear_session()
 
         evaluate_with_ensemble.evaluate(
+            y_pred=np.array(y_pred),
             model_path=model_path,
             data=data_source,
             dest_path=experiment_dest_path,
@@ -161,12 +160,11 @@ def run_experiments(*,
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
                                                 dest_path=dest_path,
                                                 use_mlflow=use_mlflow)
-    if Splits.GRIDS in data_file_path:
-        fair_report_path = os.path.join(dest_path, Experiment.REPORT_FAIR)
-        artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-                                                    dest_path=fair_report_path,
-                                                    filename=Experiment.INFERENCE_FAIR_METRICS,
-                                                    use_mlflow=use_mlflow)
+    fair_report_path = os.path.join(dest_path, Experiment.REPORT_FAIR)
+    artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                dest_path=fair_report_path,
+                                                filename=Experiment.INFERENCE_FAIR_METRICS,
+                                                use_mlflow=use_mlflow)
     if use_mlflow:
         mlflow.set_experiment(experiment_name)
         mlflow.log_artifacts(dest_path, artifact_path=dest_path)
