@@ -1,5 +1,5 @@
 md5: a84a5d2197cb22511a0559a48aec57b4
-frozen: true
+locked: true
 deps:
 - path: hyperspectral/clouds/38-Cloud
   repo:

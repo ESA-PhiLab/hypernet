@@ -1,5 +1,5 @@
 md5: f1a99047a4e926637c684171bb2681da
-frozen: true
+locked: true
 deps:
 - path: hyperspectral/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial
   repo:
