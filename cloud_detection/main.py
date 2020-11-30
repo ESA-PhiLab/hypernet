@@ -3,7 +3,7 @@
 import numpy as np
 import argparse
 from pathlib import Path
-from mlflow import log_metrics, log_artifacts
+from mlflow import log_metrics, log_artifacts, end_run
 
 from train_model import train_model
 from evaluate_38Cloud import visualise_model
@@ -32,12 +32,14 @@ def main(c):
     if c["mlflow"] == True:
         log_metrics(mean_metrics_L8CCA)
         log_artifacts("artifacts")
+        end_run()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
+    parser.add_argument("-n", help="mlflow run name", default=None)
 
     args = parser.parse_args()
 
@@ -55,7 +57,8 @@ if __name__ == "__main__":
         "epochs": 200,
         "steps_per_epoch": 10,
         "stopping_patience": 20,
-        "mlflow": args.f
+        "mlflow": args.f,
+        "run_name": args.n
         }
 
     main(params)

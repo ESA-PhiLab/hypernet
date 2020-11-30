@@ -20,6 +20,7 @@ def overlay_mask(image: np.ndarray, mask: np.ndarray, rgb_color: Tuple[float], o
 def setup_mlflow(c):
     mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
     mlflow.set_experiment("cloud_detection")
+    mlflow.start_run(run_name=c["run_name"])
     mlflow.tensorflow.autolog(every_n_iter=1)
     mlflow.log_params(c)
 
