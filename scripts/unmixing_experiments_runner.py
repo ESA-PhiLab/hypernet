@@ -126,7 +126,7 @@ def run_experiments(*,
 
         os.makedirs(experiment_dest_path, exist_ok=True)
 
-        # Get the publication's hyperparameters:
+        # Apply default literature hyperparameters:
         if neighborhood_size is None and model_name in NEIGHBORHOOD_SIZES:
             neighborhood_size = NEIGHBORHOOD_SIZES[model_name]
         if lr is None and model_name in LEARNING_RATES:
