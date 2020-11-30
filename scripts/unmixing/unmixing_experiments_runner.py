@@ -13,8 +13,8 @@ from clize.parameters import multi
 from ml_intuition import enums
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 from ml_intuition.data.utils import parse_train_size, subsample_test_set
-from scripts import prepare_data, train_unmixing, evaluate_unmixing, \
-    artifacts_reporter
+from scripts import prepare_data, artifacts_reporter
+from scripts.unmixing import evaluate_unmixing, train_unmixing
 from ml_intuition.models import unmixing_pixel_based_dcae, \
     unmixing_pixel_based_cnn, \
     unmixing_cube_based_cnn, \

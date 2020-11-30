@@ -10,53 +10,10 @@ import tensorflow as tf
 
 from ml_intuition import enums, models
 from ml_intuition.data import io, transforms
+from ml_intuition.data.transforms import UNMIXING_TRANSFORMS
 from ml_intuition.evaluation import time_metrics
-from ml_intuition.evaluation.performance_metrics import \
-    spectral_information_divergence_loss, \
-    overall_rms_abundance_angle_distance, \
-    cnn_rmse, sum_per_class_rmse
-from ml_intuition.models import unmixing_cube_based_dcae, \
-    unmixing_pixel_based_dcae, \
-    unmixing_cube_based_cnn, unmixing_pixel_based_cnn, unmixing_rnn_supervised
-
-TRANSFORMS = {
-    unmixing_pixel_based_dcae.__name__:
-        [transforms.ExtractCentralPixelSpectrumTransform,
-         transforms.SpectralTransform],
-    unmixing_cube_based_dcae.__name__:
-        [transforms.ExtractCentralPixelSpectrumTransform,
-         transforms.SpectralTransform],
-
-    unmixing_pixel_based_cnn.__name__: [transforms.SpectralTransform],
-    unmixing_cube_based_cnn.__name__: [transforms.SpectralTransform],
-
-    unmixing_rnn_supervised.__name__: [transforms.RNNSpectralInputTransform]
-}
-
-LOSSES = {
-    unmixing_pixel_based_dcae.__name__: spectral_information_divergence_loss,
-    unmixing_cube_based_dcae.__name__: spectral_information_divergence_loss,
-
-    unmixing_pixel_based_cnn.__name__: 'mse',
-    unmixing_cube_based_cnn.__name__: 'mse',
-
-    unmixing_rnn_supervised.__name__: 'mse'
-}
-METRICS = {
-    unmixing_pixel_based_dcae.__name__: [spectral_information_divergence_loss],
-    unmixing_cube_based_dcae.__name__: [spectral_information_divergence_loss],
-
-    unmixing_pixel_based_cnn.__name__: [cnn_rmse,
-                                        overall_rms_abundance_angle_distance,
-                                        sum_per_class_rmse],
-    unmixing_cube_based_cnn.__name__: [cnn_rmse,
-                                       overall_rms_abundance_angle_distance,
-                                       sum_per_class_rmse],
-
-    unmixing_rnn_supervised.__name__: [cnn_rmse,
-                                       overall_rms_abundance_angle_distance,
-                                       sum_per_class_rmse]
-}
+from ml_intuition.evaluation.performance_metrics import UNMIXING_LOSSES, \
+    UNMIXING_TRAIN_METRICS
 
 
 def train(data: Dict[str, np.ndarray],
@@ -115,8 +72,8 @@ def train(data: Dict[str, np.ndarray],
     model.summary()
     model.compile(
         optimizer=tf.keras.optimizers.Adam(lr=lr),
-        loss=LOSSES[model_name],
-        metrics=METRICS[model_name])
+        loss=UNMIXING_LOSSES[model_name],
+        metrics=UNMIXING_TRAIN_METRICS[model_name])
 
     time_history = time_metrics.TimeHistory()
 
@@ -140,7 +97,7 @@ def train(data: Dict[str, np.ndarray],
 
     transformations = [transforms.MinMaxNormalize(min_=min_, max_=max_)]
     transformations += [t(**{'neighborhood_size': neighborhood_size}) for t
-                        in TRANSFORMS[model_name]]
+                        in UNMIXING_TRANSFORMS[model_name]]
 
     train_dict = transforms.apply_transformations(train_dict, transformations)
     val_dict = transforms.apply_transformations(val_dict, transformations)

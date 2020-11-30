@@ -11,11 +11,11 @@ import tensorflow as tf
 
 from ml_intuition import enums
 from ml_intuition.data import io, transforms
+from ml_intuition.data.transforms import UNMIXING_TRANSFORMS
 from ml_intuition.data.utils import get_central_pixel_spectrum
 from ml_intuition.evaluation.performance_metrics import \
-    calculate_unmixing_metrics
+    calculate_unmixing_metrics, UNMIXING_TRAIN_METRICS
 from ml_intuition.evaluation.time_metrics import timeit
-from scripts.train_unmixing import METRICS, TRANSFORMS
 
 
 def evaluate(data,
@@ -40,7 +40,7 @@ def evaluate(data,
     model = tf.keras.models.load_model(
         model_path, compile=True,
         custom_objects={metric.__name__: metric for metric in
-                        METRICS[model_name]})
+                        UNMIXING_TRAIN_METRICS[model_name]})
 
     test_dict = data[enums.Dataset.TEST]
 
@@ -49,7 +49,7 @@ def evaluate(data,
 
     transformations = [transforms.MinMaxNormalize(min_=min_, max_=max_)]
     transformations += [t(**{'neighborhood_size': neighborhood_size}) for t
-                        in TRANSFORMS[model_name]]
+                        in UNMIXING_TRANSFORMS[model_name]]
     test_dict_transformed = transforms.apply_transformations(test_dict.copy(),
                                                              transformations)
     if 'dcae' in model_name:

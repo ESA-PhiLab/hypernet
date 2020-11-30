@@ -8,6 +8,9 @@ from typing import List, Dict
 import numpy as np
 
 from ml_intuition import enums
+from ml_intuition.models import unmixing_pixel_based_dcae, \
+    unmixing_cube_based_dcae, unmixing_cube_based_cnn, \
+    unmixing_pixel_based_cnn, unmixing_rnn_supervised
 
 
 class BaseTransform(abc.ABC):
@@ -190,3 +193,18 @@ class ExtractCentralPixelSpectrumTransform(BaseTransform):
         else:
             label = np.squeeze(sample)
         return [sample, label]
+
+
+UNMIXING_TRANSFORMS = {
+    unmixing_pixel_based_dcae.__name__:
+        [ExtractCentralPixelSpectrumTransform,
+         SpectralTransform],
+    unmixing_cube_based_dcae.__name__:
+        [ExtractCentralPixelSpectrumTransform,
+         SpectralTransform],
+
+    unmixing_pixel_based_cnn.__name__: [SpectralTransform],
+    unmixing_cube_based_cnn.__name__: [SpectralTransform],
+
+    unmixing_rnn_supervised.__name__: [RNNSpectralInputTransform]
+}

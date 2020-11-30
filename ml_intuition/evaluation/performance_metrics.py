@@ -9,6 +9,9 @@ from sklearn import metrics
 from sklearn.metrics import confusion_matrix
 
 from ml_intuition.data import utils
+from ml_intuition.models import unmixing_rnn_supervised, \
+    unmixing_pixel_based_dcae, unmixing_cube_based_dcae, \
+    unmixing_cube_based_cnn, unmixing_pixel_based_cnn
 
 
 def convert_to_tensor(metric_function):
@@ -214,12 +217,38 @@ DEFAULT_FAIR_METRICS = [
     metrics.cohen_kappa_score
 ]
 
+UNMIXING_TRAIN_METRICS = {
+    unmixing_pixel_based_dcae.__name__: [spectral_information_divergence_loss],
+    unmixing_cube_based_dcae.__name__: [spectral_information_divergence_loss],
+
+    unmixing_pixel_based_cnn.__name__: [cnn_rmse,
+                                        overall_rms_abundance_angle_distance,
+                                        sum_per_class_rmse],
+    unmixing_cube_based_cnn.__name__: [cnn_rmse,
+                                       overall_rms_abundance_angle_distance,
+                                       sum_per_class_rmse],
+
+    unmixing_rnn_supervised.__name__: [cnn_rmse,
+                                       overall_rms_abundance_angle_distance,
+                                       sum_per_class_rmse]
+}
+
 UNMIXING_TEST_METRICS = {
     'aRMSE': dcae_rmse,
     'aSAM': average_angle_spectral_mapper,
     'overallRMSE': cnn_rmse,
     'rmsAAD': overall_rms_abundance_angle_distance,
     'perClassSumRMSE': sum_per_class_rmse
+}
+
+UNMIXING_LOSSES = {
+    unmixing_pixel_based_dcae.__name__: spectral_information_divergence_loss,
+    unmixing_cube_based_dcae.__name__: spectral_information_divergence_loss,
+
+    unmixing_pixel_based_cnn.__name__: 'mse',
+    unmixing_cube_based_cnn.__name__: 'mse',
+
+    unmixing_rnn_supervised.__name__: 'mse'
 }
 
 
