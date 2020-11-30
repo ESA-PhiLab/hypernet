@@ -8,11 +8,24 @@ from einops import rearrange
 from pathlib import Path
 from typing import Tuple
 from tensorflow import keras
+from tensorflow.keras.preprocessing.image import load_img
 
 import losses
 from data_gen import DG_L8CCA
-from utils import unpad, get_metrics
+from utils import unpad, get_metrics, save_vis
 
+
+def build_rgb_scene_img(path: Path, img_id: str):
+    r_path = next(path.glob("*" + img_id + "_B4*"))
+    g_path = next(path.glob("*" + img_id + "_B3*"))
+    b_path = next(path.glob("*" + img_id + "_B2*"))
+    ret = np.stack([
+        np.array(load_img(r_path, color_mode="grayscale")),
+        np.array(load_img(g_path, color_mode="grayscale")),
+        np.array(load_img(b_path, color_mode="grayscale")),
+    ], axis=2)
+    return (ret / ret.max())
+    
 
 def get_img_pred(path: Path, img_id: str, model: keras.Model,
                  batch_size: int, patch_size: int = 384) -> np.ndarray:
@@ -63,6 +76,7 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
 
 
 def evaluate_model(model: keras.Model, dpath: Path,
+                   vids: Tuple[str],
                    batch_size: int) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
@@ -103,6 +117,11 @@ def evaluate_model(model: keras.Model, dpath: Path,
                     img_metrics[f"test_{metric_name}"]
             print("Average inference time: "
                   + f"{ sum(scene_times) / len(scene_times) } seconds")
+            if img_id in vids or '*' in vids:
+                print(f"Creating visualisation for {img_id}")
+                img_vis = build_rgb_scene_img(tpath/img_id, img_id)
+                save_vis(img_id, img_vis, img_pred, img_gt)
+            
 
     return metrics
 
@@ -124,9 +143,10 @@ if __name__ == "__main__":
     params = {
         "model": model,
         "dpath": Path(
-            "datasets/clouds/"
+            "../datasets/clouds/"
             + "Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"
             ),
+        "vids": ("*"),
         "batch_size": 10
         }
     evaluate_model(**params)

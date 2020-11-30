@@ -8,25 +8,10 @@ from pathlib import Path
 from typing import Dict, List, Tuple
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
-from skimage import io, img_as_ubyte
 
 import losses
 from data_gen import load_image_paths, DG_38Cloud
-from utils import overlay_mask, unpad, get_metrics
-
-
-def true_positives(y_true, y_pred):
-    return y_true * y_pred
-
-
-def false_positives(y_true, y_pred):
-    y_true_neg = 1 - y_true
-    return y_true_neg * y_pred
-
-
-def false_negatives(y_true, y_pred):
-    y_pred_neg = 1 - y_pred
-    return y_true * y_pred_neg
+from utils import overlay_mask, unpad, get_metrics, save_vis
 
 
 def get_full_scene_img(path: Path, img_id: str):
@@ -99,23 +84,10 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
     return np.expand_dims(img/255, axis=-1)
 
 
-def save_vis(img_id, vpath, img_pred, img_gt):
-    if not os.path.exists("artifacts"):
-        os.makedirs("artifacts")
-
-    img_pred = np.round(img_pred)
-    io.imsave("artifacts/" + img_id + "_gt.png", img_as_ubyte(img_gt[:,:,0]))
-    io.imsave("artifacts/" + img_id + "_pred.png", img_as_ubyte(img_pred[:,:,0]))
-
-    fsi = 0.7 * get_full_scene_img(vpath, img_id)
-    mask_vis = overlay_mask(fsi, true_positives(img_gt, img_pred), (1, 1,  0))
-    mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), (1, 0, 0))
-    mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), (1, 0, 1))
-    io.imsave("artifacts/" + img_id + "_masks.png", img_as_ubyte(mask_vis))
 
 
-def evaluate_model(model: keras.Model, dpath: Path,
-                   gtpath: Path, batch_size: int) -> Tuple:
+def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
+                   vids: Tuple[str], batch_size: int) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
@@ -149,30 +121,13 @@ def evaluate_model(model: keras.Model, dpath: Path,
                 metric_name = metric_fn.__name__
             metrics[f"38Cloud_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
         print(f"Average inference time: { sum(scene_times) / len(scene_times) } seconds")
-
-    return metrics
-
-
-def visualise_model(model: keras.Model, dpath: Path,
-                    gtpath: Path, vpath: Path, vids: Tuple[str], batch_size: int) -> Tuple:
-    """
-    Get evaluation metrics for given model on 38-Cloud testset.
-    param model: trained model to make predictions.
-    param dpath: path to dataset.
-    param gtpath: path to dataset ground truths.
-    param vpath: path do dataset visualisation images.
-    param batch_size: size of generated batches, only one batch is loaded
-          to memory at a time.
-    return: evaluation metrics.
-    """
-    for fname in os.listdir(gtpath):
-        img_id = fname[fname.find("LC08"):fname.find(".TIF")]
         if img_id in vids or '*' in vids:
             print(f"Creating visualisation for {img_id}")
-            img_pred, _ = get_img_pred(dpath, img_id, model, batch_size)
-            img_gt = load_img_gt(gtpath, fname)
-            img_pred = unpad(img_pred, img_gt.shape)
-            save_vis(img_id, vpath, img_pred, img_gt)
+            img_vis = 0.7 * get_full_scene_img(vpath, img_id)
+            save_vis(img_id, img_vis, img_pred, img_gt)
+        
+
+    return metrics
 
 
 if __name__ == "__main__":
@@ -190,8 +145,10 @@ if __name__ == "__main__":
             })
     params = {
         "model": model,
-        "dpath": Path("datasets/clouds/38-Cloud/38-Cloud_test"),
-        "gtpath": Path("datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
+        "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
+        "gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
+        "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
+        "vids": ("*"),
         "batch_size": 10
         }
     evaluate_model(**params)

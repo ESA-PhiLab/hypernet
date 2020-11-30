@@ -1,11 +1,29 @@
+import os
 from typing import Dict, List, Tuple, Callable
+from pathlib import Path
 
 import numpy as np
 import mlflow
 import mlflow.tensorflow
 import tensorflow.keras.backend as K
+from tensorflow.keras.preprocessing.image import load_img
+from skimage import io, img_as_ubyte
 
 import losses
+
+
+def true_positives(y_true, y_pred):
+    return y_true * y_pred
+
+
+def false_positives(y_true, y_pred):
+    y_true_neg = 1 - y_true
+    return y_true_neg * y_pred
+
+
+def false_negatives(y_true, y_pred):
+    y_pred_neg = 1 - y_pred
+    return y_true * y_pred_neg
 
 
 def overlay_mask(image: np.ndarray, mask: np.ndarray, rgb_color: Tuple[float], overlay_intensity: float=0.5) -> np.ndarray:
@@ -76,3 +94,17 @@ def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) ->
                                                    feed_dict={gt_ph: gt,
                                                               pred_ph: pred})
     return metrics
+
+
+def save_vis(img_id: str, img_vis: np.ndarray, img_pred: np.ndarray, img_gt: np.ndarray):
+    if not os.path.exists("artifacts"):
+        os.makedirs("artifacts")
+
+    img_pred = np.round(img_pred)
+    io.imsave("artifacts/" + img_id + "_gt.png",img_gt[:,:,0])
+    io.imsave("artifacts/" + img_id + "_pred.png", img_as_ubyte(img_pred[:,:,0]))
+
+    mask_vis = overlay_mask(img_vis, true_positives(img_gt, img_pred), (1, 1,  0))
+    mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), (1, 0, 0))
+    mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), (1, 0, 1))
+    io.imsave("artifacts/" + img_id + "_masks.png", img_as_ubyte(mask_vis))

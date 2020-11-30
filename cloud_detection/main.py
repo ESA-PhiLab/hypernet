@@ -6,7 +6,6 @@ from pathlib import Path
 from mlflow import log_metrics, log_artifacts, end_run
 
 from train_model import train_model
-from evaluate_38Cloud import visualise_model
 from evaluate_38Cloud import evaluate_model as test_38Cloud
 from evaluate_L8CCA import evaluate_model as test_L8CCA
 from utils import setup_mlflow
@@ -18,14 +17,13 @@ def main(c):
     model = train_model(c["train_path"], c["train_size"], c["batch_size"],
                         c["bn_momentum"], c["learning_rate"], c["stopping_patience"],
                         c["steps_per_epoch"], c["epochs"])
-    visualise_model(model, c["38Cloud_path"], c["38Cloud_gtpath"], c["vpath"], c["vids"], c["batch_size"])
-    metrics_38Cloud = test_38Cloud(model, c["38Cloud_path"], c["38Cloud_gtpath"], c["batch_size"])
+    metrics_38Cloud = test_38Cloud(model, c["38Cloud_path"], c["38Cloud_gtpath"], c["vpath"], c["vids"], c["batch_size"])
     mean_metrics_38Cloud = {}
     for key, value in metrics_38Cloud.items():
         mean_metrics_38Cloud[key] = np.mean(list(value.values()))
     if c["mlflow"] == True:
         log_metrics(mean_metrics_38Cloud)
-    metrics_L8CCA = test_L8CCA(model, c["L8CCA_path"], c["batch_size"])
+    metrics_L8CCA = test_L8CCA(model, c["L8CCA_path"], c["vids"], c["batch_size"])
     mean_metrics_L8CCA = {}
     for key, value in metrics_L8CCA.items():
         mean_metrics_L8CCA[key] = np.mean(list(value.values()))
