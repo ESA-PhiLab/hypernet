@@ -11,7 +11,7 @@ from models import unet
 from losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
 
 
-def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: float,
+def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn_momentum: float,
                 learning_rate: float, stopping_patience: int, steps_per_epoch: int,
                 epochs: int) -> keras.Model:
     """
@@ -28,6 +28,7 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
     param epochs: number of epochs.
     return: trained model.
     """
+    Path(rpath).mkdir(parents=True, exist_ok=False)
     # Load data
     train_files, val_files = load_image_paths(
         dpath,
@@ -67,6 +68,12 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
         keras.callbacks.EarlyStopping(
             patience=stopping_patience,
             verbose=1
+        ),
+        keras.callbacks.ModelCheckpoint(
+            filepath=f"{rpath}/best_weights",
+            save_best_only=True,
+            save_weights_only=True,
+            verbose=1
         )
     ]
 
@@ -80,6 +87,9 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
         callbacks=callbacks,
         verbose=1
         )
+
+    # Load best weights
+    model.load_weights(f"{rpath}/best_weights")
 
     # Return model
     return model
