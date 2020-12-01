@@ -28,6 +28,7 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn
     param epochs: number of epochs.
     return: trained model.
     """
+    Path(rpath).mkdir(parents=True, exist_ok=False)
     # Load data
     train_files, val_files = load_image_paths(
         dpath,
@@ -69,7 +70,7 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn
             verbose=1
         ),
         keras.callbacks.ModelCheckpoint(
-            filepath=f"{rpath}/model/data/best_weights",
+            filepath=f"{rpath}/best_weights",
             save_best_only=True,
             save_weights_only=True,
             verbose=1
@@ -88,7 +89,7 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn
         )
 
     # Load best weights
-    model.load_weights(f"{rpath}/model/data/best_weights")
+    model.load_weights(f"{rpath}/best_weights")
 
     # Return model
     return model

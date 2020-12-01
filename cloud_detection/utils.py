@@ -97,6 +97,7 @@ def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) ->
 
 
 def save_vis(img_id: str, img_vis: np.ndarray, img_pred: np.ndarray, img_gt: np.ndarray, rpath: Path):
+    Path(rpath).mkdir(parents=True, exist_ok=False)
     img_pred = np.round(img_pred)
     io.imsave(rpath / f"{img_id}_gt.png", img_gt[:,:,0])
     io.imsave(rpath / f"{img_id}_pred.png", img_as_ubyte(img_pred[:,:,0]))

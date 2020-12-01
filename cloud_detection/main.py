@@ -16,17 +16,17 @@ def main(c):
     Path(c["rpath"]).mkdir(parents=True, exist_ok=False)
     if c["mlflow"] == True:
         setup_mlflow(c)
-    model = train_model(c["train_path"], c["rpath"], c["train_size"], c["batch_size"],
+    model = train_model(c["train_path"], c["rpath"] / "best_weights", c["train_size"], c["batch_size"],
                         c["bn_momentum"], c["learning_rate"], c["stopping_patience"],
                         c["steps_per_epoch"], c["epochs"])
     metrics_38Cloud = test_38Cloud(model, c["38Cloud_path"], c["38Cloud_gtpath"], c["vpath"],
-                                   c["rpath"], c["vids"], c["batch_size"])
+                                   c["rpath"] / "38Cloud_vis", c["vids"], c["batch_size"])
     mean_metrics_38Cloud = {}
     for key, value in metrics_38Cloud.items():
         mean_metrics_38Cloud[key] = np.mean(list(value.values()))
     if c["mlflow"] == True:
         log_metrics(mean_metrics_38Cloud)
-    metrics_L8CCA = test_L8CCA(model, c["L8CCA_path"], c["rpath"], c["vids"], c["batch_size"])
+    metrics_L8CCA = test_L8CCA(model, c["L8CCA_path"], c["rpath"] / "L8CCA_vis", c["vids"], c["batch_size"])
     mean_metrics_L8CCA = {}
     for key, value in metrics_L8CCA.items():
         mean_metrics_L8CCA[key] = np.mean(list(value.values()))
