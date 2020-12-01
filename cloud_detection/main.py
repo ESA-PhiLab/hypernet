@@ -51,7 +51,7 @@ if __name__ == "__main__":
         "vids": ('*'),
         "train_size": 0.8,
         "batch_size": 8,
-        "balance_train_dataset": False,
+        "balance_train_dataset": True,
         "balance_val_dataset": True,
         "learning_rate": .01,
         "bn_momentum": .9,

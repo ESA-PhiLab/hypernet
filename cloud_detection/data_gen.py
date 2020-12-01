@@ -157,7 +157,11 @@ class DG_38Cloud(keras.utils.Sequence):
         labels = []
         for file_ in self._files:
             gt = self._open_mask(file_)
-            labels.append(int(np.median(gt)))
+            clouds_prop = np.count_nonzero(gt)/np.prod(self._dim)
+            if clouds_prop > 0.1 and clouds_prop < 0.9:
+                labels.append(1)
+            else:
+                labels.append(0)
         return labels
 
 
