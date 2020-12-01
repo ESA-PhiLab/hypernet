@@ -21,7 +21,8 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str,
                            test_dict[enums.DataStats.MAX]
 
     transformations = [transforms.MinMaxNormalize(min_=min_value,
-                                                  max_=max_value)]
+                                                  max_=max_value),
+                       transforms.SpectralTransform()]
 
     test_dict = transforms.apply_transformations(test_dict, transformations)
 

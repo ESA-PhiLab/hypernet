@@ -34,17 +34,18 @@ def main(*,
     :param ground_truth_path: Path to the data file.
     :param output_path: Path under in which the output .h5 file will be stored.
         Used only if the parameter save_data is set to True
-    :param train_size: If float, should be between 0.0 and 1.0,
-                        if stratified = True, it represents percentage of each
-                        class to be extracted,
-                 If float and stratified = False, it represents percentage of the
-                    whole dataset to be extracted with samples drawn randomly,
-                    regardless of their class.
-                 If int and stratified = True, it represents number of samples
-                    to be drawn from each class.
-                 If int and stratified = False, it represents overall number of
-                    samples to be drawn regardless of their class, randomly.
-                 Defaults to 0.8
+    :param train_size:
+            If float, should be between 0.0 and 1.0,
+                if stratified = True, it represents percentage of each class
+                to be extracted,
+            If float and stratified = False, it represents percentage of the
+                whole dataset to be extracted with samples drawn randomly,
+                regardless of their class.
+            If int and stratified = True, it represents number of samples
+                to be drawn from each class.
+            If int and stratified = False, it represents overall number of
+                samples to be drawn regardless of their class, randomly.
+                Defaults to 0.8
     :type train_size: float or int
     :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
                      each class from the training set to be extracted as a
@@ -52,6 +53,9 @@ def main(*,
     :param stratified: Indicated whether the extracted training set should be
                      stratified, defaults to True
     :param background_label: Label indicating the background in GT file
+    :param neighborhood_size: Neighborhood size of the pixel to extract along
+        with its spectral bands. Use only if you are training 2D or 3D
+        convolutional model.
     :param channels_idx: Index specifying the channels position in the provided
                          data
     :param save_data: Whether to save data as .md5 or to return it as a dict
@@ -59,17 +63,7 @@ def main(*,
     :raises TypeError: When provided data or labels file is not supported
     """
     train_size = utils.parse_train_size(train_size)
-    if 'patches' in data_file_path:
-        train_x, train_y, val_x, val_y, test_x, test_y = preprocessing.patches_to_samples(data_file_path, neighborhood_size, val_size, background_label,
-                                                                                          channels_idx)
-        if save_data:
-            io.save_md5(output_path, train_x, train_y, val_x, val_y, test_x,
-                        test_y)
-            return None
-        else:
-            return utils.build_data_dict(train_x, train_y, val_x, val_y, test_x,
-                                         test_y)
-    elif data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
+    if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
         data, labels = io.load_npy(data_file_path, ground_truth_path)
         if neighborhood_size is not None:
             data, labels = preprocessing.reshape_cube_to_3d_samples(data,

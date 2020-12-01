@@ -27,7 +27,7 @@ def evaluate(*,
              n_classes: int,
              batch_size: int = 1024,
              use_ensemble: bool = False,
-             ensemble_copies: int,
+             ensemble_copies: int = 1,
              voting: str = 'hard',
              noise: ('post', multi(min=0)),
              noise_sets: ('spost', multi(min=0)),
@@ -99,7 +99,8 @@ def evaluate(*,
     y_pred, inference_time = predict(test_dict[enums.Dataset.DATA],
                                      batch_size=batch_size)
 
-    # y_pred = np.argmax(y_pred, axis=-1)
+    if not use_ensemble:
+        y_pred = np.argmax(y_pred, axis=-1)
     y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 
     model_metrics = get_model_metrics(y_true, y_pred)
