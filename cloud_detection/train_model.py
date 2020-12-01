@@ -11,7 +11,7 @@ from models import unet
 from losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
 
 
-def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: float,
+def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn_momentum: float,
                 learning_rate: float, stopping_patience: int, steps_per_epoch: int,
                 epochs: int) -> keras.Model:
     """
@@ -69,7 +69,7 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
             verbose=1
         ),
         keras.callbacks.ModelCheckpoint(
-            filepath="artifacts/model/data/best_weights",
+            filepath=f"{rpath}/model/data/best_weights",
             save_best_only=True,
             save_weights_only=True,
             verbose=1
@@ -88,7 +88,7 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
         )
 
     # Load best weights
-    model.load_weights("artifacts/model/data/best_weights")
+    model.load_weights(f"{rpath}/model/data/best_weights")
 
     # Return model
     return model

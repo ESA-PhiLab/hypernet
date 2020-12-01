@@ -16,7 +16,7 @@ def main(c):
     Path(c["rpath"]).mkdir(parents=True, exist_ok=False)
     if c["mlflow"] == True:
         setup_mlflow(c)
-    model = train_model(c["train_path"], c["train_size"], c["batch_size"],
+    model = train_model(c["train_path"], c["rpath"], c["train_size"], c["batch_size"],
                         c["bn_momentum"], c["learning_rate"], c["stopping_patience"],
                         c["steps_per_epoch"], c["epochs"])
     metrics_38Cloud = test_38Cloud(model, c["38Cloud_path"], c["38Cloud_gtpath"], c["vpath"],
