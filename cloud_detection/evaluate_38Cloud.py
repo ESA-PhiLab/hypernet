@@ -87,7 +87,7 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
 
 
 def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
-                   vids: Tuple[str], batch_size: int) -> Tuple:
+                   rpath: Path, vids: Tuple[str], batch_size: int) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
@@ -124,7 +124,7 @@ def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
         if img_id in vids or '*' in vids:
             print(f"Creating visualisation for {img_id}")
             img_vis = 0.7 * get_full_scene_img(vpath, img_id)
-            save_vis(img_id, img_vis, img_pred, img_gt)
+            save_vis(img_id, img_vis, img_pred, img_gt, rpath)
         
 
     return metrics
