@@ -96,15 +96,12 @@ def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) ->
     return metrics
 
 
-def save_vis(img_id: str, img_vis: np.ndarray, img_pred: np.ndarray, img_gt: np.ndarray):
-    if not os.path.exists("artifacts"):
-        os.makedirs("artifacts")
-
+def save_vis(img_id: str, img_vis: np.ndarray, img_pred: np.ndarray, img_gt: np.ndarray, rpath: Path):
     img_pred = np.round(img_pred)
-    io.imsave("artifacts/" + img_id + "_gt.png",img_gt[:,:,0])
-    io.imsave("artifacts/" + img_id + "_pred.png", img_as_ubyte(img_pred[:,:,0]))
+    io.imsave(rpath / f"{img_id}_gt.png", img_gt[:,:,0])
+    io.imsave(rpath / f"{img_id}_pred.png", img_as_ubyte(img_pred[:,:,0]))
 
     mask_vis = overlay_mask(img_vis, true_positives(img_gt, img_pred), (1, 1,  0))
     mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), (1, 0, 0))
     mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), (1, 0, 1))
-    io.imsave("artifacts/" + img_id + "_masks.png", img_as_ubyte(mask_vis))
+    io.imsave(rpath / f"{img_id}_masks.png", img_as_ubyte(mask_vis))
