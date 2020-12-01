@@ -67,6 +67,12 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
         keras.callbacks.EarlyStopping(
             patience=stopping_patience,
             verbose=1
+        ),
+        keras.callbacks.ModelCheckpoint(
+            filepath="artifacts/model/data/best_weights",
+            save_best_only=True,
+            save_weights_only=True,
+            verbose=1
         )
     ]
 
@@ -80,6 +86,9 @@ def train_model(dpath: Path, train_size: float, batch_size: int, bn_momentum: fl
         callbacks=callbacks,
         verbose=1
         )
+
+    # Load best weights
+    model.load_weights("artifacts/model/data/best_weights")
 
     # Return model
     return model
