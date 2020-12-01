@@ -83,7 +83,6 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn
         steps_per_epoch=steps_per_epoch,
         epochs=epochs,
         validation_data=valgen,
-        validation_steps=steps_per_epoch,
         callbacks=callbacks,
         verbose=1
         )

@@ -53,11 +53,11 @@ if __name__ == "__main__":
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ('*'),
         "train_size": 0.8,
-        "batch_size": 8,
+        "batch_size": 16,
         "learning_rate": .01,
         "bn_momentum": .9,
         "epochs": 200,
-        "steps_per_epoch": 10,
+        "steps_per_epoch": 50,
         "stopping_patience": 20,
         "mlflow": args.f,
         "run_name": args.n
