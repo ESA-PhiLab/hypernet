@@ -88,4 +88,4 @@ def predict(*,
 
 
 if __name__ == '__main__':
-    clize.run(evaluate)
+    clize.run(predict)

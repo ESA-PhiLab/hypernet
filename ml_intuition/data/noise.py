@@ -5,8 +5,8 @@ import sys
 from itertools import product
 from typing import Dict, List, NamedTuple
 
-import yaml
 import numpy as np
+import yaml
 
 from ml_intuition.enums import Dataset, Sample
 
@@ -45,8 +45,10 @@ class Params(NamedTuple):
 class BaseNoise(abc.ABC):
     def __init__(self, params: Dict):
         super().__init__()
-        self.params = Params(**params)
-        pass
+        default_params = {'pa': None, 'pb': None, 'bc': None, 'mean': None, 'std': None, 'pw': None}
+        for key, value in params.items():
+            default_params[key] = value
+        self.params = Params(**default_params)
 
     @abc.abstractmethod
     def __call__(self, *args, **kwargs):
@@ -84,10 +86,10 @@ class Gaussian(BaseNoise):
                 noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
                                                n_bands, False)
             for band_index in noisy_bands:
-                data[sample_index, :, :, band_index] += \
+                data[sample_index, band_index] += \
                     np.random.normal(loc=self.params.mean,
                                      scale=self.params.std,
-                                     size=data[sample_index, :, :, band_index].shape)
+                                     size=data[sample_index, band_index].shape)
         return [data, labels]
 
 
@@ -115,12 +117,12 @@ class Impulsive(BaseNoise):
                                                n_bands, False)
             for band_index in noisy_bands:
                 if noise_index < n_white:
-                    data[sample_index, :, :, band_index] = \
-                        np.full(shape=data[sample_index, :, :, band_index].shape,
+                    data[sample_index, band_index] = \
+                        np.full(shape=data[sample_index, band_index].shape,
                                 fill_value=white)
                 else:
-                    data[sample_index, :, :, band_index] = \
-                        np.full(shape=data[sample_index, :, :, band_index].shape,
+                    data[sample_index, band_index] = \
+                        np.full(shape=data[sample_index, band_index].shape,
                                 fill_value=black)
         return [data, labels]
 
@@ -138,9 +140,9 @@ class Shot(BaseNoise):
         n_affected, n_bands = \
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
             self.get_proba(data.shape[Sample.FEATURES_DIM], self.params.pb)
-        data = data.astype(np.float16)
+        data = data.astype(np.float)
         data = np.clip(data, a_min=0, a_max=None)
-        noise = np.random.poisson(np.expand_dims(data[:, [3], [3], :], axis=1))
+        noise = np.random.poisson(data)
         noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
                                        n_bands, False)
         for sample_index in np.random.choice(data.shape[Sample.SAMPLES_DIM],
@@ -149,7 +151,7 @@ class Shot(BaseNoise):
                 noisy_bands = np.random.choice(data.shape[Sample.FEATURES_DIM],
                                                n_bands, False)
             for band_index in noisy_bands:
-                data[sample_index, :, :, band_index] += np.repeat(np.repeat(noise[sample_index, :, :, band_index], 7, axis=0), 7, axis=1)
+                data[sample_index, band_index] += noise[sample_index, band_index]
         return [data, labels]
 
 
@@ -187,10 +189,11 @@ def inject_noise(data_source: Dict, affected_subsets: List[str],
 
     :param data_source: Dictionary containing subsets.
     :param affected_subsets: List of names of subsets that will undergo noise injection.
-    :param noise_injectors: List of names of noise injection methods. 
+    :param noise_injectors: List of names of noise injection methods.
     :param noise_params: Parameters of the noise injection.
     """
     for f_noise, affected_subset in product(
             get_noise_functions(noise_injectors, noise_params), affected_subsets):
-        data_source[affected_subset][Dataset.DATA], data_source[affected_subset][Dataset.LABELS] = f_noise(data_source[affected_subset][Dataset.DATA],
-                                                                                                           data_source[affected_subset][Dataset.LABELS])
+        data_source[affected_subset][Dataset.DATA], data_source[affected_subset][Dataset.LABELS] = f_noise(
+            data_source[affected_subset][Dataset.DATA],
+            data_source[affected_subset][Dataset.LABELS])
