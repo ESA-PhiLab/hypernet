@@ -53,7 +53,7 @@ if __name__ == "__main__":
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ('*'),
         "train_size": 0.8,
-        "batch_size": 64,
+        "batch_size": 32,
         "balance_train_dataset": False,
         "balance_val_dataset": False,
         "learning_rate": .01,
