@@ -12,6 +12,7 @@ from typing import Dict, List, Tuple
 
 from utils import overlay_mask, pad
 
+
 def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
     """
     Strips nir channel so image can be displayed.
@@ -124,6 +125,8 @@ class DG_38Cloud(keras.utils.Sequence):
 
         self._files = files
         self._file_indexes = np.arange(len(self._files))
+        if self._shuffle == True:
+            np.random.shuffle(self._file_indexes)
 
 
     def _open_as_array(self, channel_files: Dict[str, Path]) -> np.ndarray:
@@ -232,6 +235,8 @@ class DG_L8CCA(keras.utils.Sequence):
         self.img_shape = img.shape
         self.patches = rearrange(img, '(r dr) (c dc) b -> (r c) dr dc b',
                                  dr=patch_size, dc=patch_size)
+        if self._shuffle == True:
+            np.random.shuffle(self.patches)
         del img
 
 

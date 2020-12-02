@@ -84,8 +84,6 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
     return np.expand_dims(img/255, axis=-1)
 
 
-
-
 def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
                    rpath: Path, vids: Tuple[str], batch_size: int) -> Tuple:
     """
@@ -125,7 +123,6 @@ def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
             print(f"Creating visualisation for {img_id}")
             img_vis = 0.7 * get_full_scene_img(vpath, img_id)
             save_vis(img_id, img_vis, img_pred, img_gt, rpath)
-        
 
     return metrics
 
