@@ -17,6 +17,7 @@ def main(c):
     if c["mlflow"] == True:
         setup_mlflow(c)
     model = train_model(c["train_path"], c["rpath"] / "best_weights", c["train_size"], c["batch_size"],
+                        c["balance_train_dataset"], c["balance_val_dataset"],
                         c["bn_momentum"], c["learning_rate"], c["stopping_patience"], c["epochs"])
     metrics_38Cloud = test_38Cloud(model, c["38Cloud_path"], c["38Cloud_gtpath"], c["vpath"],
                                    c["rpath"] / "38Cloud_vis", c["vids"], c["batch_size"])
@@ -53,6 +54,8 @@ if __name__ == "__main__":
         "vids": ('*'),
         "train_size": 0.8,
         "batch_size": 64,
+        "balance_train_dataset": False,
+        "balance_val_dataset": False,
         "learning_rate": .01,
         "bn_momentum": .9,
         "epochs": 200,

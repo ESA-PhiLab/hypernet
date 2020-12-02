@@ -106,6 +106,7 @@ class DG_38Cloud(keras.utils.Sequence):
     def __init__(self,
                  files,
                  batch_size: int,
+                 balance_classes: bool=False,
                  dim: Tuple[int, int]=(384, 384),
                  shuffle: bool=True,
                  with_gt: bool=True
@@ -114,6 +115,7 @@ class DG_38Cloud(keras.utils.Sequence):
         Prepare generator and init paths to files containing image channels.
         param batch_size: size of generated batches, only one batch is loaded
               to memory at a time.
+        param balance_classes: if True balance classes.
         param dim: Tuple with x, y image dimensions.
         param shuffle: if True shuffles dataset on each epoch end.
         param with_gt: if True returns y along with x.
@@ -122,11 +124,46 @@ class DG_38Cloud(keras.utils.Sequence):
         self._dim: Tuple[int, int] = dim
         self._shuffle: bool = shuffle
         self._with_gt: bool = with_gt
+        self._balance_classes: bool = balance_classes
 
         self._files = files
         self._file_indexes = np.arange(len(self._files))
+        if self._balance_classes:
+            self._balance_file_indexes()
         if self._shuffle == True:
             np.random.shuffle(self._file_indexes)
+
+
+    def _balance_file_indexes(self):
+        """
+        Upsamples the file indexes of the smaller class.
+        """
+        labels = self._get_labels_for_balancing()
+        pos_idx = self._file_indexes[np.array(labels, dtype=bool)]
+        neg_idx = self._file_indexes[~np.array(labels, dtype=bool)]
+        if len(pos_idx) < len(neg_idx):
+            resampled_idx = np.random.choice(pos_idx, len(neg_idx))
+            self._file_indexes = np.concatenate([neg_idx, resampled_idx], axis=0)
+        elif len(pos_idx) > len(neg_idx):
+            resampled_idx = np.random.choice(neg_idx, len(pos_idx))
+            self._file_indexes = np.concatenate([pos_idx, resampled_idx], axis=0)
+        self._file_indexes = np.sort(self._file_indexes)
+
+
+    def _get_labels_for_balancing(self) -> List[int]:
+        """
+        Returns the pseudo-labels for each patch. Pseudo-label being
+        1 if clouds proportion between 0.1 and 0.9, and 0 otherwise.
+        """
+        labels = []
+        for file_ in self._files:
+            gt = self._open_mask(file_)
+            clouds_prop = np.count_nonzero(gt)/np.prod(self._dim)
+            if clouds_prop > 0.1 and clouds_prop < 0.9:
+                labels.append(1)
+            else:
+                labels.append(0)
+        return labels
 
 
     def _open_as_array(self, channel_files: Dict[str, Path]) -> np.ndarray:

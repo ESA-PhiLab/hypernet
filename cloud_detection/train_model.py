@@ -11,7 +11,8 @@ from models import unet
 from losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
 
 
-def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn_momentum: float,
+def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
+                balance_train_dataset: bool, balance_val_dataset: bool, bn_momentum: float,
                 learning_rate: float, stopping_patience: int, epochs: int) -> keras.Model:
     """
     Train the U-Net model using 38-Cloud dataset.
@@ -20,6 +21,8 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn
     param train_size: proportion of the training set (the rest goes to validation set).
     param batch_size: size of generated batches, only one batch is loaded 
           to memory at a time.
+    param balance_train_dataset: whether to balance train dataset.
+    param balance_val_dataset: whether to balance val dataset.
     param bn_momentum: momentum of the batch normalization layer.
     param learning_rate: learning rate for training.
     param stopping_patience: patience param for early stopping.
@@ -34,11 +37,13 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn
         )
     traingen = DG_38Cloud(
         files=train_files,
-        batch_size=batch_size
+        batch_size=batch_size,
+        balance_classes=balance_train_dataset
         )
     valgen = DG_38Cloud(
         files=val_files,
-        batch_size=batch_size
+        batch_size=batch_size,
+        balance_classes=balance_val_dataset
         )
 
     # Create model
