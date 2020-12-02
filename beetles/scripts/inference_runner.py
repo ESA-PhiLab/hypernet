@@ -4,17 +4,18 @@ Run experiments given set of hyperparameters.
 
 import os
 import shutil
+import re
 
 import clize
 import mlflow
 import tensorflow as tf
 from clize.parameters import multi
 
-from scripts import evaluate_model, prepare_data, artifacts_reporter
-from ml_intuition.enums import Splits, Experiment
 from ml_intuition.data.io import load_processed_h5
-from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
+from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
+from ml_intuition.enums import Splits, Experiment
+from scripts import evaluate_model, prepare_data, artifacts_reporter
 
 
 def run_experiments(*,
@@ -26,11 +27,16 @@ def run_experiments(*,
                     stratified: bool = True,
                     background_label: int = 0,
                     channels_idx: int = 0,
+                    neighborhood_size: int = None,
                     save_data: bool = False,
                     n_runs: int,
                     dest_path: str,
                     models_path: str,
+                    model_name: str = 'model_2d',
                     n_classes: int,
+                    use_ensemble: bool = False,
+                    ensemble_copies: int = None,
+                    voting: str = 'hard',
                     batch_size: int = 1024,
                     post_noise_sets: ('spost', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
@@ -68,7 +74,13 @@ def run_experiments(*,
         subfolders in this directory.
     :param models_path: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
+    :param model_name: The name of model for the inference.
     :param n_classes: Number of classes.
+    :param use_ensemble: Use ensemble for prediction.
+    :param ensemble_copies: Number of model copies for the ensemble.
+    :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
+        labels for majority rule voting. Else if ‘soft’, predicts the class
+        label based on the argmax of the sums of the predicted probabilities.
     :param batch_size: Size of the batch for the inference
     :param post_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
@@ -98,9 +110,10 @@ def run_experiments(*,
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))
-        model_path = os.path.join(models_path,
-                                  'experiment_' + str(experiment_id),
-                                  'model_2d')
+        model_name_regex = re.compile('model_.*')
+        model_dir = os.path.join(models_path, f'experiment_{experiment_id}')
+        model_name = list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
+        model_path = os.path.join(model_dir, model_name)
         if dataset_path is None:
             data_source = os.path.join(models_path,
                                        'experiment_' + str(experiment_id),
@@ -109,7 +122,7 @@ def run_experiments(*,
             data_source = dataset_path
         os.makedirs(experiment_dest_path, exist_ok=True)
 
-        if data_file_path.endswith('.h5') and ground_truth_path is None:
+        if data_file_path.endswith('.h5') and ground_truth_path is None and 'patches' not in data_file_path:
             data_source = load_processed_h5(data_file_path=data_file_path)
 
         elif not os.path.exists(data_source):
@@ -121,6 +134,7 @@ def run_experiments(*,
                                             stratified=stratified,
                                             background_label=background_label,
                                             channels_idx=channels_idx,
+                                            neighborhood_size=neighborhood_size,
                                             save_data=save_data,
                                             seed=experiment_id)
 
@@ -129,10 +143,14 @@ def run_experiments(*,
             data=data_source,
             dest_path=experiment_dest_path,
             n_classes=n_classes,
+            use_ensemble=use_ensemble,
+            ensemble_copies=ensemble_copies,
+            voting=voting,
             noise=post_noise,
             noise_sets=post_noise_sets,
             noise_params=noise_params,
-            batch_size=batch_size)
+            batch_size=batch_size,
+            seed=experiment_id)
 
         tf.keras.backend.clear_session()
 

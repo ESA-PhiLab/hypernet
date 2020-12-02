@@ -5,6 +5,7 @@ Perform the inference of the model on the testing dataset.
 import os
 
 import clize
+import yaml
 import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
@@ -16,6 +17,7 @@ from ml_intuition.data.noise import get_noise_functions
 from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
     get_fair_model_metrics
 from ml_intuition.evaluation.time_metrics import timeit
+from ml_intuition.models import Ensemble
 
 
 def evaluate(*,
@@ -24,9 +26,13 @@ def evaluate(*,
              dest_path: str,
              n_classes: int,
              batch_size: int = 1024,
+             use_ensemble: bool = False,
+             ensemble_copies: int = 1,
+             voting: str = 'hard',
              noise: ('post', multi(min=0)),
              noise_sets: ('spost', multi(min=0)),
-             noise_params: str = None):
+             noise_params: str = None,
+             seed: int = 0):
     """
     Function for evaluating the trained model.
 
@@ -35,6 +41,11 @@ def evaluate(*,
     :param dest_path: Directory in which to store the calculated metrics
     :param n_classes: Number of classes.
     :param batch_size: Size of the batch for inference
+    :param use_ensemble: Use ensemble for prediction.
+    :param ensemble_copies: Number of model copies for the ensemble.
+    :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
+            labels for majority rule voting. Else if ‘soft’, predicts the class
+            label based on the argmax of the sums of the predicted probabilities.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
     :param noise_sets: List of sets that are affected by the noise injection.
@@ -46,6 +57,7 @@ def evaluate(*,
         functions that are specified in the noise argument.
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
+    :param seed: Seed for RNG
     """
     if type(data) is str:
         test_dict = io.extract_set(data, enums.Dataset.TEST)
@@ -60,19 +72,35 @@ def evaluate(*,
 
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
-                       transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
-    transformations = transformations + get_noise_functions(noise, noise_params) \
+                       transforms.MinMaxNormalize(min_=min_value,
+                                                  max_=max_value)]
+    transformations = transformations + \
+                      get_noise_functions(noise, noise_params) \
         if enums.Dataset.TEST in noise_sets else transformations
 
     test_dict = transforms.apply_transformations(test_dict, transformations)
 
     model = tf.keras.models.load_model(model_path, compile=True)
+    if use_ensemble:
+        model = Ensemble(model, voting=voting)
+
+        if ensemble_copies is not None:
+            noise_params = yaml.load(noise_params)
+            model.generate_models_with_noise(copies=ensemble_copies,
+                                             mean=noise_params['mean'],
+                                             seed=seed)
+        if voting == 'classifier':
+            train_dict = io.extract_set(data, enums.Dataset.TRAIN)
+            train_dict = transforms.apply_transformations(train_dict, transformations)
+            train_probabilities = model.predict_probabilities(train_dict[enums.Dataset.DATA])
+            model.train_ensemble_predictor(train_probabilities, train_dict[enums.Dataset.LABELS])
 
     predict = timeit(model.predict)
     y_pred, inference_time = predict(test_dict[enums.Dataset.DATA],
                                      batch_size=batch_size)
 
-    y_pred = np.argmax(y_pred, axis=-1)
+    if not use_ensemble:
+        y_pred = np.argmax(y_pred, axis=-1)
     y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 
     model_metrics = get_model_metrics(y_true, y_pred)
