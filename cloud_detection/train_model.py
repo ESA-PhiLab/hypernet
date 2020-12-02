@@ -12,8 +12,7 @@ from losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, r
 
 
 def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn_momentum: float,
-                learning_rate: float, stopping_patience: int, steps_per_epoch: int,
-                epochs: int) -> keras.Model:
+                learning_rate: float, stopping_patience: int, epochs: int) -> keras.Model:
     """
     Train the U-Net model using 38-Cloud dataset.
 
@@ -24,7 +23,6 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn
     param bn_momentum: momentum of the batch normalization layer.
     param learning_rate: learning rate for training.
     param stopping_patience: patience param for early stopping.
-    param steps_per_epoch: number of processed batches per epoch.
     param epochs: number of epochs.
     return: trained model.
     """
@@ -80,7 +78,6 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int, bn
     # Train model
     model.fit_generator(
         generator=traingen,
-        steps_per_epoch=steps_per_epoch,
         epochs=epochs,
         validation_data=valgen,
         callbacks=callbacks,
@@ -102,7 +99,6 @@ if __name__ == "__main__":
         "learning_rate": .01,
         "bn_momentum": .9,
         "epochs": 200,
-        "steps_per_epoch": 10,
         "stopping_patience": 20,
         }
     train_model(**params)
