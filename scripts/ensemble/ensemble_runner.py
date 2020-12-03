@@ -12,9 +12,10 @@ import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
 
+from ml_intuition import enums
 from scripts import prepare_data, artifacts_reporter, predict_with_model
 from scripts.ensemble import evaluate_with_ensemble
-from ml_intuition.enums import Splits, Experiment
+from ml_intuition.enums import Experiment
 from ml_intuition.data.io import load_processed_h5
 from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
@@ -101,13 +102,13 @@ def run_experiments(*,
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
         log_tags_to_mlflow(args['run_name'])
-
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))
 
         os.makedirs(experiment_dest_path, exist_ok=True)
-        y_pred = []
+        models_test_predictions = []
+        models_train_predictions = []
 
         for data_file_path, model_path, model_experiment_name, neighborhood_size in \
                 zip(
@@ -135,25 +136,31 @@ def run_experiments(*,
                                                 save_data=save_data,
                                                 seed=experiment_id)
 
-            predictions = predict_with_model.predict(
+            test_predictions = predict_with_model.predict(
                 model_path=model_path,
                 data=data_source,
-                n_classes=n_classes,
-                noise=post_noise,
-                noise_sets=post_noise_sets,
-                noise_params=noise_params,
                 batch_size=batch_size,
+                dataset_to_predict=enums.Dataset.TEST
             )
-            y_pred.append(predictions)
+            models_test_predictions.append(test_predictions)
 
+            if voting == 'classifier':
+                train_predictions = predict_with_model.predict(
+                    model_path=model_path,
+                    data=data_source,
+                    batch_size=batch_size,
+                    dataset_to_predict=enums.Dataset.TRAIN
+                )
+                models_train_predictions.append(train_predictions)
             tf.keras.backend.clear_session()
 
         evaluate_with_ensemble.evaluate(
-            y_pred=np.array(y_pred),
+            y_pred=np.array(models_test_predictions),
             model_path=model_path,
             data=data_source,
             dest_path=experiment_dest_path,
-            voting=voting)
+            voting=voting,
+            train_set_predictions=np.array(models_train_predictions))
 
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
                                                 dest_path=dest_path,

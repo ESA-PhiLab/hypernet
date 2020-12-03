@@ -270,5 +270,5 @@ class Ensemble:
         predictor = RandomForestClassifier()
         models_count, samples, classes = data.shape
         data = data.swapaxes(0, 1).reshape(samples, models_count * classes)
-        predictor.fit(data, np.argmax(labels, axis=-1))
+        predictor.fit(data, labels)
         self.predictor = predictor
