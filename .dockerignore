@@ -146,4 +146,6 @@ cython_debug/
 
 # Specific datasets
 datasets/clouds
-datasets/houston
+datasets/pavia
+datasets/salinas
+datasets/indiana
