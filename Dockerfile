@@ -28,6 +28,8 @@ RUN mkdir /workspace
 WORKDIR /workspace
 
 ADD datasets/pavia datasets/pavia
+ADD datasets/salinas datasets/salinas
+ADD datasets/indiana datasets/indiana
 ADD ml_intuition ml_intuition
 ADD scripts scripts
 ADD tests tests
