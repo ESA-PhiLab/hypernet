@@ -23,7 +23,7 @@ pipeline {
         }
         stage('Run') {
             steps {
-                sh "docker run ${DOCKER_FLAGS} -v /media/ML:/media/ML -v datasets:/workspace/datasets beetle:${COMMIT_ID} '${params.command_run}'"
+                sh "docker run ${DOCKER_FLAGS} -v /media/ML:/media/ML -v ${WORKSPACE}datasets:/workspace/datasets beetle:${COMMIT_ID} '${params.command_run}'"
             }
         }
     }
