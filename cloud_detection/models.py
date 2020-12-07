@@ -1,6 +1,10 @@
 """ Keras models for cloud detection. """
 
 import tensorflow as tf
+from tensorflow.keras.layers import (Input, Concatenate, Activation,
+                                     Lambda, Conv2D, BatchNormalization,
+                                     MaxPool2D, Conv2DTranspose)
+from math import floor, ceil
 
 
 def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
@@ -25,19 +29,25 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
         :param kernel_size: Kernel size of convolutional layers.
         :param bn_momentum: Momentum of the batch normalization layer.
         """
-        x = tf.keras.layers.Conv2D(filters=filters,
-                                   kernel_size=kernel_size,
-                                   padding="same",
-                                   activation="relu")(x)
-        x = tf.keras.layers.BatchNormalization(momentum=bn_momentum)(x)
-        x = tf.keras.layers.Conv2D(filters=filters,
-                                   kernel_size=kernel_size,
-                                   padding="same",
-                                   activation="relu")(x)
-        x = tf.keras.layers.BatchNormalization(momentum=bn_momentum)(x)
-        x = tf.keras.layers.MaxPool2D(pool_size=3,
-                                      strides=2,
-                                      padding="same")(x)
+        pad_l, pad_r = ceil(kernel_size/2) - 1, floor(kernel_size/2)
+        pad_size = [[0, 0], [pad_l, pad_r], [pad_l, pad_r], [0, 0]]
+        x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
+        x = Conv2D(filters=filters,
+                   kernel_size=kernel_size,
+                   padding="valid",
+                   activation="relu")(x)
+        x = BatchNormalization(momentum=bn_momentum)(x)
+        x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
+        x = Conv2D(filters=filters,
+                   kernel_size=kernel_size,
+                   padding="valid",
+                   activation="relu")(x)
+        x = BatchNormalization(momentum=bn_momentum)(x)
+        pool_pad_size = [[0, 0], [1, 1], [1, 1], [0, 0]]
+        x = Lambda(lambda x: tf.pad(x, pool_pad_size, "SYMMETRIC"))(x)
+        x = MaxPool2D(pool_size=3,
+                      strides=2,
+                      padding="valid")(x)
         return x
 
     def expand_block(x: tf.Tensor,
@@ -52,24 +62,28 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
         :param kernel_size: Kernel size of convolutional layers.
         :param bn_momentum: Momentum of the batch normalization layer.
         """
-        x = tf.keras.layers.Conv2D(filters=filters,
-                                   kernel_size=kernel_size,
-                                   padding="same",
-                                   activation="relu")(x)
-        x = tf.keras.layers.BatchNormalization(momentum=bn_momentum)(x)
-        x = tf.keras.layers.Conv2D(filters=filters,
-                                   kernel_size=kernel_size,
-                                   padding="same",
-                                   activation="relu")(x)
-        x = tf.keras.layers.BatchNormalization(momentum=bn_momentum)(x)
-        x = tf.keras.layers.Conv2DTranspose(filters=filters,
-                                            kernel_size=3,
-                                            strides=2,
-                                            padding="same")(x)
+        pad_l, pad_r = ceil(kernel_size/2) - 1, floor(kernel_size/2)
+        pad_size = [[0, 0], [pad_l, pad_r], [pad_l, pad_r], [0, 0]]
+        x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
+        x = Conv2D(filters=filters,
+                   kernel_size=kernel_size,
+                   padding="valid",
+                   activation="relu")(x)
+        x = BatchNormalization(momentum=bn_momentum)(x)
+        x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
+        x = Conv2D(filters=filters,
+                   kernel_size=kernel_size,
+                   padding="valid",
+                   activation="relu")(x)
+        x = BatchNormalization(momentum=bn_momentum)(x)
+        x = Conv2DTranspose(filters=filters,
+                            kernel_size=3,
+                            strides=2,
+                            padding="same")(x)
         return x
 
-    input_ = tf.keras.layers.Input(shape=(384, 384, input_size))
-    concat = tf.keras.layers.Concatenate(axis=-1)
+    input_ = Input(shape=(384, 384, input_size))
+    concat = Concatenate(axis=-1)
 
     cont1 = contract_block(input_, 32, 7, bn_momentum)
     cont2 = contract_block(cont1, 64, 3, bn_momentum)
@@ -80,7 +94,7 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
     exp2 = expand_block(exp1cont2, 32, 3, bn_momentum)
     exp2cont1 = concat([exp2, cont1])
     exp3 = expand_block(exp2cont1, 1, 3, bn_momentum)
-    out = tf.keras.layers.Activation(activation="sigmoid")(exp3)
+    out = Activation(activation="sigmoid")(exp3)
 
     model = tf.keras.Model(input_, out)
 
