@@ -77,9 +77,9 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
                    activation="relu")(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
         x = Conv2DTranspose(filters=filters,
-                            kernel_size=3,
+                            kernel_size=2,
                             strides=2,
-                            padding="same")(x)
+                            padding="valid")(x)
         return x
 
     input_ = Input(shape=(384, 384, input_size))
