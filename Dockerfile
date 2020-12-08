@@ -30,6 +30,7 @@ WORKDIR /workspace
 ADD ml_intuition ml_intuition
 ADD scripts scripts
 ADD tests tests
+ADD .git .git
 VOLUME "/workspace/parameters"
 
 ENV PARAMETERS_DIR "/workspace/parameters"
