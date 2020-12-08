@@ -43,7 +43,7 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
                    padding="valid",
                    activation="relu")(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
-        pool_pad_size = [[0, 0], [1, 1], [1, 1], [0, 0]]
+        pool_pad_size = [[0, 0], [0, 1], [0, 1], [0, 0]]
         x = Lambda(lambda x: tf.pad(x, pool_pad_size, "SYMMETRIC"))(x)
         x = MaxPool2D(pool_size=3,
                       strides=2,
