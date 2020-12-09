@@ -3,7 +3,7 @@
 import tensorflow as tf
 from tensorflow.keras.layers import (Input, Concatenate, Activation,
                                      Lambda, Conv2D, BatchNormalization,
-                                     MaxPool2D, Conv2DTranspose)
+                                     MaxPool2D, UpSampling2D)
 from math import floor, ceil
 
 
@@ -76,10 +76,7 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
                    padding="valid",
                    activation="relu")(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
-        x = Conv2DTranspose(filters=filters,
-                            kernel_size=2,
-                            strides=2,
-                            padding="valid")(x)
+        x = UpSampling2D(size=(2, 2))(x)
         return x
 
     input_ = Input(shape=(384, 384, input_size))
