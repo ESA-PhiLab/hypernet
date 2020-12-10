@@ -1,0 +1,10 @@
+md5: 81c464e1efd4575a08b9229bd394557c
+frozen: true
+deps:
+- path: hyperspectral/urban/urban_m.npy
+  repo:
+    url: git@git.kplabs.pl:ml/data_registry.git
+    rev_lock: 518cd73d74a2af66b926423d9ea0bb5aa9ae528f
+outs:
+- md5: 0678e8f9d43ee3adfa2a66a2b12a0c53
+  path: urban_m.npy
