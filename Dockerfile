@@ -27,7 +27,6 @@ RUN wget -O xilinx_dnndk_v3.1.tar.gz -nv "https://jug.kplabs.pl/file/cZfqhhaqYz/
 RUN mkdir /workspace
 WORKDIR /workspace
 
-ADD datasets datasets
 ADD ml_intuition ml_intuition
 ADD scripts scripts
 ADD tests tests
