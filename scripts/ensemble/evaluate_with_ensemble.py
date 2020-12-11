@@ -53,6 +53,24 @@ def evaluate(*,
         refer to the ml_intuition/data/noise.py module.
     :param seed: Seed for RNG
     """
+    min_length = np.inf
+    for arr in y_pred:
+        min_length = arr.shape[0] if arr.shape[0] < min_length else min_length
+
+    for i in range(len(y_pred)):
+        y_pred[i] = y_pred[i][:min_length, ...]
+
+    y_pred = np.array(y_pred)
+
+    min_length = np.inf
+    for arr in train_set_predictions:
+        min_length = arr.shape[0] if arr.shape[0] < min_length else min_length
+
+    for i in range(len(train_set_predictions)):
+        train_set_predictions[i] = train_set_predictions[i][:min_length, ...]
+
+    train_set_predictions = np.array(train_set_predictions)
+
     ensemble = Ensemble(voting=voting)
     if voting == 'classifier':
         ensemble.train_ensemble_predictor(train_set_predictions,

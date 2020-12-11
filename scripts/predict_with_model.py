@@ -55,10 +55,10 @@ def predict(*,
     set_dict = transforms.apply_transformations(set_dict, transformations)
 
     model = tf.keras.models.load_model(model_path, compile=True)
-
+    print('before pred:', set_dict[enums.Dataset.DATA].shape)
     y_pred = model.predict(set_dict[enums.Dataset.DATA],
                            batch_size=batch_size)
-
+    print('after pred', y_pred.shape)
     # y_pred = np.argmax(y_pred, axis=-1)
 
     return y_pred

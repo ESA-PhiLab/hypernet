@@ -142,7 +142,7 @@ def run_experiments(*,
                 batch_size=batch_size,
                 dataset_to_predict=enums.Dataset.TEST
             )
-            print(len(test_predictions))
+
             models_test_predictions.append(test_predictions)
 
             if voting == 'classifier':
@@ -156,12 +156,12 @@ def run_experiments(*,
             tf.keras.backend.clear_session()
 
         evaluate_with_ensemble.evaluate(
-            y_pred=np.array(models_test_predictions),
+            y_pred=models_test_predictions,
             model_path=model_path,
             data=data_source,
             dest_path=experiment_dest_path,
             voting=voting,
-            train_set_predictions=np.array(models_train_predictions))
+            train_set_predictions=models_train_predictions)
 
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
                                                 dest_path=dest_path,
