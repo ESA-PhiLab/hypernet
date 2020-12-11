@@ -142,6 +142,7 @@ def run_experiments(*,
                 batch_size=batch_size,
                 dataset_to_predict=enums.Dataset.TEST
             )
+            print(len(test_predictions))
             models_test_predictions.append(test_predictions)
 
             if voting == 'classifier':
