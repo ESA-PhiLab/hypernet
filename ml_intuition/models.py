@@ -223,6 +223,8 @@ class Ensemble:
         :return: Predicted classes
         """
         if self.voting == 'hard':
+            print(predictions.shape)
+            print(np.count_nonzero(~np.isnan(predictions)))
             predictions = np.argmax(predictions, axis=-1)
             return mode(predictions, axis=0).mode[0, :]
         elif self.voting == 'soft':
