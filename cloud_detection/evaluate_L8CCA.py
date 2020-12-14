@@ -1,6 +1,7 @@
 """ Get evaluation metrics for given model on L8CCA dataset. """
 
 import os
+import uuid
 import time
 import numpy as np
 import spectral.io.envi as envi
@@ -127,8 +128,7 @@ def evaluate_model(model: keras.Model, dpath: Path,
 
 
 if __name__ == "__main__":
-    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/"
-                 + "4848bf5b4c464af7b6be5abb0d70f842/"
+    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/f7129e6a404443f591d2e2ad6860c04b/"
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
@@ -142,10 +142,8 @@ if __name__ == "__main__":
             })
     params = {
         "model": model,
-        "dpath": Path(
-            "../datasets/clouds/"
-            + "Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"
-            ),
+        "dpath": Path("datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"),
+        "rpath": Path(f"cloud_detection/artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
         "batch_size": 10
         }

@@ -28,6 +28,7 @@ def false_negatives(y_true, y_pred):
 
 def overlay_mask(image: np.ndarray, mask: np.ndarray, rgb_color: Tuple[float], overlay_intensity: float=0.5) -> np.ndarray:
     """ Overlay a mask on image for visualization purposes. """
+    image = np.copy(image)
     for i, color in enumerate(rgb_color):
         channel = image[:,:,i]
         channel += overlay_intensity * color *  mask[:,:,0]
@@ -99,6 +100,14 @@ def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) ->
 def save_vis(img_id: str, img_vis: np.ndarray, img_pred: np.ndarray, img_gt: np.ndarray, rpath: Path):
     rpath = rpath / img_id
     Path(rpath).mkdir(parents=True, exist_ok=False)
+
+    unc = np.copy(img_pred)
+    unc[unc < 0.001] = 0
+    unc[unc > 0.999] = 0
+    unc[unc != 0] = 1
+    unc_vis = overlay_mask(img_vis, unc, (1, 1, 0), 1.)
+    io.imsave(rpath / "unc.png", img_as_ubyte(unc_vis))
+
     img_pred = np.round(img_pred)
     io.imsave(rpath / "gt.png", img_gt[:,:,0])
     io.imsave(rpath / "pred.png", img_as_ubyte(img_pred[:,:,0]))

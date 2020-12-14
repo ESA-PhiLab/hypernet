@@ -2,6 +2,7 @@
 
 import os
 import re
+import uuid
 import time
 import numpy as np
 from pathlib import Path
@@ -128,7 +129,7 @@ def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
 
 
 if __name__ == "__main__":
-    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/4848bf5b4c464af7b6be5abb0d70f842/"
+    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/f7129e6a404443f591d2e2ad6860c04b/"
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
@@ -142,9 +143,10 @@ if __name__ == "__main__":
             })
     params = {
         "model": model,
-        "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
-        "gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
-        "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
+        "dpath": Path("datasets/clouds/38-Cloud/38-Cloud_test"),
+        "gtpath": Path("datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
+        "vpath": Path("datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
+        "rpath": Path(f"cloud_detection/artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
         "batch_size": 10
         }
