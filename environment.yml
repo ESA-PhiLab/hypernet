@@ -148,6 +148,7 @@ dependencies:
     - pathspec==0.7.0
     - pillow==7.0.0
     - pipreqs==0.4.10
+    - plotly==4.13.0
     - ply==3.11
     - progressbar2==3.47.0
     - protobuf==3.11.2

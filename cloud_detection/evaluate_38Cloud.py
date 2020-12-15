@@ -3,6 +3,7 @@
 import os
 import re
 import time
+import uuid
 import numpy as np
 from pathlib import Path
 from typing import Dict, List, Tuple
@@ -11,6 +12,8 @@ from tensorflow.keras.preprocessing.image import load_img
 
 import losses
 from data_gen import load_image_paths, DG_38Cloud
+from validate import make_precission_recall, make_roc, make_activation_hist
+from validate import datagen_to_gt_array
 from utils import overlay_mask, unpad, get_metrics, save_vis
 
 
@@ -119,13 +122,22 @@ def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
                 metric_name = metric_fn.__name__
             metrics[f"38Cloud_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
         print(f"Average inference time: { sum(scene_times) / len(scene_times) } seconds")
+
         if img_id in vids or '*' in vids:
             print(f"Creating visualisation for {img_id}")
             img_vis = 0.7 * get_full_scene_img(vpath, img_id)
             save_vis(img_id, img_vis, img_pred, img_gt, rpath)
 
-    return metrics
+        if img_metrics['test_jaccard_index_metric'] < 0.6:
+            print("Will make insights for {img_id}", flush=True)
+            y_gt = img_gt.ravel()
+            y_pred = np.round(img_pred.ravel(), decimals=5)
 
+            make_activation_hist(y_pred, rpath)
+            make_roc(y_gt, y_pred, rpath)
+            make_precission_recall(y_gt, y_pred, rpath)
+
+    return metrics
 
 if __name__ == "__main__":
     mpath = Path("/media/ML/mlflow/beetle/artifacts/34/4848bf5b4c464af7b6be5abb0d70f842/"
@@ -145,6 +157,7 @@ if __name__ == "__main__":
         "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
         "gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
         "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
+        "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
         "batch_size": 10
         }
