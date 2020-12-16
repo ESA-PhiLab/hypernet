@@ -9,7 +9,7 @@ from tensorflow import keras
 from data_gen import DG_38Cloud, load_image_paths
 from models import unet
 from losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
-from validate import make_roc
+from validate import make_validation_insights
 
 def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
                 balance_train_dataset: bool, balance_val_dataset: bool, bn_momentum: float,
