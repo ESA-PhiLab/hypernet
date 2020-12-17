@@ -7,7 +7,10 @@ from typing import Dict, List, Tuple, Union
 
 import mlflow
 import numpy as np
+import pandas as pd
+import seaborn as sns
 import tensorflow as tf
+import matplotlib.pyplot as plt
 
 from ml_intuition import enums
 
@@ -39,7 +42,7 @@ def create_tf_dataset(batch_size: int,
     :param batch_size: Size of the batch used in either phase,
         it is the size of samples per gradient step.
     :param dataset: Passed dataset as a dictionary of samples and labels.
-    :param transforms: List of all transformations. 
+    :param transforms: List of all transforma, x=x, y="val_loss"tions.
     :return: Transformed dataset with its size.
     """
     n_samples = dataset[enums.Dataset.DATA].shape[SAMPLES_DIM]
@@ -286,3 +289,16 @@ def get_label_indices_per_class(labels, return_uniques: bool = True):
         return label_indices, unique_labels
     else:
         return label_indices
+
+
+def plot_training_curve(metrics_file: str):
+    df = pd.read_csv(metrics_file)
+    df.drop("TimeHistory", inplace=True, axis=1)
+    sns.lineplot(data=df)
+    plt.ylim(0, 1.5)
+    plt.show()
+
+
+def show_statistics(metrics_file: str):
+    df = pd.read_csv(metrics_file)
+    return df
