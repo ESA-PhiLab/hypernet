@@ -62,15 +62,17 @@ def run_experiments(*,
         Defaults to 0.8
     :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
         each class from the training set to be extracted as a
-        validation set, defaults to 0.1
+        validation set.
+        Defaults to 0.1.
     :param stratified: Indicated whether the extracted training set should be
-        stratified, defaults to True
-    :param background_label: Label indicating the background in GT file
+        stratified.
+        Defaults to True.
+    :param background_label: Label indicating the background in GT file.
     :param channels_idx: Index specifying the channels position in the provided
-        data
+        data.
     :param neighborhood_size: Size of the neighborhood of the pixel.
-        Only used for 2D and 3D models
-    :param save_data: Whether to save the prepared dataset
+        Only used for 2D and 3D models.
+    :param save_data: Whether to save the prepared dataset.
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
         subfolders in this directory.
@@ -96,7 +98,7 @@ def run_experiments(*,
         refer to the ml_intuition/data/noise.py module.
     :param use_mlflow: Whether to log metrics and artifacts to mlflow.
     :param experiment_name: Name of the experiment. Used only if
-        use_mlflow = True
+        use_mlflow = True.
     :param run_name: Name of the run. Used only if use_mlflow = True.
     """
     train_size = parse_train_size(train_size)

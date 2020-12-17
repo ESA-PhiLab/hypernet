@@ -1,5 +1,5 @@
 """
-Run experiments given set of hyperparameters.
+Run experiments given set of hyperparameters for the unmixing problem.
 """
 
 import os
@@ -60,29 +60,23 @@ def run_experiments(*,
                     experiment_name: str = None,
                     run_name: str = None):
     """
-    Function for running experiments given a set of hyper parameters.
-    :param data_file_path: Path to the data file. Supported types are: .npy
+    Function for running experiments on unmixing given a set of hyperparameters.
+
+    :param data_file_path: Path to the data file. Supported types are: .npy.
     :param ground_truth_path: Path to the ground-truth data file.
-    :param train_size: If float, should be between 0.0 and 1.0,
-        if stratified = True, it represents percentage of each class
-        to be extracted.
-        If float and stratified = False, it represents percentage of the
-            whole dataset to be extracted with samples drawn randomly,
-            regardless of their class.
-         If int and stratified = True, it represents number of samples
-            to be drawn from each class.
-         If int and stratified = False, it represents overall number of
-            samples to be drawn regardless of their class, randomly.
-         Defaults to 0.8
+    :param train_size: If float, should be between 0.0 and 1.0.
+        If int, specifies the number of samples in the training set.
+        Defaults to 0.8
     :param val_size: Should be between 0.0 and 1.0. Represents the
-        percentage of each class from the training set to be
-        extracted as a validation set, defaults to 0.1
+        percentage of samples from the training set to be
+        extracted as a validation set.
+        Defaults to 0.1.
     :param sub_test_size: Number of pixels to subsample the test set
-        instead of performing the inference on all untrained samples.
-    :param channels_idx: Index specifying the channels position in the provided
-                         data.
+        instead of performing the inference on all
+        samples that are not in the training set.
+    :param channels_idx: Index specifying the channels position in the provided data.
     :param neighborhood_size: Size of the spatial patch.
-    :param save_data: Whether to save the prepared dataset
+    :param save_data: Boolean indicating whether to save the prepared dataset.
     :param n_runs: Number of total experiment runs.
     :param model_name: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
@@ -96,14 +90,13 @@ def run_experiments(*,
         it is the size of samples per gradient step.
     :param epochs: Number of epochs for model to train.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
-    :param shuffle: Boolean indicating whether to shuffle dataset
-     dataset_key each epoch.
+    :param shuffle: Boolean indicating whether to shuffle dataset.
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
     :param use_mlflow: Whether to log metrics and artifacts to mlflow.
-    :param endmembers_path: Path to the endmembers file containing
-        average reflectances for each class.
-        Used only when use_unmixing is true.
+    :param endmembers_path: Path to the endmembers matrix file,
+        containing the average reflectances for each endmember,
+        i.e., the pure spectra.
     :param experiment_name: Name of the experiment. Used only if
         use_mlflow = True
     :param run_name: Name of the run. Used only if use_mlflow = True.

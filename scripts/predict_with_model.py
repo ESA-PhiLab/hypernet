@@ -34,7 +34,7 @@ def predict(*,
     :param data: Either path to the input data or the data dict.
     :param model_path: Path to the model.
     :param n_classes: Number of classes.
-    :param batch_size: Size of the batch for inference
+    :param batch_size: Size of the batch for inference.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
     :param noise_sets: List of sets that are affected by the noise injection.

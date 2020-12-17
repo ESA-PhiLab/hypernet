@@ -39,9 +39,9 @@ def evaluate(*,
 
     :param model_path: Path to the model.
     :param data: Either path to the input data or the data dict.
-    :param dest_path: Directory in which to store the calculated metrics
+    :param dest_path: Directory in which to store the calculated metrics.
     :param n_classes: Number of classes.
-    :param batch_size: Size of the batch for inference
+    :param batch_size: Size of the batch for inference.
     :param use_ensemble: Use ensemble for prediction.
     :param ensemble_copies: Number of model copies for the ensemble.
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
@@ -58,7 +58,7 @@ def evaluate(*,
         functions that are specified in the noise argument.
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
-    :param seed: Seed for RNG
+    :param seed: Seed for RNG.
     """
     os.makedirs(dest_path, exist_ok=True)
     if type(data) is str:

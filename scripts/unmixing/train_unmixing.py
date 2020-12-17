@@ -1,5 +1,5 @@
 """
-Perform the training of the model for the unmixing problem.
+Perform the training of the models for the unmixing problem.
 """
 
 import os
@@ -33,12 +33,14 @@ def train(data: Dict[str, np.ndarray],
     """
     Function for running experiments on various unmixing models,
     given a set of hyper parameters.
-    :param data: Either path to the input data or the data dict itself.
+
+    :param data: The data dictionary containing
+        the subsets for training and validation.
         First dimension of the dataset should be the number of samples.
     :param model_name: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
     :param dest_path: Path to where all experiment runs will be saved as
-        subdirectories in this directory.
+        subdirectories in this given directory.
     :param sample_size: Size of the input sample.
     :param n_classes: Number of classes.
     :param neighborhood_size: Size of the spatial patch.
@@ -48,13 +50,12 @@ def train(data: Dict[str, np.ndarray],
         it is the size of samples per gradient step.
     :param epochs: Number of epochs for model to train.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
-    :param shuffle: Boolean indicating whether to shuffle dataset
-     dataset_key each epoch.
+    :param shuffle: Boolean indicating whether to shuffle dataset.
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
-    :param endmembers_path: Path to the endmembers file
-        containing average reflectances for each class, i.e., the pure spectra.
-        Used only when use_unmixing is true.
+    :param endmembers_path: Path to the endmembers matrix file,
+        containing the average reflectances for each endmember,
+        i.e., the pure spectra.
     :param seed: Seed for training reproducibility.
     """
     # Reproducibility:
