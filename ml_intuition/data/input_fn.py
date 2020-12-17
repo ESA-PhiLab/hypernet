@@ -17,6 +17,7 @@ def calibrate_2d_input(iter: int) -> Dict[str, np.ndarray]:
     Return dictionary with a batch of the training data to be used for
     quantization calibration. One dimension and the end is added and the
     min max normalization is performed.
+
     :param iter: Int object indicating the calibration step
     :return: Dict with name of the input node as key and training samples in
              np.ndarray as value

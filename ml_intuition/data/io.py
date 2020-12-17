@@ -13,7 +13,7 @@ import tensorflow as tf
 import tifffile
 
 import ml_intuition.enums as enums
-from ml_intuition.data.utils import build_data_dict
+from ml_intuition.data.utils import _build_data_dict
 
 UNMIXING_CLASS_FRACTIONS = 0
 
@@ -67,7 +67,7 @@ def extract_set(data_path: str, dataset_key: str) -> Dict[
     str, Union[np.ndarray, float]]:
     """
     Function for loading a h5 format dataset as a dictionary
-        of samples, labels, min and max values.
+    of samples, labels, min and max values.
 
     :param data_path: Path to the dataset.
     :param dataset_key: Key for dataset.
@@ -106,8 +106,8 @@ def load_npy(data_file_path: str, gt_input_path: str,
 
 def load_satellite_h5(data_file_path: str) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Load hyperspectral cube and ground truth
-        transformation matrix from .h5 file
+    Load hyperspectral cube and ground truth transformation matrix from .h5 file
+
     :param data_file_path: Path to the .h5 file
     :return: Hyperspectral cube and transformation matrix,
         both as np.ndarray
@@ -122,6 +122,7 @@ def load_processed_h5(data_file_path: str) -> Dict:
     """
     Load processed dataset containing the train, validation and test subsets
     with corresponding samples and labels.
+
     :param data_file_path: Path to the .h5 file.
     :return: Dictionary containing train, validation and test subsets.
     """
@@ -133,23 +134,27 @@ def load_processed_h5(data_file_path: str) -> Dict:
             file[enums.Dataset.VAL][enums.Dataset.LABELS][:], \
             file[enums.Dataset.TEST][enums.Dataset.DATA][:], \
             file[enums.Dataset.TEST][enums.Dataset.LABELS][:]
-    return build_data_dict(train_x=train_x, train_y=train_y,
-                           val_x=val_x, val_y=val_y,
-                           test_x=test_x, test_y=test_y)
+    return _build_data_dict(train_x=train_x, train_y=train_y,
+                            val_x=val_x, val_y=val_y,
+                            test_x=test_x, test_y=test_y)
 
 
 def load_tiff(file_path: str) -> np.ndarray:
     """
     Load tiff image into np.ndarray
+
     :param file_path: Path to the .tiff file
     :return: Loaded image as np.ndarray
     """
     return tifffile.imread(file_path)
 
 
-def save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y):
+def save_md5(output_path: str, train_x: np.ndarray, train_y: np.ndarray,
+             val_x: np.ndarray, val_y: np.ndarray, test_x: np.ndarray,
+             test_y: np.ndarray) -> None:
     """
     Save provided data as .md5 file
+
     :param output_path: Path to the filename
     :param train_x: Train set
     :param train_y: Train labels
@@ -157,7 +162,7 @@ def save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y):
     :param val_y: Validation labels
     :param test_x: Test set
     :param test_y: Test labels
-    :return:
+    :return: None
     """
     data_file = h5py.File(output_path, 'w')
 
@@ -182,7 +187,8 @@ def save_md5(output_path, train_x, train_y, val_x, val_y, test_x, test_y):
 def read_min_max(path: str) -> Tuple[float, float]:
     """
     Read min and max value from a .csv file
-    :param path:
+
+    :param path: Path to the .csv file containing min and max value
     :return: Tuple with min and max
     """
     min_, max_ = np.loadtxt(path)
@@ -192,6 +198,7 @@ def read_min_max(path: str) -> Tuple[float, float]:
 def load_pb(path_to_pb: str) -> tf.GraphDef:
     """
     Load .pb file as a graph
+
     :param path_to_pb: Path to the .pb file
     :return: Loaded graph
     """
@@ -204,10 +211,11 @@ def load_pb(path_to_pb: str) -> tf.GraphDef:
 
 
 def save_confusion_matrix(matrix: np.ndarray, dest_path: str,
-                          filename: str = 'confusion_matrix'):
+                          filename: str = 'confusion_matrix') -> None:
     """
     Save confusion matrix to provided destination. If filename is not provided
     'confusion_matrix.csv' will be used.
+
     :param matrix: Matrix to save
     :param dest_path: Destination folder
     :param filename: Name of the file, defaults to 'confusion_matrix.csv'

@@ -1,9 +1,8 @@
 """
-All models that are used for training.
+All models that are used in the project.
 """
 
 import sys
-import functools
 from copy import deepcopy
 from typing import Union, List
 
@@ -29,6 +28,8 @@ def model_2d(kernel_size: int,
     :param input_size: Number of input channels, i.e.,
         the number of spectral bands.
     :param n_classes: Number of classes.
+    :param kwargs: Additional arguments.
+    :return: Compiled model ready for training
     """
 
     def add_layer(model):
@@ -80,6 +81,8 @@ def pool_model_2d(kernel_size: int,
     :param input_size: Number of input channels, i.e.,
         the number of spectral bands.
     :param n_classes: Number of classes.
+    :param kwargs: Additional arguments.
+    :return: Compiled model ready for training
     """
 
     def add_layer(model):
@@ -107,7 +110,17 @@ def model_3d_mfl(kernel_size: int,
                  n_kernels: int,
                  n_classes: int,
                  input_size: int,
-                 **kwargs):
+                 **kwargs) -> tf.keras.Sequential:
+    """
+    Multiple Features Learning model from: https://ieeexplore.ieee.org/document/6882821/figures#figures
+
+    :param kernel_size: Size of the convolutional kernel
+    :param n_kernels: Number of kernels in each convolutional layer
+    :param n_classes: Number of classes in the dataset
+    :param input_size: Size of the input sample
+    :param kwargs: Additional arguments.
+    :return: Compiled model ready for training
+    """
     model = tf.keras.Sequential()
     model.add(tf.keras.layers.Conv2D(filters=n_kernels,
                                      kernel_size=kernel_size - 3,
@@ -130,7 +143,15 @@ def model_3d_mfl(kernel_size: int,
     return model
 
 
-def model_3d_deep(n_classes: int, input_size: int, **kwargs):
+def model_3d_deep(n_classes: int, input_size: int, **kwargs) -> tf.keras.Sequential:
+    """
+    Deep 3D convolutional model from: https://arxiv.org/pdf/1907.11935.pdf
+
+    :param n_classes: Number of classes in the dataset
+    :param input_size: Size of the input sample
+    :param kwargs: Additional arguments.
+    :return: Compiled model ready for training
+    """
     model = tf.keras.Sequential()
     model.add(
         tf.keras.layers.Conv3D(filters=24, kernel_size=3, activation='relu',
@@ -148,7 +169,7 @@ def model_3d_deep(n_classes: int, input_size: int, **kwargs):
     return model
 
 
-def get_model(model_key: str, **kwargs):
+def _get_model(model_key: str, **kwargs):
     """
     Get a given instance of model specified by model_key.
 
@@ -170,21 +191,24 @@ class Ensemble:
                  voting: str = 'hard'):
         """
         Ensemble for using multiple models for prediction
+
         :param models: Either list of tf.keras.models.Sequential models,
             or a list of paths to the models (can't mix both).
         :param voting: If ‘hard’, uses predicted class labels for majority rule
             voting. Else if ‘soft’, predicts the class label based on the argmax
-            of the sums of the predicted probabilities.
+            of the sums of the predicted probabilities. If 'classifier', a
+            Random Forest trained on train set predictions is used as a voter.
         """
         self.models = models
         self.voting = voting
         self.predictor = None
 
     def generate_models_with_noise(self, copies: int = 5, mean: float = None,
-                                   std: float = None, seed=None):
+                                   std: float = None, seed=None) -> None:
         """
         Generate new models by injecting Gaussian noise into the original
         model's weights.
+
         :param copies: Number of models to generate
         :param mean: Mean used to draw noise from normal distribution.
             If None, it will be calculated from the layer itself.
@@ -208,9 +232,10 @@ class Ensemble:
 
     @staticmethod
     def inject_noise_to_weights(weights: List[np.ndarray], mean: float,
-                                std: float):
+                                std: float) -> List[np.ndarray]:
         """
         Inject noise into all layers
+
         :param weights: List of weights for each layer
         :param mean: Mean used to draw noise from normal distribution.
         :param std: Std used to draw noise from normal distribution.
@@ -227,6 +252,7 @@ class Ensemble:
     def vote(self, predictions: np.ndarray) -> np.ndarray:
         """
         Perform voting process on provided predictions
+
         :param predictions: Predictions of all models
         :return: Predicted classes
         """
@@ -243,9 +269,10 @@ class Ensemble:
             return self.predictor.predict(predictions)
 
     def predict_probabilities(self, data: Union[np.ndarray, List[np.ndarray]],
-                              batch_size: int = 1024):
+                              batch_size: int = 1024) -> np.ndarray:
         """
         Return predicted classes
+
         :param data: Either a single dataset which will be fed into all of the
             models, or a list of datasets, unique for each model
         :param batch_size: Size of the batch used for prediction
@@ -266,6 +293,7 @@ class Ensemble:
                 batch_size: int = 1024) -> np.ndarray:
         """
         Return predicted classes
+
         :param data: Either a single dataset which will be fed into all of the
             models, or a list of datasets, unique for each model
         :param batch_size: Size of the batch used for prediction
@@ -274,7 +302,13 @@ class Ensemble:
         predictions = self.predict_probabilities(data, batch_size)
         return self.vote(predictions)
 
-    def train_ensemble_predictor(self, data: np.ndarray, labels: np.ndarray):
+    def train_ensemble_predictor(self, data: np.ndarray, labels: np.ndarray) -> None:
+        """
+        Train the Random Forest on train set predictions
+
+        :param data: Predictions of the models on training set
+        :param labels: Corresponding las
+        """
         predictor = RandomForestClassifier()
         models_count, samples, classes = data.shape
         data = data.swapaxes(0, 1).reshape(samples, models_count * classes)

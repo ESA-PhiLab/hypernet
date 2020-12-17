@@ -52,14 +52,6 @@ ml\_intuition.data.transforms module
    :undoc-members:
    :show-inheritance:
 
-ml\_intuition.data.utils module
--------------------------------
-
-.. automodule:: ml_intuition.data.utils
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 
 Module contents
 ---------------

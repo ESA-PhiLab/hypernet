@@ -98,6 +98,7 @@ def apply_transformations(data: Dict,
                           transformations: List[BaseTransform]) -> Dict:
     """
     Apply each transformation from provided list
+
     :param data: Dictionary with 'data' and 'labels' keys holding np.ndarrays
     :param transformations: List of transformations
     :return: Transformed data, in the same format as input

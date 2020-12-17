@@ -62,7 +62,7 @@ def train(data: Dict[str, np.ndarray],
     tf.set_random_seed(seed=seed)
     np.random.seed(seed=seed)
 
-    model = models.get_model(
+    model = models._get_model(
         model_key=model_name,
         **{'input_size': sample_size,
            'n_classes': n_classes,

@@ -1,5 +1,6 @@
 """
-Run experiments given set of hyperparameters.
+Run inference N times on the provided model given set of hyperparameters. Has
+the option to inject noise into the test set.
 """
 
 import os
@@ -45,29 +46,30 @@ def run_experiments(*,
                     experiment_name: str = None,
                     run_name: str = None):
     """
-    Function for running experiments given a set of hyperparameters.
+    Run inference on the provided model given set of hyperparameters.
+
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the ground-truth data file.
     :param dataset_path: Path to the already extracted .h5 dataset
-    :param train_size: If float, should be between 0.0 and 1.0,
-                        if stratified = True, it represents percentage of each
-                        class to be extracted,
-                 If float and stratified = False, it represents percentage of the
-                    whole dataset to be extracted with samples drawn randomly,
-                    regardless of their class.
-                 If int and stratified = True, it represents number of samples
-                    to be drawn from each class.
-                 If int and stratified = False, it represents overall number of
-                    samples to be drawn regardless of their class, randomly.
-                 Defaults to 0.8
+    :param train_size: If float, should be between 0.0 and 1.0.
+        If stratified = True, it represents percentage of each class to be extracted,
+        If float and stratified = False, it represents percentage of the whole
+        dataset to be extracted with samples drawn randomly, regardless of their class.
+        If int and stratified = True, it represents number of samples to be
+        drawn from each class.
+        If int and stratified = False, it represents overall number of samples
+        to be drawn regardless of their class, randomly.
+        Defaults to 0.8
     :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
-                     each class from the training set to be extracted as a
-                     validation set, defaults to 0.1
+        each class from the training set to be extracted as a
+        validation set, defaults to 0.1
     :param stratified: Indicated whether the extracted training set should be
-                     stratified, defaults to True
+        stratified, defaults to True
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
-                         data
+        data
+    :param neighborhood_size: Size of the neighborhood of the pixel.
+        Only used for 2D and 3D models
     :param save_data: Whether to save the prepared dataset
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as

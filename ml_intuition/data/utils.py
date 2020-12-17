@@ -1,5 +1,5 @@
 """
-All data handling methods.
+Helper functions
 """
 
 import os
@@ -18,7 +18,7 @@ SAMPLES_DIM = 0
 MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
 
 
-def subsample_test_set(data: Dict, test_size: int):
+def subsample_test_set(data: Dict, test_size: int) -> None:
     """
     Subsample the test set.
 
@@ -42,7 +42,7 @@ def create_tf_dataset(batch_size: int,
     :param batch_size: Size of the batch used in either phase,
         it is the size of samples per gradient step.
     :param dataset: Passed dataset as a dictionary of samples and labels.
-    :param transforms: List of all transforma, x=x, y="val_loss"tions.
+    :param transforms: List of all transformations, x=x, y="val_loss".
     :return: Transformed dataset with its size.
     """
     n_samples = dataset[enums.Dataset.DATA].shape[SAMPLES_DIM]
@@ -57,7 +57,7 @@ def create_tf_dataset(batch_size: int,
                .repeat().prefetch(tf.contrib.data.AUTOTUNE), n_samples
 
 
-def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
+def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0) -> None:
     """
     Shuffle arbitrary number of arrays together, in-place
 
@@ -82,6 +82,7 @@ def freeze_session(session: tf.Session,
     constants taking their current value in the session. The new graph will be
     pruned so subgraphs that are not necessary to compute the requested
     outputs are removed.
+
     :param session: The TensorFlow session to be frozen.
     :param keep_var_names: A list of variable names that should not be frozen,
                           or None to freeze all the variables in the graph.
@@ -106,9 +107,10 @@ def freeze_session(session: tf.Session,
     return frozen_graph
 
 
-def build_data_dict(train_x, train_y, val_x, val_y, test_x, test_y) -> Dict:
+def _build_data_dict(train_x, train_y, val_x, val_y, test_x, test_y) -> Dict:
     """
     Build data dictionary with following structure:
+
     'train':
         'data': np.ndarray
         'labels': np.ndarray

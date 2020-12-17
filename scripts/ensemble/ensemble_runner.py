@@ -1,5 +1,5 @@
 """
-Run experiments given set of hyperparameters.
+Run N experiments utilizing the ensemble model.
 """
 
 import os
@@ -44,36 +44,33 @@ def run_experiments(*,
                     run_name: str = None):
     """
     Function for running experiments given a set of hyper parameters.
+
     :param data_file_paths: Path to the data file. Supported types are: .npy
-    :param ground_truth_paths: Path to the ground-truth data file.
-    :param train_size: If float, should be between 0.0 and 1.0,
-                        if stratified = True, it represents percentage of each
-                        class to be extracted,
-                 If float and stratified = False, it represents percentage of the
-                    whole dataset to be extracted with samples drawn randomly,
-                    regardless of their class.
-                 If int and stratified = True, it represents number of samples
-                    to be drawn from each class.
-                 If int and stratified = False, it represents overall number of
-                    samples to be drawn regardless of their class, randomly.
-                 Defaults to 0.8
+    :param train_size: If float, should be between 0.0 and 1.0.
+        If stratified = True, it represents percentage of each class to be extracted,
+        If float and stratified = False, it represents percentage of the whole
+        dataset to be extracted with samples drawn randomly, regardless of their class.
+        If int and stratified = True, it represents number of samples to be
+        drawn from each class.
+        If int and stratified = False, it represents overall number of samples
+        to be drawn regardless of their class, randomly.
+        Defaults to 0.8
     :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
-                     each class from the training set to be extracted as a
-                     validation set, defaults to 0.1
+        each class from the training set to be extracted as a
+        validation set, defaults to 0.1
     :param stratified: Indicated whether the extracted training set should be
-                     stratified, defaults to True
+        stratified, defaults to True
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
-                         data
+        data
+    :param neighborhood_sizes: Sizes of the neighbourhood of each provided model
     :param save_data: Whether to save the prepared dataset
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
         subfolders in this directory.
-    :param models_path: Name of the model, it serves as a key in the
-        dictionary holding all functions returning models.
+    :param model_paths: Paths to all models to be used in ensemble
+    :param model_experiment_names: Names of MLFlow experiments
     :param n_classes: Number of classes.
-    :param use_ensemble: Use ensemble for prediction.
-    :param ensemble_copies: Number of model copies for the ensemble.
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
         labels for majority rule voting. Else if ‘soft’, predicts the class
         label based on the argmax of the sums of the predicted probabilities.

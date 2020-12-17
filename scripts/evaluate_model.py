@@ -1,5 +1,5 @@
 """
-Perform the inference of the model on the testing dataset.
+Perform the inference of the model on the provided dataset.
 """
 
 import os
@@ -45,8 +45,8 @@ def evaluate(*,
     :param use_ensemble: Use ensemble for prediction.
     :param ensemble_copies: Number of model copies for the ensemble.
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
-            labels for majority rule voting. Else if ‘soft’, predicts the class
-            label based on the argmax of the sums of the predicted probabilities.
+        labels for majority rule voting. Else if ‘soft’, predicts the class
+        label based on the argmax of the sums of the predicted probabilities.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
     :param noise_sets: List of sets that are affected by the noise injection.

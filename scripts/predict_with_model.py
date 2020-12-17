@@ -1,5 +1,5 @@
 """
-Perform the inference of the model on the testing dataset.
+Perform the inference of the model on the provided dataset.
 """
 
 import os
@@ -31,16 +31,10 @@ def predict(*,
     """
     Function for evaluating the trained model.
 
-    :param model_path: Path to the model.
     :param data: Either path to the input data or the data dict.
-    :param dest_path: Directory in which to store the calculated metrics
+    :param model_path: Path to the model.
     :param n_classes: Number of classes.
     :param batch_size: Size of the batch for inference
-    :param use_ensemble: Use ensemble for prediction.
-    :param ensemble_copies: Number of model copies for the ensemble.
-    :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
-            labels for majority rule voting. Else if ‘soft’, predicts the class
-            label based on the argmax of the sums of the predicted probabilities.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
     :param noise_sets: List of sets that are affected by the noise injection.
@@ -52,7 +46,6 @@ def predict(*,
         functions that are specified in the noise argument.
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
-    :param seed: Seed for RNG
     """
     if type(data) is str:
         test_dict = io.extract_set(data, enums.Dataset.TEST)
@@ -81,8 +74,6 @@ def predict(*,
 
     y_pred = model.predict(test_dict[enums.Dataset.DATA],
                            batch_size=batch_size)
-
-    # y_pred = np.argmax(y_pred, axis=-1)
 
     return y_pred
 

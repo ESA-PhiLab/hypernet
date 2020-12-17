@@ -1,5 +1,5 @@
 """
-Freeze model, quantize it and evaluate for multiple runs.
+Freeze model, quantize it and evaluate N times.
 """
 
 import os
@@ -8,8 +8,9 @@ import subprocess
 import clize
 from clize.parameters import multi
 import tensorflow as tf
-from scripts import evaluate_graph, freeze_model, prepare_data, \
+from scripts import prepare_data, \
     artifacts_reporter
+from scripts.quantization import freeze_model, evaluate_graph
 
 
 def run_experiments(*,
@@ -27,7 +28,8 @@ def run_experiments(*,
                     stratified: bool = True,
                     gpu: bool = 0):
     """
-    Function for running experiments given a set of hyperparameters.
+    Freeze model, quantize it and evaluate N times.
+
     :param input_dir: Directory with saved data and models, each in separate
         `experiment_n` folder.
     :param n_runs: Number of total experiment runs.
@@ -40,21 +42,19 @@ def run_experiments(*,
     :param dataset_path: Path to the already extracted .h5 dataset
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
-                         data
+        data
     :param channels_count: Number of channels (bands) in the image.
-    :param train_size: If float, should be between 0.0 and 1.0,
-                    if stratified = True, it represents percentage of each
-                    class to be extracted,
-             If float and stratified = False, it represents percentage of the
-                whole dataset to be extracted with samples drawn randomly,
-                regardless of their class.
-             If int and stratified = True, it represents number of samples
-                to be drawn from each class.
-             If int and stratified = False, it represents overall number of
-                samples to be drawn regardless of their class, randomly.
-             Defaults to 0.8
+    :param train_size: If float, should be between 0.0 and 1.0.
+        If stratified = True, it represents percentage of each class to be extracted,
+        If float and stratified = False, it represents percentage of the whole
+        dataset to be extracted with samples drawn randomly, regardless of their class.
+        If int and stratified = True, it represents number of samples to be
+        drawn from each class.
+        If int and stratified = False, it represents overall number of samples
+        to be drawn regardless of their class, randomly.
+        Defaults to 0.8
     :param stratified: Indicated whether the extracted training set should be
-                 stratified, defaults to True
+        stratified, defaults to True
     :param batch_size: Batch size
     :param gpu: Whether to run quantization on gpu.
     """

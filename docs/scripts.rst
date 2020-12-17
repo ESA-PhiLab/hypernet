@@ -1,6 +1,15 @@
 scripts package
 ===============
 
+Subpackages
+-----------
+
+.. toctree::
+
+   scripts.ensemble
+   scripts.unmixing
+   scripts.quantization
+
 Submodules
 ----------
 
@@ -72,14 +81,6 @@ scripts.quantize\_runner module
 -------------------------------
 
 .. automodule:: scripts.quantize_runner
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scripts.train\_merged\_data\_runner module
-------------------------------------------
-
-.. automodule:: scripts.train_merged_data_runner
    :members:
    :undoc-members:
    :show-inheritance:

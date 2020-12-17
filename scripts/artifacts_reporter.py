@@ -1,3 +1,7 @@
+"""
+Collect the artifacts report based on the experiment runs
+placed in the "experiments_path" directory.
+"""
 import os
 
 import clize
