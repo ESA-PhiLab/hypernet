@@ -133,9 +133,12 @@ def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
             y_gt = img_gt.ravel()
             y_pred = np.round(img_pred.ravel(), decimals=5)
 
-            make_activation_hist(y_pred, rpath)
-            make_roc(y_gt, y_pred, rpath)
-            make_precission_recall(y_gt, y_pred, rpath)
+            make_roc(y_gt, y_pred, rpath / img_id)
+            make_precission_recall(y_gt, y_pred, rpath / img_id)
+
+            # Make histogram with more rounded predictions for performance reasons
+            y_pred = np.round(y_pred, decimals=3)
+            make_activation_hist(y_pred, rpath / img_id)
 
     return metrics
 
