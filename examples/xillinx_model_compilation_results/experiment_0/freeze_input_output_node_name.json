@@ -1,0 +1,4 @@
+{
+    "input_node": "conv2d_input",
+    "output_node": "dense_2/Softmax"
+}
