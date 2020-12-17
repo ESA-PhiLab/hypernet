@@ -5,12 +5,12 @@ All data handling methods.
 import os
 from typing import Dict, List, Tuple, Union
 
+import matplotlib.pyplot as plt
 import mlflow
 import numpy as np
 import pandas as pd
 import seaborn as sns
 import tensorflow as tf
-import matplotlib.pyplot as plt
 
 from ml_intuition import enums
 
@@ -225,7 +225,6 @@ def list_to_string(list_to_convert: List) -> str:
     return ",".join(map(str, list_to_convert))
 
 
-
 def get_central_pixel_spectrum(data: np.ndarray,
                                neighborhood_size: int) -> np.ndarray:
     """
@@ -251,7 +250,8 @@ def get_mlflow_artifacts_path(artifacts_storage_path: str,
     """
     if experiment_name is not None:
         mlflow.set_experiment(experiment_name)
-    filter_string = 'parameters.artifacts_storage = \'{}\''.format(artifacts_storage_path)
+    filter_string = 'parameters.artifacts_storage = \'{}\''.format(
+        artifacts_storage_path)
     result = mlflow.search_runs(filter_string=filter_string)['artifact_uri'][0]
     return os.path.join(result, artifacts_storage_path)
 
@@ -291,11 +291,13 @@ def get_label_indices_per_class(labels, return_uniques: bool = True):
         return label_indices
 
 
-def plot_training_curve(metrics_file: str):
-    df = pd.read_csv(metrics_file)
-    df.drop("TimeHistory", inplace=True, axis=1)
+def plot_training_curve(metrics_file: str,
+                        curve_names: List[str],
+                        y_limit: bool = True):
+    df = pd.read_csv(metrics_file)[curve_names]
     sns.lineplot(data=df)
-    plt.ylim(0, 1.5)
+    if y_limit:
+        plt.ylim(0, 1.5)
     plt.show()
 
 
