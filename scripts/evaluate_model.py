@@ -10,6 +10,7 @@ import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
 from sklearn.metrics import confusion_matrix
+from copy import copy
 
 from ml_intuition import enums
 from ml_intuition.data import io, transforms
@@ -59,10 +60,11 @@ def evaluate(*,
         refer to the ml_intuition/data/noise.py module.
     :param seed: Seed for RNG
     """
+    os.makedirs(dest_path, exist_ok=True)
     if type(data) is str:
         test_dict = io.extract_set(data, enums.Dataset.TEST)
     else:
-        test_dict = data[enums.Dataset.TEST]
+        test_dict = copy(data[enums.Dataset.TEST])
     min_max_path = os.path.join(os.path.dirname(model_path), "min-max.csv")
     if os.path.exists(min_max_path):
         min_value, max_value = io.read_min_max(min_max_path)
