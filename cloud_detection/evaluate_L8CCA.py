@@ -5,6 +5,7 @@ import uuid
 import time
 import numpy as np
 import spectral.io.envi as envi
+import tensorflow as tf
 from einops import rearrange
 from pathlib import Path
 from typing import Tuple
@@ -128,7 +129,7 @@ def evaluate_model(model: keras.Model, dpath: Path,
 
 
 if __name__ == "__main__":
-    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/f7129e6a404443f591d2e2ad6860c04b/"
+    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/987cc26176464e6dad02bfa4757a10a3/"
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
@@ -138,7 +139,8 @@ if __name__ == "__main__":
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
-            "f1_score": losses.f1_score
+            "f1_score": losses.f1_score,
+            "tf": tf
             })
     params = {
         "model": model,
