@@ -1,9 +1,11 @@
 """ Get evaluation metrics for given model on L8CCA dataset. """
 
 import os
+import uuid
 import time
 import numpy as np
 import spectral.io.envi as envi
+import tensorflow as tf
 from einops import rearrange
 from pathlib import Path
 from typing import Tuple
@@ -127,8 +129,7 @@ def evaluate_model(model: keras.Model, dpath: Path,
 
 
 if __name__ == "__main__":
-    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/"
-                 + "4848bf5b4c464af7b6be5abb0d70f842/"
+    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/987cc26176464e6dad02bfa4757a10a3/"
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
@@ -138,14 +139,13 @@ if __name__ == "__main__":
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
-            "f1_score": losses.f1_score
+            "f1_score": losses.f1_score,
+            "tf": tf
             })
     params = {
         "model": model,
-        "dpath": Path(
-            "../datasets/clouds/"
-            + "Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"
-            ),
+        "dpath": Path("../datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"),
+        "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
         "batch_size": 10
         }

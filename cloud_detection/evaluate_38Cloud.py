@@ -2,9 +2,11 @@
 
 import os
 import re
+import uuid
 import time
 import uuid
 import numpy as np
+import tensorflow as tf
 from pathlib import Path
 from typing import Dict, List, Tuple
 from tensorflow import keras
@@ -143,7 +145,7 @@ def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
     return metrics
 
 if __name__ == "__main__":
-    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/4848bf5b4c464af7b6be5abb0d70f842/"
+    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/987cc26176464e6dad02bfa4757a10a3/"
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
@@ -153,7 +155,8 @@ if __name__ == "__main__":
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
-            "f1_score": losses.f1_score
+            "f1_score": losses.f1_score,
+            "tf": tf
             })
     params = {
         "model": model,
