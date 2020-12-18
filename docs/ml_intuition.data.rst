@@ -35,6 +35,7 @@ ml\_intuition.data.noise module
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members: __call__
 
 ml\_intuition.data.preprocessing module
 ---------------------------------------
@@ -51,6 +52,7 @@ ml\_intuition.data.transforms module
    :members:
    :undoc-members:
    :show-inheritance:
+   :special-members: __call__
 
 
 Module contents

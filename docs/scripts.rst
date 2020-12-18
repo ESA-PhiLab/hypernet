@@ -21,14 +21,6 @@ scripts.artifacts\_reporter module
    :undoc-members:
    :show-inheritance:
 
-scripts.evaluate\_graph module
-------------------------------
-
-.. automodule:: scripts.evaluate_graph
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 scripts.evaluate\_model module
 ------------------------------
 
@@ -41,14 +33,6 @@ scripts.experiments\_runner module
 ----------------------------------
 
 .. automodule:: scripts.experiments_runner
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scripts.freeze\_model module
-----------------------------
-
-.. automodule:: scripts.freeze_model
    :members:
    :undoc-members:
    :show-inheritance:
@@ -73,14 +57,6 @@ scripts.prepare\_data module
 ----------------------------
 
 .. automodule:: scripts.prepare_data
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
-scripts.quantize\_runner module
--------------------------------
-
-.. automodule:: scripts.quantize_runner
    :members:
    :undoc-members:
    :show-inheritance:
