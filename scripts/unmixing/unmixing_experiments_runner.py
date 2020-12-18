@@ -67,6 +67,7 @@ def run_experiments(*,
     :param train_size: If float, should be between 0.0 and 1.0.
         If int, specifies the number of samples in the training set.
         Defaults to 0.8
+    :type train_size: Union[int, float]
     :param val_size: Should be between 0.0 and 1.0. Represents the
         percentage of samples from the training set to be
         extracted as a validation set.

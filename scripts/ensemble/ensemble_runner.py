@@ -46,6 +46,7 @@ def run_experiments(*,
     Function for running experiments given a set of hyper parameters.
 
     :param data_file_paths: Path to the data file. Supported types are: .npy
+    :type data_file_paths: list[str]
     :param train_size: If float, should be between 0.0 and 1.0.
         If stratified = True, it represents percentage of each class to be extracted,
         If float and stratified = False, it represents percentage of the whole
@@ -55,6 +56,7 @@ def run_experiments(*,
         If int and stratified = False, it represents overall number of samples
         to be drawn regardless of their class, randomly.
         Defaults to 0.8
+    :type train_size: Union[int, float]
     :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
         each class from the training set to be extracted as a
         validation set, defaults to 0.1
@@ -64,12 +66,15 @@ def run_experiments(*,
     :param channels_idx: Index specifying the channels position in the provided
         data
     :param neighborhood_sizes: Sizes of the neighbourhood of each provided model
+    :type neighborhood_sizes: list[str]
     :param save_data: Whether to save the prepared dataset
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
         subfolders in this directory.
     :param model_paths: Paths to all models to be used in ensemble
+    :type model_paths: list[str]
     :param model_experiment_names: Names of MLFlow experiments
+    :type model_experiment_names: list[str]
     :param n_classes: Number of classes.
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
         labels for majority rule voting. Else if ‘soft’, predicts the class
@@ -77,8 +82,10 @@ def run_experiments(*,
     :param batch_size: Size of the batch for the inference
     :param post_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
+    :type post_noise_sets: list[str]
     :param post_noise: The list of names of noise injection methods after
         the normalization transformations.
+    :type post_noise: list[str]
     :param noise_params: JSON containing the parameter setting of injection methods.
         Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
         This JSON should include all parameters for noise injection

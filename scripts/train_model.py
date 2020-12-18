@@ -62,9 +62,11 @@ def train(*,
     :param seed: Seed for training reproducibility.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
+    :type noise: list[str]
     :param noise_sets: List of sets that are affected by
         the noise injection methods.
         For this module single element can be either "train" or "val".
+    :type noise_sets: list[str]
     :param noise_params: JSON containing the parameters
         setting of injection methods.
         Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".

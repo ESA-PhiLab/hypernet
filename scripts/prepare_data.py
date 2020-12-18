@@ -43,6 +43,7 @@ def main(*,
         If int and stratified = False, it represents overall number of samples
         to be drawn regardless of their class, randomly.
         Defaults to 0.8
+    :type train_size: Union[int, float]
     :type train_size: float or int
     :param val_size: Should be between 0.0 and 1.0. Represents the
         percentage of each class from the training set

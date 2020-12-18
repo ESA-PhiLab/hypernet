@@ -60,6 +60,7 @@ def run_experiments(*,
         If int and stratified = False, it represents overall number of samples
         to be drawn regardless of their class, randomly.
         Defaults to 0.8
+    :type train_size: Union[int, float]
     :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
         each class from the training set to be extracted as a
         validation set.
@@ -88,8 +89,10 @@ def run_experiments(*,
     :param batch_size: Size of the batch for the inference
     :param post_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
+    :type post_noise_sets: list[str]
     :param post_noise: The list of names of noise injection methods after
         the normalization transformations.
+    :type post_noise: list[str]
     :param noise_params: JSON containing the parameter setting of injection methods.
         Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
         This JSON should include all parameters for noise injection

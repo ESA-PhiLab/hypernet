@@ -53,6 +53,7 @@ def run_experiments(*,
         If int and stratified = False, it represents overall number of samples
         to be drawn regardless of their class, randomly.
         Defaults to 0.8
+    :type train_size: Union[int, float]
     :param stratified: Indicated whether the extracted training set should be
         stratified, defaults to True
     :param batch_size: Batch size
