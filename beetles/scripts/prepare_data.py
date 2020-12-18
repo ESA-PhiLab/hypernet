@@ -30,39 +30,40 @@ def main(*,
          seed: int = 0,
          use_unmixing: bool = False):
     """
-    :param data_file_path: Path to the data file. Supported types are: .npy
+    :param data_file_path: Path to the data file. Supported types are: .npy.
     :param ground_truth_path: Path to the data file.
     :param output_path: Path under in which the output .h5 file will be stored.
-        Used only if the parameter save_data is set to True
-    :param train_size: If float, should be between 0.0 and 1.0,
-                        if stratified = True, it represents percentage of each
-                        class to be extracted,
-                 If float and stratified = False, it represents
-                    percentage of the whole dataset to be extracted
-                    with samples drawn randomly, regardless of their class.
-                 If int and stratified = True, it represents number of samples
-                    to be drawn from each class.
-                 If int and stratified = False, it represents overall number of
-                    samples to be drawn regardless of their class, randomly.
-                 Defaults to 0.8
+        Used only if the parameter save_data is set to True.
+    :param train_size: If float, should be between 0.0 and 1.0.
+        If stratified = True, it represents percentage of each class to be extracted,
+        If float and stratified = False, it represents percentage of the whole
+        dataset to be extracted with samples drawn randomly, regardless of their class.
+        If int and stratified = True, it represents number of samples to be
+        drawn from each class.
+        If int and stratified = False, it represents overall number of samples
+        to be drawn regardless of their class, randomly.
+        Defaults to 0.8
+    :type train_size: Union[int, float]
     :type train_size: float or int
     :param val_size: Should be between 0.0 and 1.0. Represents the
-                     percentage of each class from the training set
-                     to be extracted as a validation set, defaults to 0.1
+        percentage of each class from the training set
+        to be extracted as a validation set.
+        Defaults to 0.1.
     :param stratified: Indicated whether the extracted training set should be
-                     stratified, defaults to True
-    :param background_label: Label indicating the background in GT file
+        stratified.
+        Defaults to True.
+    :param background_label: Label indicating the background in GT file.
     :param neighborhood_size: Neighborhood size of the pixel to extract along
         with its spectral bands. Use only if you are training 2D or 3D
         convolutional model.
     :param channels_idx: Index specifying the channels position in the provided
-                         data
-    :param save_data: Whether to save data as .md5 or to return it as a dict
-    :param seed: Seed used for data shuffling
+        data.
+    :param save_data: Whether to save data as .md5 or to return it as a dict.
+    :param seed: Seed used for data shuffling.
     :param use_unmixing: Boolean indicating whether to perform experiments
         on the unmixing datasets, where classes in each pixel
         are present as fractions.
-    :raises TypeError: When provided data or labels file is not supported
+    :raises TypeError: When provided data or labels file is not supported.
     """
     train_size = utils.parse_train_size(train_size)
     if data_file_path.endswith('.npy') and ground_truth_path.endswith('.npy'):
@@ -108,8 +109,8 @@ def main(*,
                     test_y)
         return None
     else:
-        return utils.build_data_dict(train_x, train_y, val_x, val_y, test_x,
-                                     test_y)
+        return utils._build_data_dict(train_x, train_y, val_x, val_y, test_x,
+                                      test_y)
 
 
 if __name__ == '__main__':

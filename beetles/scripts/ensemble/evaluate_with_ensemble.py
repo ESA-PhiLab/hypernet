@@ -1,5 +1,5 @@
 """
-Perform the inference of the model on the testing dataset.
+Evaluate a dataset using an ensemble.
 """
 
 import os
@@ -29,28 +29,14 @@ def evaluate(*,
     """
     Function for evaluating the trained model.
 
-    :param model_path: Path to the model.
+    :param y_pred: Predictions of all the models to be provided into an
+        ensemble to vote
     :param data: Either path to the input data or the data dict.
     :param dest_path: Directory in which to store the calculated metrics
-    :param n_classes: Number of classes.
-    :param batch_size: Size of the batch for inference
-    :param use_ensemble: Use ensemble for prediction.
-    :param ensemble_copies: Number of model copies for the ensemble.
+    :param model_path: Path to the model.
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
             labels for majority rule voting. Else if ‘soft’, predicts the class
             label based on the argmax of the sums of the predicted probabilities.
-    :param noise: List containing names of used noise injection methods
-        that are performed after the normalization transformations.
-    :param noise_sets: List of sets that are affected by the noise injection.
-        For this module single element can be "test".
-    :param noise_params: JSON containing the parameters
-        setting of noise injection methods.
-        Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
-        This JSON should include all parameters for noise injection
-        functions that are specified in the noise argument.
-        For the accurate description of each parameter, please
-        refer to the ml_intuition/data/noise.py module.
-    :param seed: Seed for RNG
     """
     ensemble = Ensemble(voting=voting)
     vote = timeit(ensemble.vote)

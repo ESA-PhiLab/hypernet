@@ -1,12 +1,15 @@
 """
-All data handling methods.
+Helper functions
 """
 
 import os
 from typing import Dict, List, Tuple, Union
 
+import matplotlib.pyplot as plt
 import mlflow
 import numpy as np
+import pandas as pd
+import seaborn as sns
 import tensorflow as tf
 
 from ml_intuition import enums
@@ -15,7 +18,7 @@ SAMPLES_DIM = 0
 MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
 
 
-def subsample_test_set(data: Dict, test_size: int):
+def subsample_test_set(data: Dict, test_size: int) -> None:
     """
     Subsample the test set.
 
@@ -39,7 +42,7 @@ def create_tf_dataset(batch_size: int,
     :param batch_size: Size of the batch used in either phase,
         it is the size of samples per gradient step.
     :param dataset: Passed dataset as a dictionary of samples and labels.
-    :param transforms: List of all transformations. 
+    :param transforms: List of all transformations, x=x, y="val_loss".
     :return: Transformed dataset with its size.
     """
     n_samples = dataset[enums.Dataset.DATA].shape[SAMPLES_DIM]
@@ -54,7 +57,7 @@ def create_tf_dataset(batch_size: int,
                .repeat().prefetch(tf.contrib.data.AUTOTUNE), n_samples
 
 
-def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0):
+def shuffle_arrays_together(arrays: List[np.ndarray], seed: int = 0) -> None:
     """
     Shuffle arbitrary number of arrays together, in-place
 
@@ -79,6 +82,7 @@ def freeze_session(session: tf.Session,
     constants taking their current value in the session. The new graph will be
     pruned so subgraphs that are not necessary to compute the requested
     outputs are removed.
+
     :param session: The TensorFlow session to be frozen.
     :param keep_var_names: A list of variable names that should not be frozen,
                           or None to freeze all the variables in the graph.
@@ -103,9 +107,10 @@ def freeze_session(session: tf.Session,
     return frozen_graph
 
 
-def build_data_dict(train_x, train_y, val_x, val_y, test_x, test_y) -> Dict:
+def _build_data_dict(train_x, train_y, val_x, val_y, test_x, test_y) -> Dict:
     """
     Build data dictionary with following structure:
+
     'train':
         'data': np.ndarray
         'labels': np.ndarray
@@ -222,7 +227,6 @@ def list_to_string(list_to_convert: List) -> str:
     return ",".join(map(str, list_to_convert))
 
 
-
 def get_central_pixel_spectrum(data: np.ndarray,
                                neighborhood_size: int) -> np.ndarray:
     """
@@ -248,7 +252,8 @@ def get_mlflow_artifacts_path(artifacts_storage_path: str,
     """
     if experiment_name is not None:
         mlflow.set_experiment(experiment_name)
-    filter_string = 'parameters.artifacts_storage = \'{}\''.format(artifacts_storage_path)
+    filter_string = 'parameters.artifacts_storage = \'{}\''.format(
+        artifacts_storage_path)
     result = mlflow.search_runs(filter_string=filter_string)['artifact_uri'][0]
     return os.path.join(result, artifacts_storage_path)
 
@@ -286,3 +291,18 @@ def get_label_indices_per_class(labels, return_uniques: bool = True):
         return label_indices, unique_labels
     else:
         return label_indices
+
+
+def plot_training_curve(metrics_file: str,
+                        curve_names: List[str],
+                        y_limit: bool = True):
+    df = pd.read_csv(metrics_file)[curve_names]
+    sns.lineplot(data=df)
+    if y_limit:
+        plt.ylim(0, 1.5)
+    plt.show()
+
+
+def show_statistics(metrics_file: str):
+    df = pd.read_csv(metrics_file)
+    return df

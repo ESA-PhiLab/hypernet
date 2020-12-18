@@ -1,3 +1,7 @@
+"""
+Evaluate a .pb graph
+"""
+
 import os
 import clize
 import json
@@ -15,6 +19,15 @@ import ml_intuition.data.transforms as transforms
 
 def main(*, graph_path: str, node_names_path: str, dataset_path: str,
          batch_size: int):
+    """
+    Evaluate a .pb graph
+
+    :param graph_path: Path to the .pb graph
+    :param node_names_path: Path to the .json file with input and output node
+        names
+    :param dataset_path: Path to the .h5 dataset file
+    :param batch_size: Size of the batch
+    """
     graph = io.load_pb(graph_path)
     test_dict = io.extract_set(dataset_path, enums.Dataset.TEST)
     min_value, max_value = test_dict[enums.DataStats.MIN], \

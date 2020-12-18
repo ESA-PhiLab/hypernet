@@ -15,24 +15,23 @@ class Params(NamedTuple):
     """
     Parameters of noise injection.
 
-    Attributes:
-        pa:     Fraction of noisy pixels, the number of affected samples
-                is calculated by: floor(n_samples * pa).
+    pa - Fraction of noisy pixels, the number of affected samples
+    is calculated by: floor(n_samples * pa).
 
-        pb:     Fraction of noisy bands. When established the number of
-                samples that undergo noise injection, for each sample
-                the: floor(n_bands * pb) bands are affected.
+    pb - Fraction of noisy bands. When established the number of
+    samples that undergo noise injection, for each sample
+    the: floor(n_bands * pb) bands are affected.
 
-        bc:     Boolean indicating whether the indexes of affected bands,
-                are constant for each sample. When set to: False,
-                different bands can be augmented with noise for each pixel.
+    bc - Boolean indicating whether the indexes of affected bands
+    are constant for each sample. When set to: False,
+    different bands can be augmented with noise for each pixel.
 
-        mean:   Gaussian noise parameter, the mean of the normal distribution.
+    mean - Gaussian noise parameter, the mean of the normal distribution.
 
-        std:    Standard deviation of the normal distribution.
+    std - Standard deviation of the normal distribution for Gaussian noise.
 
-        pw:     Ratio of whitened pixels for the affected set of samples
-                in the Impulsive noise injection.
+    pw - Ratio of whitened pixels for the affected set of samples
+    in the Impulsive noise injection.
     """
     pa: float = None
     pb: float = None
@@ -71,8 +70,8 @@ class Gaussian(BaseNoise):
         Perform Gaussian noise injection.
 
         :param data: Input data that will undergo noise injection.
-        :param label: Class value for each data.
-        :return: List containing the noisy data and the class label.
+        :param labels: Class value for each data point.
+        :return: List containing the noisy data and the class labels.
         """
         n_affected, n_bands = \
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
@@ -100,8 +99,8 @@ class Impulsive(BaseNoise):
         Perform impulsive noise injection.
 
         :param data: Input data that will undergo noise injection.
-        :param label: Class value for each data.
-        :return: List containing the noisy data and the class label.
+        :param labels: Class value for each data point.
+        :return: List containing the noisy data and the class labels.
         """
         n_affected, n_bands = \
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
@@ -134,8 +133,8 @@ class Shot(BaseNoise):
         Perform shot noise injection.
 
         :param data: Input data that will undergo noise injection.
-        :param label: Class value for each data.
-        :return: List containing the noisy data and the class label.
+        :param labels: Class value for each data point.
+        :return: List containing the noisy data and the class labels.
         """
         n_affected, n_bands = \
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
@@ -155,11 +154,12 @@ class Shot(BaseNoise):
         return [data, labels]
 
 
-def get_all_noise_functions(noise: str) -> List:
+def get_all_noise_functions(noise: List[str]) -> List:
     """
-    Get a given noise function.
+    Get all specified noise functions.
 
-    :param noise: Noise method as string.
+    :param noise: List the of noise injection methods.
+    :return: List of all noise injection functions.
     """
     all_ = {
         str(f).lower(): eval(f) for f in dir(sys.modules[__name__])
@@ -171,8 +171,9 @@ def get_noise_functions(noise: List[str], noise_params: str) -> List[BaseNoise]:
     """
     Helper function for getting all noise injector instances.
 
-    :param noise: List of noise injection methods.
-    :param noise_params: Parameters of the noise injection.
+    :param noise: List the of noise injection methods.
+    :param noise_params: Parameters of the noise injections.
+    :return: List of instances of noise injectors functions.
     """
     try:
         noise_params = json.loads(noise_params)

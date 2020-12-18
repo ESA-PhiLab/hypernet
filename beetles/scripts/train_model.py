@@ -1,5 +1,6 @@
 """
-Perform the training of the model.
+Perform the training of the model. Has the option to inject
+noise into train and val set.
 """
 
 import os
@@ -61,9 +62,11 @@ def train(*,
     :param seed: Seed for training reproducibility.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
+    :type noise: list[str]
     :param noise_sets: List of sets that are affected by
         the noise injection methods.
         For this module single element can be either "train" or "val".
+    :type noise_sets: list[str]
     :param noise_params: JSON containing the parameters
         setting of injection methods.
         Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
@@ -101,9 +104,9 @@ def train(*,
     train_dict = transforms.apply_transformations(train_dict, tr_transformations)
     val_dict = transforms.apply_transformations(val_dict, val_transformations)
 
-    model = models.get_model(model_key=model_name, kernel_size=kernel_size,
-                             n_kernels=n_kernels, n_layers=n_layers,
-                             input_size=sample_size, n_classes=n_classes)
+    model = models._get_model(model_key=model_name, kernel_size=kernel_size,
+                              n_kernels=n_kernels, n_layers=n_layers,
+                              input_size=sample_size, n_classes=n_classes)
     model.summary()
     model.compile(tf.keras.optimizers.Adam(lr=lr),
                   'categorical_crossentropy',

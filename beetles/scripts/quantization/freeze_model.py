@@ -15,6 +15,8 @@ from tensorflow import keras
 
 def main(*, model_path: str, output_dir: str):
     """
+    Freeze the graph and store it in .pb (Protocol Buffers) format
+
     :param model_path: Path to the model to be saved
     :param output_dir: Directory in which the .pb graph and nodes json will be
                        stored

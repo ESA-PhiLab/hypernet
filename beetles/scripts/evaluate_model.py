@@ -1,5 +1,5 @@
 """
-Perform the inference of the model on the testing dataset.
+Perform the inference of the model on the provided dataset.
 """
 
 import os
@@ -10,6 +10,7 @@ import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
 from sklearn.metrics import confusion_matrix
+from copy import copy
 
 from ml_intuition import enums
 from ml_intuition.data import io, transforms
@@ -38,18 +39,20 @@ def evaluate(*,
 
     :param model_path: Path to the model.
     :param data: Either path to the input data or the data dict.
-    :param dest_path: Directory in which to store the calculated metrics
+    :param dest_path: Directory in which to store the calculated metrics.
     :param n_classes: Number of classes.
-    :param batch_size: Size of the batch for inference
+    :param batch_size: Size of the batch for inference.
     :param use_ensemble: Use ensemble for prediction.
     :param ensemble_copies: Number of model copies for the ensemble.
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
-            labels for majority rule voting. Else if ‘soft’, predicts the class
-            label based on the argmax of the sums of the predicted probabilities.
+        labels for majority rule voting. Else if ‘soft’, predicts the class
+        label based on the argmax of the sums of the predicted probabilities.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
+    :type noise: list[str]
     :param noise_sets: List of sets that are affected by the noise injection.
         For this module single element can be "test".
+    :type noise_sets: list[str]
     :param noise_params: JSON containing the parameters
         setting of noise injection methods.
         Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
@@ -57,12 +60,13 @@ def evaluate(*,
         functions that are specified in the noise argument.
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
-    :param seed: Seed for RNG
+    :param seed: Seed for RNG.
     """
+    os.makedirs(dest_path, exist_ok=True)
     if type(data) is str:
         test_dict = io.extract_set(data, enums.Dataset.TEST)
     else:
-        test_dict = data[enums.Dataset.TEST]
+        test_dict = copy(data[enums.Dataset.TEST])
     min_max_path = os.path.join(os.path.dirname(model_path), "min-max.csv")
     if os.path.exists(min_max_path):
         min_value, max_value = io.read_min_max(min_max_path)

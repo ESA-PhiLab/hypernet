@@ -1,3 +1,7 @@
+"""
+Helper function logging data into MLFlow
+"""
+
 import json
 import re
 from typing import Dict
@@ -17,6 +21,7 @@ LOGGING_EXCLUDED_PARAMS = ['run_name', 'experiment_name', 'use_mlflow',
 def log_dict_as_str_to_mlflow(dict_as_string: str) -> None:
     """
     Log a string which represents a dictionary to MLflow
+
     :param dict_as_string: A string with dictionary format
     :return: None
     """
@@ -30,6 +35,7 @@ def log_dict_as_str_to_mlflow(dict_as_string: str) -> None:
 def log_params_to_mlflow(args: Dict) -> None:
     """
     Log provided arguments as dictionary to mlflow.
+
     :param args: Arguments to log
     """
     args['artifacts_storage'] = args.pop('dest_path')
@@ -48,7 +54,8 @@ def log_params_to_mlflow(args: Dict) -> None:
 def log_tags_to_mlflow(run_name: str) -> None:
     """
     Log tags to mlflow based on provided args
-    :param args: Argument of the running script
+
+    :param run_name: Name of the current run
     :return: None
     """
     if Splits.IMBALANCED in run_name:
@@ -69,9 +76,10 @@ def log_tags_to_mlflow(run_name: str) -> None:
         mlflow.set_tag(MLflowTags.QUANTIZED, '1')
 
 
-def log_metrics_to_mlflow(metrics: Dict[str, float], fair: bool = False):
+def log_metrics_to_mlflow(metrics: Dict[str, float], fair: bool = False) -> None:
     """
     Log provided metrics to mlflow
+
     :param metrics: Metrics in a dictionary
     :param fair: Whether to add '_fair' suffix to the metrics name
     :return: None

@@ -1,7 +1,5 @@
 """
-Perform the inference of the unmixing model on the testing dataset.
-In the case of unsupervised approach, the inference
-is performed on the entire HSI.
+Perform the inference of the unmixing models on the test dataset.
 """
 
 import os
@@ -28,13 +26,13 @@ def evaluate(data,
     Function for evaluating the trained model for the unmixing problem.
 
     :param model_path: Path to the model.
-    :param data: Either path to the input data or the data dict.
-    :param dest_path: Directory in which to store the calculated metrics
+    :param data: The data dictionary containing the subset for testing.
+    :param dest_path: Directory in which to store the calculated metrics.
     :param neighborhood_size: Size of the spatial patch.
     :param batch_size: Size of the batch for inference.
-    :param endmembers_path: Path to the endmembers file containing
-        average reflectances for each class.
-        Used only when use_unmixing is true.
+    :param endmembers_path: Path to the endmembers matrix file,
+        containing the average reflectances for each endmember,
+        i.e., the pure spectra.
     """
     model_name = os.path.basename(model_path)
     model = tf.keras.models.load_model(

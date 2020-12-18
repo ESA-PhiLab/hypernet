@@ -1,5 +1,6 @@
 """
-Run experiments given set of hyperparameters.
+Run inference N times on the provided model given set of hyperparameters. Has
+the option to inject noise into the test set.
 """
 
 import os
@@ -45,30 +46,34 @@ def run_experiments(*,
                     experiment_name: str = None,
                     run_name: str = None):
     """
-    Function for running experiments given a set of hyperparameters.
+    Run inference on the provided model given set of hyperparameters.
+
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the ground-truth data file.
     :param dataset_path: Path to the already extracted .h5 dataset
-    :param train_size: If float, should be between 0.0 and 1.0,
-                        if stratified = True, it represents percentage of each
-                        class to be extracted,
-                 If float and stratified = False, it represents percentage of the
-                    whole dataset to be extracted with samples drawn randomly,
-                    regardless of their class.
-                 If int and stratified = True, it represents number of samples
-                    to be drawn from each class.
-                 If int and stratified = False, it represents overall number of
-                    samples to be drawn regardless of their class, randomly.
-                 Defaults to 0.8
+    :param train_size: If float, should be between 0.0 and 1.0.
+        If stratified = True, it represents percentage of each class to be extracted,
+        If float and stratified = False, it represents percentage of the whole
+        dataset to be extracted with samples drawn randomly, regardless of their class.
+        If int and stratified = True, it represents number of samples to be
+        drawn from each class.
+        If int and stratified = False, it represents overall number of samples
+        to be drawn regardless of their class, randomly.
+        Defaults to 0.8
+    :type train_size: Union[int, float]
     :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
-                     each class from the training set to be extracted as a
-                     validation set, defaults to 0.1
+        each class from the training set to be extracted as a
+        validation set.
+        Defaults to 0.1.
     :param stratified: Indicated whether the extracted training set should be
-                     stratified, defaults to True
-    :param background_label: Label indicating the background in GT file
+        stratified.
+        Defaults to True.
+    :param background_label: Label indicating the background in GT file.
     :param channels_idx: Index specifying the channels position in the provided
-                         data
-    :param save_data: Whether to save the prepared dataset
+        data.
+    :param neighborhood_size: Size of the neighborhood of the pixel.
+        Only used for 2D and 3D models.
+    :param save_data: Whether to save the prepared dataset.
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
         subfolders in this directory.
@@ -84,8 +89,10 @@ def run_experiments(*,
     :param batch_size: Size of the batch for the inference
     :param post_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
+    :type post_noise_sets: list[str]
     :param post_noise: The list of names of noise injection methods after
         the normalization transformations.
+    :type post_noise: list[str]
     :param noise_params: JSON containing the parameter setting of injection methods.
         Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
         This JSON should include all parameters for noise injection
@@ -94,7 +101,7 @@ def run_experiments(*,
         refer to the ml_intuition/data/noise.py module.
     :param use_mlflow: Whether to log metrics and artifacts to mlflow.
     :param experiment_name: Name of the experiment. Used only if
-        use_mlflow = True
+        use_mlflow = True.
     :param run_name: Name of the run. Used only if use_mlflow = True.
     """
     train_size = parse_train_size(train_size)

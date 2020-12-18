@@ -1,5 +1,6 @@
 """
-Run experiments given set of hyperparameters.
+Run training and evaluation of a model  N times, given set of hyperparameters.
+Has the option to inject noise into train, val and test set.
 """
 
 import os
@@ -53,29 +54,31 @@ def run_experiments(*,
                     run_name: str = None):
     """
     Function for running experiments given a set of hyper parameters.
-    :param data_file_path: Path to the data file. Supported types are: .npy
+
+    :param data_file_path: Path to the data file. Supported types are: .npy.
     :param ground_truth_path: Path to the ground-truth data file.
-    :param train_size: If float, should be between 0.0 and 1.0,
-        if stratified = True, it represents percentage of each class
-        to be extracted.
-        If float and stratified = False, it represents percentage of the
-            whole dataset to be extracted with samples drawn randomly,
-            regardless of their class.
-         If int and stratified = True, it represents number of samples
-            to be drawn from each class.
-         If int and stratified = False, it represents overall number of
-            samples to be drawn regardless of their class, randomly.
-         Defaults to 0.8
+    :param train_size: If float, should be between 0.0 and 1.0.
+        If stratified = True, it represents percentage of each class to be extracted.
+        If float and stratified = False, it represents percentage of the whole
+        dataset to be extracted with samples drawn randomly, regardless of their class.
+        If int and stratified = True, it represents number of samples to be
+        drawn from each class.
+        If int and stratified = False, it represents overall number of samples
+        to be drawn regardless of their class, randomly.
+        Defaults to 0.8.
+    :type train_size: Union[int, float]
     :param val_size: Should be between 0.0 and 1.0. Represents the
         percentage of each class from the training set to be
-        extracted as a validation set, defaults to 0.1
+        extracted as a validation set.
+        Defaults to 0.1.
     :param stratified: Indicated whether the extracted training set should be
-                     stratified, defaults to True
-    :param background_label: Label indicating the background in GT file
+        stratified.
+        Defaults to True.
+    :param background_label: Label indicating the background in GT file.
     :param channels_idx: Index specifying the channels position in the provided
-                         data.
+        data.
     :param neighborhood_size: Size of the spatial patch.
-    :param save_data: Whether to save the prepared dataset
+    :param save_data: Whether to save the prepared dataset.
     :param n_runs: Number of total experiment runs.
     :param model_name: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
@@ -99,12 +102,16 @@ def run_experiments(*,
     :param pre_noise: The list of names of noise injection methods before
         the normalization transformations. Exemplary names are "gaussian"
         or "impulsive".
+    :type pre_noise: list[str]
     :param pre_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
+    :type pre_noise_sets: list[str]
     :param post_noise: The list of names of noise injection methods after
         the normalization transformations.
+    :type post_noise: list[str]
     :param post_noise_sets: The list of sets to which
         the noise will be injected.
+    :type post_noise_sets: list[str]
     :param noise_params: JSON containing the parameter
         setting of injection methods.
         Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".

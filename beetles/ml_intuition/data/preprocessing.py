@@ -1,3 +1,6 @@
+"""
+All function related to the data preprocessing step of the pipeline.
+"""
 import functools
 from itertools import product
 from typing import Tuple, Union, List
@@ -17,6 +20,7 @@ DEPTH = 2
 def normalize_labels(labels: np.ndarray) -> np.ndarray:
     """
     Normalize labels so that they always start from 0
+
     :param labels: labels to normalize
     :return: Normalized labels
     """
@@ -33,6 +37,7 @@ def reshape_cube_to_2d_samples(data: np.ndarray,
     """
     Reshape the data and labels from [CHANNELS, HEIGHT, WIDTH] to
         [PIXEL,CHANNELS, 1], so it fits the 2D Convolutional modules.
+
     :param data: Data to reshape.
     :param labels: Corresponding labels.
     :param channels_idx: Index at which the channels are located in the
@@ -56,7 +61,14 @@ def reshape_cube_to_2d_samples(data: np.ndarray,
     return data, labels
 
 
-def get_padded_cube(data: np.ndarray, padding_size: int):
+def get_padded_cube(data: np.ndarray, padding_size: int) -> np.ndarray:
+    """
+    Pad the cube with zeros
+
+    :param data: Data to pad
+    :param padding_size: Size of the padding for each side
+    :return: Padded cube
+    """
     v_padding = np.zeros((padding_size, data.shape[WIDTH], data.shape[DEPTH]))
     data = np.vstack((v_padding, data))
     data = np.vstack((data, v_padding))
@@ -71,6 +83,7 @@ def spectral_angle_mapper(data: np.ndarray,
                           channel_idx: int) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculate the spectral angle mapper between the HSI pixels and endmembers.
+
     :param data: Data cube.
     :param endmembers: The matrix containing the spectra for each class of
         dimensionality [n_classes, n_bands].
@@ -108,8 +121,9 @@ def reshape_cube_to_3d_samples(data: np.ndarray,
         Tuple[np.ndarray, np.ndarray]:
     """
     Reshape data to a array of dimensionality:
-        [N_SAMPLES, HEIGHT, WIDTH, CHANNELS] and the labels to
-        dimensionality of: [N_SAMPLES, N_CLASSES]
+    [N_SAMPLES, HEIGHT, WIDTH, CHANNELS] and the labels
+    to dimensionality of: [N_SAMPLES, N_CLASSES]
+
     :param data: Data passed as array.
     :param labels: Labels passed as array.
     :param neighborhood_size: Length of the spatial patch.
@@ -145,6 +159,7 @@ def align_ground_truth(cube_2d_shape: Tuple[int, int],
     """
     Align original labels to match the satellite hyperspectral cube using
     transformation matrix
+
     :param cube_2d_shape: Shape of the hyperspectral data cube
     :param ground_truth: Original labels as 2D array
     :param cube_to_gt_transform: Cube to ground truth transformation matrix
@@ -161,6 +176,7 @@ def remove_nan_samples(data: np.ndarray, labels: np.ndarray) -> Tuple[
     np.ndarray, np.ndarray]:
     """
     Remove samples which contain only nan values
+
     :param data: Data with dimensions [SAMPLES, ...]
     :param labels: Corresponding labels
     :return: Data and labels with removed samples containing nans
@@ -185,22 +201,17 @@ def train_val_test_split(data: np.ndarray, labels: np.ndarray,
 
     :param data: Data with the [SAMPLES, ...] dimensions
     :param labels: Vector with corresponding labels
-    :param train_size: If float, should be between 0.0 and 1.0,
-                        if stratified = True, it represents percentage
-                        of each class to be extracted.
-                 If float and stratified = False, it represents percentage
-                    of the whole dataset to be extracted with samples
-                    drawn randomly, regardless of their class.
-                 If int and stratified = True, it represents number of samples
-                    to be drawn from each class.
-                 If int and stratified = False, it represents overall number of
-                    samples to be drawn regardless of their class, randomly.
-                 Defaults to 0.8
+    :param train_size:  If float, should be between 0.0 and 1.0,
+        If stratified = True, it represents percentage of each class to be extracted.
+        If float and stratified = False, it represents percentage of the whole dataset to be extracted with samples drawn randomly, regardless of their class.
+        If int and stratified = True, it represents number of samples to be drawn from each class.
+        If int and stratified = False, it represents overall number of samples to be drawn regardless of their class, randomly.
+        Defaults to 0.8
     :param val_size: Should be between 0.0 and 1.0. Represents the percentage
                      of each class from the training set to be extracted as a
                      validation set, defaults to 0.1
     :param stratified: Indicated whether the extracted training set should be
-                     stratified, defaults to True
+        stratified, defaults to True
     :param seed: Seed used for data shuffling
     :return: train_x, train_y, val_x, val_y, test_x, test_y
     :raises AssertionError: When wrong type is passed as train_size
