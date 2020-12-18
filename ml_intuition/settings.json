@@ -1,7 +1,0 @@
-{
-    "remote_host_name" : "ci.kplabs.pl",
-    "remote_host_port" : "80",
-    "job_name"         : "Beetle_Run",
-    "credentials_id"   : "gitlab_beetle",
-    "url"              : "git@git.kplabs.pl:intuition-1/system-analysis/machine-learning.git"
-}
