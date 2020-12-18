@@ -71,7 +71,7 @@ class Gaussian(BaseNoise):
 
         :param data: Input data that will undergo noise injection.
         :param labels: Class value for each data point.
-        :return: List containing the noisy data and the class label.
+        :return: List containing the noisy data and the class labels.
         """
         n_affected, n_bands = \
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
@@ -100,7 +100,7 @@ class Impulsive(BaseNoise):
 
         :param data: Input data that will undergo noise injection.
         :param labels: Class value for each data point.
-        :return: List containing the noisy data and the class label.
+        :return: List containing the noisy data and the class labels.
         """
         n_affected, n_bands = \
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
@@ -134,7 +134,7 @@ class Shot(BaseNoise):
 
         :param data: Input data that will undergo noise injection.
         :param labels: Class value for each data point.
-        :return: List containing the noisy data and the class label.
+        :return: List containing the noisy data and the class labels.
         """
         n_affected, n_bands = \
             self.get_proba(data.shape[Sample.SAMPLES_DIM], self.params.pa), \
@@ -154,12 +154,12 @@ class Shot(BaseNoise):
         return [data, labels]
 
 
-def get_all_noise_functions(noise: str) -> List:
+def get_all_noise_functions(noise: List[str]) -> List:
     """
-    Get a given noise function.
+    Get all specified noise functions.
 
-    :param noise: Noise method as string.
-    :return: List of all noise functions.
+    :param noise: List the of noise injection methods.
+    :return: List of all noise injection functions.
     """
     all_ = {
         str(f).lower(): eval(f) for f in dir(sys.modules[__name__])
@@ -171,9 +171,9 @@ def get_noise_functions(noise: List[str], noise_params: str) -> List[BaseNoise]:
     """
     Helper function for getting all noise injector instances.
 
-    :param noise: List of noise injection methods.
-    :param noise_params: Parameters of the noise injection.
-    :return: List of instances of noise injectors.
+    :param noise: List the of noise injection methods.
+    :param noise_params: Parameters of the noise injections.
+    :return: List of instances of noise injectors functions.
     """
     try:
         noise_params = json.loads(noise_params)

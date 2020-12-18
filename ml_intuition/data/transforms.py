@@ -32,17 +32,17 @@ class SpectralTransform(BaseTransform):
         """
         super().__init__()
 
-    def __call__(self, sample: np.ndarray,
-                 label: np.ndarray) -> List[np.ndarray]:
+    def __call__(self, samples: np.ndarray,
+                 labels: np.ndarray) -> List[np.ndarray]:
         """
         Transform 1D samples along the spectral axis.
         Only the spectral features are present for each sample in the dataset.
 
-        :param sample: Input samples that will undergo transformation.
-        :param label: Class value for each samples.
+        :param samples: Input samples that will undergo transformation.
+        :param labels: Class value for each samples.
         :return: List containing the transformed samples and the class labels.
         """
-        return [np.expand_dims(sample.astype(np.float32), -1), label]
+        return [np.expand_dims(samples.astype(np.float32), -1), labels]
 
 
 class OneHotEncode(BaseTransform):
@@ -55,20 +55,20 @@ class OneHotEncode(BaseTransform):
         super().__init__()
         self.n_classes = n_classes
 
-    def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[
+    def __call__(self, samples: np.ndarray, labels: np.ndarray) -> List[
         np.ndarray]:
         """
         Perform one-hot encoding on the passed labels.
 
-        :param sample: Input samples.
-        :param label: Class values for each sample
+        :param samples: Input samples.
+        :param labels: Class values for each sample
             that will undergo one-hot encoding.
         :return: List containing the samples
             and the one-hot encoded class labels.
         """
-        out_label = np.zeros((label.size, self.n_classes))
-        out_label[np.arange(label.size), label] = 1
-        return [sample, out_label.astype(np.uint8)]
+        out_label = np.zeros((labels.size, self.n_classes))
+        out_label[np.arange(labels.size), labels] = 1
+        return [samples, out_label.astype(np.uint8)]
 
 
 class MinMaxNormalize(BaseTransform):
@@ -83,16 +83,16 @@ class MinMaxNormalize(BaseTransform):
         self.min_ = min_
         self.max_ = max_
 
-    def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[
+    def __call__(self, samples: np.ndarray, labels: np.ndarray) -> List[
         np.ndarray]:
         """"
         Perform min-max normalization on the passed samples.
 
-        :param sample: Input samples that will undergo normalization.
-        :param label: Class values for each sample.
+        :param samples: Input samples that will undergo normalization.
+        :param labels: Class values for each sample.
         :return: List containing the normalized samples and the class labels.
         """
-        return [(sample - self.min_) / (self.max_ - self.min_), label]
+        return [(samples - self.min_) / (self.max_ - self.min_), labels]
 
 
 def apply_transformations(data: Dict,
@@ -112,19 +112,19 @@ def apply_transformations(data: Dict,
 
 class RNNSpectralInputTransform(BaseTransform):
 
-    def __call__(self, sample: np.ndarray,
-                 label: np.ndarray) -> List[np.ndarray]:
+    def __call__(self, samples: np.ndarray,
+                 labels: np.ndarray) -> List[np.ndarray]:
         """"
         Transform the input samples to fit the recurrent
         neural network (RNN) input.
         This is performed for the pixel-based model;
         the input sample includes only spectral bands.
 
-        :param sample: Input samples that will undergo the transformation.
-        :param label: Class values for each sample.
+        :param samples: Input samples that will undergo the transformation.
+        :param labels: Class values for each sample.
         :return: List containing the normalized samples and the class labels.
         """
-        return [np.expand_dims(np.squeeze(sample), -1), label]
+        return [np.expand_dims(np.squeeze(samples), -1), labels]
 
 
 class PerBandMinMaxNormalization(BaseTransform):
@@ -134,25 +134,25 @@ class PerBandMinMaxNormalization(BaseTransform):
         self.min_ = min_
         self.max_ = max_
 
-    def __call__(self, sample: np.ndarray, label: np.ndarray) -> List[
+    def __call__(self, samples: np.ndarray, labels: np.ndarray) -> List[
         np.ndarray]:
         """
         Perform per-band min-max normalization.
         Each band is treated as a separate feature.
 
-        :param sample: Input samples that will undergo transformation.
-        :param label: Abundance vectors for each sample.
+        :param samples: Input samples that will undergo transformation.
+        :param labels: Abundance vectors for each sample.
         :return: List containing the normalized samples and the abundance vectors.
         """
-        sample, label = sample.astype(np.float32), label.astype(np.float32)
-        sample_shape = sample.shape
-        sample = sample.reshape(-1, sample.shape[
+        samples, labels = samples.astype(np.float32), labels.astype(np.float32)
+        sample_shape = samples.shape
+        samples = samples.reshape(-1, samples.shape[
             PerBandMinMaxNormalization.SPECTRAL_DIM])
         for band_index, (min_val, max_val) in enumerate(
                 zip(self.min_, self.max_)):
-            sample[..., band_index] = (sample[..., band_index] - min_val) / (
+            samples[..., band_index] = (samples[..., band_index] - min_val) / (
                     max_val - min_val)
-        return [sample.reshape(sample_shape), label]
+        return [samples.reshape(sample_shape), labels]
 
     @staticmethod
     def get_min_max_vectors(data_cube: np.ndarray) -> Dict[str, np.ndarray]:
@@ -181,23 +181,23 @@ class ExtractCentralPixelSpectrumTransform(BaseTransform):
         super().__init__()
         self.neighborhood_size = neighborhood_size
 
-    def __call__(self, sample: np.ndarray,
-                 label: np.ndarray) -> List[np.ndarray]:
+    def __call__(self, samples: np.ndarray,
+                 labels: np.ndarray) -> List[np.ndarray]:
         """"
         Transform the labels for unsupervised unmixing problem.
         The label is the central pixel of each sample patch.
 
-        :param sample: Input samples.
-        :param label: Central pixel of each sample.
+        :param samples: Input samples.
+        :param labels: Central pixel of each sample.
         :return: List containing the input samples
             and its targets as central pixel.
         """
         if self.neighborhood_size is not None:
             central_index = np.floor(self.neighborhood_size / 2).astype(int)
-            label = np.squeeze(sample[:, central_index, central_index])
+            labels = np.squeeze(samples[:, central_index, central_index])
         else:
-            label = np.squeeze(sample)
-        return [sample, label]
+            labels = np.squeeze(samples)
+        return [samples, labels]
 
 
 UNMIXING_TRANSFORMS = {

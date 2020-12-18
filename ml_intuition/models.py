@@ -319,7 +319,7 @@ class Ensemble:
 def unmixing_pixel_based_cnn(n_classes: int, input_size: int,
                              **kwargs) -> tf.keras.Sequential:
     """
-    Model for supervised hyperspectral unmixing proposed in
+    Model for pixel-based supervised hyperspectral unmixing proposed in
     the following publication (Chicago style citation):
 
     Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
@@ -357,7 +357,7 @@ def unmixing_pixel_based_cnn(n_classes: int, input_size: int,
 def unmixing_cube_based_cnn(n_classes: int, input_size: int,
                             **kwargs) -> tf.keras.Sequential:
     """
-    Model for supervised hyperspectral unmixing proposed in
+    Model for cube-based supervised hyperspectral unmixing proposed in
     the following publication (Chicago style citation):
 
     Zhang, Xiangrong, Yujia Sun, Jingyan Zhang, Peng Wu, and Licheng Jiao.
@@ -394,7 +394,7 @@ def unmixing_cube_based_cnn(n_classes: int, input_size: int,
 def unmixing_pixel_based_dcae(n_classes: int, input_size: int,
                               **kwargs) -> tf.keras.Sequential:
     """
-    Model for unsupervised hyperspectral unmixing proposed in
+    Model for pixel-based unsupervised hyperspectral unmixing proposed in
     the following publication (Chicago style citation):
 
     Khajehrayeni, Farshid, and Hassan Ghassemian.
@@ -444,7 +444,7 @@ def unmixing_pixel_based_dcae(n_classes: int, input_size: int,
 def unmixing_cube_based_dcae(n_classes: int, input_size: int,
                              **kwargs) -> tf.keras.Sequential:
     """
-    Model for unsupervised hyperspectral unmixing proposed in
+    Model for cube-based unsupervised hyperspectral unmixing proposed in
     the following publication (Chicago style citation):
 
     Khajehrayeni, Farshid, and Hassan Ghassemian.
@@ -496,7 +496,7 @@ def unmixing_rnn_supervised(n_classes: int, **kwargs) -> tf.keras.Sequential:
 
     :param n_classes: Number of classes.
     :param kwargs: Additional arguments.
-    :return: Model proposed in the publication listed above.
+    :return: RNN model instance.
     """
     model = tf.keras.Sequential()
     model.add(
