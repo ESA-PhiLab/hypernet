@@ -139,7 +139,7 @@ def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
             make_precission_recall(y_gt, y_pred, rpath / img_id)
 
             # Make histogram with more rounded predictions for performance reasons
-            y_pred = np.round(y_pred, decimals=3)
+            y_pred = np.round(y_pred, decimals=2)
             make_activation_hist(y_pred, rpath / img_id)
 
     return metrics

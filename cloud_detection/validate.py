@@ -64,9 +64,9 @@ def make_validation_insights(model, datagen, output_dir):
     y_gt = datagen_to_gt_array(datagen).ravel()
     y_pred = np.round(model.predict_generator(datagen).ravel(), decimals=5)
 
-    make_activation_hist(y_pred, output_dir)
     make_roc(y_gt, y_pred, output_dir)
     make_precission_recall(y_gt, y_pred, output_dir)
+    make_activation_hist(np.round(y_pred, decimals=2), output_dir)
 
 
 def main():
