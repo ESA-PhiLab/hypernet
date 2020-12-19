@@ -45,17 +45,18 @@ def spectral_information_divergence_loss(y_true: tf.Tensor,
     [n_samples, n_classes], [n_samples, n_bands].
     :return: The spectral information divergence loss.
     """
-    y_true_row_sum = tf.reduce_sum(y_true, 1)
-    y_pred_row_sum = tf.reduce_sum(y_pred, 1)
-    y_true = y_true / tf.reshape(y_true_row_sum, (-1, 1))
-    y_pred = y_pred / tf.reshape(y_pred_row_sum, (-1, 1))
-    y_true, y_pred = tf.keras.backend.clip(y_true,
-                                           tf.keras.backend.epsilon(), 1), \
-                     tf.keras.backend.clip(y_pred,
-                                           tf.keras.backend.epsilon(), 1)
-    loss = tf.reduce_sum(y_true * tf.log(y_true / y_pred)) + \
-           tf.reduce_sum(y_pred * tf.log(y_pred / y_true))
-    return loss
+    log_base_change = tf.log(tf.constant(2, dtype=y_true.dtype))
+    y_true = y_true / tf.reshape(tf.reduce_sum(y_true, axis=1), (-1, 1))
+    y_pred = y_pred / tf.reshape(tf.reduce_sum(y_pred, axis=1), (-1, 1))
+    y_true += tf.keras.backend.epsilon()
+    y_pred += tf.keras.backend.epsilon()
+
+    loss = tf.reduce_sum(
+        y_true * (tf.log(y_true / y_pred) / log_base_change))
+
+    loss_prime = tf.reduce_sum(
+        y_pred * (tf.log(y_pred / y_true) / log_base_change))
+    return loss + loss_prime
 
 
 def average_angle_spectral_mapper(y_true: tf.Tensor,
