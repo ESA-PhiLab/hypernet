@@ -41,7 +41,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
     parser.add_argument("-n", help="mlflow run name", default=None)
-    parser.add_argument("-s", help="train/validate split", type=float, default=0.5)
+    parser.add_argument("-s", help="train/validate split", type=float, default=0.8)
 
     args = parser.parse_args()
 
