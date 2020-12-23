@@ -77,12 +77,13 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
     return img
 
 
-def evaluate_model(model: keras.Model, dpath: Path,
+def evaluate_model(model: keras.Model, thr: float, dpath: Path,
                    rpath: Path, vids: Tuple[str],
                    batch_size: int) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
+    param thr: threshold.
     param dpath: path to dataset.
     param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
@@ -109,7 +110,7 @@ def evaluate_model(model: keras.Model, dpath: Path,
             scene_times.append(scene_time)
             img_gt = load_img_gt(gtpath, f"{img_id}_fixedmask.hdr")
             img_pred = unpad(img_pred, img_gt.shape)
-            img_metrics = get_metrics(img_gt, img_pred, model.metrics)
+            img_metrics = get_metrics(img_gt, img_pred > thr, model.metrics)
             for metric_fn in model.metrics:
                 if type(metric_fn) is str:
                     metric_name = metric_fn
@@ -144,6 +145,7 @@ if __name__ == "__main__":
             })
     params = {
         "model": model,
+        "thr": 0.5,
         "dpath": Path("../datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"),
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),

@@ -89,11 +89,12 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
     return np.expand_dims(img/255, axis=-1)
 
 
-def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
+def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vpath: Path,
                    rpath: Path, vids: Tuple[str], batch_size: int) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
+    param thr: threshold.
     param dpath: path to dataset.
     param gtpath: path to dataset ground truths.
     param batch_size: size of generated batches, only one batch is loaded
@@ -128,10 +129,10 @@ def evaluate_model(model: keras.Model, dpath: Path, gtpath: Path, vpath: Path,
         if img_id in vids or '*' in vids:
             print(f"Creating visualisation for {img_id}")
             img_vis = 0.7 * get_full_scene_img(vpath, img_id)
-            save_vis(img_id, img_vis, img_pred, img_gt, rpath)
+            save_vis(img_id, img_vis, img_pred > thr, img_gt, rpath)
 
         if img_metrics['test_jaccard_index_metric'] < 0.6:
-            print("Will make insights for {img_id}", flush=True)
+            print(f"Will make insights for {img_id}", flush=True)
             y_gt = img_gt.ravel()
             y_pred = np.round(img_pred.ravel(), decimals=5)
 
@@ -160,6 +161,7 @@ if __name__ == "__main__":
             })
     params = {
         "model": model,
+        "thr": 0.5,
         "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test"),
         "gtpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
         "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),

@@ -93,10 +93,10 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
     model.load_weights(f"{rpath}/best_weights")
 
     # Save validation insights
-    make_validation_insights(model, valgen, rpath/"validation_insight")
+    best_thr = make_validation_insights(model, valgen, rpath/"validation_insight")
 
     # Return model
-    return model
+    return model, best_thr
 
 
 if __name__ == "__main__":
