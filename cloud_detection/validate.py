@@ -1,8 +1,10 @@
 from pathlib import Path
+import tensorflow as tf
 from tensorflow import keras
 import tensorflow.keras.backend as K
 from data_gen import load_image_paths, DG_38Cloud
 import losses
+from scipy.spatial.distance import cdist
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 from plotly import express as px
 import numpy as np
@@ -17,8 +19,21 @@ def datagen_to_gt_array(datagen):
     return np.concatenate(ret)
 
 
+def find_best_thr(fpr, tpr, thr):
+    curve_points = np.transpose(np.vstack((fpr, tpr)))
+    perfect_point = [(0., 1.)]
+    dists = cdist(curve_points, perfect_point, 'euclidean')
+    print('thr dist variance:', np.var(dists[1:-1]))
+    print('thr dist mean:', np.mean(dists[1:-1]))
+    best_idx = np.argmin(dists)
+    return thr[best_idx]
+
+
 def make_roc(y_gt, y_pred, output_dir):
     fpr, tpr, thr = roc_curve(y_gt, y_pred)
+
+    best_thr = find_best_thr(fpr, tpr, thr)
+    print('Optimal thr:', best_thr)
 
     fig = px.area(
         x=fpr, y=tpr, hover_data={"treshold": thr},
@@ -33,6 +48,7 @@ def make_roc(y_gt, y_pred, output_dir):
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     fig.update_xaxes(constrain='domain')
     fig.write_html(str(output_dir/"roc.html"))
+    return best_thr
 
 
 def make_activation_hist(y_pred, output_dir):
@@ -64,9 +80,10 @@ def make_validation_insights(model, datagen, output_dir):
     y_gt = datagen_to_gt_array(datagen).ravel()
     y_pred = np.round(model.predict_generator(datagen).ravel(), decimals=5)
 
-    make_roc(y_gt, y_pred, output_dir)
+    best_thr = make_roc(y_gt, y_pred, output_dir)
     make_precission_recall(y_gt, y_pred, output_dir)
     make_activation_hist(np.round(y_pred, decimals=2), output_dir)
+    return best_thr
 
 
 def main():
@@ -83,7 +100,7 @@ def main():
         batch_size=batch_size,
     )
 
-    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/4848bf5b4c464af7b6be5abb0d70f842/"
+    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/b943e6e7066a458f8037b63dc1a960a3/"
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
@@ -93,7 +110,8 @@ def main():
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
-            "f1_score": losses.f1_score
+            "f1_score": losses.f1_score,
+            "tf": tf
         }
     )
     make_validation_insights(model, valgen, Path("./artifacts"))
