@@ -41,6 +41,7 @@ if __name__ == "__main__":
 
     parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
     parser.add_argument("-n", help="mlflow run name", default=None)
+    parser.add_argument("-s", help="train/validate split", type=float, default=0.5)
 
     args = parser.parse_args()
 
@@ -52,7 +53,7 @@ if __name__ == "__main__":
         "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ('*'),
-        "train_size": 0.8,
+        "train_size": args.s,
         "batch_size": 32,
         "balance_train_dataset": False,
         "balance_val_dataset": False,
