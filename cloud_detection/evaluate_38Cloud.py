@@ -112,7 +112,7 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
 
     for fname in os.listdir(gtpath):
         img_id = fname[fname.find("LC08"):fname.find(".TIF")]
-        print(f"Processing {img_id}")
+        print(f"Processing {img_id}", flush=True)
         img_pred, scene_time = get_img_pred(dpath, img_id, model, batch_size)
         scene_times.append(scene_time)
         img_gt = load_img_gt(gtpath, fname)

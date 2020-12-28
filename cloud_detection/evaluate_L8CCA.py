@@ -101,7 +101,7 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path,
     for tname in os.listdir(dpath):
         tpath = dpath / tname
         for img_id in os.listdir(tpath):
-            print(f"Processing {tname}-{img_id}")
+            print(f"Processing {tname}-{img_id}", flush=True)
             gtpath = tpath / img_id
             img_pred, scene_time = get_img_pred(tpath,
                                                 img_id,
