@@ -78,11 +78,10 @@ def make_validation_insights(model, datagen, output_dir):
     output_dir.mkdir(exist_ok=True)
 
     y_gt = datagen_to_gt_array(datagen).ravel()
-    y_pred = np.round(model.predict_generator(datagen).ravel(), decimals=5)
-
+    y_pred = np.round(model.predict_generator(datagen).ravel(), decimals=3)
+    print("Loaded whole validation dataset to memory", flush=True)
     best_thr = make_roc(y_gt, y_pred, output_dir)
     make_precission_recall(y_gt, y_pred, output_dir)
-    make_activation_hist(np.round(y_pred, decimals=2), output_dir)
     return best_thr
 
 

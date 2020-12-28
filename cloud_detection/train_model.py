@@ -88,6 +88,7 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
         callbacks=callbacks,
         verbose=1
         )
+    print("Finished fitting. Will make validation insights now.", flush=True)
 
     # Load best weights
     model.load_weights(f"{rpath}/best_weights")
