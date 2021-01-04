@@ -56,7 +56,6 @@ def get_model_metrics(y_true, y_pred, metrics_to_compute: List = None) \
     Calculate provided metrics and store them in a Dict
     :param y_true: True labels
     :param y_pred: Predicted labels
-    :param inference_time: Prediction time, defaults to None
     :param metrics_to_compute: Metrics which will be computed, defaults to None
     :return: Dictionary with metric name as key and metric value as value
     """

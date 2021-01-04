@@ -99,7 +99,7 @@ def evaluate(*,
     y_pred, inference_time = predict(test_dict[enums.Dataset.DATA],
                                      batch_size=batch_size)
 
-    if not use_ensemble:
+    if voting == 'classifier':
         y_pred = np.argmax(y_pred, axis=-1)
     y_true = np.argmax(test_dict[enums.Dataset.LABELS], axis=-1)
 
