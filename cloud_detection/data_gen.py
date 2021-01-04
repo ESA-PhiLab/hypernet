@@ -72,6 +72,7 @@ def load_image_paths(base_path: Path,
             red_files = list(base_path.glob("*red/*.TIF"))
         else:
             red_files = list(base_path.glob(f"*red/*{img_id}.TIF"))
+        red_files.sort()
         # Get other channels in accordance to the red channel filenames
         return [combine_channel_files(red_file) for red_file in red_files]
 

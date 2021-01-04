@@ -4,7 +4,7 @@ import uuid
 import numpy as np
 import argparse
 from pathlib import Path
-from mlflow import log_metrics, log_artifacts, end_run
+from mlflow import log_metrics, log_artifacts, log_param, end_run
 
 from train_model import train_model
 from evaluate_38Cloud import evaluate_model as test_38Cloud
@@ -26,6 +26,7 @@ def main(c):
     for key, value in metrics_38Cloud.items():
         mean_metrics_38Cloud[key] = np.mean(list(value.values()))
     if c["mlflow"] == True:
+        log_param('threshold', thr)
         log_metrics(mean_metrics_38Cloud)
     metrics_L8CCA = test_L8CCA(model, thr, c["L8CCA_path"], c["rpath"] / "L8CCA_vis", c["vids"], c["batch_size"])
     mean_metrics_L8CCA = {}
