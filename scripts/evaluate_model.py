@@ -90,7 +90,10 @@ def evaluate(*,
                                              mean=noise_params['mean'],
                                              seed=seed)
         if voting == 'classifier':
-            train_dict = io.extract_set(data, enums.Dataset.TRAIN)
+            if type(data) is str:
+                train_dict = io.extract_set(data, enums.Dataset.TRAIN)
+            else:
+                train_dict = data[enums.Dataset.TRAIN]
             train_dict = transforms.apply_transformations(train_dict, transformations)
             train_probabilities = model.predict_probabilities(train_dict[enums.Dataset.DATA])
             model.train_ensemble_predictor(train_probabilities, train_dict[enums.Dataset.LABELS])
