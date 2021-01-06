@@ -15,6 +15,8 @@ from tensorflow.keras.preprocessing.image import load_img
 import losses
 from data_gen import DG_L8CCA
 from utils import unpad, get_metrics, save_vis
+from validate import make_precission_recall, make_roc, make_activation_hist
+from validate import datagen_to_gt_array
 
 
 def build_rgb_scene_img(path: Path, img_id: str):
@@ -124,13 +126,24 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path,
                 print(f"Creating visualisation for {img_id}")
                 img_vis = build_rgb_scene_img(tpath/img_id, img_id)
                 save_vis(img_id, img_vis, img_pred, img_gt, rpath)
-            
+
+            if img_metrics['test_jaccard_index_metric'] < 0.6:
+                print(f"Will make insights for {img_id}", flush=True)
+                y_gt = img_gt.ravel()
+                y_pred = np.round(img_pred.ravel(), decimals=5)
+
+                make_roc(y_gt, y_pred, rpath / img_id)
+                make_precission_recall(y_gt, y_pred, rpath / img_id)
+
+                # Make histogram with more rounded predictions for performance reasons
+                y_pred = np.round(y_pred, decimals=2)
+                make_activation_hist(y_pred, rpath / img_id)
 
     return metrics
 
 
 if __name__ == "__main__":
-    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/987cc26176464e6dad02bfa4757a10a3/"
+    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/3e19daf248954674966cd31af1c4cb12/"
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
@@ -143,9 +156,10 @@ if __name__ == "__main__":
             "f1_score": losses.f1_score,
             "tf": tf
             })
+    # TODO: fall back from 1 to .5
     params = {
         "model": model,
-        "thr": 0.5,
+        "thr": 1.0,
         "dpath": Path("../datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"),
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
