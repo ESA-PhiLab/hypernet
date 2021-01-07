@@ -168,4 +168,5 @@ if __name__ == "__main__":
         "vids": ("*"),
         "batch_size": 10
         }
+    print(f'Working dir: {os.getcwd()}, artifacts dir: {params["rpath"]}', flush=True)
     evaluate_model(**params)
