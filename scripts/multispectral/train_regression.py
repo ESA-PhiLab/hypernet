@@ -28,7 +28,7 @@ def train_and_eval_regression(dataframe: pd.DataFrame,
     :param model_name: Name of the utilized model.
     :param seed: Seed used for reproduction of experiment results.
     :param verbose: Verbosity mode.
-    :param n_jobs: Number of jobs for parallel computing.
+    :param n_jobs: Number of jobs utilized for the parallel computing.
     :return: Tuple of the report over the test set as a dataframe
         and the best parameters found as a dictionary.
     """

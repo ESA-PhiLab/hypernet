@@ -21,7 +21,7 @@ def train_and_eval_classifier(dataframe: pd.DataFrame,
     The dataset is a design matrix, where in rows each new observations
     are placed, and the columns denote the explanatory variables.
     The process of finding the best parameters is done by leave one
-    out cross validation method, utilizing the mean-squared error.
+    out cross validation method, utilizing the accuracy score.
 
     :param dataframe: Data collected for the classification problem.
     :param label_name: Name of the label i.e., the dependent variable.
@@ -30,7 +30,7 @@ def train_and_eval_classifier(dataframe: pd.DataFrame,
     :param model_name: Name of the utilized model.
     :param seed: Seed used for reproduction of experiment results.
     :param verbose: Verbosity mode.
-    :param n_jobs: Number of jobs for parallel computing.
+    :param n_jobs: Number of jobs utilized for the parallel computing.
     :return: Tuple of the report over the test set as a dataframe
         and the best parameters found as a dictionary.
     """
