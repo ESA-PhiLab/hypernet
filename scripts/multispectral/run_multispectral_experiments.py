@@ -20,19 +20,31 @@ def run_experiments(*,
 
     :param dataframe_path: Dataframe containing all samples as a design matrix.
         The rows indicate observations, whereas the columns
-        indicate explanatory variables.
+        indicate explanatory variables. One of those columns is the
+        target or dependent variable which the model learns.
+        The target variable for the classification should be in the raw nominal
+        form (simply put as strings, as the one-hot-encoding is done already
+        in the pipeline on this very column), whereas for the regression problem,
+        the numerical form is required (standard regression target).
     :param label_name: The name of the dependent variable in the dataframe.
         All other columns are assumed to serve as input features and the
         regression and classification models are build on top of them.
+        In other words, the dataset should only consist of one dependent
+        variable column, and other features i.e., explanatory variables.
     :param output_dir_path: Path to the destination output directory.
     :param model_name: Type of the model used for the experiments.
+        For the classification task, the name should end with "_clf" suffix,
+        whereas for the regression problem it is simply "_reg".
+        For example to employ the decision tree classifier one
+        should specify the model_name as a "decision_tree_clf".
     :param train_fraction: Fraction of the samples employed
         for training the models. For classification problem,
         the division is stratified to preserve the original
-        distribution of classes.
+        distribution of classes. For the regression task, the data sampling
+        is not stratified, and random subsets are generated.
     :param seed: Seed used for the experiments reproduction.
     :param verbose: Verbosity mode.
-    :param n_jobs: Number of jobs for parallel computing.
+    :param n_jobs: Number of jobs utilized for the parallel computing.
     :return: None.
     """
     dataframe = pd.read_csv(dataframe_path)
