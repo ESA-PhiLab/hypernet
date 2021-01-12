@@ -6,6 +6,8 @@ import sys
 
 import numpy as np
 import tensorflow as tf
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 
 def model_2d(kernel_size: int,
@@ -349,3 +351,38 @@ def unmixing_rnn_supervised(n_classes: int, **kwargs) -> tf.keras.Sequential:
 
     model.add(tf.keras.layers.Dense(n_classes, activation='softmax'))
     return model
+
+
+ML_MODELS = {
+    'decision_tree_clf': DecisionTreeClassifier,
+    'random_forest_clf': RandomForestClassifier,
+    'decision_tree_reg': DecisionTreeRegressor,
+    'random_forest_reg': RandomForestRegressor,
+}
+
+ML_MODELS_GRID = {
+    'decision_tree_clf':
+        {
+            'max_depth': [2, 4, 6, 8, 10, 20, 50, 100],
+            'criterion': ['gini', 'entropy'],
+            'min_samples_split': [2, 4, 6, 8, 10, 20, 50]
+        },
+
+    'random_forest_clf':
+        {
+            'max_depth': [10, 20, 40, 60],
+            'min_samples_leaf': [1, 2, 4],
+            'n_estimators': [200, 400, 600, 800]
+        },
+    'decision_tree_reg':
+        {
+            'max_depth': [2, 4, 6, 8, 10, 20, 50, 100],
+            'min_samples_split': [2, 4, 6, 8, 10, 20, 50]
+        },
+    'random_forest_reg':
+        {
+            'max_depth': [10, 20, 40, 60],
+            'min_samples_leaf': [1, 2, 4],
+            'n_estimators': [200, 400, 600, 800]
+        },
+}
