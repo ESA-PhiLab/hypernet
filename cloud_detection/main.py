@@ -20,6 +20,8 @@ def main(c):
     model, thr = train_model(c["train_path"], c["rpath"] / "best_weights", c["train_size"], c["batch_size"],
                         c["balance_train_dataset"], c["balance_val_dataset"],
                         c["bn_momentum"], c["learning_rate"], c["stopping_patience"], c["epochs"])
+    # This is to disable auto threshold
+    thr = 0.5
     print("Finished training and validation, starting evaluation.", flush=True)
     print(f'Working dir: {os.getcwd()}, artifacts dir: {c["rpath"]}', flush=True)
     metrics_38Cloud = test_38Cloud(model, thr, c["38Cloud_path"], c["38Cloud_gtpath"], c["vpath"],
