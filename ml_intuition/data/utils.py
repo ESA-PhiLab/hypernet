@@ -221,6 +221,7 @@ def get_mlflow_artifacts_path(artifacts_storage_path: str,
         mlflow.set_experiment(experiment_name)
     filter_string = 'parameters.artifacts_storage = \'{}\''.format(artifacts_storage_path)
     result = mlflow.search_runs(filter_string=filter_string)['artifact_uri'][0]
+    result = result.replace('sftp://ftp_ml:EGv7d3@earth.kplabs.pl:/pub/Teams', '/media')
     return os.path.join(result, artifacts_storage_path)
 
 
