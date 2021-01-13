@@ -23,6 +23,9 @@ RUN wget -O xilinx_dnndk_v3.1.tar.gz -nv "https://jug.kplabs.pl/file/cZfqhhaqYz/
     && cd xilinx_dnndk_v3.1/host_x86 && ./install.sh \
     && apt-get -y update && apt-get install -y --force-yes libgomp1 jq
 
+#Add earth.kplabs.pl to known_host
+RUN ssh -o StrictHostKeyChecking=accept-new earth.kplabs.pl || true
+
 # Create workspace
 RUN mkdir /workspace
 WORKDIR /workspace
