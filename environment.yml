@@ -61,6 +61,7 @@ dependencies:
   - py-opencv=3.4.2=py36hb342d67_1
   - pylint=2.4.4=py36_0
   - pyparsing=2.4.6=py_0
+  - pysftp=0.2.9
   - pytest=5.3.5=py36_0
   - python-graphviz==0.13.2
   - python=3.6.10=h0371630_0
