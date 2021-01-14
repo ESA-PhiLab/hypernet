@@ -70,13 +70,13 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
     callbacks = [
         keras.callbacks.EarlyStopping(
             patience=stopping_patience,
-            verbose=1
+            verbose=2
         ),
         keras.callbacks.ModelCheckpoint(
             filepath=f"{rpath}/best_weights",
             save_best_only=True,
             save_weights_only=True,
-            verbose=1
+            verbose=2
         )
     ]
 
@@ -86,7 +86,7 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
         epochs=epochs,
         validation_data=valgen,
         callbacks=callbacks,
-        verbose=1
+        verbose=2
         )
     print("Finished fitting. Will make validation insights now.", flush=True)
 
