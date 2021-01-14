@@ -24,6 +24,7 @@ def evaluate(*,
              y_pred,
              data,
              dest_path: str,
+             n_classes: int,
              model_path: str,
              voting: str = 'hard',
              train_set_predictions: np.ndarray = None):
@@ -34,24 +35,9 @@ def evaluate(*,
     :param data: Either path to the input data or the data dict.
     :param dest_path: Directory in which to store the calculated metrics
     :param n_classes: Number of classes.
-    :param batch_size: Size of the batch for inference
-    :param use_ensemble: Use ensemble for prediction.
-    :param ensemble_copies: Number of model copies for the ensemble.
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
             labels for majority rule voting. Else if ‘soft’, predicts the class
             label based on the argmax of the sums of the predicted probabilities.
-    :param noise: List containing names of used noise injection methods
-        that are performed after the normalization transformations.
-    :param noise_sets: List of sets that are affected by the noise injection.
-        For this module single element can be "test".
-    :param noise_params: JSON containing the parameters
-        setting of noise injection methods.
-        Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
-        This JSON should include all parameters for noise injection
-        functions that are specified in the noise argument.
-        For the accurate description of each parameter, please
-        refer to the ml_intuition/data/noise.py module.
-    :param seed: Seed for RNG
     """
     min_length = np.inf
     for arr in y_pred:
@@ -81,7 +67,8 @@ def evaluate(*,
     y_true = data[enums.Dataset.TEST][enums.Dataset.LABELS]
     model_metrics = get_model_metrics(y_true, y_pred)
     model_metrics['inference_time'] = [voting_time]
-    conf_matrix = confusion_matrix(y_true, y_pred)
+    conf_matrix = confusion_matrix(y_true, y_pred,
+                                   labels=[i for i in range(n_classes)])
     io.save_metrics(dest_path=dest_path,
                     file_name=enums.Experiment.INFERENCE_METRICS,
                     metrics=model_metrics)

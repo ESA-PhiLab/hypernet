@@ -18,7 +18,8 @@ def mean_per_class_accuracy(y_true: np.ndarray,
     :param y_true: Labels as a one-dimensional numpy array.
     :param y_pred: Model's predictions as a one-dimensional numpy array.
     """
-    conf_matrix = confusion_matrix(y_true, y_pred)
+    max_label = max(y_true) if max(y_true) >= max(y_pred) else max(y_pred)
+    conf_matrix = confusion_matrix(y_true, y_pred, labels=list(range(max_label + 1)))
     return conf_matrix.diagonal() / conf_matrix.sum(axis=1)
 
 
