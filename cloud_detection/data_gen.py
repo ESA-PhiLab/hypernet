@@ -108,6 +108,7 @@ class DG_38Cloud(keras.utils.Sequence):
                  files,
                  batch_size: int,
                  balance_classes: bool=False,
+                 balance_snow: bool=False,
                  dim: Tuple[int, int]=(384, 384),
                  shuffle: bool=True,
                  with_gt: bool=True
@@ -125,13 +126,14 @@ class DG_38Cloud(keras.utils.Sequence):
         self._dim: Tuple[int, int] = dim
         self._shuffle: bool = shuffle
         self._with_gt: bool = with_gt
+        self._balance_snow: bool = balance_snow
         self._balance_classes: bool = balance_classes
 
         self._files = files
         self._file_indexes = np.arange(len(self._files))
         if self._balance_classes:
             self._balance_file_indexes()
-        if True: # self._balance_snow
+        if self._balance_snow:
             self._balance_snow_indexes()
         if self._shuffle == True:
             np.random.shuffle(self._file_indexes)

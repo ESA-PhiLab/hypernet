@@ -35,10 +35,12 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
         dpath,
         (train_size, 1-train_size)
         )
+    # Upstream snow balancing
     traingen = DG_38Cloud(
         files=train_files,
         batch_size=batch_size,
-        balance_classes=balance_train_dataset
+        balance_classes=balance_train_dataset,
+        balance_snow=True
         )
     valgen = DG_38Cloud(
         files=val_files,
