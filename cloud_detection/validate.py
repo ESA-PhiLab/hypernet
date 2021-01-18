@@ -7,6 +7,7 @@ import losses
 from scipy.spatial.distance import cdist
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 from plotly import express as px
+from plotly import graph_objects as go
 import numpy as np
 
 
@@ -29,7 +30,7 @@ def find_best_thr(fpr, tpr, thr):
     return thr[best_idx]
 
 
-def make_roc(y_gt, y_pred, output_dir):
+def make_roc(y_gt, y_pred, output_dir, thr_marker: float=None):
     fpr, tpr, thr = roc_curve(y_gt, y_pred)
 
     best_thr = find_best_thr(fpr, tpr, thr)
@@ -44,9 +45,19 @@ def make_roc(y_gt, y_pred, output_dir):
         type='line', line=dict(dash='dash'),
         x0=0, x1=1, y0=0, y1=1
     )
+    if thr_marker is not None:
+        marker_idx = find_nearest(thr, thr_marker)
+        fig.add_trace(
+            go.Scatter(
+                x=[fpr[marker_idx]],
+                y=[tpr[marker_idx]],
+                text=f'set threshold: {thr_marker}'
+            )
+        )
 
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     fig.update_xaxes(constrain='domain')
+    fig.layout.update(showlegend=False)
     fig.write_html(str(output_dir/"roc.html"))
     return best_thr
 
@@ -57,7 +68,7 @@ def make_activation_hist(y_pred, output_dir):
     fig.write_html(str(output_dir/"activation_hist.html"))
 
 
-def make_precission_recall(y_gt, y_pred, output_dir):
+def make_precission_recall(y_gt, y_pred, output_dir, thr_marker: float=None):
     fpr, fre, thr = precision_recall_curve(y_gt, y_pred)
 
     fig = px.area(
@@ -69,8 +80,18 @@ def make_precission_recall(y_gt, y_pred, output_dir):
         type='line', line=dict(dash='dash'),
         x0=0, x1=1, y0=1, y1=0
     )
+    if thr_marker is not None:
+        marker_idx = find_nearest(thr, thr_marker)
+        fig.add_trace(
+            go.Scatter(
+                x=[fpr[marker_idx]],
+                y=[fre[marker_idx]],
+                text=f'set threshold: {thr_marker}'
+            )
+        )
     fig.update_yaxes(scaleanchor="x", scaleratio=1)
     fig.update_xaxes(constrain='domain')
+    fig.layout.update(showlegend=False)
     fig.write_html(str(output_dir/"prec_recall.html"))
 
 
@@ -83,6 +104,11 @@ def make_validation_insights(model, datagen, output_dir):
     best_thr = make_roc(y_gt, y_pred, output_dir)
     make_precission_recall(y_gt, y_pred, output_dir)
     return best_thr
+
+
+def find_nearest(array, value):
+    array = np.asarray(array)
+    return (np.abs(array - value)).argmin()
 
 
 def main():

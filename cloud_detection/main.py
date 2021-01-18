@@ -1,6 +1,7 @@
 """ Train and test the models for cloud detection. """
 
 import uuid
+import os
 import numpy as np
 import argparse
 from pathlib import Path
@@ -20,6 +21,7 @@ def main(c):
                         c["balance_train_dataset"], c["balance_val_dataset"],
                         c["bn_momentum"], c["learning_rate"], c["stopping_patience"], c["epochs"])
     print("Finished training and validation, starting evaluation.", flush=True)
+    print(f'Working dir: {os.getcwd()}, artifacts dir: {c["rpath"]}', flush=True)
     metrics_38Cloud = test_38Cloud(model, thr, c["38Cloud_path"], c["38Cloud_gtpath"], c["vpath"],
                                    c["rpath"] / "38Cloud_vis", c["vids"], c["batch_size"])
     mean_metrics_38Cloud = {}
