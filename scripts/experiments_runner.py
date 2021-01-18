@@ -9,14 +9,14 @@ import clize
 import mlflow
 import tensorflow as tf
 from clize.parameters import multi
-from scripts import evaluate_model, prepare_data, train_model, \
-    artifacts_reporter
 
 from ml_intuition import enums
 from ml_intuition.data import noise
 from ml_intuition.data.io import load_processed_h5
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 from ml_intuition.data.utils import parse_train_size
+from scripts import evaluate_model, prepare_data, train_model, \
+    artifacts_reporter
 
 
 def run_experiments(*,
@@ -27,21 +27,22 @@ def run_experiments(*,
                     stratified: bool = True,
                     background_label: int = 0,
                     channels_idx: int = 0,
+                    neighborhood_size: int = None,
                     n_runs: int,
                     model_name: str,
-                    kernel_size: int = 3,
-                    n_kernels: int = 16,
+                    kernel_size: int = 5,
+                    n_kernels: int = 200,
                     save_data: bool = 0,
                     n_layers: int = 1,
                     dest_path: str = None,
                     sample_size: int,
                     n_classes: int,
-                    lr: float = 0.005,
-                    batch_size: int = 150,
-                    epochs: int = 10,
+                    lr: float = 0.001,
+                    batch_size: int = 128,
+                    epochs: int = 200,
                     verbose: int = 2,
                     shuffle: bool = True,
-                    patience: int = 3,
+                    patience: int = 15,
                     pre_noise: ('pre', multi(min=0)),
                     pre_noise_sets: ('spre', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
@@ -55,24 +56,25 @@ def run_experiments(*,
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the ground-truth data file.
     :param train_size: If float, should be between 0.0 and 1.0,
-                        if stratified = True, it represents percentage of each
-                        class to be extracted,
-                 If float and stratified = False, it represents percentage of the
-                    whole dataset to be extracted with samples drawn randomly,
-                    regardless of their class.
-                 If int and stratified = True, it represents number of samples
-                    to be drawn from each class.
-                 If int and stratified = False, it represents overall number of
-                    samples to be drawn regardless of their class, randomly.
-                 Defaults to 0.8
-    :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
-                     each class from the training set to be extracted as a
-                     validation set, defaults to 0.1
+        if stratified = True, it represents percentage of each class
+        to be extracted.
+        If float and stratified = False, it represents percentage of the
+            whole dataset to be extracted with samples drawn randomly,
+            regardless of their class.
+         If int and stratified = True, it represents number of samples
+            to be drawn from each class.
+         If int and stratified = False, it represents overall number of
+            samples to be drawn regardless of their class, randomly.
+         Defaults to 0.8
+    :param val_size: Should be between 0.0 and 1.0. Represents the
+        percentage of each class from the training set to be
+        extracted as a validation set, defaults to 0.1
     :param stratified: Indicated whether the extracted training set should be
                      stratified, defaults to True
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
-                         data
+                         data.
+    :param neighborhood_size: Size of the spatial patch.
     :param save_data: Whether to save the prepared dataset
     :param n_runs: Number of total experiment runs.
     :param model_name: Name of the model, it serves as a key in the
@@ -84,8 +86,8 @@ def run_experiments(*,
         subfolders in this directory.
     :param sample_size: Size of the input sample.
     :param n_classes: Number of classes.
-    :param lr: Learning rate for the model, i.e., regulates the size of the step
-        in the gradient descent process.
+    :param lr: Learning rate for the model, i.e., regulates
+        the size of the step in the gradient descent process.
     :param batch_size: Size of the batch used in training phase,
         it is the size of samples per gradient step.
     :param epochs: Number of epochs for model to train.
@@ -101,8 +103,10 @@ def run_experiments(*,
         injected. One element can either be "train", "val" or "test".
     :param post_noise: The list of names of noise injection methods after
         the normalization transformations.
-    :param post_noise_sets: The list of sets to which the noise will be injected.
-    :param noise_params: JSON containing the parameter setting of injection methods.
+    :param post_noise_sets: The list of sets to which
+        the noise will be injected.
+    :param noise_params: JSON containing the parameter
+        setting of injection methods.
         Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
         This JSON should include all parameters for noise injection
         functions that are specified in pre_noise and post_noise arguments.
@@ -127,7 +131,8 @@ def run_experiments(*,
 
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
-            dest_path, '{}_{}'.format(enums.Experiment.EXPERIMENT, str(experiment_id)))
+            dest_path,
+            '{}_{}'.format(enums.Experiment.EXPERIMENT, str(experiment_id)))
         if save_data:
             data_source = os.path.join(experiment_dest_path, 'data.h5')
         else:
@@ -185,15 +190,18 @@ def run_experiments(*,
             noise_params=noise_params)
         tf.keras.backend.clear_session()
 
-    artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-                                                dest_path=dest_path,
-                                                use_mlflow=use_mlflow)
+    artifacts_reporter.collect_artifacts_report(
+        experiments_path=dest_path,
+        dest_path=dest_path,
+        use_mlflow=use_mlflow)
     if enums.Splits.GRIDS in data_file_path:
-        fair_report_path = os.path.join(dest_path, enums.Experiment.REPORT_FAIR)
-        artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-                                                    dest_path=fair_report_path,
-                                                    filename=enums.Experiment.INFERENCE_FAIR_METRICS,
-                                                    use_mlflow=use_mlflow)
+        fair_report_path = os.path.join(dest_path,
+                                        enums.Experiment.REPORT_FAIR)
+        artifacts_reporter.collect_artifacts_report(
+            experiments_path=dest_path,
+            dest_path=fair_report_path,
+            filename=enums.Experiment.INFERENCE_FAIR_METRICS,
+            use_mlflow=use_mlflow)
 
     if use_mlflow:
         mlflow.log_artifacts(dest_path, artifact_path=dest_path)
