@@ -2,7 +2,6 @@
 
 import os
 import re
-import uuid
 import time
 import uuid
 import numpy as np
@@ -136,8 +135,8 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
             y_gt = img_gt.ravel()
             y_pred = np.round(img_pred.ravel(), decimals=5)
 
-            make_roc(y_gt, y_pred, rpath / img_id)
-            make_precission_recall(y_gt, y_pred, rpath / img_id)
+            make_roc(y_gt, y_pred, rpath / img_id, thr_marker=thr)
+            make_precission_recall(y_gt, y_pred, rpath / img_id, thr_marker=thr)
 
             # Make histogram with more rounded predictions for performance reasons
             y_pred = np.round(y_pred, decimals=2)
@@ -169,4 +168,5 @@ if __name__ == "__main__":
         "vids": ("*"),
         "batch_size": 10
         }
+    print(f'Working dir: {os.getcwd()}, artifacts dir: {params["rpath"]}', flush=True)
     evaluate_model(**params)
