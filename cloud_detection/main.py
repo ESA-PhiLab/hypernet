@@ -17,13 +17,15 @@ def main(c):
     Path(c["rpath"]).mkdir(parents=True, exist_ok=False)
     if c["mlflow"] == True:
         setup_mlflow(c)
-    model, thr = train_model(c["train_path"], c["rpath"] / "best_weights", c["train_size"], c["batch_size"],
-                        c["balance_train_dataset"], c["balance_val_dataset"],
-                        c["bn_momentum"], c["learning_rate"], c["stopping_patience"], c["epochs"])
-    # This is to disable auto threshold
-    thr = 0.5
+    model, auto_thr = train_model(c["train_path"], c["rpath"] / "best_weights", c["train_size"], c["batch_size"],
+                                  c["balance_train_dataset"], c["balance_val_dataset"],
+                                  c["bn_momentum"], c["learning_rate"], c["stopping_patience"], c["epochs"])
     print("Finished training and validation, starting evaluation.", flush=True)
     print(f'Working dir: {os.getcwd()}, artifacts dir: {c["rpath"]}', flush=True)
+    if c["thr"] is None:
+        thr = auto_thr
+    else:
+        thr = c["thr"]
     metrics_38Cloud = test_38Cloud(model, thr, c["38Cloud_path"], c["38Cloud_gtpath"], c["vpath"],
                                    c["rpath"] / "38Cloud_vis", c["vids"], c["batch_size"])
     mean_metrics_38Cloud = {}
@@ -63,6 +65,7 @@ if __name__ == "__main__":
         "batch_size": 32,
         "balance_train_dataset": False,
         "balance_val_dataset": False,
+        "thr": 0.5,
         "learning_rate": .01,
         "bn_momentum": .9,
         "epochs": 200,

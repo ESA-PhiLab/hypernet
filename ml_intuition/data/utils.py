@@ -2,26 +2,39 @@
 All data handling methods.
 """
 
+import os
 from typing import Dict, List, Tuple, Union
 
-import os
 import mlflow
 import numpy as np
 import tensorflow as tf
 
 from ml_intuition import enums
-from ml_intuition.data.transforms import BaseTransform
 
 SAMPLES_DIM = 0
 MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
 
 
+def subsample_test_set(data: Dict, test_size: int):
+    """
+    Subsample the test set.
+
+    :param data: The test data dictionary.
+    :param test_size: Size of the test samples to remain.
+    """
+    assert data[enums.Dataset.DATA].shape[SAMPLES_DIM] >= test_size and \
+           data[enums.Dataset.LABELS].shape[SAMPLES_DIM] >= test_size
+    data[enums.Dataset.DATA] = data[enums.Dataset.DATA][-test_size:]
+    data[enums.Dataset.LABELS] = data[enums.Dataset.LABELS][-test_size:]
+
+
 def create_tf_dataset(batch_size: int,
                       dataset: Dict[str, np.ndarray],
-                      transforms: List[BaseTransform]) -> Tuple[
+                      transforms: List) -> Tuple[
     tf.data.Dataset, int]:
     """
-    Create and transform datasets that are used in the training, validaton or testing phases.
+    Create and transform datasets that are used
+    in the training, validation or testing phases.
 
     :param batch_size: Size of the batch used in either phase,
         it is the size of samples per gradient step.
@@ -209,13 +222,29 @@ def list_to_string(list_to_convert: List) -> str:
     return ",".join(map(str, list_to_convert))
 
 
+def get_central_pixel_spectrum(data: np.ndarray,
+                               neighborhood_size: int) -> np.ndarray:
+    """
+    If the model is an autoencoder, get the central pixel
+    spectrum as its reconstruction original sample.
+
+    :param data: The data cube used for training the autoencoder.
+    :param neighborhood_size: Spatial size of the patch.
+    """
+    if neighborhood_size is not None:
+        central_index = np.floor(neighborhood_size / 2).astype(int)
+        return np.squeeze(data[:, central_index, central_index])
+    return np.squeeze(data)
+
+
 def get_mlflow_artifacts_path(artifacts_storage_path: str) -> str:
     """
     Find full local artifacts storage path relative artifacts storage path
     :param artifacts_storage_path: Relative artifacts storage path
     :return: Full local path to artifacts
     """
-    filter_string = 'parameters.artifacts_storage = \'{}\''.format(artifacts_storage_path)
+    filter_string = 'parameters.artifacts_storage = \'{}\''.format(
+        artifacts_storage_path)
     result = mlflow.search_runs(filter_string=filter_string)['artifact_uri'][0]
     return os.path.join(result, artifacts_storage_path)
 

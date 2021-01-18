@@ -60,8 +60,10 @@ def evaluate(*,
 
     transformations = [transforms.SpectralTransform(),
                        transforms.OneHotEncode(n_classes=n_classes),
-                       transforms.MinMaxNormalize(min_=min_value, max_=max_value)]
-    transformations = transformations + get_noise_functions(noise, noise_params) \
+                       transforms.MinMaxNormalize(min_=min_value,
+                                                  max_=max_value)]
+    transformations = transformations + \
+                      get_noise_functions(noise, noise_params) \
         if enums.Dataset.TEST in noise_sets else transformations
 
     test_dict = transforms.apply_transformations(test_dict, transformations)

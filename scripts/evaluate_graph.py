@@ -20,8 +20,7 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str,
     min_value, max_value = test_dict[enums.DataStats.MIN], \
                            test_dict[enums.DataStats.MAX]
 
-    transformations = [transforms.SpectralTransform(),
-                       transforms.MinMaxNormalize(min_=min_value,
+    transformations = [transforms.MinMaxNormalize(min_=min_value,
                                                   max_=max_value)]
 
     test_dict = transforms.apply_transformations(test_dict, transformations)
@@ -41,7 +40,7 @@ def main(*, graph_path: str, node_names_path: str, dataset_path: str,
                                               batch_size)
 
     graph_metrics = get_model_metrics(test_dict[enums.Dataset.LABELS],
-                                      predictions, inference_time)
+                                      predictions)
     graph_metrics['inference_time'] = [inference_time]
     conf_matrix = confusion_matrix(test_dict[enums.Dataset.LABELS],
                                             predictions)
