@@ -108,6 +108,7 @@ class DG_38Cloud(keras.utils.Sequence):
                  files,
                  batch_size: int,
                  balance_classes: bool=False,
+                 balance_snow: bool=False,
                  dim: Tuple[int, int]=(384, 384),
                  shuffle: bool=True,
                  with_gt: bool=True
@@ -125,21 +126,20 @@ class DG_38Cloud(keras.utils.Sequence):
         self._dim: Tuple[int, int] = dim
         self._shuffle: bool = shuffle
         self._with_gt: bool = with_gt
+        self._balance_snow: bool = balance_snow
         self._balance_classes: bool = balance_classes
 
         self._files = files
         self._file_indexes = np.arange(len(self._files))
         if self._balance_classes:
             self._balance_file_indexes()
+        if self._balance_snow:
+            self._balance_snow_indexes()
         if self._shuffle == True:
             np.random.shuffle(self._file_indexes)
 
 
-    def _balance_file_indexes(self):
-        """
-        Upsamples the file indexes of the smaller class.
-        """
-        labels = self._get_labels_for_balancing()
+    def _perform_balancing(self, labels):
         pos_idx = self._file_indexes[np.array(labels, dtype=bool)]
         neg_idx = self._file_indexes[~np.array(labels, dtype=bool)]
         if len(pos_idx) < len(neg_idx):
@@ -149,6 +149,33 @@ class DG_38Cloud(keras.utils.Sequence):
             resampled_idx = np.random.choice(neg_idx, len(pos_idx))
             self._file_indexes = np.concatenate([pos_idx, resampled_idx], axis=0)
         self._file_indexes = np.sort(self._file_indexes)
+
+
+    def _balance_file_indexes(self):
+        """
+        Upsamples the file indexes of the smaller class.
+        """
+        labels = self._get_labels_for_balancing()
+        self._perform_balancing(labels)
+
+
+    def _balance_snow_indexes(self):
+        labels = self._get_labels_for_snow_balancing()
+        self._perform_balancing(labels)
+
+
+    def _get_labels_for_snow_balancing(self, brightness_thr=0.4, frequency_thr=0.1):
+        labels = []
+        print(len(self._files))
+        for file_ in self._files:
+            img = self._open_as_array(file_)
+            if (np.count_nonzero(img > brightness_thr) / img.size) > frequency_thr:
+                labels.append(1)
+            else:
+                labels.append(0)
+
+        print('Multiplied:', np.count_nonzero(labels))
+        return labels
 
 
     def _get_labels_for_balancing(self) -> List[int]:
@@ -320,7 +347,7 @@ def main():
     base_path = Path("../datasets/clouds/38-Cloud/38-Cloud_training")
 
     split_names = ("train", "validation", "test")
-    splits = load_image_paths(base_path, (0.1, 0.2, 0.7))
+    splits = load_image_paths(base_path, (0.8, 0.15, 0.05))
     
     for name, split in zip(split_names, splits):
         dg = DG_38Cloud(split, 16)
@@ -336,9 +363,9 @@ def main():
         plt.imshow(sample_batch_y[0])
         plt.title(f"Split: { name }\n sample gt mask")
 
-        plt.subplot(1, 3, 3)
-        plt.imshow(overlay_mask(strip_nir(sample_batch_x[0]), sample_batch_y[0]))
-        plt.title(f"Split: { name }\n sample gt mask overlay")
+        # plt.subplot(1, 3, 3)
+        # plt.imshow(overlay_mask(strip_nir(sample_batch_x[0]), sample_batch_y[0]))
+        # plt.title(f"Split: { name }\n sample gt mask overlay")
 
     plt.show()
 
