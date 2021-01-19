@@ -13,7 +13,12 @@ from evaluate_L8CCA import evaluate_model as test_L8CCA
 from utils import setup_mlflow
 
 
-def main(c):
+def main(c,
+         snow_imgs_38Cloud=["LC08_L1TP_064015_20160420_20170223_01_T1",
+                            "LC08_L1TP_035035_20160120_20170224_01_T1",
+                            "LC08_L1TP_050024_20160520_20170324_01_T1"],
+         snow_imgs_L8CCA=["LC82271192014287LGN00",
+                          "LC81321192014054LGN00"]):
     Path(c["rpath"]).mkdir(parents=True, exist_ok=False)
     if c["mlflow"] == True:
         setup_mlflow(c)
@@ -29,17 +34,23 @@ def main(c):
     metrics_38Cloud = test_38Cloud(model, thr, c["38Cloud_path"], c["38Cloud_gtpath"], c["vpath"],
                                    c["rpath"] / "38Cloud_vis", c["vids"], c["batch_size"])
     mean_metrics_38Cloud = {}
+    mean_metrics_38Cloud_snow = {}
     for key, value in metrics_38Cloud.items():
         mean_metrics_38Cloud[key] = np.mean(list(value.values()))
+        mean_metrics_38Cloud_snow[f"snow_{key}"] = np.mean([value[x] for x in snow_imgs_38Cloud])
     if c["mlflow"] == True:
         log_param('threshold', thr)
         log_metrics(mean_metrics_38Cloud)
+        log_metrics(mean_metrics_38Cloud_snow)
     metrics_L8CCA = test_L8CCA(model, thr, c["L8CCA_path"], c["rpath"] / "L8CCA_vis", c["vids"], c["batch_size"])
     mean_metrics_L8CCA = {}
+    mean_metrics_L8CCA_snow = {}
     for key, value in metrics_L8CCA.items():
         mean_metrics_L8CCA[key] = np.mean(list(value.values()))
+        mean_metrics_L8CCA_snow[f"snow_{key}"] = np.mean([value[x] for x in snow_imgs_L8CCA])
     if c["mlflow"] == True:
         log_metrics(mean_metrics_L8CCA)
+        log_metrics(mean_metrics_L8CCA_snow)
         log_artifacts(c["rpath"])
         end_run()
 

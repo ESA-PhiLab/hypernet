@@ -8,7 +8,7 @@ import spectral.io.envi as envi
 import tensorflow as tf
 from einops import rearrange
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, List
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 
@@ -81,7 +81,7 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
 
 def evaluate_model(model: keras.Model, thr: float, dpath: Path,
                    rpath: Path, vids: Tuple[str],
-                   batch_size: int) -> Tuple:
+                   batch_size: int, img_ids: List[str]=None) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
@@ -89,6 +89,7 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path,
     param dpath: path to dataset.
     param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
+    param img_ids: if given, process only these images.
     return: evaluation metrics.
     """
     metrics = {}
@@ -103,6 +104,9 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path,
     for tname in os.listdir(dpath):
         tpath = dpath / tname
         for img_id in os.listdir(tpath):
+            if img_ids is not None:
+                if img_id not in img_ids:
+                    continue
             print(f"Processing {tname}-{img_id}", flush=True)
             gtpath = tpath / img_id
             img_pred, scene_time = get_img_pred(tpath,
@@ -165,4 +169,8 @@ if __name__ == "__main__":
         "vids": ("*"),
         "batch_size": 10
         }
-    evaluate_model(**params)
+    metrics = evaluate_model(**params)
+    mean_metrics = {}
+    for key, value in metrics.items():
+        mean_metrics[key] = np.mean(list(value.values()))
+    print(mean_metrics)

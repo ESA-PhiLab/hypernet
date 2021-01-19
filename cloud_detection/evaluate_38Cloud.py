@@ -89,7 +89,7 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
 
 
 def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vpath: Path,
-                   rpath: Path, vids: Tuple[str], batch_size: int) -> Tuple:
+                   rpath: Path, vids: Tuple[str], batch_size: int, img_ids: List[str]=None) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
@@ -98,6 +98,7 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
     param gtpath: path to dataset ground truths.
     param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
+    param img_ids: if given, process only these images.
     return: evaluation metrics.
     """
     metrics = {}
@@ -111,6 +112,9 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
 
     for fname in os.listdir(gtpath):
         img_id = fname[fname.find("LC08"):fname.find(".TIF")]
+        if img_ids is not None:
+            if img_id not in img_ids:
+                continue
         print(f"Processing {img_id}", flush=True)
         img_pred, scene_time = get_img_pred(dpath, img_id, model, batch_size)
         scene_times.append(scene_time)
@@ -122,7 +126,7 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
                 metric_name = metric_fn
             else:
                 metric_name = metric_fn.__name__
-            metrics[f"38Cloud_{metric_name}"][fname] = img_metrics[f"test_{metric_name}"]
+            metrics[f"38Cloud_{metric_name}"][img_id] = img_metrics[f"test_{metric_name}"]
         print(f"Average inference time: { sum(scene_times) / len(scene_times) } seconds")
 
         if img_id in vids or '*' in vids:
@@ -166,7 +170,16 @@ if __name__ == "__main__":
         "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
-        "batch_size": 10
+        "batch_size": 10,
+        "img_ids": [
+            "LC08_L1TP_064015_20160420_20170223_01_T1",
+            "LC08_L1TP_035035_20160120_20170224_01_T1",
+            "LC08_L1TP_050024_20160520_20170324_01_T1"
+            ]
         }
     print(f'Working dir: {os.getcwd()}, artifacts dir: {params["rpath"]}', flush=True)
-    evaluate_model(**params)
+    metrics = evaluate_model(**params)
+    mean_metrics = {}
+    for key, value in metrics.items():
+        mean_metrics[key] = np.mean(list(value.values()))
+    print(mean_metrics)
