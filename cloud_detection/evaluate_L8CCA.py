@@ -143,7 +143,7 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path,
             if img_id in vids or '*' in vids:
                 print(f"Creating visualisation for {img_id}")
                 img_vis = build_rgb_scene_img(tpath/img_id, img_id)
-                save_vis(img_id, img_vis, img_pred, img_gt, rpath)
+                save_vis(img_id, img_vis, img_pred > thr, img_gt, rpath)
 
             if img_metrics['test_jaccard_index_metric'] < 0.6:
                 print(f"Will make insights for {img_id}", flush=True)
