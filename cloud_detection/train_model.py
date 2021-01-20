@@ -12,8 +12,9 @@ from losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, r
 from validate import make_validation_insights
 
 def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
-                balance_train_dataset: bool, balance_val_dataset: bool, bn_momentum: float,
-                learning_rate: float, stopping_patience: int, epochs: int) -> keras.Model:
+                balance_train_dataset: bool, balance_val_dataset: bool, balance_snow: bool,
+                bn_momentum: float, learning_rate: float, stopping_patience: int,
+                epochs: int) -> keras.Model:
     """
     Train the U-Net model using 38-Cloud dataset.
 
@@ -24,6 +25,7 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
           to memory at a time.
     :param balance_train_dataset: whether to balance train dataset.
     :param balance_val_dataset: whether to balance val dataset.
+    :param balance_snow: whether to balance snow.
     :param bn_momentum: momentum of the batch normalization layer.
     :param learning_rate: learning rate for training.
     :param stopping_patience: patience param for early stopping.
@@ -41,7 +43,7 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
         files=train_files,
         batch_size=batch_size,
         balance_classes=balance_train_dataset,
-        balance_snow=False
+        balance_snow=balance_snow
         )
     valgen = DG_38Cloud(
         files=val_files,
