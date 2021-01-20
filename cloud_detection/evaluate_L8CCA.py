@@ -182,6 +182,8 @@ if __name__ == "__main__":
             "f1_score": losses.f1_score,
             "tf": tf
             })
+    model.load_weights(f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
+                       + "artifacts/best_weights")
     # TODO: fall back from 1 to .5
     params = {
         "model": model,
