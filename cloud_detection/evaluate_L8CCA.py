@@ -21,7 +21,12 @@ from validate import make_precission_recall, make_roc, make_activation_hist
 from validate import datagen_to_gt_array
 
 
-def build_rgb_scene_img(path: Path, img_id: str):
+def build_rgb_scene_img(path: Path, img_id: str) -> np.ndarray:
+    """ Build displayable rgb image out channel slices.
+    :param path: path to directory with images.
+    :param img_id: id of image to be loaded.
+    :return: rgb image in numpy array.
+    """
     r_path = next(path.glob("*" + img_id + "_B4*"))
     g_path = next(path.glob("*" + img_id + "_B3*"))
     b_path = next(path.glob("*" + img_id + "_B2*"))
@@ -37,13 +42,13 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
                  batch_size: int, patch_size: int = 384) -> np.ndarray:
     """
     Generates prediction for a given image.
-    param path: path containing directories with image channels.
-    param img_id: ID of the considered image.
-    param model: trained model to make predictions.
-    param batch_size: size of generated batches, only one batch is loaded
+    :param path: path containing directories with image channels.
+    :param img_id: ID of the considered image.
+    :param model: trained model to make predictions.
+    :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
-    param patch_size: size of the image patches.
-    return: prediction for a given image.
+    :param patch_size: size of the image patches.
+    :return: prediction for a given image.
     """
     testgen = DG_L8CCA(
         img_path=path,
@@ -71,9 +76,9 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
 def load_img_gt(path: Path, fname: str) -> np.ndarray:
     """
     Load image ground truth.
-    param path: path containing image gts.
-    param fname: image gt file name.
-    return: image ground truth.
+    :param path: path containing image gts.
+    :param fname: image gt file name.
+    :return: image ground truth.
     """
     img = envi.open(path / fname)
     img = np.asarray(img[:, :, :], dtype=np.int)
@@ -87,13 +92,16 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path,
                    mlflow=False, run_name=None) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
-    param model: trained model to make predictions.
-    param thr: threshold.
-    param dpath: path to dataset.
-    param batch_size: size of generated batches, only one batch is loaded
+    :param model: trained model to make predictions.
+    :param thr: threshold.
+    :param dpath: path to dataset.
+    :param rpath: path to direcotry where results and artifacts should be logged.
+    :param vids: tuple of ids of images which should be used to create visualisations.
+        If contains '*' visualisations will be created for all images in the dataset.
+    :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
-    param img_ids: if given, process only these images.
-    return: evaluation metrics.
+    :param img_ids: if given, process only these images.
+    :return: evaluation metrics.
     """
     Path(rpath).mkdir(parents=True, exist_ok=False)
     if mlflow == True:
