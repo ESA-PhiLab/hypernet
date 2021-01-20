@@ -23,7 +23,7 @@ def main(c,
     if c["mlflow"] == True:
         setup_mlflow(c)
     model, auto_thr = train_model(c["train_path"], c["rpath"] / "best_weights", c["train_size"], c["batch_size"],
-                                  c["balance_train_dataset"], c["balance_val_dataset"],
+                                  c["balance_train_dataset"], c["balance_val_dataset"], c["balance_snow"],
                                   c["bn_momentum"], c["learning_rate"], c["stopping_patience"], c["epochs"])
     print("Finished training and validation, starting evaluation.", flush=True)
     print(f'Working dir: {os.getcwd()}, artifacts dir: {c["rpath"]}', flush=True)
@@ -76,6 +76,7 @@ if __name__ == "__main__":
         "batch_size": 32,
         "balance_train_dataset": False,
         "balance_val_dataset": False,
+        "balance_snow": False,
         "thr": 0.5,
         "learning_rate": .01,
         "bn_momentum": .9,
