@@ -3,12 +3,14 @@
 import os
 import uuid
 import time
+import argparse
 import numpy as np
 import spectral.io.envi as envi
 import tensorflow as tf
 from einops import rearrange
 from pathlib import Path
 from typing import Tuple, List
+from mlflow import log_metrics, log_artifacts
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 
@@ -81,7 +83,8 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
 
 def evaluate_model(model: keras.Model, thr: float, dpath: Path,
                    rpath: Path, vids: Tuple[str],
-                   batch_size: int, img_ids: List[str]=None) -> Tuple:
+                   batch_size: int, img_ids: List[str]=None,
+                   mlflow=False, run_name=None) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     param model: trained model to make predictions.
@@ -92,6 +95,9 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path,
     param img_ids: if given, process only these images.
     return: evaluation metrics.
     """
+    Path(rpath).mkdir(parents=True, exist_ok=False)
+    if mlflow == True:
+        setup_mlflow(locals())
     metrics = {}
     scene_times = []
     for metric_fn in model.metrics:
@@ -147,6 +153,13 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path,
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
+    parser.add_argument("-n", help="mlflow run name", default=None)
+
+    args = parser.parse_args()
+
     mpath = Path("/media/ML/mlflow/beetle/artifacts/34/3e19daf248954674966cd31af1c4cb12/"
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
@@ -163,14 +176,24 @@ if __name__ == "__main__":
     # TODO: fall back from 1 to .5
     params = {
         "model": model,
-        "thr": 1.0,
+        "thr": 0.5,
         "dpath": Path("../datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"),
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
-        "batch_size": 10
+        "batch_size": 32,
+        "mlflow": args.f,
+        "run_name": args.n
         }
     metrics = evaluate_model(**params)
+    snow_imgs = ["LC82271192014287LGN00",
+                 "LC81321192014054LGN00"]
     mean_metrics = {}
+    mean_metrics_snow = {}
     for key, value in metrics.items():
         mean_metrics[key] = np.mean(list(value.values()))
-    print(mean_metrics)
+        mean_metrics_snow[f"snow_{key}"] = np.mean([value[x] for x in snow_imgs])
+    print(mean_metrics, mean_metrics_snow)
+    if params["mlflow"] == True:
+        log_metrics(mean_metrics)
+        log_metrics(mean_metrics_snow)
+        log_artifacts(params["rpath"])
