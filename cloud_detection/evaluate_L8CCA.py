@@ -183,8 +183,7 @@ if __name__ == "__main__":
             "tf": tf
             })
     model.load_weights(f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
-                       + "artifacts/best_weights")
-    # TODO: fall back from 1 to .5
+                       + "artifacts/best_weights/best_weights")
     params = {
         "model": model,
         "thr": 0.5,
