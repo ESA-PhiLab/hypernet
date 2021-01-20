@@ -27,13 +27,13 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
                  batch_size: int, patch_size: int=384) -> np.ndarray:
     """
     Generates prediction for a given image.
-    param path: path containing directories with image channels.
-    param img_id: ID of the considered image.
-    param model: trained model to make predictions.
-    param batch_size: size of generated batches, only one batch is loaded
+    :param path: path containing directories with image channels.
+    :param img_id: ID of the considered image.
+    :param model: trained model to make predictions.
+    :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
-    param patch_size: size of the image patches.
-    return: prediction for a given image.
+    :param patch_size: size of the image patches.
+    :return: prediction for the given image.
     """
     test_files, = load_image_paths(path, [1.0], shuffle=False, img_id=img_id)
     testgen = DG_38Cloud(
@@ -62,10 +62,10 @@ def get_img_pred_shape(files: List[Dict[str, Path]],
                        patch_size: int) -> Tuple:
     """
     Infers shape of the predictions of the considered image.
-    param files: paths to patch files;
+    :param files: paths to patch files;
           structured as: list_of_files['file_channel', Path].
-    param patch_size: size of the image patches.
-    return: shape of the predictions of the considered image.
+    :param patch_size: size of the image patches.
+    :return: shape of the predictions of the considered image.
     """
     row_max, col_max = 0, 0
     for fnames in files:
@@ -80,9 +80,9 @@ def get_img_pred_shape(files: List[Dict[str, Path]],
 def load_img_gt(path: Path, fname: str) -> np.ndarray:
     """
     Load image ground truth.
-    param path: path containing image gts.
-    param fname: image gt file name.
-    return: image ground truth.
+    :param path: path containing image gts.
+    :param fname: image gt file name.
+    :return: image ground truth.
     """
     img = np.array(load_img(path / fname, color_mode="grayscale"))
     return np.expand_dims(img/255, axis=-1)
@@ -92,14 +92,18 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
                    rpath: Path, vids: Tuple[str], batch_size: int, img_ids: List[str]=None) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
-    param model: trained model to make predictions.
-    param thr: threshold.
-    param dpath: path to dataset.
-    param gtpath: path to dataset ground truths.
-    param batch_size: size of generated batches, only one batch is loaded
+    :param model: trained model to make predictions.
+    :param thr: threshold to be used during evaluation.
+    :param dpath: path to dataset.
+    :param gtpath: path to dataset ground truths.
+    :param vpath: path to dataset (false color) visualisation images.
+    :param rpath: path to direcotry where results and artifacts should be logged.
+    :param vids: tuple of ids of images which should be used to create visualisations.
+        If contains '*' visualisations will be created for all images in the dataset.
+    :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
-    param img_ids: if given, process only these images.
-    return: evaluation metrics.
+    :param img_ids: if given, process only these images.
+    :return: evaluation metrics.
     """
     metrics = {}
     scene_times = []

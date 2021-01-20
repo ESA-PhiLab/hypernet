@@ -17,17 +17,18 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
     """
     Train the U-Net model using 38-Cloud dataset.
 
-    param dpath: path to dataset.
-    param train_size: proportion of the training set (the rest goes to validation set).
-    param batch_size: size of generated batches, only one batch is loaded 
+    :param dpath: path to dataset.
+    :param rpath: path to direcotry where results and artifacts should be logged.
+    :param train_size: proportion of the training set (the rest goes to validation set).
+    :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
-    param balance_train_dataset: whether to balance train dataset.
-    param balance_val_dataset: whether to balance val dataset.
-    param bn_momentum: momentum of the batch normalization layer.
-    param learning_rate: learning rate for training.
-    param stopping_patience: patience param for early stopping.
-    param epochs: number of epochs.
-    return: trained model.
+    :param balance_train_dataset: whether to balance train dataset.
+    :param balance_val_dataset: whether to balance val dataset.
+    :param bn_momentum: momentum of the batch normalization layer.
+    :param learning_rate: learning rate for training.
+    :param stopping_patience: patience param for early stopping.
+    :param epochs: number of epochs.
+    :return: trained model.
     """
     Path(rpath).mkdir(parents=True, exist_ok=False)
     # Load data
