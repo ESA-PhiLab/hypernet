@@ -163,10 +163,11 @@ if __name__ == "__main__":
 
     parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
     parser.add_argument("-n", help="mlflow run name", default=None)
+    parser.add_argument("-m", help="model hash", default="3e19daf248954674966cd31af1c4cb12")
 
     args = parser.parse_args()
 
-    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/3e19daf248954674966cd31af1c4cb12/"
+    mpath = Path(f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
@@ -188,11 +189,11 @@ if __name__ == "__main__":
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
         "batch_size": 32,
-        # "img_ids": [
-        #     "LC08_L1TP_064015_20160420_20170223_01_T1",
-        #     "LC08_L1TP_035035_20160120_20170224_01_T1",
-        #     "LC08_L1TP_050024_20160520_20170324_01_T1"
-        #     ],
+        "img_ids": [
+            "LC08_L1TP_064015_20160420_20170223_01_T1",
+            "LC08_L1TP_035035_20160120_20170224_01_T1",
+            "LC08_L1TP_050024_20160520_20170324_01_T1"
+            ],
         "mlflow": args.f,
         "run_name": args.n
         }
