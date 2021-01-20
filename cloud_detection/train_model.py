@@ -41,7 +41,7 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
         files=train_files,
         batch_size=batch_size,
         balance_classes=balance_train_dataset,
-        balance_snow=True
+        balance_snow=False
         )
     valgen = DG_38Cloud(
         files=val_files,
