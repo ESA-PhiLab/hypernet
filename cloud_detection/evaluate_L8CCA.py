@@ -16,7 +16,7 @@ from tensorflow.keras.preprocessing.image import load_img
 
 import losses
 from data_gen import DG_L8CCA
-from utils import unpad, get_metrics, save_vis
+from utils import unpad, get_metrics, save_vis, setup_mlflow
 from validate import make_precission_recall, make_roc, make_activation_hist
 from validate import datagen_to_gt_array
 
