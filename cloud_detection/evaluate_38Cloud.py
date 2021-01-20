@@ -130,7 +130,7 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
         scene_times.append(scene_time)
         img_gt = load_img_gt(gtpath, fname)
         img_pred = unpad(img_pred, img_gt.shape)
-        img_metrics = get_metrics(img_gt, img_pred, model.metrics)
+        img_metrics = get_metrics(img_gt, img_pred > thr, model.metrics)
         for metric_fn in model.metrics:
             if type(metric_fn) is str:
                 metric_name = metric_fn
