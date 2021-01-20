@@ -4,10 +4,12 @@ import os
 import re
 import time
 import uuid
+import argparse
 import numpy as np
 import tensorflow as tf
 from pathlib import Path
 from typing import Dict, List, Tuple
+from mlflow import log_metrics, log_artifacts
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 
@@ -15,7 +17,7 @@ import losses
 from data_gen import load_image_paths, DG_38Cloud
 from validate import make_precission_recall, make_roc, make_activation_hist
 from validate import datagen_to_gt_array
-from utils import overlay_mask, unpad, get_metrics, save_vis
+from utils import overlay_mask, unpad, get_metrics, save_vis, setup_mlflow
 
 
 def get_full_scene_img(path: Path, img_id: str):
@@ -89,7 +91,8 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
 
 
 def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vpath: Path,
-                   rpath: Path, vids: Tuple[str], batch_size: int, img_ids: List[str]=None) -> Tuple:
+                   rpath: Path, vids: Tuple[str], batch_size: int, img_ids: List[str]=None,
+                   mlflow=False, run_name=None) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     :param model: trained model to make predictions.
@@ -105,6 +108,9 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
     :param img_ids: if given, process only these images.
     :return: evaluation metrics.
     """
+    Path(rpath).mkdir(parents=True, exist_ok=False)
+    if mlflow == True:
+        setup_mlflow(locals())
     metrics = {}
     scene_times = []
     for metric_fn in model.metrics:
@@ -153,7 +159,14 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
     return metrics
 
 if __name__ == "__main__":
-    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/987cc26176464e6dad02bfa4757a10a3/"
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
+    parser.add_argument("-n", help="mlflow run name", default=None)
+
+    args = parser.parse_args()
+
+    mpath = Path("/media/ML/mlflow/beetle/artifacts/34/3e19daf248954674966cd31af1c4cb12/"
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
@@ -174,16 +187,27 @@ if __name__ == "__main__":
         "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
-        "batch_size": 10,
-        "img_ids": [
-            "LC08_L1TP_064015_20160420_20170223_01_T1",
-            "LC08_L1TP_035035_20160120_20170224_01_T1",
-            "LC08_L1TP_050024_20160520_20170324_01_T1"
-            ]
+        "batch_size": 32,
+        # "img_ids": [
+        #     "LC08_L1TP_064015_20160420_20170223_01_T1",
+        #     "LC08_L1TP_035035_20160120_20170224_01_T1",
+        #     "LC08_L1TP_050024_20160520_20170324_01_T1"
+        #     ],
+        "mlflow": args.f,
+        "run_name": args.n
         }
     print(f'Working dir: {os.getcwd()}, artifacts dir: {params["rpath"]}', flush=True)
     metrics = evaluate_model(**params)
+    snow_imgs= ["LC08_L1TP_064015_20160420_20170223_01_T1",
+                "LC08_L1TP_035035_20160120_20170224_01_T1",
+                "LC08_L1TP_050024_20160520_20170324_01_T1"]
     mean_metrics = {}
+    mean_metrics_snow = {}
     for key, value in metrics.items():
         mean_metrics[key] = np.mean(list(value.values()))
-    print(mean_metrics)
+        mean_metrics_snow[f"snow_{key}"] = np.mean([value[x] for x in snow_imgs])
+    print(mean_metrics, mean_metrics_snow)
+    if params["mlflow"] == True:
+        log_metrics(mean_metrics)
+        log_metrics(mean_metrics_snow)
+        log_artifacts(params["rpath"])
