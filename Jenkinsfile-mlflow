@@ -3,7 +3,8 @@ pipeline {
     agent { label "${params.label}" }
     options { disableConcurrentBuilds() }
     environment {
-        def DOCKER_FLAGS = "--shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --gpus 1 --rm"
+        def EXECUTOR_ID = "${env.EXECUTOR_NUMBER}"
+        def DOCKER_FLAGS = "--shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --gpus device=${EXECUTOR_ID} --rm"
         def SCM_VARS = checkout scm
         def COMMIT_ID = "${SCM_VARS.GIT_COMMIT.take(7)}"
         }
