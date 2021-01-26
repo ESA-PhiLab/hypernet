@@ -117,8 +117,8 @@ def main():
     batch_size=8
 
     _, val_files = load_image_paths(
-        dpath,
-        (train_size, 1-train_size)
+        base_path=dpath,
+        split_ratios=(train_size, 1-train_size),
     )
     valgen = DG_38Cloud(
         files=val_files,

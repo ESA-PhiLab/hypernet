@@ -37,7 +37,8 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
     :param patch_size: size of the image patches.
     :return: prediction for the given image.
     """
-    test_files, = load_image_paths(path, [1.0], shuffle=False, img_id=img_id)
+    test_files, = load_image_paths(base_path=path, split_ratios=[1.0],
+                                   shuffle=False, img_id=img_id)
     testgen = DG_38Cloud(
         files=test_files,
         batch_size=batch_size,

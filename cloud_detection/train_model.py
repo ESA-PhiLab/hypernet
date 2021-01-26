@@ -11,7 +11,7 @@ from models import unet
 from losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
 from validate import make_validation_insights
 
-def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
+def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_size: int,
                 balance_train_dataset: bool, balance_val_dataset: bool, balance_snow: bool, train_img: str,
                 bn_momentum: float, learning_rate: float, stopping_patience: int,
                 epochs: int) -> keras.Model:
@@ -35,8 +35,9 @@ def train_model(dpath: Path, rpath: Path, train_size: float, batch_size: int,
     Path(rpath).mkdir(parents=True, exist_ok=False)
     # Load data
     train_files, val_files = load_image_paths(
-        dpath,
-        (train_size, 1-train_size),
+        base_path=dpath,
+        patches_path=ppath,
+        split_ratios=(train_size, 1-train_size),
         img_id=train_img
         )
     # Upstream snow balancing
