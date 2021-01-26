@@ -32,6 +32,7 @@ def strip_category(mask_img: np.ndarray) -> np.ndarray:
 
 
 def load_image_paths(base_path: Path,
+                     patches_path: Path=None,
                      split_ratios: List[float]=[1.0],
                      shuffle: bool=True,
                      img_id: str=None) -> List[List[Dict[str, Path]]]:
@@ -60,7 +61,7 @@ def load_image_paths(base_path: Path,
         }
 
 
-    def build_paths(base_path: Path, img_id: str) -> List[Dict[str, Path]]: 
+    def build_paths(base_path: Path, patches_path: Path, img_id: str) -> List[Dict[str, Path]]: 
         """
         Build paths to all files containg image channels. 
         :param base_path: root path containing directories with image channels.
@@ -72,12 +73,24 @@ def load_image_paths(base_path: Path,
             red_files = list(base_path.glob("*red/*.TIF"))
         else:
             red_files = list(base_path.glob(f"*red/*{img_id}.TIF"))
+        if patches_path is not None:
+            patches_names = set(np.genfromtxt(
+                patches_path,
+                dtype="str",
+                skip_header=1,
+                ))
+            select_files = []
+            for fname in red_files:
+                fname_str = str(fname)
+                if fname_str[fname_str.find("patch"):fname_str.find(".TIF")] in patches_names:
+                    select_files.append(fname)
+            red_files = select_files
         red_files.sort()
         # Get other channels in accordance to the red channel filenames
         return [combine_channel_files(red_file) for red_file in red_files]
 
 
-    files = build_paths(base_path, img_id)
+    files = build_paths(base_path, patches_path, img_id)
     print(f"Loaded paths for images of { len(files) } samples")
 
     if shuffle:
@@ -362,7 +375,7 @@ def main():
     base_path = Path("../datasets/clouds/38-Cloud/38-Cloud_training")
 
     split_names = ("train", "validation", "test")
-    splits = load_image_paths(base_path, (0.8, 0.15, 0.05))
+    splits = load_image_paths(base_path=base_path, split_ratios=(0.8, 0.15, 0.05))
     
     for name, split in zip(split_names, splits):
         dg = DG_38Cloud(split, 16)

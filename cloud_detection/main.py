@@ -22,7 +22,7 @@ def main(c,
     Path(c["rpath"]).mkdir(parents=True, exist_ok=False)
     if c["mlflow"] == True:
         setup_mlflow(c)
-    model, auto_thr = train_model(c["train_path"], c["rpath"] / "best_weights", c["train_size"], c["batch_size"],
+    model, auto_thr = train_model(c["train_path"], c["rpath"] / "best_weights", c["ppath"], c["train_size"], c["batch_size"],
                                   c["balance_train_dataset"], c["balance_val_dataset"], c["balance_snow"], c["train_img"],
                                   c["bn_momentum"], c["learning_rate"], c["stopping_patience"], c["epochs"])
     print("Finished training and validation, starting evaluation.", flush=True)
@@ -71,6 +71,7 @@ if __name__ == "__main__":
         "L8CCA_path": Path("../datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"),
         "vpath": Path("../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
+        "ppath": None,
         "vids": ('*'),
         "train_size": args.s,
         "batch_size": 32,
