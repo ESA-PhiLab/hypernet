@@ -181,7 +181,7 @@ class Ensemble:
         self.predictor = None
 
     def generate_models_with_noise(self, copies: int = 5, mean: float = None,
-                                   std: float = None, seed=None):
+                                   std: float = None, seed=None) -> None:
         """
         Generate new models by injecting Gaussian noise into the original
         model's weights.
@@ -208,7 +208,7 @@ class Ensemble:
 
     @staticmethod
     def inject_noise_to_weights(weights: List[np.ndarray], mean: float,
-                                std: float):
+                                std: float) -> List[np.ndarray]:
         """
         Inject noise into all layers
         :param weights: List of weights for each layer
@@ -243,7 +243,7 @@ class Ensemble:
             return self.predictor.predict(predictions)
 
     def predict_probabilities(self, data: Union[np.ndarray, List[np.ndarray]],
-                              batch_size: int = 1024):
+                              batch_size: int = 1024) -> np.ndarray:
         """
         Return predicted classes
         :param data: Either a single dataset which will be fed into all of the
