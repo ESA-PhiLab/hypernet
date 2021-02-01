@@ -8,7 +8,6 @@ import re
 
 import clize
 import mlflow
-import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
 
@@ -22,7 +21,7 @@ from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 
 
 def run_experiments(*,
-                    data_file_paths: ('d', multi(min=1)) ,
+                    data_file_paths: ('d', multi(min=1)),
                     train_size: ('train_size', multi(min=0)),
                     val_size: float = 0.1,
                     stratified: bool = True,
@@ -46,7 +45,6 @@ def run_experiments(*,
     """
     Function for running experiments given a set of hyper parameters.
     :param data_file_paths: Path to the data file. Supported types are: .npy
-    :param ground_truth_paths: Path to the ground-truth data file.
     :param train_size: If float, should be between 0.0 and 1.0,
                         if stratified = True, it represents percentage of each
                         class to be extracted,
@@ -66,15 +64,16 @@ def run_experiments(*,
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
                          data
+    :param neighborhood_sizes: List of sizes of neighborhoods of provided models.
     :param save_data: Whether to save the prepared dataset
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
         subfolders in this directory.
-    :param models_path: Name of the model, it serves as a key in the
+    :param model_paths: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
+    :param model_experiment_names: Names of experiments that provided models
+        belong to.
     :param n_classes: Number of classes.
-    :param use_ensemble: Use ensemble for prediction.
-    :param ensemble_copies: Number of model copies for the ensemble.
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
         labels for majority rule voting. Else if ‘soft’, predicts the class
         label based on the argmax of the sums of the predicted probabilities.
@@ -116,13 +115,15 @@ def run_experiments(*,
                     model_paths,
                     model_experiment_names,
                     neighborhood_sizes):
-            model_path = get_mlflow_artifacts_path(model_path, model_experiment_name)
+            model_path = get_mlflow_artifacts_path(model_path,
+                                                   model_experiment_name)
             model_name_regex = re.compile('model_.*')
             model_dir = os.path.join(model_path, f'experiment_{experiment_id}')
             model_name = \
                 list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
             model_path = os.path.join(model_dir, model_name)
-            if data_file_path.endswith('.h5') and 'patches' not in data_file_path:
+            if data_file_path.endswith(
+                    '.h5') and 'patches' not in data_file_path:
                 data_source = load_processed_h5(data_file_path=data_file_path)
             else:
                 data_source = prepare_data.main(data_file_path=data_file_path,
@@ -132,7 +133,8 @@ def run_experiments(*,
                                                 stratified=stratified,
                                                 background_label=background_label,
                                                 channels_idx=channels_idx,
-                                                neighborhood_size=int(neighborhood_size),
+                                                neighborhood_size=int(
+                                                    neighborhood_size),
                                                 save_data=save_data,
                                                 seed=experiment_id)
 

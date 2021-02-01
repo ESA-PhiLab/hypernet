@@ -2,18 +2,13 @@
 Perform the inference of the model on the testing dataset.
 """
 
-import os
 
 import clize
-import yaml
 import numpy as np
-import tensorflow as tf
-from clize.parameters import multi
 from sklearn.metrics import confusion_matrix
 
 from ml_intuition import enums
-from ml_intuition.data import io, transforms
-from ml_intuition.data.noise import get_noise_functions
+from ml_intuition.data import io
 from ml_intuition.evaluation.performance_metrics import get_model_metrics, \
     get_fair_model_metrics
 from ml_intuition.evaluation.time_metrics import timeit
@@ -21,7 +16,7 @@ from ml_intuition.models import Ensemble
 
 
 def evaluate(*,
-             y_pred,
+             y_pred: np.ndarray,
              data,
              dest_path: str,
              n_classes: int,
@@ -31,6 +26,7 @@ def evaluate(*,
     """
     Function for evaluating the trained model.
 
+    :param y_pred: Predictions of test set.
     :param model_path: Path to the model.
     :param data: Either path to the input data or the data dict.
     :param dest_path: Directory in which to store the calculated metrics
@@ -38,23 +34,9 @@ def evaluate(*,
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
             labels for majority rule voting. Else if ‘soft’, predicts the class
             label based on the argmax of the sums of the predicted probabilities.
+    :param train_set_predictions: Predictions of the train set. Only used if
+        'voting' = 'classifier'.
     """
-    min_length = np.inf
-    for arr in y_pred:
-        min_length = arr.shape[0] if arr.shape[0] < min_length else min_length
-
-    for i in range(len(y_pred)):
-        y_pred[i] = y_pred[i][:min_length, ...]
-
-    y_pred = np.array(y_pred)
-
-    min_length = np.inf
-    for arr in train_set_predictions:
-        min_length = arr.shape[0] if arr.shape[0] < min_length else min_length
-
-    for i in range(len(train_set_predictions)):
-        train_set_predictions[i] = train_set_predictions[i][:min_length, ...]
-
     train_set_predictions = np.array(train_set_predictions)
 
     ensemble = Ensemble(voting=voting)

@@ -274,8 +274,9 @@ class Ensemble:
         predictions = self.predict_probabilities(data, batch_size)
         return self.vote(predictions)
 
-    def train_ensemble_predictor(self, data: np.ndarray, labels: np.ndarray):
-        predictor = RandomForestClassifier()
+    def train_ensemble_predictor(self, data: np.ndarray, labels: np.ndarray,
+                                 predictor=None):
+        predictor = RandomForestClassifier() if predictor is None else predictor
         models_count, samples, classes = data.shape
         data = data.swapaxes(0, 1).reshape(samples, models_count * classes)
         predictor.fit(data, labels)

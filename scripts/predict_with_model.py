@@ -1,5 +1,5 @@
 """
-Perform the inference of the model on the testing dataset.
+Perform the inference of the model on the testing dataset and return predictions.
 """
 
 import os
@@ -19,21 +19,10 @@ def predict(*,
     """
     Function for evaluating the trained model.
 
-    :param model_path: Path to the model.
     :param data: Either path to the input data or the data dict.
-    :param n_classes: Number of classes.
+    :param model_path: Path to the model.
     :param batch_size: Size of the batch for inference
-    :param noise: List containing names of used noise injection methods
-        that are performed after the normalization transformations.
-    :param noise_sets: List of sets that are affected by the noise injection.
-        For this module single element can be "test".
-    :param noise_params: JSON containing the parameters
-        setting of noise injection methods.
-        Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
-        This JSON should include all parameters for noise injection
-        functions that are specified in the noise argument.
-        For the accurate description of each parameter, please
-        refer to the ml_intuition/data/noise.py module.
+    :param dataset_to_predict: Name of the dataset to predict, 'train' or 'test'.
     """
     if type(data) is str:
         set_dict = io.extract_set(data, dataset_to_predict)
@@ -55,12 +44,8 @@ def predict(*,
     set_dict = transforms.apply_transformations(set_dict, transformations)
 
     model = tf.keras.models.load_model(model_path, compile=True)
-    print('before pred:', set_dict[enums.Dataset.DATA].shape)
     y_pred = model.predict(set_dict[enums.Dataset.DATA],
                            batch_size=batch_size)
-    print('after pred', y_pred.shape)
-    # y_pred = np.argmax(y_pred, axis=-1)
-
     return y_pred
 
 

@@ -9,9 +9,6 @@ import re
 import clize
 import mlflow
 import tensorflow as tf
-config = tf.ConfigProto()
-config.gpu_options.allow_growth = True
-session = tf.Session(config=config)
 from clize.parameters import multi
 
 from ml_intuition.data.io import load_processed_h5
@@ -72,6 +69,7 @@ def run_experiments(*,
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
                          data
+    :param neighborhood_size: Size of the neighbourhood for the model.
     :param save_data: Whether to save the prepared dataset
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
