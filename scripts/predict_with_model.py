@@ -1,5 +1,5 @@
 """
-Perform the inference of the model on the testing dataset and return predictions.
+Perform the inference of the model on the dataset and return predictions.
 """
 
 import os

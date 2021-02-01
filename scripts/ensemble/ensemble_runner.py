@@ -1,5 +1,6 @@
 """
-Run experiments given set of hyperparameters.
+Run ensemble using N number of different models. Models might use datasets
+preprocessed in various ways.
 """
 
 import os

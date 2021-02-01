@@ -1,5 +1,5 @@
 """
-Perform the inference of the model on the testing dataset.
+Evaluate the dataset using an ensemble of models.
 """
 
 
