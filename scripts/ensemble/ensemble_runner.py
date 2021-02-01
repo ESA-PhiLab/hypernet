@@ -1,5 +1,6 @@
 """
-Run experiments given set of hyperparameters.
+Run ensemble using N number of different models. Models might use datasets
+preprocessed in various ways.
 """
 
 import os
@@ -11,31 +12,29 @@ import mlflow
 import tensorflow as tf
 from clize.parameters import multi
 
+from ml_intuition import enums
+from scripts import prepare_data, artifacts_reporter, predict_with_model
+from scripts.ensemble import evaluate_with_ensemble
+from ml_intuition.enums import Experiment
 from ml_intuition.data.io import load_processed_h5
-from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
-from ml_intuition.enums import Splits, Experiment
-from scripts import evaluate_model, prepare_data, artifacts_reporter
+from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
 
 
 def run_experiments(*,
-                    data_file_path: str = None,
-                    ground_truth_path: str = None,
-                    dataset_path: str = None,
+                    data_file_paths: ('d', multi(min=1)),
                     train_size: ('train_size', multi(min=0)),
                     val_size: float = 0.1,
                     stratified: bool = True,
                     background_label: int = 0,
                     channels_idx: int = 0,
-                    neighborhood_size: int = None,
+                    neighborhood_sizes: ('n', multi(min=1)),
                     save_data: bool = False,
                     n_runs: int,
                     dest_path: str,
-                    models_path: str,
-                    model_name: str = 'model_2d',
+                    model_paths: ('m', multi(min=1)),
+                    model_experiment_names: ('e', multi(min=1)),
                     n_classes: int,
-                    use_ensemble: bool = False,
-                    ensemble_copies: int = None,
                     voting: str = 'hard',
                     batch_size: int = 1024,
                     post_noise_sets: ('spost', multi(min=0)),
@@ -43,13 +42,10 @@ def run_experiments(*,
                     noise_params: str = None,
                     use_mlflow: bool = False,
                     experiment_name: str = None,
-                    model_exp_name: str = None,
                     run_name: str = None):
     """
-    Function for running experiments given a set of hyperparameters.
-    :param data_file_path: Path to the data file. Supported types are: .npy
-    :param ground_truth_path: Path to the ground-truth data file.
-    :param dataset_path: Path to the already extracted .h5 dataset
+    Function for running experiments given a set of hyper parameters.
+    :param data_file_paths: Path to the data file. Supported types are: .npy
     :param train_size: If float, should be between 0.0 and 1.0,
                         if stratified = True, it represents percentage of each
                         class to be extracted,
@@ -69,17 +65,16 @@ def run_experiments(*,
     :param background_label: Label indicating the background in GT file
     :param channels_idx: Index specifying the channels position in the provided
                          data
-    :param neighborhood_size: Size of the neighbourhood for the model.
+    :param neighborhood_sizes: List of sizes of neighborhoods of provided models.
     :param save_data: Whether to save the prepared dataset
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
         subfolders in this directory.
-    :param models_path: Name of the model, it serves as a key in the
+    :param model_paths: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
-    :param model_name: The name of model for the inference.
+    :param model_experiment_names: Names of experiments that provided models
+        belong to.
     :param n_classes: Number of classes.
-    :param use_ensemble: Use ensemble for prediction.
-    :param ensemble_copies: Number of model copies for the ensemble.
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
         labels for majority rule voting. Else if ‘soft’, predicts the class
         label based on the argmax of the sums of the predicted probabilities.
@@ -107,64 +102,78 @@ def run_experiments(*,
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
         log_tags_to_mlflow(args['run_name'])
-        models_path = get_mlflow_artifacts_path(models_path, model_exp_name)
-
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
             dest_path, 'experiment_' + str(experiment_id))
-        model_name_regex = re.compile('model_.*')
-        model_dir = os.path.join(models_path, f'experiment_{experiment_id}')
-        model_name = list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
-        model_path = os.path.join(model_dir, model_name)
-        if dataset_path is None:
-            data_source = os.path.join(models_path,
-                                       'experiment_' + str(experiment_id),
-                                       'data.h5')
-        else:
-            data_source = dataset_path
+
         os.makedirs(experiment_dest_path, exist_ok=True)
+        models_test_predictions = []
+        models_train_predictions = []
 
-        if data_file_path.endswith('.h5') and ground_truth_path is None and 'patches' not in data_file_path:
-            data_source = load_processed_h5(data_file_path=data_file_path)
+        for data_file_path, model_path, model_experiment_name, neighborhood_size in \
+                zip(
+                    data_file_paths,
+                    model_paths,
+                    model_experiment_names,
+                    neighborhood_sizes):
+            model_path = get_mlflow_artifacts_path(model_path,
+                                                   model_experiment_name)
+            model_name_regex = re.compile('model_.*')
+            model_dir = os.path.join(model_path, f'experiment_{experiment_id}')
+            model_name = \
+                list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
+            model_path = os.path.join(model_dir, model_name)
+            if data_file_path.endswith(
+                    '.h5') and 'patches' not in data_file_path:
+                data_source = load_processed_h5(data_file_path=data_file_path)
+            else:
+                data_source = prepare_data.main(data_file_path=data_file_path,
+                                                ground_truth_path='',
+                                                train_size=train_size,
+                                                val_size=val_size,
+                                                stratified=stratified,
+                                                background_label=background_label,
+                                                channels_idx=channels_idx,
+                                                neighborhood_size=int(
+                                                    neighborhood_size),
+                                                save_data=save_data,
+                                                seed=experiment_id)
 
-        elif not os.path.exists(data_source):
-            data_source = prepare_data.main(data_file_path=data_file_path,
-                                            ground_truth_path=ground_truth_path,
-                                            output_path=data_source,
-                                            train_size=train_size,
-                                            val_size=val_size,
-                                            stratified=stratified,
-                                            background_label=background_label,
-                                            channels_idx=channels_idx,
-                                            neighborhood_size=neighborhood_size,
-                                            save_data=save_data,
-                                            seed=experiment_id)
+            test_predictions = predict_with_model.predict(
+                model_path=model_path,
+                data=data_source,
+                batch_size=batch_size,
+                dataset_to_predict=enums.Dataset.TEST
+            )
 
-        evaluate_model.evaluate(
+            models_test_predictions.append(test_predictions)
+
+            if voting == 'classifier':
+                train_predictions = predict_with_model.predict(
+                    model_path=model_path,
+                    data=data_source,
+                    batch_size=batch_size,
+                    dataset_to_predict=enums.Dataset.TRAIN
+                )
+                models_train_predictions.append(train_predictions)
+            tf.keras.backend.clear_session()
+
+        evaluate_with_ensemble.evaluate(
+            y_pred=models_test_predictions,
             model_path=model_path,
             data=data_source,
             dest_path=experiment_dest_path,
-            n_classes=n_classes,
-            use_ensemble=use_ensemble,
-            ensemble_copies=ensemble_copies,
             voting=voting,
-            noise=post_noise,
-            noise_sets=post_noise_sets,
-            noise_params=noise_params,
-            batch_size=batch_size,
-            seed=experiment_id)
-
-        tf.keras.backend.clear_session()
+            train_set_predictions=models_train_predictions)
 
     artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
                                                 dest_path=dest_path,
                                                 use_mlflow=use_mlflow)
-    if Splits.GRIDS in data_file_path:
-        fair_report_path = os.path.join(dest_path, Experiment.REPORT_FAIR)
-        artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-                                                    dest_path=fair_report_path,
-                                                    filename=Experiment.INFERENCE_FAIR_METRICS,
-                                                    use_mlflow=use_mlflow)
+    fair_report_path = os.path.join(dest_path, Experiment.REPORT_FAIR)
+    artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
+                                                dest_path=fair_report_path,
+                                                filename=Experiment.INFERENCE_FAIR_METRICS,
+                                                use_mlflow=use_mlflow)
     if use_mlflow:
         mlflow.set_experiment(experiment_name)
         mlflow.log_artifacts(dest_path, artifact_path=dest_path)

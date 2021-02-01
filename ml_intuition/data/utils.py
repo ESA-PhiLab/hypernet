@@ -13,6 +13,7 @@ from ml_intuition import enums
 
 SAMPLES_DIM = 0
 MEAN_PER_CLASS_ACC = 'mean_per_class_accuracy'
+FTP_PATH = 'sftp://ftp_ml:EGv7d3@earth.kplabs.pl:/pub/Teams'
 
 
 def subsample_test_set(data: Dict, test_size: int):
@@ -222,6 +223,7 @@ def list_to_string(list_to_convert: List) -> str:
     return ",".join(map(str, list_to_convert))
 
 
+
 def get_central_pixel_spectrum(data: np.ndarray,
                                neighborhood_size: int) -> np.ndarray:
     """
@@ -237,15 +239,19 @@ def get_central_pixel_spectrum(data: np.ndarray,
     return np.squeeze(data)
 
 
-def get_mlflow_artifacts_path(artifacts_storage_path: str) -> str:
+def get_mlflow_artifacts_path(artifacts_storage_path: str,
+                              experiment_name: str = None) -> str:
     """
     Find full local artifacts storage path relative artifacts storage path
     :param artifacts_storage_path: Relative artifacts storage path
+    :param experiment_name: Name of the experiment to search in
     :return: Full local path to artifacts
     """
-    filter_string = 'parameters.artifacts_storage = \'{}\''.format(
-        artifacts_storage_path)
+    if experiment_name is not None:
+        mlflow.set_experiment(experiment_name)
+    filter_string = 'parameters.artifacts_storage = \'{}\''.format(artifacts_storage_path)
     result = mlflow.search_runs(filter_string=filter_string)['artifact_uri'][0]
+    result = result.replace(FTP_PATH, '/media')
     return os.path.join(result, artifacts_storage_path)
 
 

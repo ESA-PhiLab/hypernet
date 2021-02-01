@@ -1,7 +1,6 @@
 @Library('obc-jpl') _
 pipeline {
     agent { label "${params.label}" }
-    options { disableConcurrentBuilds() }
     environment {
         def EXECUTOR_ID = "${env.EXECUTOR_NUMBER}"
         def DOCKER_FLAGS = "--shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --gpus device=${EXECUTOR_ID} --rm"
