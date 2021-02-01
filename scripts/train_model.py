@@ -42,7 +42,8 @@ def train(*,
     :param kernel_size: Size of ech kernel in each layer.
     :param n_kernels: Number of kernels in each layer.
     :param n_layers: Number of layers in the model.
-    :param dest_path: Path to where to save the model under the name "model_name".
+    :param dest_path: Path to where to save the model
+        under the name "model_name".
     :param sample_size: Size of the input sample.
     :param n_classes: Number of classes.
     :param lr: Learning rate for the model, i.e., regulates the size of the step
@@ -60,10 +61,12 @@ def train(*,
     :param seed: Seed for training reproducibility.
     :param noise: List containing names of used noise injection methods
         that are performed after the normalization transformations.
-    :param noise_sets: List of sets that are affected by the noise injecton methods.
+    :param noise_sets: List of sets that are affected by
+        the noise injection methods.
         For this module single element can be either "train" or "val".
-    :param noise_params: JSON containing the parameters setting of injection methods.
-        Examplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
+    :param noise_params: JSON containing the parameters
+        setting of injection methods.
+        Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
         This JSON should include all parameters for noise injection
         functions that are specified in the noise argument.
         For the accurate description of each parameter, please
@@ -86,10 +89,9 @@ def train(*,
         min_, max_ = data[enums.DataStats.MIN], \
             data[enums.DataStats.MAX]
 
-    transformations = [transforms.OneHotEncode(n_classes=n_classes),
+    transformations = [transforms.SpectralTransform(),
+                       transforms.OneHotEncode(n_classes=n_classes),
                        transforms.MinMaxNormalize(min_=min_, max_=max_)]
-    if '2d' in model_name or 'deep' in model_name:
-        transformations.append(transforms.SpectralTransform())
 
     tr_transformations = transformations + get_noise_functions(noise, noise_params) \
         if enums.Dataset.TRAIN in noise_sets else transformations
@@ -99,12 +101,9 @@ def train(*,
     train_dict = transforms.apply_transformations(train_dict, tr_transformations)
     val_dict = transforms.apply_transformations(val_dict, val_transformations)
 
-    model_kwargs = {'kernel_size': kernel_size,
-                    'n_kernels': n_kernels,
-                    'n_layers': n_layers,
-                    'input_size': sample_size,
-                    'n_classes': n_classes}
-    model = models.get_model(model_key=model_name, **model_kwargs)
+    model = models.get_model(model_key=model_name, kernel_size=kernel_size,
+                             n_kernels=n_kernels, n_layers=n_layers,
+                             input_size=sample_size, n_classes=n_classes)
     model.summary()
     model.compile(tf.keras.optimizers.Adam(lr=lr),
                   'categorical_crossentropy',

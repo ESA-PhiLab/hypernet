@@ -14,11 +14,11 @@ config.gpu_options.allow_growth = True
 session = tf.Session(config=config)
 from clize.parameters import multi
 
-from scripts import evaluate_model, prepare_data, artifacts_reporter
-from ml_intuition.enums import Splits, Experiment
 from ml_intuition.data.io import load_processed_h5
-from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
+from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
+from ml_intuition.enums import Splits, Experiment
+from scripts import evaluate_model, prepare_data, artifacts_reporter
 
 
 def run_experiments(*,
@@ -35,6 +35,7 @@ def run_experiments(*,
                     n_runs: int,
                     dest_path: str,
                     models_path: str,
+                    model_name: str = 'model_2d',
                     n_classes: int,
                     use_ensemble: bool = False,
                     ensemble_copies: int = None,
@@ -77,6 +78,7 @@ def run_experiments(*,
         subfolders in this directory.
     :param models_path: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
+    :param model_name: The name of model for the inference.
     :param n_classes: Number of classes.
     :param use_ensemble: Use ensemble for prediction.
     :param ensemble_copies: Number of model copies for the ensemble.
