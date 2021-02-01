@@ -37,10 +37,10 @@ def evaluate(*,
     :param train_set_predictions: Predictions of the train set. Only used if
         'voting' = 'classifier'.
     """
-    train_set_predictions = np.array(train_set_predictions)
 
     ensemble = Ensemble(voting=voting)
     if voting == 'classifier':
+        train_set_predictions = np.array(train_set_predictions)
         ensemble.train_ensemble_predictor(train_set_predictions,
                                           data[enums.Dataset.TRAIN][enums.Dataset.LABELS])
     vote = timeit(ensemble.vote)
