@@ -8,10 +8,10 @@ import argparse
 from pathlib import Path
 from mlflow import log_metrics, log_artifacts, log_param, log_params, end_run
 
-from train_model import train_model
-from evaluate_38Cloud import evaluate_model as test_38Cloud
-from evaluate_L8CCA import evaluate_model as test_L8CCA
-from utils import setup_mlflow, make_paths
+from cloud_detection.train_model import train_model
+from cloud_detection.evaluate_38Cloud import evaluate_model as test_38Cloud
+from cloud_detection.evaluate_L8CCA import evaluate_model as test_L8CCA
+from cloud_detection.utils import setup_mlflow, make_paths
 
 
 def main(run_name, train_path, C38_path, C38_gtpath, L8CCA_path, vpath, rpath, ppath, vids, mlflow, train_size, train_img,

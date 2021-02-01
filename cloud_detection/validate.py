@@ -2,13 +2,14 @@ from pathlib import Path
 import tensorflow as tf
 from tensorflow import keras
 import tensorflow.keras.backend as K
-from data_gen import load_image_paths, DG_38Cloud
-import losses
 from scipy.spatial.distance import cdist
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 from plotly import express as px
 from plotly import graph_objects as go
 import numpy as np
+
+from cloud_detection.data_gen import load_image_paths, DG_38Cloud
+import cloud_detection.losses
 
 
 def datagen_to_gt_array(datagen):

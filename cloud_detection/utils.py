@@ -9,7 +9,7 @@ import tensorflow.keras.backend as K
 from tensorflow.keras.preprocessing.image import load_img
 from skimage import io, img_as_ubyte
 
-import losses
+import cloud_detection.losses
 
 
 def true_positives(y_true, y_pred):

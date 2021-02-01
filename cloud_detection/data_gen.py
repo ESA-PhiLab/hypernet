@@ -10,7 +10,7 @@ from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 from typing import Dict, List, Tuple
 
-from utils import overlay_mask, pad
+from cloud_detection.utils import overlay_mask, pad
 
 
 def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
@@ -20,15 +20,6 @@ def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
     :return: image with shape (x, y, 3) with standard RGB channels.
     """
     return hyper_img[:,:,:3]
-
-
-def strip_category(mask_img: np.ndarray) -> np.ndarray:
-    """
-    Strip additional mask dimension, so it can be displayed.
-    :param mask_img: image mask with shape (x, y, 2).
-    :return: image mask with shape (x, y), where 1 is cloud.
-    """
-    return mask_img[:,:,1]
 
 
 def load_image_paths(base_path: Path,
@@ -158,7 +149,7 @@ class DG_38Cloud(keras.utils.Sequence):
     def _perform_balancing(self, labels: List):
         """
         Perform balancing on given images.
-        :param labes: List of pseudo-labels for indexing. For each patch in the
+        :param labels: List of pseudo-labels for indexing. For each patch in the
             dataset should contain 1 if image is to be balanced, otherwise
             should be 0.
         """

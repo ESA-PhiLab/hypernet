@@ -6,10 +6,10 @@ from typing import Dict
 from pathlib import Path
 from tensorflow import keras
 
-from data_gen import DG_38Cloud, load_image_paths
-from models import unet
-from losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
-from validate import make_validation_insights
+from cloud_detection.data_gen import DG_38Cloud, load_image_paths
+from cloud_detection.models import unet
+from cloud_detection.losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
+from cloud_detection.validate import make_validation_insights
 
 def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_size: int,
                 balance_train_dataset: bool, balance_val_dataset: bool, balance_snow: bool, train_img: str,
