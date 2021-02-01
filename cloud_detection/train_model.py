@@ -32,7 +32,6 @@ def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_
     :param epochs: number of epochs.
     :return: trained model.
     """
-    Path(rpath).mkdir(parents=True, exist_ok=False)
     # Load data
     train_files, val_files = load_image_paths(
         base_path=dpath,
@@ -55,8 +54,8 @@ def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_
 
     # Create model
     model = unet(input_size=4,
-                bn_momentum=bn_momentum
-                )
+                 bn_momentum=bn_momentum
+                 )
     model.compile(
         optimizer=keras.optimizers.Adam(lr=learning_rate),
         loss=Jaccard_index_loss(),
@@ -74,13 +73,14 @@ def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_
     )
 
     # Prepare training
+    Path(rpath / "best_weights").mkdir(parents=True, exist_ok=False)
     callbacks = [
         keras.callbacks.EarlyStopping(
             patience=stopping_patience,
             verbose=2
         ),
         keras.callbacks.ModelCheckpoint(
-            filepath=f"{rpath}/best_weights",
+            filepath=f"{rpath}/best_weights/best_weights",
             save_best_only=True,
             save_weights_only=True,
             verbose=2
@@ -98,7 +98,7 @@ def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_
     print("Finished fitting. Will make validation insights now.", flush=True)
 
     # Load best weights
-    model.load_weights(f"{rpath}/best_weights")
+    model.load_weights(f"{rpath}/best_weights/best_weights")
 
     # Save validation insights
     best_thr = make_validation_insights(model, valgen, rpath/"validation_insight")

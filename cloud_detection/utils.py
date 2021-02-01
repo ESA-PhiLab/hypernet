@@ -36,12 +36,11 @@ def overlay_mask(image: np.ndarray, mask: np.ndarray, rgb_color: Tuple[float], o
     return np.clip(image, 0, 1)
 
 
-def setup_mlflow(c):
+def setup_mlflow(run_name):
     mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
     mlflow.set_experiment("cloud_detection")
-    mlflow.start_run(run_name=c["run_name"])
+    mlflow.start_run(run_name=run_name)
     mlflow.tensorflow.autolog()
-    mlflow.log_params(c)
 
 
 def pad(img: np.ndarray, patch_size: int = 384) -> np.ndarray:
@@ -116,3 +115,8 @@ def save_vis(img_id: str, img_vis: np.ndarray, img_pred: np.ndarray, img_gt: np.
     mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), (1, 0, 0))
     mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), (1, 0, 1))
     io.imsave(rpath / "masks.png", img_as_ubyte(mask_vis))
+
+
+def make_paths(*args):
+    paths = [Path(path) if path is not None else None for path in [*args]]
+    return tuple(paths)
