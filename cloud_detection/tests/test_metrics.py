@@ -2,10 +2,11 @@ import pytest
 import numpy as np
 import tensorflow.keras.backend as K
 from tensorflow.debugging import assert_near
-from tensorflow import errors
+from tensorflow import errors, enable_eager_execution
 
 from cloud_detection.losses import Jaccard_index_loss, Jaccard_index_metric
 
+enable_eager_execution()
 
 @pytest.mark.parametrize(
     'y_true, y_pred, expected',
