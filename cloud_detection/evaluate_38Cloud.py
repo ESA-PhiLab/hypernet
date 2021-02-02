@@ -13,7 +13,7 @@ from mlflow import log_metrics, log_artifacts
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 
-import cloud_detection.losses
+from cloud_detection import losses
 from cloud_detection.data_gen import load_image_paths, DG_38Cloud
 from cloud_detection.validate import make_precission_recall, make_roc, make_activation_hist, datagen_to_gt_array
 from cloud_detection.utils import overlay_mask, unpad, get_metrics, save_vis, setup_mlflow
