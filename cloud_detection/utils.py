@@ -48,7 +48,7 @@ def pad(img: np.ndarray, patch_size: int = 384) -> np.ndarray:
     Padding of an image to divide it into patches.
     param img: image to pad.
     param patch_size: size of the patches.
-    return: unpadded image.
+    return: padded image.
     """
     x_len, y_len, _ = img.shape
     x_r = (-x_len) % patch_size
@@ -86,7 +86,7 @@ def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) ->
     for metric_fn in metric_fns:
         if type(metric_fn) is str:
             metric_name = metric_fn
-            metric_fn = getattr(losses, metric_fn)
+            metric_fn = getattr(cloud_detection.losses, metric_fn)
         else:
             metric_name = metric_fn.__name__
         loss = K.mean(metric_fn(gt_ph, pred_ph))

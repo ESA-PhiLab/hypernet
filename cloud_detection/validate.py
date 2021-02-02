@@ -130,13 +130,13 @@ def main():
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
-            "jaccard_index_loss": losses.Jaccard_index_loss(),
-            "jaccard_index_metric": losses.Jaccard_index_metric(),
-            "dice_coeff_metric": losses.Dice_coef_metric(),
-            "recall": losses.recall,
-            "precision": losses.precision,
-            "specificity": losses.specificity,
-            "f1_score": losses.f1_score,
+            "jaccard_index_loss": cloud_detection.losses.Jaccard_index_loss(),
+            "jaccard_index_metric": cloud_detection.losses.Jaccard_index_metric(),
+            "dice_coeff_metric": cloud_detection.losses.Dice_coef_metric(),
+            "recall": cloud_detection.losses.recall,
+            "precision": cloud_detection.losses.precision,
+            "specificity": cloud_detection.losses.specificity,
+            "f1_score": cloud_detection.losses.f1_score,
             "tf": tf
         }
     )
