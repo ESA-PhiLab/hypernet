@@ -1,18 +1,25 @@
+"""Perform various validation tasks, like making ROC, precision-recall, thresholding etc."""
+
 from pathlib import Path
-import tensorflow as tf
-from tensorflow import keras
-import tensorflow.keras.backend as K
-from scipy.spatial.distance import cdist
-from sklearn.metrics import roc_curve, auc, precision_recall_curve
+
 from plotly import express as px
 from plotly import graph_objects as go
+from scipy.spatial.distance import cdist
+from sklearn.metrics import roc_curve, auc, precision_recall_curve
+from tensorflow import keras
 import numpy as np
+import tensorflow as tf
+import tensorflow.keras.backend as K
 
 from cloud_detection.data_gen import load_image_paths, DG_38Cloud
 import cloud_detection.losses
 
 
-def datagen_to_gt_array(datagen):
+def datagen_to_gt_array(datagen: keras.utils.Sequence) -> np.ndarray:
+    """
+    Load all gt masks from data generator and store them in RAM at once
+    inside a np.array
+    """
     ret = []
     # Keras internals force usage of range(len()) here instead of enumerate
     for i in range(len(datagen)):
@@ -21,7 +28,15 @@ def datagen_to_gt_array(datagen):
     return np.concatenate(ret)
 
 
-def find_best_thr(fpr, tpr, thr):
+def find_best_thr(fpr: np.ndarray, tpr: np.ndarray, thr: np.ndarray) -> float:
+    """
+    Find best threshold based on ROC curve.
+    :param fpr: False positives rate ROC axis.
+    :param tpr: True positives rate ROC axis.
+    :param thr: Thresholds corresponding to ROC points.
+    :return: Best thr based on minimal distance to point (0, 1) on ROC.
+    """
+
     curve_points = np.transpose(np.vstack((fpr, tpr)))
     perfect_point = [(0., 1.)]
     dists = cdist(curve_points, perfect_point, 'euclidean')
@@ -31,7 +46,16 @@ def find_best_thr(fpr, tpr, thr):
     return thr[best_idx]
 
 
-def make_roc(y_gt, y_pred, output_dir, thr_marker: float=None):
+def make_roc(y_gt: np.ndarray, y_pred: np.ndarray,
+             output_dir: Path, thr_marker: float=None) -> float:
+    """
+    Make ROC curve and save it, get best thr based on the ROC.
+    :param y_gt: Array of ground truth masks.
+    :param y_pred: Array of predictions.
+    :param output_dir: Path to directory where ROC should be saved.
+    :param thr_marker: extra threshold level to mark on ROC.
+    :return: Best thr based on minimal distance to point (0, 1) on ROC.
+    """
     fpr, tpr, thr = roc_curve(y_gt, y_pred)
 
     best_thr = find_best_thr(fpr, tpr, thr)
@@ -64,12 +88,24 @@ def make_roc(y_gt, y_pred, output_dir, thr_marker: float=None):
 
 
 def make_activation_hist(y_pred, output_dir):
+    """Make histogram of prediction activations.
+    :param y_pred: Array of predictions.
+    :param output_dir: Path to directory where hist should be saved.
+    """
     fig = px.histogram(y_pred.ravel(), log_y=True)
     fig.layout.update(showlegend=False)
     fig.write_html(str(output_dir/"activation_hist.html"))
 
 
-def make_precission_recall(y_gt, y_pred, output_dir, thr_marker: float=None):
+def make_precission_recall(y_gt: np.ndarray, y_pred: np.ndarray,
+                           output_dir: Path, thr_marker: float=None):
+    """
+    Make precission recall curve and save it.
+    :param y_gt: Array of ground truth masks.
+    :param y_pred: Array of predictions.
+    :param output_dir: Path to directory where curve should be saved.
+    :param thr_marker: extra threshold level to mark on the curve.
+    """
     fpr, fre, thr = precision_recall_curve(y_gt, y_pred)
 
     fig = px.area(
@@ -96,7 +132,18 @@ def make_precission_recall(y_gt, y_pred, output_dir, thr_marker: float=None):
     fig.write_html(str(output_dir/"prec_recall.html"))
 
 
-def make_validation_insights(model, datagen, output_dir):
+def make_validation_insights(model: keras.Model,
+                             datagen: keras.utils.Sequence,
+                             output_dir: Path) -> float:
+    """
+    Make validation insights including:
+        * Making ROC and finding best thr on ROC.
+        * Making precision-recall curve.
+    :param model: Model to validate.
+    :param datagen: Validation data generator.
+    :param output_dir: Path to directory where artifacts should be saved.
+    :return: Best thr based on ROC.
+    """
     output_dir.mkdir(exist_ok=True)
 
     y_gt = datagen_to_gt_array(datagen).ravel()
@@ -108,6 +155,10 @@ def make_validation_insights(model, datagen, output_dir):
 
 
 def find_nearest(array, value):
+    """
+    In an array find a value that is closest to the given one.
+    :return: value inside the 'array' param that is closest to the 'value' param.
+    """
     array = np.asarray(array)
     return (np.abs(array - value)).argmin()
 

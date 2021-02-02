@@ -19,7 +19,8 @@ from cloud_detection.validate import make_precission_recall, make_roc, make_acti
 from cloud_detection.utils import overlay_mask, unpad, get_metrics, save_vis, setup_mlflow
 
 
-def get_full_scene_img(path: Path, img_id: str):
+def get_full_scene_img(path: Path, img_id: str) -> np.ndarray:
+    """ Get image of given id as np.array with values in range 0 to 1."""
     img_path = next(path.glob("*" + img_id + "*"))
     return np.array(load_img(img_path))/255
 
