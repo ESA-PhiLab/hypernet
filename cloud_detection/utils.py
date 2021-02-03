@@ -140,4 +140,4 @@ def make_paths(*args):
 
 class MLFlowCallback(keras.callbacks.Callback):
     def on_epoch_end(self, epoch, logs=None):
-        mlflow.log_metrics(logs)
+        mlflow.log_metrics(logs, step=epoch)
