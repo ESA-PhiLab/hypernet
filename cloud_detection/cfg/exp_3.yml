@@ -1,11 +1,11 @@
 name: exp_3
 exp_cfg:
   run_name: null
-  train_path: "../datasets/clouds/38-Cloud/38-Cloud_training"
-  C38_path: "../datasets/clouds/38-Cloud/38-Cloud_test"
-  C38_gtpath: "../datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"
-  L8CCA_path: "../datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"
-  vpath: "../datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"
+  train_path: "datasets/clouds/38-Cloud/38-Cloud_training"
+  C38_path: "datasets/clouds/38-Cloud/38-Cloud_test"
+  C38_gtpath: "datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"
+  L8CCA_path: "datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"
+  vpath: "datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"
   rpath: "artifacts/"
   ppath: null
   vids: ["*"]

@@ -10,11 +10,12 @@ from cloud_detection.data_gen import DG_38Cloud, load_image_paths
 from cloud_detection.models import unet
 from cloud_detection.losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
 from cloud_detection.validate import make_validation_insights
+from cloud_detection.utils import MLFlowCallback
 
 def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_size: int,
                 balance_train_dataset: bool, balance_val_dataset: bool, balance_snow: bool, train_img: str,
                 bn_momentum: float, learning_rate: float, stopping_patience: int,
-                epochs: int) -> keras.Model:
+                epochs: int, mlflow: bool) -> keras.Model:
     """
     Train the U-Net model using 38-Cloud dataset.
 
@@ -30,6 +31,7 @@ def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_
     :param learning_rate: learning rate for training.
     :param stopping_patience: patience param for early stopping.
     :param epochs: number of epochs.
+    :param mlflow: whether to use mlflow
     :return: trained model.
     """
     # Load data
@@ -67,8 +69,7 @@ def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_
             Dice_coef_metric(),
             recall,
             precision,
-            specificity,
-            f1_score
+            specificity
         ]
     )
 
@@ -86,6 +87,8 @@ def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_
             verbose=2
         )
     ]
+    if mlflow:
+        callbacks.append(MLFlowCallback())
 
     # Train model
     model.fit_generator(

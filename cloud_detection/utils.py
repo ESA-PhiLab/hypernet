@@ -1,10 +1,10 @@
 import os
 from typing import Dict, List, Tuple, Callable
 from pathlib import Path
+from tensorflow import keras
 
 import numpy as np
 import mlflow
-import mlflow.tensorflow
 import tensorflow.keras.backend as K
 from tensorflow.keras.preprocessing.image import load_img
 from skimage import io, img_as_ubyte
@@ -40,7 +40,6 @@ def setup_mlflow(run_name):
     mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
     mlflow.set_experiment("cloud_detection")
     mlflow.start_run(run_name=run_name)
-    mlflow.tensorflow.autolog()
 
 
 def pad(img: np.ndarray, patch_size: int = 384) -> np.ndarray:
@@ -120,3 +119,8 @@ def save_vis(img_id: str, img_vis: np.ndarray, img_pred: np.ndarray, img_gt: np.
 def make_paths(*args):
     paths = [Path(path) if path is not None else None for path in [*args]]
     return tuple(paths)
+
+
+class MLFlowCallback(keras.callbacks.Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        mlflow.log_metrics(logs)

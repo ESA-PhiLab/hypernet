@@ -172,13 +172,12 @@ if __name__ == "__main__":
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
-            "jaccard_index_loss": losses.Jaccard_index_loss(),
-            "jaccard_index_metric": losses.Jaccard_index_metric(),
-            "dice_coeff_metric": losses.Dice_coef_metric(),
-            "recall": losses.recall,
-            "precision": losses.precision,
-            "specificity": losses.specificity,
-            "f1_score": losses.f1_score,
+            "jaccard_index_loss": cloud_detection.losses.Jaccard_index_loss(),
+            "jaccard_index_metric": cloud_detection.losses.Jaccard_index_metric(),
+            "dice_coeff_metric": cloud_detection.losses.Dice_coef_metric(),
+            "recall": cloud_detection.losses.recall,
+            "precision": cloud_detection.losses.precision,
+            "specificity": cloud_detection.losses.specificity,
             "tf": tf
             })
     model.load_weights(f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
@@ -186,7 +185,7 @@ if __name__ == "__main__":
     params = {
         "model": model,
         "thr": 0.5,
-        "dpath": Path("../datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"),
+        "dpath": Path("datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"),
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
         "batch_size": 32,

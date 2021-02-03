@@ -26,7 +26,7 @@ def main(run_name, train_path, C38_path, C38_gtpath, L8CCA_path, vpath, rpath, p
         log_params(locals())
     model, auto_thr = train_model(train_path, rpath, ppath, train_size, batch_size,
                                   balance_train_dataset, balance_val_dataset, balance_snow, train_img,
-                                  bn_momentum, learning_rate, stopping_patience, epochs)
+                                  bn_momentum, learning_rate, stopping_patience, epochs, mlflow)
     print("Finished training and validation, starting evaluation.", flush=True)
     print(f'Working dir: {os.getcwd()}, artifacts dir: {rpath}', flush=True)
     thr = auto_thr if thr is None else thr
@@ -58,7 +58,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
     parser.add_argument("-n", help="mlflow run name", default=None)
-    parser.add_argument("-c", help="config path", default="cfg/exp_1.yml")
+    parser.add_argument("-c", help="config path", default="cloud_detection/cfg/exp_1.yml")
     args = parser.parse_args()
 
     with open(args.c, "r") as f:

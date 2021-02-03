@@ -71,6 +71,7 @@ def specificity(y_true, y_pred):
     return ret
 
 
+# Same as Dice_coef_metric()
 def f1_score(y_true, y_pred):
     prec = precision(y_true, y_pred)
     rec = recall(y_true, y_pred)
