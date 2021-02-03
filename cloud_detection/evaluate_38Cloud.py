@@ -13,13 +13,14 @@ from mlflow import log_metrics, log_artifacts
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 
-import cloud_detection.losses
+from cloud_detection import losses
 from cloud_detection.data_gen import load_image_paths, DG_38Cloud
 from cloud_detection.validate import make_precission_recall, make_roc, make_activation_hist, datagen_to_gt_array
 from cloud_detection.utils import overlay_mask, unpad, get_metrics, save_vis, setup_mlflow
 
 
-def get_full_scene_img(path: Path, img_id: str):
+def get_full_scene_img(path: Path, img_id: str) -> np.ndarray:
+    """ Get image of given id as np.array with values in range 0 to 1."""
     img_path = next(path.glob("*" + img_id + "*"))
     return np.array(load_img(img_path))/255
 
@@ -171,12 +172,12 @@ if __name__ == "__main__":
                  + "artifacts/model/data/model.h5")
     model = keras.models.load_model(
         mpath, custom_objects={
-            "jaccard_index_loss": cloud_detection.losses.Jaccard_index_loss(),
-            "jaccard_index_metric": cloud_detection.losses.Jaccard_index_metric(),
-            "dice_coeff_metric": cloud_detection.losses.Dice_coef_metric(),
-            "recall": cloud_detection.losses.recall,
-            "precision": cloud_detection.losses.precision,
-            "specificity": cloud_detection.losses.specificity,
+            "jaccard_index_loss": losses.Jaccard_index_loss(),
+            "jaccard_index_metric": losses.Jaccard_index_metric(),
+            "dice_coeff_metric": losses.Dice_coef_metric(),
+            "recall": losses.recall,
+            "precision": losses.precision,
+            "specificity": losses.specificity,
             "tf": tf
             })
     model.load_weights(f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"

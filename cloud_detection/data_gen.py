@@ -96,7 +96,7 @@ def load_image_paths(base_path: Path,
     split_beg = 0
     splits = []
     for ratio in split_ratios:
-        split_end = split_beg + math.floor(ratio * len(files))
+        split_end = split_beg + math.ceil(ratio * len(files))
         splits.append(files[split_beg:split_end])
         split_beg=split_end
 

@@ -1,33 +1,36 @@
-import os
-from typing import Dict, List, Tuple, Callable
+""" Various utilities, running tools, img editing etc. """
+
 from pathlib import Path
 from tensorflow import keras
+from typing import Dict, List, Tuple, Callable
+import os
 
-import numpy as np
-import mlflow
-import tensorflow.keras.backend as K
-from tensorflow.keras.preprocessing.image import load_img
 from skimage import io, img_as_ubyte
+from tensorflow.keras.preprocessing.image import load_img
+import mlflow
+import numpy as np
+import tensorflow.keras.backend as K
 
 import cloud_detection.losses
 
 
-def true_positives(y_true, y_pred):
+def true_positives(y_true: np.ndarray, y_pred: np.ndarray):
     return y_true * y_pred
 
 
-def false_positives(y_true, y_pred):
+def false_positives(y_true: np.ndarray, y_pred: np.ndarray):
     y_true_neg = 1 - y_true
     return y_true_neg * y_pred
 
 
-def false_negatives(y_true, y_pred):
+def false_negatives(y_true: np.ndarray, y_pred: np.ndarray):
     y_pred_neg = 1 - y_pred
     return y_true * y_pred_neg
 
 
-def overlay_mask(image: np.ndarray, mask: np.ndarray, rgb_color: Tuple[float], overlay_intensity: float=0.5) -> np.ndarray:
-    """ Overlay a mask on image for visualization purposes. """
+def overlay_mask(image: np.ndarray, mask: np.ndarray,
+                 rgb_color: Tuple[float], overlay_intensity: float=0.5) -> np.ndarray:
+    """Overlay a mask on image for visualization purposes."""
     image = np.copy(image)
     for i, color in enumerate(rgb_color):
         channel = image[:,:,i]
@@ -36,7 +39,8 @@ def overlay_mask(image: np.ndarray, mask: np.ndarray, rgb_color: Tuple[float], o
     return np.clip(image, 0, 1)
 
 
-def setup_mlflow(run_name):
+def setup_mlflow(run_name: str):
+    """Start mlflow run with given name."""
     mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
     mlflow.set_experiment("cloud_detection")
     mlflow.start_run(run_name=run_name)
@@ -60,9 +64,9 @@ def pad(img: np.ndarray, patch_size: int = 384) -> np.ndarray:
 def unpad(img: np.ndarray, gt_shape: Tuple) -> np.ndarray:
     """
     Unpadding of an image to return it to its original shape.
-    param img: image to unpad.
-    param gt_shape: shape of the original image.
-    return: unpadded image.
+    :param img: image to unpad.
+    :param gt_shape: shape of the original image.
+    :return: unpadded image.
     """
     r, c, _ = img.shape
     r_gt, c_gt, _ = gt_shape
@@ -74,10 +78,10 @@ def unpad(img: np.ndarray, gt_shape: Tuple) -> np.ndarray:
 def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) -> Dict:
     """
     Calculates evaluation metrics for a given image predictions.
-    param gt: image ground truth.
-    param pred: image predictions.
-    param metric_fns: list of metric functions.
-    return: evaluation metrics.
+    :param gt: image ground truth.
+    :param pred: image predictions.
+    :param metric_fns: list of metric functions.
+    :return: evaluation metrics.
     """
     gt_ph = K.placeholder(ndim=3)
     pred_ph = K.placeholder(ndim=3)
@@ -95,7 +99,20 @@ def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) ->
     return metrics
 
 
-def save_vis(img_id: str, img_vis: np.ndarray, img_pred: np.ndarray, img_gt: np.ndarray, rpath: Path):
+def save_vis(img_id: str, img_vis: np.ndarray, img_pred: np.ndarray,
+             img_gt: np.ndarray, rpath: Path):
+    """
+    Save visualisations set for img of given id.
+    Visualisations set includes:
+        * Mask overlay of uncertain regions of segmentation.
+        * Ground truth mask.
+        * Prediction mask.
+        * TP, FP, FN mask overlays.
+    :param img_id: Id of visualised img, will be used for naming saved artifacts.
+    :param img_pred: Prediction mask, result of segmentation.
+    :param img_gt: Ground truth mask.
+    :param rpath: Path where artifacts should be saved.
+    """
     rpath = rpath / img_id
     Path(rpath).mkdir(parents=True, exist_ok=False)
 
