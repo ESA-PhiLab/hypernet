@@ -1,9 +1,16 @@
 """ Keras models for cloud detection. """
 
 import tensorflow as tf
-from tensorflow.keras.layers import (Input, Concatenate, Activation,
-                                     Lambda, Conv2D, BatchNormalization,
-                                     MaxPool2D, UpSampling2D)
+from tensorflow.keras.layers import (
+    Input,
+    Concatenate,
+    Activation,
+    Lambda,
+    Conv2D,
+    BatchNormalization,
+    MaxPool2D,
+    UpSampling2D,
+)
 from math import floor, ceil
 
 
@@ -17,10 +24,10 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
     :param input_size: Number of input channels, i.e., the number of spectral bands.
     :param bn_momentum: Momentum of the batch normalization layer.
     """
-    def contract_block(x: tf.Tensor,
-                       filters: int,
-                       kernel_size: int,
-                       bn_momentum: float) -> tf.Tensor:
+
+    def contract_block(
+        x: tf.Tensor, filters: int, kernel_size: int, bn_momentum: float
+    ) -> tf.Tensor:
         """
         Contracting block of the U-Net.
 
@@ -29,31 +36,26 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
         :param kernel_size: Kernel size of convolutional layers.
         :param bn_momentum: Momentum of the batch normalization layer.
         """
-        pad_l, pad_r = ceil(kernel_size/2) - 1, floor(kernel_size/2)
+        pad_l, pad_r = ceil(kernel_size / 2) - 1, floor(kernel_size / 2)
         pad_size = [[0, 0], [pad_l, pad_r], [pad_l, pad_r], [0, 0]]
         x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
-        x = Conv2D(filters=filters,
-                   kernel_size=kernel_size,
-                   padding="valid",
-                   activation="relu")(x)
+        x = Conv2D(
+            filters=filters, kernel_size=kernel_size, padding="valid", activation="relu"
+        )(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
         x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
-        x = Conv2D(filters=filters,
-                   kernel_size=kernel_size,
-                   padding="valid",
-                   activation="relu")(x)
+        x = Conv2D(
+            filters=filters, kernel_size=kernel_size, padding="valid", activation="relu"
+        )(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
         pool_pad_size = [[0, 0], [0, 1], [0, 1], [0, 0]]
         x = Lambda(lambda x: tf.pad(x, pool_pad_size, "SYMMETRIC"))(x)
-        x = MaxPool2D(pool_size=3,
-                      strides=2,
-                      padding="valid")(x)
+        x = MaxPool2D(pool_size=3, strides=2, padding="valid")(x)
         return x
 
-    def expand_block(x: tf.Tensor,
-                     filters: int,
-                     kernel_size: int,
-                     bn_momentum: float) -> tf.Tensor:
+    def expand_block(
+        x: tf.Tensor, filters: int, kernel_size: int, bn_momentum: float
+    ) -> tf.Tensor:
         """
         Expanding block of the U-Net.
 
@@ -62,19 +64,17 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
         :param kernel_size: Kernel size of convolutional layers.
         :param bn_momentum: Momentum of the batch normalization layer.
         """
-        pad_l, pad_r = ceil(kernel_size/2) - 1, floor(kernel_size/2)
+        pad_l, pad_r = ceil(kernel_size / 2) - 1, floor(kernel_size / 2)
         pad_size = [[0, 0], [pad_l, pad_r], [pad_l, pad_r], [0, 0]]
         x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
-        x = Conv2D(filters=filters,
-                   kernel_size=kernel_size,
-                   padding="valid",
-                   activation="relu")(x)
+        x = Conv2D(
+            filters=filters, kernel_size=kernel_size, padding="valid", activation="relu"
+        )(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
         x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
-        x = Conv2D(filters=filters,
-                   kernel_size=kernel_size,
-                   padding="valid",
-                   activation="relu")(x)
+        x = Conv2D(
+            filters=filters, kernel_size=kernel_size, padding="valid", activation="relu"
+        )(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
         x = UpSampling2D(size=(2, 2))(x)
         return x

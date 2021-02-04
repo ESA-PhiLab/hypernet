@@ -15,18 +15,30 @@ from tensorflow.keras.preprocessing.image import load_img
 
 from cloud_detection import losses
 from cloud_detection.data_gen import load_image_paths, DG_38Cloud
-from cloud_detection.validate import make_precission_recall, make_roc, make_activation_hist, datagen_to_gt_array
-from cloud_detection.utils import overlay_mask, unpad, get_metrics, save_vis, setup_mlflow
+from cloud_detection.validate import (
+    make_precission_recall,
+    make_roc,
+    make_activation_hist,
+    datagen_to_gt_array,
+)
+from cloud_detection.utils import (
+    overlay_mask,
+    unpad,
+    get_metrics,
+    save_vis,
+    setup_mlflow,
+)
 
 
 def get_full_scene_img(path: Path, img_id: str) -> np.ndarray:
     """ Get image of given id as np.array with values in range 0 to 1."""
     img_path = next(path.glob("*" + img_id + "*"))
-    return np.array(load_img(img_path))/255
+    return np.array(load_img(img_path)) / 255
 
 
-def get_img_pred(path: Path, img_id: str, model: keras.Model,
-                 batch_size: int, patch_size: int=384) -> np.ndarray:
+def get_img_pred(
+    path: Path, img_id: str, model: keras.Model, batch_size: int, patch_size: int = 384
+) -> np.ndarray:
     """
     Generates prediction for a given image.
     :param path: path containing directories with image channels.
@@ -37,14 +49,12 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
     :param patch_size: size of the image patches.
     :return: prediction for the given image.
     """
-    test_files, = load_image_paths(base_path=path, split_ratios=[1.0],
-                                   shuffle=False, img_id=img_id)
+    (test_files,) = load_image_paths(
+        base_path=path, split_ratios=[1.0], shuffle=False, img_id=img_id
+    )
     testgen = DG_38Cloud(
-        files=test_files,
-        batch_size=batch_size,
-        shuffle=False,
-        with_gt=False
-        )
+        files=test_files, batch_size=batch_size, shuffle=False, with_gt=False
+    )
     tbeg = time.time()
     pred = model.predict_generator(testgen)
     scene_time = time.time() - tbeg
@@ -56,13 +66,14 @@ def get_img_pred(path: Path, img_id: str, model: keras.Model,
         red_fname = str(fnames["red"])
         row, col = re.search("([0-9]*)_by_([0-9]*)", red_fname).groups()
         row, col = int(row), int(col)
-        img[(row-1)*patch_size:row*patch_size,
-            (col-1)*patch_size:col*patch_size] = pred[i]
+        img[
+            (row - 1) * patch_size : row * patch_size,
+            (col - 1) * patch_size : col * patch_size,
+        ] = pred[i]
     return img, scene_time
 
 
-def get_img_pred_shape(files: List[Dict[str, Path]],
-                       patch_size: int) -> Tuple:
+def get_img_pred_shape(files: List[Dict[str, Path]], patch_size: int) -> Tuple:
     """
     Infers shape of the predictions of the considered image.
     :param files: paths to patch files;
@@ -77,7 +88,7 @@ def get_img_pred_shape(files: List[Dict[str, Path]],
         row, col = int(row), int(col)
         row_max = max(row_max, row)
         col_max = max(col_max, col)
-    return (patch_size*row_max, patch_size*col_max, 1)
+    return (patch_size * row_max, patch_size * col_max, 1)
 
 
 def load_img_gt(path: Path, fname: str) -> np.ndarray:
@@ -88,12 +99,22 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
     :return: image ground truth.
     """
     img = np.array(load_img(path / fname, color_mode="grayscale"))
-    return np.expand_dims(img/255, axis=-1)
+    return np.expand_dims(img / 255, axis=-1)
 
 
-def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vpath: Path,
-                   rpath: Path, vids: Tuple[str], batch_size: int, img_ids: List[str]=None,
-                   mlflow=False, run_name=None) -> Tuple:
+def evaluate_model(
+    model: keras.Model,
+    thr: float,
+    dpath: Path,
+    gtpath: Path,
+    vpath: Path,
+    rpath: Path,
+    vids: Tuple[str],
+    batch_size: int,
+    img_ids: List[str] = None,
+    mlflow=False,
+    run_name=None,
+) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     :param model: trained model to make predictions.
@@ -122,7 +143,7 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
         metrics[f"38Cloud_{metric_name}"] = {}
 
     for fname in os.listdir(gtpath):
-        img_id = fname[fname.find("LC08"):fname.find(".TIF")]
+        img_id = fname[fname.find("LC08") : fname.find(".TIF")]
         if img_ids is not None:
             if img_id not in img_ids:
                 continue
@@ -137,15 +158,19 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
                 metric_name = metric_fn
             else:
                 metric_name = metric_fn.__name__
-            metrics[f"38Cloud_{metric_name}"][img_id] = img_metrics[f"test_{metric_name}"]
-        print(f"Average inference time: { sum(scene_times) / len(scene_times) } seconds")
+            metrics[f"38Cloud_{metric_name}"][img_id] = img_metrics[
+                f"test_{metric_name}"
+            ]
+        print(
+            f"Average inference time: { sum(scene_times) / len(scene_times) } seconds"
+        )
 
-        if img_id in vids or '*' in vids:
+        if img_id in vids or "*" in vids:
             print(f"Creating visualisation for {img_id}")
             img_vis = 0.7 * get_full_scene_img(vpath, img_id)
             save_vis(img_id, img_vis, img_pred > thr, img_gt, rpath)
 
-        if img_metrics['test_jaccard_index_metric'] < 0.6:
+        if img_metrics["test_jaccard_index_metric"] < 0.6:
             print(f"Will make insights for {img_id}", flush=True)
             y_gt = img_gt.ravel()
             y_pred = np.round(img_pred.ravel(), decimals=5)
@@ -159,29 +184,38 @@ def evaluate_model(model: keras.Model, thr: float, dpath: Path, gtpath: Path, vp
 
     return metrics
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
     parser.add_argument("-n", help="mlflow run name", default=None)
-    parser.add_argument("-m", help="model hash", default="3e19daf248954674966cd31af1c4cb12")
+    parser.add_argument(
+        "-m", help="model hash", default="3e19daf248954674966cd31af1c4cb12"
+    )
 
     args = parser.parse_args()
 
-    mpath = Path(f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
-                 + "artifacts/model/data/model.h5")
+    mpath = Path(
+        f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
+        + "artifacts/model/data/model.h5"
+    )
     model = keras.models.load_model(
-        mpath, custom_objects={
+        mpath,
+        custom_objects={
             "jaccard_index_loss": losses.Jaccard_index_loss(),
             "jaccard_index_metric": losses.Jaccard_index_metric(),
             "dice_coeff_metric": losses.Dice_coef_metric(),
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
-            "tf": tf
-            })
-    model.load_weights(f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
-                       + "artifacts/best_weights/best_weights")
+            "tf": tf,
+        },
+    )
+    model.load_weights(
+        f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
+        + "artifacts/best_weights/best_weights"
+    )
     params = {
         "model": model,
         "thr": 0.5,
@@ -194,16 +228,18 @@ if __name__ == "__main__":
         "img_ids": [
             "LC08_L1TP_064015_20160420_20170223_01_T1",
             "LC08_L1TP_035035_20160120_20170224_01_T1",
-            "LC08_L1TP_050024_20160520_20170324_01_T1"
-            ],
+            "LC08_L1TP_050024_20160520_20170324_01_T1",
+        ],
         "mlflow": args.f,
-        "run_name": args.n
-        }
+        "run_name": args.n,
+    }
     print(f'Working dir: {os.getcwd()}, artifacts dir: {params["rpath"]}', flush=True)
     metrics = evaluate_model(**params)
-    snow_imgs= ["LC08_L1TP_064015_20160420_20170223_01_T1",
-                "LC08_L1TP_035035_20160120_20170224_01_T1",
-                "LC08_L1TP_050024_20160520_20170324_01_T1"]
+    snow_imgs = [
+        "LC08_L1TP_064015_20160420_20170223_01_T1",
+        "LC08_L1TP_035035_20160120_20170224_01_T1",
+        "LC08_L1TP_050024_20160520_20170324_01_T1",
+    ]
     mean_metrics = {}
     mean_metrics_snow = {}
     for key, value in metrics.items():

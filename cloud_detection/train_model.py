@@ -8,14 +8,35 @@ from tensorflow import keras
 
 from cloud_detection.data_gen import DG_38Cloud, load_image_paths
 from cloud_detection.models import unet
-from cloud_detection.losses import Jaccard_index_loss, Jaccard_index_metric, Dice_coef_metric, recall, precision, specificity, f1_score
+from cloud_detection.losses import (
+    Jaccard_index_loss,
+    Jaccard_index_metric,
+    Dice_coef_metric,
+    recall,
+    precision,
+    specificity,
+    f1_score,
+)
 from cloud_detection.validate import make_validation_insights
 from cloud_detection.utils import MLFlowCallback
 
-def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_size: int,
-                balance_train_dataset: bool, balance_val_dataset: bool, balance_snow: bool, train_img: str,
-                bn_momentum: float, learning_rate: float, stopping_patience: int,
-                epochs: int, mlflow: bool) -> keras.Model:
+
+def train_model(
+    dpath: Path,
+    rpath: Path,
+    ppath: Path,
+    train_size: float,
+    batch_size: int,
+    balance_train_dataset: bool,
+    balance_val_dataset: bool,
+    balance_snow: bool,
+    train_img: str,
+    bn_momentum: float,
+    learning_rate: float,
+    stopping_patience: int,
+    epochs: int,
+    mlflow: bool,
+) -> keras.Model:
     """
     Train the U-Net model using 38-Cloud dataset.
 
@@ -38,26 +59,22 @@ def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_
     train_files, val_files = load_image_paths(
         base_path=dpath,
         patches_path=ppath,
-        split_ratios=(train_size, 1-train_size),
-        img_id=train_img
-        )
+        split_ratios=(train_size, 1 - train_size),
+        img_id=train_img,
+    )
     # Upstream snow balancing
     traingen = DG_38Cloud(
         files=train_files,
         batch_size=batch_size,
         balance_classes=balance_train_dataset,
-        balance_snow=balance_snow
-        )
+        balance_snow=balance_snow,
+    )
     valgen = DG_38Cloud(
-        files=val_files,
-        batch_size=batch_size,
-        balance_classes=balance_val_dataset
-        )
+        files=val_files, batch_size=batch_size, balance_classes=balance_val_dataset
+    )
 
     # Create model
-    model = unet(input_size=4,
-                 bn_momentum=bn_momentum
-                 )
+    model = unet(input_size=4, bn_momentum=bn_momentum)
     model.compile(
         optimizer=keras.optimizers.Adam(lr=learning_rate),
         loss=Jaccard_index_loss(),
@@ -69,23 +86,20 @@ def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_
             Dice_coef_metric(),
             recall,
             precision,
-            specificity
-        ]
+            specificity,
+        ],
     )
 
     # Prepare training
     Path(rpath / "best_weights").mkdir(parents=True, exist_ok=False)
     callbacks = [
-        keras.callbacks.EarlyStopping(
-            patience=stopping_patience,
-            verbose=2
-        ),
+        keras.callbacks.EarlyStopping(patience=stopping_patience, verbose=2),
         keras.callbacks.ModelCheckpoint(
             filepath=f"{rpath}/best_weights/best_weights",
             save_best_only=True,
             save_weights_only=True,
-            verbose=2
-        )
+            verbose=2,
+        ),
     ]
     if mlflow:
         callbacks.append(MLFlowCallback())
@@ -96,15 +110,15 @@ def train_model(dpath: Path, rpath: Path, ppath: Path, train_size: float, batch_
         epochs=epochs,
         validation_data=valgen,
         callbacks=callbacks,
-        verbose=2
-        )
+        verbose=2,
+    )
     print("Finished fitting. Will make validation insights now.", flush=True)
 
     # Load best weights
     model.load_weights(f"{rpath}/best_weights/best_weights")
 
     # Save validation insights
-    best_thr = make_validation_insights(model, valgen, rpath/"validation_insight")
+    best_thr = make_validation_insights(model, valgen, rpath / "validation_insight")
 
     # Return model
     return model, best_thr
@@ -115,9 +129,9 @@ if __name__ == "__main__":
         "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_training"),
         "train_size": 0.8,
         "batch_size": 8,
-        "learning_rate": .01,
-        "bn_momentum": .9,
+        "learning_rate": 0.01,
+        "bn_momentum": 0.9,
         "epochs": 200,
         "stopping_patience": 20,
-        }
+    }
     train_model(**params)

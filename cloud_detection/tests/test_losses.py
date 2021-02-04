@@ -4,25 +4,59 @@ import tensorflow.keras.backend as K
 from tensorflow.debugging import assert_near
 from tensorflow import errors, enable_eager_execution
 
-from cloud_detection.losses import (Jaccard_index_loss, Jaccard_index_metric,
-                                    Dice_coef_metric, recall, precision, specificity,
-                                    f1_score)
+from cloud_detection.losses import (
+    Jaccard_index_loss,
+    Jaccard_index_metric,
+    Dice_coef_metric,
+    recall,
+    precision,
+    specificity,
+    f1_score,
+)
 
 enable_eager_execution()
 
 
 class TestJaccardIndexLoss:
     @pytest.mark.parametrize(
-        'y_true, y_pred, expected',
+        "y_true, y_pred, expected",
         [
-            (K.constant([[ [1, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [0, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.25)),
-            (K.constant([[ [0, 1], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.5)),
-            (K.constant([[ [0, 0], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.75)),
-            (K.constant([[ [0, 0], [0, 0] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(1)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.25, 0.25], [0, 0] ]]), K.constant(0.75)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.75, 0.75], [0, 0] ]]), K.constant(0.25)),
-        ]
+            (
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[0, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.25),
+            ),
+            (
+                K.constant([[[0, 1], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.5),
+            ),
+            (
+                K.constant([[[0, 0], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.75),
+            ),
+            (
+                K.constant([[[0, 0], [0, 0]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(1),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.25, 0.25], [0, 0]]]),
+                K.constant(0.75),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.75, 0.75], [0, 0]]]),
+                K.constant(0.25),
+            ),
+        ],
     )
     def test_jaccard_index_loss(self, y_true, y_pred, expected):
         jaccard = Jaccard_index_loss()
@@ -34,16 +68,44 @@ class TestJaccardIndexLoss:
 
 class TestJaccardIndexMetric:
     @pytest.mark.parametrize(
-        'y_true, y_pred, expected',
+        "y_true, y_pred, expected",
         [
-            (K.constant([[ [1, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(1)),
-            (K.constant([[ [0, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.75)),
-            (K.constant([[ [0, 1], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.5)),
-            (K.constant([[ [0, 0], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.25)),
-            (K.constant([[ [0, 0], [0, 0] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.25, 0.25], [0, 0] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.75, 0.75], [0, 0] ]]), K.constant(1)),
-        ]
+            (
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(1),
+            ),
+            (
+                K.constant([[[0, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.75),
+            ),
+            (
+                K.constant([[[0, 1], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.5),
+            ),
+            (
+                K.constant([[[0, 0], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.25),
+            ),
+            (
+                K.constant([[[0, 0], [0, 0]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.25, 0.25], [0, 0]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.75, 0.75], [0, 0]]]),
+                K.constant(1),
+            ),
+        ],
     )
     def test_jaccard_index_metric(self, y_true, y_pred, expected):
         jaccard = Jaccard_index_metric()
@@ -55,16 +117,44 @@ class TestJaccardIndexMetric:
 
 class TestDiceCoefMetric:
     @pytest.mark.parametrize(
-        'y_true, y_pred, expected',
+        "y_true, y_pred, expected",
         [
-            (K.constant([[ [1, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(1)),
-            (K.constant([[ [0, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.85714286)),
-            (K.constant([[ [0, 1], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.66666666)),
-            (K.constant([[ [0, 0], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.4)),
-            (K.constant([[ [0, 0], [0, 0] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.25, 0.25], [0, 0] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.75, 0.75], [0, 0] ]]), K.constant(1)),
-        ]
+            (
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(1),
+            ),
+            (
+                K.constant([[[0, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.85714286),
+            ),
+            (
+                K.constant([[[0, 1], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.66666666),
+            ),
+            (
+                K.constant([[[0, 0], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.4),
+            ),
+            (
+                K.constant([[[0, 0], [0, 0]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.25, 0.25], [0, 0]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.75, 0.75], [0, 0]]]),
+                K.constant(1),
+            ),
+        ],
     )
     def test_dice_coef_metric(self, y_true, y_pred, expected):
         dice = Dice_coef_metric()
@@ -76,16 +166,44 @@ class TestDiceCoefMetric:
 
 class TestRecall:
     @pytest.mark.parametrize(
-        'y_true, y_pred, expected',
+        "y_true, y_pred, expected",
         [
-            (K.constant([[ [1, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(1)),
-            (K.constant([[ [0, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(1)),
-            (K.constant([[ [0, 1], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(1)),
-            (K.constant([[ [0, 0], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(1)),
-            (K.constant([[ [0, 0], [0, 0] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.25, 0.25], [0, 0] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.75, 0.75], [0, 0] ]]), K.constant(1)),
-        ]
+            (
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(1),
+            ),
+            (
+                K.constant([[[0, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(1),
+            ),
+            (
+                K.constant([[[0, 1], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(1),
+            ),
+            (
+                K.constant([[[0, 0], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(1),
+            ),
+            (
+                K.constant([[[0, 0], [0, 0]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.25, 0.25], [0, 0]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.75, 0.75], [0, 0]]]),
+                K.constant(1),
+            ),
+        ],
     )
     def test_recall(self, y_true, y_pred, expected):
         try:
@@ -96,16 +214,44 @@ class TestRecall:
 
 class TestPrecision:
     @pytest.mark.parametrize(
-        'y_true, y_pred, expected',
+        "y_true, y_pred, expected",
         [
-            (K.constant([[ [1, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(1)),
-            (K.constant([[ [0, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.75)),
-            (K.constant([[ [0, 1], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.5)),
-            (K.constant([[ [0, 0], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.25)),
-            (K.constant([[ [0, 0], [0, 0] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.25, 0.25], [0, 0] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.75, 0.75], [0, 0] ]]), K.constant(1)),
-        ]
+            (
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(1),
+            ),
+            (
+                K.constant([[[0, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.75),
+            ),
+            (
+                K.constant([[[0, 1], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.5),
+            ),
+            (
+                K.constant([[[0, 0], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.25),
+            ),
+            (
+                K.constant([[[0, 0], [0, 0]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.25, 0.25], [0, 0]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.75, 0.75], [0, 0]]]),
+                K.constant(1),
+            ),
+        ],
     )
     def test_precision(self, y_true, y_pred, expected):
         try:
@@ -116,16 +262,44 @@ class TestPrecision:
 
 class TestSpecificity:
     @pytest.mark.parametrize(
-        'y_true, y_pred, expected',
+        "y_true, y_pred, expected",
         [
-            (K.constant([[ [1, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [0, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [0, 1], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [0, 0], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [0, 0], [0, 0] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.25, 0.25], [0, 0] ]]), K.constant(1)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.75, 0.75], [0, 0] ]]), K.constant(1)),
-        ]
+            (
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[0, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[0, 1], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[0, 0], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[0, 0], [0, 0]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.25, 0.25], [0, 0]]]),
+                K.constant(1),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.75, 0.75], [0, 0]]]),
+                K.constant(1),
+            ),
+        ],
     )
     def test_specificity(self, y_true, y_pred, expected):
         try:
@@ -136,16 +310,44 @@ class TestSpecificity:
 
 class TestF1Score:
     @pytest.mark.parametrize(
-        'y_true, y_pred, expected',
+        "y_true, y_pred, expected",
         [
-            (K.constant([[ [1, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(1)),
-            (K.constant([[ [0, 1], [1, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.85714286)),
-            (K.constant([[ [0, 1], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.66666666)),
-            (K.constant([[ [0, 0], [0, 1] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0.4)),
-            (K.constant([[ [0, 0], [0, 0] ]]), K.constant([[ [1, 1], [1, 1] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.25, 0.25], [0, 0] ]]), K.constant(0)),
-            (K.constant([[ [1, 1], [0, 0] ]]), K.constant([[ [0.75, 0.75], [0, 0] ]]), K.constant(1)),
-        ]
+            (
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(1),
+            ),
+            (
+                K.constant([[[0, 1], [1, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.85714286),
+            ),
+            (
+                K.constant([[[0, 1], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.66666666),
+            ),
+            (
+                K.constant([[[0, 0], [0, 1]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0.4),
+            ),
+            (
+                K.constant([[[0, 0], [0, 0]]]),
+                K.constant([[[1, 1], [1, 1]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.25, 0.25], [0, 0]]]),
+                K.constant(0),
+            ),
+            (
+                K.constant([[[1, 1], [0, 0]]]),
+                K.constant([[[0.75, 0.75], [0, 0]]]),
+                K.constant(1),
+            ),
+        ],
     )
     def test_f1_score(self, y_true, y_pred, expected):
         try:
