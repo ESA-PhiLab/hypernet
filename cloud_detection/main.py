@@ -5,7 +5,6 @@ import os
 import yaml
 import numpy as np
 import argparse
-from pathlib import Path
 from mlflow import log_metrics, log_artifacts, log_param, log_params, end_run
 
 from cloud_detection.train_model import train_model
@@ -39,12 +38,13 @@ def main(
     epochs,
     stopping_patience,
 ):
-    train_path, C38_path, C38_gtpath, L8CCA_path, vpath, rpath, ppath = make_paths(
-        train_path, C38_path, C38_gtpath, L8CCA_path, vpath, rpath, ppath
-    )
+    train_path, C38_path, C38_gtpath, L8CCA_path, vpath, rpath, ppath = \
+        make_paths(
+            train_path, C38_path, C38_gtpath, L8CCA_path, vpath, rpath, ppath
+        )
     rpath = rpath / uuid.uuid4().hex
     rpath.mkdir(parents=True, exist_ok=False)
-    if mlflow == True:
+    if mlflow:
         setup_mlflow(run_name)
         log_params(locals())
     model, auto_thr = train_model(
@@ -67,7 +67,8 @@ def main(
     print(f"Working dir: {os.getcwd()}, artifacts dir: {rpath}", flush=True)
     thr = auto_thr if thr is None else thr
     metrics_38Cloud = test_38Cloud(
-        model, thr, C38_path, C38_gtpath, vpath, rpath / "38Cloud_vis", vids, batch_size
+        model, thr, C38_path, C38_gtpath, vpath,
+        rpath / "38Cloud_vis", vids, batch_size
     )
     mean_metrics_38Cloud = {}
     mean_metrics_38Cloud_snow = {}
@@ -78,7 +79,7 @@ def main(
             [value[x] for x in snow_imgs_38Cloud]
         )
 
-    if mlflow == True:
+    if mlflow:
         log_param("threshold", thr)
         log_metrics(mean_metrics_38Cloud)
         log_metrics(mean_metrics_38Cloud_snow)
@@ -95,7 +96,7 @@ def main(
             [value[x] for x in snow_imgs_L8CCA]
         )
 
-    if mlflow == True:
+    if mlflow:
         log_metrics(mean_metrics_L8CCA)
         log_metrics(mean_metrics_L8CCA_snow)
         log_artifacts(rpath)
@@ -104,7 +105,8 @@ def main(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
+    parser.add_argument(
+        "-f", help="enable mlflow reporting", action="store_true")
     parser.add_argument("-n", help="mlflow run name", default=None)
     parser.add_argument(
         "-c", help="config path", default="cloud_detection/cfg/exp_1.yml"

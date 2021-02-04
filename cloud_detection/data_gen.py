@@ -10,7 +10,7 @@ from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 from typing import Dict, List, Tuple
 
-from cloud_detection.utils import overlay_mask, pad
+from cloud_detection.utils import pad
 
 
 def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
@@ -32,7 +32,8 @@ def load_image_paths(
     """
     Build paths to all files containg image channels.
     :param base_path: root path containing directories with image channels.
-    :param split_ratios: list containg split ratios, splits should add up to one.
+    :param split_ratios: list containg split ratios,
+                         splits should add up to one.
     :param img_id: image ID; if specified, load paths for this image only.
     :return: list with paths to image files, separated into splits.
         Structured as: list_of_splits[list_of_files['file_channel', Path]]
@@ -79,7 +80,7 @@ def load_image_paths(
             for fname in red_files:
                 fname_str = str(fname)
                 if (
-                    fname_str[fname_str.find("patch") : fname_str.find(".TIF")]
+                    fname_str[fname_str.find("patch"): fname_str.find(".TIF")]
                     in patches_names
                 ):
                     select_files.append(fname)
@@ -151,24 +152,26 @@ class DG_38Cloud(keras.utils.Sequence):
             self._balance_file_indexes()
         if self._balance_snow:
             self._balance_snow_indexes()
-        if self._shuffle == True:
+        if self._shuffle:
             np.random.shuffle(self._file_indexes)
 
     def _perform_balancing(self, labels: List):
         """
         Perform balancing on given images.
-        :param labels: List of pseudo-labels for indexing. For each patch in the
-            dataset should contain 1 if image is to be balanced, otherwise
-            should be 0.
+        :param labels: List of pseudo-labels for indexing. For each patch in
+                       the dataset should contain 1 if image is to be
+                       balanced, otherwise should be 0.
         """
         pos_idx = self._file_indexes[np.array(labels, dtype=bool)]
         neg_idx = self._file_indexes[~np.array(labels, dtype=bool)]
         if len(pos_idx) < len(neg_idx):
             resampled_idx = np.random.choice(pos_idx, len(neg_idx))
-            self._file_indexes = np.concatenate([neg_idx, resampled_idx], axis=0)
+            self._file_indexes = np.concatenate(
+                [neg_idx, resampled_idx], axis=0)
         elif len(pos_idx) > len(neg_idx):
             resampled_idx = np.random.choice(neg_idx, len(pos_idx))
-            self._file_indexes = np.concatenate([pos_idx, resampled_idx], axis=0)
+            self._file_indexes = np.concatenate(
+                [pos_idx, resampled_idx], axis=0)
         self._file_indexes = np.sort(self._file_indexes)
 
     def _balance_file_indexes(self):
@@ -181,7 +184,8 @@ class DG_38Cloud(keras.utils.Sequence):
         labels = self._get_labels_for_snow_balancing()
         self._perform_balancing(labels)
 
-    def _get_labels_for_snow_balancing(self, brightness_thr=0.4, frequency_thr=0.1):
+    def _get_labels_for_snow_balancing(
+            self, brightness_thr=0.4, frequency_thr=0.1):
         """
         Returns the pseudo-labels for each patch. Pseudo-label being
         1 if certain percent of pixels in patch are above brightness threshold,
@@ -191,7 +195,8 @@ class DG_38Cloud(keras.utils.Sequence):
         print(len(self._files))
         for file_ in self._files:
             img = self._open_as_array(file_)
-            if (np.count_nonzero(img > brightness_thr) / img.size) > frequency_thr:
+            if (np.count_nonzero(img > brightness_thr) / img.size) > \
+                    frequency_thr:
                 labels.append(1)
             else:
                 labels.append(0)
@@ -217,15 +222,20 @@ class DG_38Cloud(keras.utils.Sequence):
     def _open_as_array(self, channel_files: Dict[str, Path]) -> np.ndarray:
         """
         Load image as array from given files.
-        :param channel_files: Dict with paths to files containing each channel of
-            an image, keyed as 'red', 'green', 'blue', 'nir'.
+        :param channel_files: Dict with paths to files containing each channel
+                              of an image, keyed as 'red', 'green', 'blue',
+                              'nir'.
         """
         array_img = np.stack(
             [
-                np.array(load_img(channel_files["red"], color_mode="grayscale")),
-                np.array(load_img(channel_files["green"], color_mode="grayscale")),
-                np.array(load_img(channel_files["blue"], color_mode="grayscale")),
-                np.array(load_img(channel_files["nir"], color_mode="grayscale")),
+                np.array(
+                    load_img(channel_files["red"], color_mode="grayscale")),
+                np.array(
+                    load_img(channel_files["green"], color_mode="grayscale")),
+                np.array(
+                    load_img(channel_files["blue"], color_mode="grayscale")),
+                np.array(
+                    load_img(channel_files["nir"], color_mode="grayscale")),
             ],
             axis=2,
         )
@@ -236,8 +246,8 @@ class DG_38Cloud(keras.utils.Sequence):
     def _open_mask(self, channel_files: Dict[str, Path]) -> np.ndarray:
         """
         Load ground truth mask as array from given files.
-        :param channel_files: Dict with paths to files containing each channel of
-            an image, must contain key 'gt'.
+        :param channel_files: Dict with paths to files containing each channel
+                              of an image, must contain key 'gt'.
         """
         masks = np.array(load_img(channel_files["gt"], color_mode="grayscale"))
         return np.expand_dims(masks / 255, axis=-1)
@@ -245,27 +255,30 @@ class DG_38Cloud(keras.utils.Sequence):
     def _data_generation(self, file_indexes_to_gen: np.arange) -> Tuple:
         """
         Generates data containing batch_size samples.
-        :param file_indexes_to_gen: Sequence of indexes of files from which images
-            should be loaded.
-        :return: (x, y) (or (x, None) if with_gt is False) data for one batch, where x is
-            set of RGB + nir images and y is set of corresponding cloud masks.
+        :param file_indexes_to_gen: Sequence of indexes of files from which
+                                    images should be loaded.
+        :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
+                where x is set of RGB + nir images and y is set of
+                 corresponding cloud masks.
         """
         x = np.empty((len(file_indexes_to_gen), *self._dim, 4))
-        if self._with_gt == True:
+        if self._with_gt:
             y = np.empty((len(file_indexes_to_gen), *self._dim, 1))
         else:
             y = None
 
         for i, file_index in enumerate(file_indexes_to_gen):
             x[i] = self._open_as_array(self._files[file_index])
-            if self._with_gt == True:
+            if self._with_gt:
                 y[i] = self._open_mask(self._files[file_index])
 
         return x, y
 
     def on_epoch_end(self):
-        """ Triggered after each epoch, if shuffle is randomises file indexing. """
-        if self._shuffle == True:
+        """
+        Triggered after each epoch, if shuffle is randomises file indexing.
+        """
+        if self._shuffle:
             np.random.shuffle(self._file_indexes)
 
     def __len__(self):
@@ -275,12 +288,13 @@ class DG_38Cloud(keras.utils.Sequence):
     def __getitem__(self, index: int):
         """
         Generates one batch of data.
-        :return: (x, y) (or (x, None) if with_gt is False) data for one batch, where x is
-            set of RGB + nir images and y is set of corresponding cloud masks.
+        :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
+                 where x is set of RGB + nir images and y is set of
+                 corresponding cloud masks.
         """
         # Generate indexes of the batch
         indexes_in_batch = self._file_indexes[
-            index * self._batch_size : (index + 1) * self._batch_size
+            index * self._batch_size: (index + 1) * self._batch_size
         ]
 
         # Generate data
@@ -322,25 +336,31 @@ class DG_L8CCA(keras.utils.Sequence):
         img = pad(img, patch_size)
         self.img_shape = img.shape
         self.patches = rearrange(
-            img, "(r dr) (c dc) b -> (r c) dr dc b", dr=patch_size, dc=patch_size
+            img, "(r dr) (c dc) b -> (r c) dr dc b",
+            dr=patch_size, dc=patch_size
         )
-        if self._shuffle == True:
+        if self._shuffle:
             np.random.shuffle(self.patches)
         del img
 
     def _open_as_array(self, channel_files: Dict[str, Path]) -> np.ndarray:
         """
         Load image as array from given files. Normalises images on load.
-        :param channel_files: Dict with paths to files containing each channel of
-            an image, keyed as 'red', 'green', 'blue', 'nir'.
+        :param channel_files: Dict with paths to files containing each channel
+                              of an image, keyed as 'red', 'green', 'blue',
+                              'nir'.
         :return: given image as a single numpy array.
         """
         array_img = np.stack(
             [
-                np.array(load_img(channel_files["red"], color_mode="grayscale")),
-                np.array(load_img(channel_files["green"], color_mode="grayscale")),
-                np.array(load_img(channel_files["blue"], color_mode="grayscale")),
-                np.array(load_img(channel_files["nir"], color_mode="grayscale")),
+                np.array(
+                    load_img(channel_files["red"], color_mode="grayscale")),
+                np.array(
+                    load_img(channel_files["green"], color_mode="grayscale")),
+                np.array(
+                    load_img(channel_files["blue"], color_mode="grayscale")),
+                np.array(
+                    load_img(channel_files["nir"], color_mode="grayscale")),
             ],
             axis=2,
         )
@@ -349,8 +369,10 @@ class DG_L8CCA(keras.utils.Sequence):
         return array_img / np.iinfo(array_img.dtype).max
 
     def on_epoch_end(self):
-        """ Triggered after each epoch, if shuffle is randomises file indexing. """
-        if self._shuffle == True:
+        """
+        Triggered after each epoch, if shuffle is randomises file indexing.
+        """
+        if self._shuffle:
             np.random.shuffle(self.patches)
 
     def __len__(self):
@@ -360,11 +382,13 @@ class DG_L8CCA(keras.utils.Sequence):
     def __getitem__(self, index: int):
         """
         Generates one batch of data.
-        :return: (x, y) (or (x, None) if with_gt is False) data for one batch, where x is
-            set of RGB + nir images and y is set of corresponding cloud masks.
+        :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
+                 where x is set of RGB + nir images and y is set of
+                 corresponding cloud masks.
         """
         return (
-            self.patches[index * self._batch_size : (index + 1) * self._batch_size],
+            self.patches[index *
+                         self._batch_size: (index + 1) * self._batch_size],
             None,
         )
 
@@ -374,7 +398,8 @@ def main():
     base_path = Path("../datasets/clouds/38-Cloud/38-Cloud_training")
 
     split_names = ("train", "validation", "test")
-    splits = load_image_paths(base_path=base_path, split_ratios=(0.8, 0.15, 0.05))
+    splits = load_image_paths(
+        base_path=base_path, split_ratios=(0.8, 0.15, 0.05))
 
     for name, split in zip(split_names, splits):
         dg = DG_38Cloud(split, 16)

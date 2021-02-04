@@ -3,10 +3,8 @@
 from pathlib import Path
 from tensorflow import keras
 from typing import Dict, List, Tuple, Callable
-import os
 
 from skimage import io, img_as_ubyte
-from tensorflow.keras.preprocessing.image import load_img
 import mlflow
 import numpy as np
 import tensorflow.keras.backend as K
@@ -76,10 +74,11 @@ def unpad(img: np.ndarray, gt_shape: Tuple) -> np.ndarray:
     r_gt, c_gt, _ = gt_shape
     r_pad = int((r - r_gt) / 2)
     c_pad = int((c - c_gt) / 2)
-    return img[r_pad : r_pad + r_gt, c_pad : c_pad + c_gt]
+    return img[r_pad: r_pad + r_gt, c_pad: c_pad + c_gt]
 
 
-def get_metrics(gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) -> Dict:
+def get_metrics(
+        gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) -> Dict:
     """
     Calculates evaluation metrics for a given image predictions.
     :param gt: image ground truth.
@@ -117,7 +116,8 @@ def save_vis(
         * Ground truth mask.
         * Prediction mask.
         * TP, FP, FN mask overlays.
-    :param img_id: Id of visualised img, will be used for naming saved artifacts.
+    :param img_id: Id of visualised img,
+                   will be used for naming saved artifacts.
     :param img_pred: Prediction mask, result of segmentation.
     :param img_gt: Ground truth mask.
     :param rpath: Path where artifacts should be saved.
@@ -136,9 +136,12 @@ def save_vis(
     io.imsave(rpath / "gt.png", img_gt[:, :, 0])
     io.imsave(rpath / "pred.png", img_as_ubyte(img_pred[:, :, 0]))
 
-    mask_vis = overlay_mask(img_vis, true_positives(img_gt, img_pred), (1, 1, 0))
-    mask_vis = overlay_mask(mask_vis, false_positives(img_gt, img_pred), (1, 0, 0))
-    mask_vis = overlay_mask(mask_vis, false_negatives(img_gt, img_pred), (1, 0, 1))
+    mask_vis = overlay_mask(
+        img_vis, true_positives(img_gt, img_pred), (1, 1, 0))
+    mask_vis = overlay_mask(
+        mask_vis, false_positives(img_gt, img_pred), (1, 0, 0))
+    mask_vis = overlay_mask(
+        mask_vis, false_negatives(img_gt, img_pred), (1, 0, 1))
     io.imsave(rpath / "masks.png", img_as_ubyte(mask_vis))
 
 

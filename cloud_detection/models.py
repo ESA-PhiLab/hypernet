@@ -17,11 +17,12 @@ from math import floor, ceil
 def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
     """
     Simple U-Net model based on model from
-    https://medium.com/analytics-vidhya/creating-a-very-simple-u-net-model-with-pytorch \
-    -for-semantic-segmentation-of-satellite-images-223aa216e705
+    https://medium.com/analytics-vidhya/creating-a-very-simple-u-net-model- \
+    with-pytorch-for-semantic-segmentation-of-satellite-images-223aa216e705
     consisting of 3 contract blocks and 3 expand blocks.
 
-    :param input_size: Number of input channels, i.e., the number of spectral bands.
+    :param input_size: Number of input channels,
+                       i.e., the number of spectral bands.
     :param bn_momentum: Momentum of the batch normalization layer.
     """
 
@@ -40,12 +41,14 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
         pad_size = [[0, 0], [pad_l, pad_r], [pad_l, pad_r], [0, 0]]
         x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
         x = Conv2D(
-            filters=filters, kernel_size=kernel_size, padding="valid", activation="relu"
+            filters=filters, kernel_size=kernel_size,
+            padding="valid", activation="relu"
         )(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
         x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
         x = Conv2D(
-            filters=filters, kernel_size=kernel_size, padding="valid", activation="relu"
+            filters=filters, kernel_size=kernel_size,
+            padding="valid", activation="relu"
         )(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
         pool_pad_size = [[0, 0], [0, 1], [0, 1], [0, 0]]
@@ -68,12 +71,14 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
         pad_size = [[0, 0], [pad_l, pad_r], [pad_l, pad_r], [0, 0]]
         x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
         x = Conv2D(
-            filters=filters, kernel_size=kernel_size, padding="valid", activation="relu"
+            filters=filters, kernel_size=kernel_size,
+            padding="valid", activation="relu"
         )(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
         x = Lambda(lambda x: tf.pad(x, pad_size, "SYMMETRIC"))(x)
         x = Conv2D(
-            filters=filters, kernel_size=kernel_size, padding="valid", activation="relu"
+            filters=filters, kernel_size=kernel_size,
+            padding="valid", activation="relu"
         )(x)
         x = BatchNormalization(momentum=bn_momentum)(x)
         x = UpSampling2D(size=(2, 2))(x)

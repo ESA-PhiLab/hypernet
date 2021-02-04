@@ -21,7 +21,6 @@ from cloud_detection.validate import (
     make_precission_recall,
     make_roc,
     make_activation_hist,
-    datagen_to_gt_array,
 )
 
 
@@ -46,7 +45,8 @@ def build_rgb_scene_img(path: Path, img_id: str) -> np.ndarray:
 
 
 def get_img_pred(
-    path: Path, img_id: str, model: keras.Model, batch_size: int, patch_size: int = 384
+    path: Path, img_id: str, model: keras.Model, batch_size: int,
+    patch_size: int = 384
 ) -> np.ndarray:
     """
     Generates prediction for a given image.
@@ -77,8 +77,8 @@ def get_img_pred(
     for r in range(preds.shape[0]):
         for c in range(preds.shape[1]):
             img[
-                r * patch_size : (r + 1) * patch_size,
-                c * patch_size : (c + 1) * patch_size,
+                r * patch_size: (r + 1) * patch_size,
+                c * patch_size: (c + 1) * patch_size,
             ] = preds[r, c]
     return img, scene_time
 
@@ -112,16 +112,18 @@ def evaluate_model(
     :param model: trained model to make predictions.
     :param thr: threshold.
     :param dpath: path to dataset.
-    :param rpath: path to direcotry where results and artifacts should be logged.
-    :param vids: tuple of ids of images which should be used to create visualisations.
-        If contains '*' visualisations will be created for all images in the dataset.
+    :param rpath: path to direcotry where results
+                  and artifacts should be logged.
+    :param vids: tuple of ids of images which should be used to create
+                 visualisations. If contains '*' visualisations will be
+                 created for all images in the dataset.
     :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
     :param img_ids: if given, process only these images.
     :return: evaluation metrics.
     """
     Path(rpath).mkdir(parents=True, exist_ok=False)
-    if mlflow == True:
+    if mlflow:
         setup_mlflow(locals())
     metrics = {}
     scene_times = []
@@ -140,7 +142,8 @@ def evaluate_model(
                     continue
             print(f"Processing {tname}-{img_id}", flush=True)
             gtpath = tpath / img_id
-            img_pred, scene_time = get_img_pred(tpath, img_id, model, batch_size)
+            img_pred, scene_time = get_img_pred(
+                tpath, img_id, model, batch_size)
             scene_times.append(scene_time)
             img_gt = load_img_gt(gtpath, f"{img_id}_fixedmask.hdr")
             img_pred = unpad(img_pred, img_gt.shape)
@@ -168,9 +171,11 @@ def evaluate_model(
                 y_pred = np.round(img_pred.ravel(), decimals=5)
 
                 make_roc(y_gt, y_pred, rpath / img_id, thr_marker=thr)
-                make_precission_recall(y_gt, y_pred, rpath / img_id, thr_marker=thr)
+                make_precission_recall(
+                    y_gt, y_pred, rpath / img_id, thr_marker=thr)
 
-                # Make histogram with more rounded predictions for performance reasons
+                # Make histogram with more rounded predictions
+                # for performance reasons
                 y_pred = np.round(y_pred, decimals=2)
                 make_activation_hist(y_pred, rpath / img_id)
 
@@ -180,7 +185,8 @@ def evaluate_model(
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    parser.add_argument("-f", help="enable mlflow reporting", action="store_true")
+    parser.add_argument(
+        "-f", help="enable mlflow reporting", action="store_true")
     parser.add_argument("-n", help="mlflow run name", default=None)
     parser.add_argument(
         "-m", help="model hash", default="3e19daf248954674966cd31af1c4cb12"
@@ -212,7 +218,8 @@ if __name__ == "__main__":
         "model": model,
         "thr": 0.5,
         "dpath": Path(
-            "datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"
+            "datasets/clouds/" +
+            "Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"
         ),
         "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
         "vids": ("*"),
@@ -227,9 +234,10 @@ if __name__ == "__main__":
     mean_metrics_snow = {}
     for key, value in metrics.items():
         mean_metrics[key] = np.mean(list(value.values()))
-        mean_metrics_snow[f"snow_{key}"] = np.mean([value[x] for x in snow_imgs])
+        mean_metrics_snow[f"snow_{key}"] = np.mean(
+            [value[x] for x in snow_imgs])
     print(mean_metrics, mean_metrics_snow)
-    if params["mlflow"] == True:
+    if params["mlflow"]:
         log_metrics(mean_metrics)
         log_metrics(mean_metrics_snow)
         log_artifacts(params["rpath"])

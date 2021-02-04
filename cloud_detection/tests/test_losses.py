@@ -1,5 +1,4 @@
 import pytest
-import numpy as np
 import tensorflow.keras.backend as K
 from tensorflow.debugging import assert_near
 from tensorflow import errors, enable_eager_execution

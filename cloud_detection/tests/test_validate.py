@@ -9,7 +9,8 @@ class TestFindNearest:
         "array, value, true_out",
         [
             (np.array([[0, 0], [1, 0]]), 1, 2),
-            (np.array([[[0, 2, 0], [0, 1, 3.5]], [[1, 0, 10], [4, 0, 0]]]), 3.8, 9),
+            (np.array([[[0, 2, 0], [0, 1, 3.5]], [[1, 0, 10], [4, 0, 0]]]),
+             3.8, 9),
         ],
     )
     def test_find_nearest(self, array, value, true_out):

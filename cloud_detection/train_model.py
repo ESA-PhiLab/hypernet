@@ -1,8 +1,5 @@
 """ Train the models for cloud detection. """
 
-import argparse
-import matplotlib.pyplot as plt
-from typing import Dict
 from pathlib import Path
 from tensorflow import keras
 
@@ -15,7 +12,6 @@ from cloud_detection.losses import (
     recall,
     precision,
     specificity,
-    f1_score,
 )
 from cloud_detection.validate import make_validation_insights
 from cloud_detection.utils import MLFlowCallback
@@ -41,8 +37,10 @@ def train_model(
     Train the U-Net model using 38-Cloud dataset.
 
     :param dpath: path to dataset.
-    :param rpath: path to direcotry where results and artifacts should be logged.
-    :param train_size: proportion of the training set (the rest goes to validation set).
+    :param rpath: path to direcotry where results and
+                  artifacts should be logged.
+    :param train_size: proportion of the training set
+                       (the rest goes to validation set).
     :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
     :param balance_train_dataset: whether to balance train dataset.
@@ -70,7 +68,8 @@ def train_model(
         balance_snow=balance_snow,
     )
     valgen = DG_38Cloud(
-        files=val_files, batch_size=batch_size, balance_classes=balance_val_dataset
+        files=val_files, batch_size=batch_size,
+        balance_classes=balance_val_dataset
     )
 
     # Create model
@@ -118,7 +117,8 @@ def train_model(
     model.load_weights(f"{rpath}/best_weights/best_weights")
 
     # Save validation insights
-    best_thr = make_validation_insights(model, valgen, rpath / "validation_insight")
+    best_thr = make_validation_insights(
+        model, valgen, rpath / "validation_insight")
 
     # Return model
     return model, best_thr

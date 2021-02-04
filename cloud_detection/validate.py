@@ -1,4 +1,7 @@
-"""Perform various validation tasks, like making ROC, precision-recall, thresholding etc."""
+"""
+Perform various validation tasks, like making ROC,
+precision-recall, thresholding etc.
+"""
 
 from pathlib import Path
 
@@ -9,7 +12,6 @@ from sklearn.metrics import roc_curve, auc, precision_recall_curve
 from tensorflow import keras
 import numpy as np
 import tensorflow as tf
-import tensorflow.keras.backend as K
 
 from cloud_detection.data_gen import load_image_paths, DG_38Cloud
 import cloud_detection.losses
@@ -47,7 +49,8 @@ def find_best_thr(fpr: np.ndarray, tpr: np.ndarray, thr: np.ndarray) -> float:
 
 
 def make_roc(
-    y_gt: np.ndarray, y_pred: np.ndarray, output_dir: Path, thr_marker: float = None
+    y_gt: np.ndarray, y_pred: np.ndarray,
+    output_dir: Path, thr_marker: float = None
 ) -> float:
     """
     Make ROC curve and save it, get best thr based on the ROC.
@@ -98,7 +101,8 @@ def make_activation_hist(y_pred, output_dir):
 
 
 def make_precission_recall(
-    y_gt: np.ndarray, y_pred: np.ndarray, output_dir: Path, thr_marker: float = None
+    y_gt: np.ndarray, y_pred: np.ndarray,
+    output_dir: Path, thr_marker: float = None
 ):
     """
     Make precission recall curve and save it.
@@ -157,7 +161,8 @@ def make_validation_insights(
 def find_nearest(array, value):
     """
     In an array find a value that is closest to the given one.
-    :return: value inside the 'array' param that is closest to the 'value' param.
+    :return: value inside the 'array' param
+             that is closest to the 'value' param.
     """
     array = np.asarray(array)
     return (np.abs(array - value)).argmin()
@@ -178,14 +183,15 @@ def main():
     )
 
     mpath = Path(
-        "/media/ML/mlflow/beetle/artifacts/34/b943e6e7066a458f8037b63dc1a960a3/"
-        + "artifacts/model/data/model.h5"
+        "/media/ML/mlflow/beetle/artifacts/34/"
+        + "b943e6e7066a458f8037b63dc1a960a3/artifacts/model/data/model.h5"
     )
     model = keras.models.load_model(
         mpath,
         custom_objects={
             "jaccard_index_loss": cloud_detection.losses.Jaccard_index_loss(),
-            "jaccard_index_metric": cloud_detection.losses.Jaccard_index_metric(),
+            "jaccard_index_metric":
+            cloud_detection.losses.Jaccard_index_metric(),
             "dice_coeff_metric": cloud_detection.losses.Dice_coef_metric(),
             "recall": cloud_detection.losses.recall,
             "precision": cloud_detection.losses.precision,

@@ -36,7 +36,8 @@ class TestFalsePositives:
         ],
     )
     def test_false_positives(self, y_true, y_pred, expected):
-        np.testing.assert_array_equal(false_positives(y_true, y_pred), expected)
+        np.testing.assert_array_equal(
+            false_positives(y_true, y_pred), expected)
 
 
 class TestFalseNegatives:
@@ -49,7 +50,8 @@ class TestFalseNegatives:
         ],
     )
     def test_false_negatives(self, y_true, y_pred, expected):
-        np.testing.assert_array_equal(false_negatives(y_true, y_pred), expected)
+        np.testing.assert_array_equal(
+            false_negatives(y_true, y_pred), expected)
 
 
 class TestOverlayMask:
@@ -96,7 +98,8 @@ class TestOverlayMask:
             ),
         ],
     )
-    def test_overlay_mask(self, image, mask, rgb_color, overlay_intensity, out_true):
+    def test_overlay_mask(
+            self, image, mask, rgb_color, overlay_intensity, out_true):
         out = overlay_mask(image, mask, rgb_color, overlay_intensity)
         np.testing.assert_array_equal(out, out_true)
 
@@ -117,7 +120,8 @@ class TestPad:
                 ),
             ),
             (
-                np.array([[[1, 1, 1], [1, 0.6, 1]], [[1, 1, 10.3], [1, 1, 1]]]),
+                np.array(
+                    [[[1, 1, 1], [1, 0.6, 1]], [[1, 1, 10.3], [1, 1, 1]]]),
                 4,
                 np.array(
                     [
@@ -164,7 +168,8 @@ class TestUnpad:
                     ]
                 ),
                 (2, 2, 3),
-                np.array([[[1, 1, 1], [1, 0.6, 1]], [[1, 1, 10.3], [1, 1, 1]]]),
+                np.array(
+                    [[[1, 1, 1], [1, 0.6, 1]], [[1, 1, 10.3], [1, 1, 1]]]),
             ),
             (
                 np.array([[[1, 1, 1], [0, 0, 1]], [[1, 1, 1], [1, 1, 0]]]),

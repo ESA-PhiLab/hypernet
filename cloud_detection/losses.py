@@ -29,7 +29,8 @@ def Jaccard_index_loss(smooth: float = 0.0000001):
 
 def Jaccard_index_metric(smooth: float = 0.0000001):
     def jaccard_index_metric(y_true: np.ndarray, y_pred: np.ndarray):
-        intersection = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)), axis=(1, 2))
+        intersection = K.sum(
+            K.round(K.clip(y_true * y_pred, 0, 1)), axis=(1, 2))
         y_true_sum = K.sum(K.round(y_true), axis=(1, 2))
         y_pred_sum = K.sum(K.round(y_pred), axis=(1, 2))
 
