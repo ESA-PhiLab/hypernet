@@ -188,11 +188,20 @@ class DG_38Cloud(keras.utils.Sequence):
         self._perform_balancing(labels)
 
     def _get_labels_for_snow_balancing(
-            self, brightness_thr=0.4, frequency_thr=0.1):
+            self,
+            brightness_thr: float = 0.4,
+            frequency_thr: float = 0.1
+    ) -> List[int]:
         """
         Returns the pseudo-labels for each patch. Pseudo-label being
         1 if certain percent of pixels in patch are above brightness threshold,
         and 0 otherwise.
+        :param brightness_thr: brightness threshold of the pixel
+                               (in relation to brightest pixel in patch)
+                               to classify it as snow.
+        :param frequency_thr: frequency threshold of snow pixels to
+                              classify patch as snowy.
+        :return: list of labels (0 - not snowy, 1 - snowy).
         """
         labels = []
         print(len(self._files))
