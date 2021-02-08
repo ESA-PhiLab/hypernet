@@ -74,12 +74,12 @@ def get_img_pred(
         c=int(img_shape[1] / patch_size),
     )
     img = np.full((img_shape[0], img_shape[1], 1), np.inf)
-    for r in range(preds.shape[0]):
-        for c in range(preds.shape[1]):
+    for row in range(preds.shape[0]):
+        for column in range(preds.shape[1]):
             img[
-                r * patch_size: (r + 1) * patch_size,
-                c * patch_size: (c + 1) * patch_size,
-            ] = preds[r, c]
+                row * patch_size: (row + 1) * patch_size,
+                column * patch_size: (column + 1) * patch_size,
+            ] = preds[row, column]
     return img, scene_time
 
 
