@@ -32,8 +32,10 @@ def load_image_paths(
     """
     Build paths to all files containg image channels.
     :param base_path: root path containing directories with image channels.
+    :param patches_path: path to images patches names to load
     :param split_ratios: list containg split ratios,
                          splits should add up to one.
+    :param shuffle: whether to shuffle image paths.
     :param img_id: image ID; if specified, load paths for this image only.
     :return: list with paths to image files, separated into splits.
         Structured as: list_of_splits[list_of_files['file_channel', Path]]
@@ -60,6 +62,7 @@ def load_image_paths(
         """
         Build paths to all files containg image channels.
         :param base_path: root path containing directories with image channels.
+        :param patches_path: path to images patches names to load
         :param img_id: image ID; if specified, load paths for this image only.
         :return: list of dicts containing paths to files with image channles.
         """
