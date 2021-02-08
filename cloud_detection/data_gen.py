@@ -30,10 +30,10 @@ def load_image_paths(
     img_id: str = None,
 ) -> List[List[Dict[str, Path]]]:
     """
-    Build paths to all files containg image channels.
+    Build paths to all files containing image channels.
     :param base_path: root path containing directories with image channels.
     :param patches_path: path to images patches names to load
-    :param split_ratios: list containg split ratios,
+    :param split_ratios: list containing split ratios,
                          splits should add up to one.
     :param shuffle: whether to shuffle image paths.
     :param img_id: image ID; if specified, load paths for this image only.
@@ -60,7 +60,7 @@ def load_image_paths(
         base_path: Path, patches_path: Path, img_id: str
     ) -> List[Dict[str, Path]]:
         """
-        Build paths to all files containg image channels.
+        Build paths to all files containing image channels.
         :param base_path: root path containing directories with image channels.
         :param patches_path: path to images patches names to load
         :param img_id: image ID; if specified, load paths for this image only.
