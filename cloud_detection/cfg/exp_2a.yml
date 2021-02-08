@@ -1,3 +1,5 @@
+# Training using patches from single non-snowy image (LC08_L1TP_002053_20160520_20170324_01_T1)
+# See https://kplabs.atlassian.net/wiki/spaces/BEET/pages/2258075669/20201106+Cloud+detection+with+U-Net#Experiments-%26-results
 name: exp_2a
 exp_cfg:
   run_name: null
