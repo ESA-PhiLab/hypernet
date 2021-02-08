@@ -66,14 +66,14 @@ def get_img_pred(
     scene_time = time.time() - tbeg
     print(f"Scene prediction took { scene_time } seconds")
 
-    img_shape = testgen.img_shape
+    img_height, img_width = testgen.img_shape
     preds = rearrange(
         preds,
         "(r c) dr dc b -> r c dr dc b",
-        r=int(img_shape[0] / patch_size),
-        c=int(img_shape[1] / patch_size),
+        r=int(img_height / patch_size),
+        c=int(img_width / patch_size),
     )
-    img = np.full((img_shape[0], img_shape[1], 1), np.inf)
+    img = np.full((img_height, img_width, 1), np.inf)
     for row in range(preds.shape[0]):
         for column in range(preds.shape[1]):
             img[
