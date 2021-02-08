@@ -5,11 +5,38 @@ from tensorflow import keras
 from typing import Dict, List, Tuple, Callable
 
 from skimage import io, img_as_ubyte
+from tensorflow.keras.preprocessing.image import load_img
 import mlflow
 import numpy as np
 import tensorflow.keras.backend as K
 
 import cloud_detection.losses
+
+
+def open_as_array(channel_files: Dict[str, Path]) -> np.ndarray:
+    """
+    Load image as array from given files. Normalises images on load.
+    :param channel_files: Dict with paths to files containing each channel
+                            of an image, keyed as 'red', 'green', 'blue',
+                            'nir'.
+    :return: given image as a single numpy array.
+    """
+    array_img = np.stack(
+        [
+            np.array(
+                load_img(channel_files["red"], color_mode="grayscale")),
+            np.array(
+                load_img(channel_files["green"], color_mode="grayscale")),
+            np.array(
+                load_img(channel_files["blue"], color_mode="grayscale")),
+            np.array(
+                load_img(channel_files["nir"], color_mode="grayscale")),
+        ],
+        axis=2,
+    )
+
+    # Return normalized
+    return array_img / np.iinfo(array_img.dtype).max
 
 
 def true_positives(y_true: np.ndarray, y_pred: np.ndarray):

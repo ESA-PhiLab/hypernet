@@ -10,7 +10,7 @@ from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 from typing import Dict, List, Tuple
 
-from cloud_detection.utils import pad
+from cloud_detection.utils import pad, open_as_array
 
 
 def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
@@ -206,7 +206,7 @@ class DG_38Cloud(keras.utils.Sequence):
         labels = []
         print(len(self._files))
         for file_ in self._files:
-            img = self._open_as_array(file_)
+            img = open_as_array(file_)
             if (np.count_nonzero(img > brightness_thr) / img.size) > \
                     frequency_thr:
                 labels.append(1)
@@ -230,30 +230,6 @@ class DG_38Cloud(keras.utils.Sequence):
             else:
                 labels.append(0)
         return labels
-
-    def _open_as_array(self, channel_files: Dict[str, Path]) -> np.ndarray:
-        """
-        Load image as array from given files.
-        :param channel_files: Dict with paths to files containing each channel
-                              of an image, keyed as 'red', 'green', 'blue',
-                              'nir'.
-        """
-        array_img = np.stack(
-            [
-                np.array(
-                    load_img(channel_files["red"], color_mode="grayscale")),
-                np.array(
-                    load_img(channel_files["green"], color_mode="grayscale")),
-                np.array(
-                    load_img(channel_files["blue"], color_mode="grayscale")),
-                np.array(
-                    load_img(channel_files["nir"], color_mode="grayscale")),
-            ],
-            axis=2,
-        )
-
-        # Return normalized
-        return array_img / np.iinfo(array_img.dtype).max
 
     def _open_mask(self, channel_files: Dict[str, Path]) -> np.ndarray:
         """
@@ -280,7 +256,7 @@ class DG_38Cloud(keras.utils.Sequence):
             y = None
 
         for i, file_index in enumerate(file_indexes_to_gen):
-            x[i] = self._open_as_array(self._files[file_index])
+            x[i] = open_as_array(self._files[file_index])
             if self._with_gt:
                 y[i] = self._open_mask(self._files[file_index])
 
@@ -344,7 +320,7 @@ class DG_L8CCA(keras.utils.Sequence):
         channel_files["green"] = img_path / img_name / f"{img_name}_B3.TIF"
         channel_files["blue"] = img_path / img_name / f"{img_name}_B2.TIF"
         channel_files["nir"] = img_path / img_name / f"{img_name}_B5.TIF"
-        img = self._open_as_array(channel_files)
+        img = open_as_array(channel_files)
         img = pad(img, patch_size)
         self.img_shape = img.shape
         self.patches = rearrange(
@@ -354,31 +330,6 @@ class DG_L8CCA(keras.utils.Sequence):
         if self._shuffle:
             np.random.shuffle(self.patches)
         del img
-
-    def _open_as_array(self, channel_files: Dict[str, Path]) -> np.ndarray:
-        """
-        Load image as array from given files. Normalises images on load.
-        :param channel_files: Dict with paths to files containing each channel
-                              of an image, keyed as 'red', 'green', 'blue',
-                              'nir'.
-        :return: given image as a single numpy array.
-        """
-        array_img = np.stack(
-            [
-                np.array(
-                    load_img(channel_files["red"], color_mode="grayscale")),
-                np.array(
-                    load_img(channel_files["green"], color_mode="grayscale")),
-                np.array(
-                    load_img(channel_files["blue"], color_mode="grayscale")),
-                np.array(
-                    load_img(channel_files["nir"], color_mode="grayscale")),
-            ],
-            axis=2,
-        )
-
-        # Return normalized
-        return array_img / np.iinfo(array_img.dtype).max
 
     def on_epoch_end(self):
         """
