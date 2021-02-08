@@ -64,7 +64,7 @@ def load_image_paths(
         :param base_path: root path containing directories with image channels.
         :param patches_path: path to images patches names to load
         :param img_id: image ID; if specified, load paths for this image only.
-        :return: list of dicts containing paths to files with image channles.
+        :return: list of dicts containing paths to files with image channels.
         """
         # Get red channel filenames
         if img_id is None:
