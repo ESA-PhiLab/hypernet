@@ -37,7 +37,7 @@ def get_full_scene_img(path: Path, img_id: str) -> np.ndarray:
 def get_img_pred(
     path: Path, img_id: str, model: keras.Model, batch_size: int,
     patch_size: int = 384
-) -> np.ndarray:
+) -> Tuple[np.ndarray, float]:
     """
     Generates prediction for a given image.
     :param path: path containing directories with image channels.
