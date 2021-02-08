@@ -214,6 +214,7 @@ if __name__ == "__main__":
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
+            # "f1_score": losses.f1_score,  # Needed to load old models
             "tf": tf,
         },
     )

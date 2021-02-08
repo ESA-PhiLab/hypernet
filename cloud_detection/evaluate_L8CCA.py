@@ -91,7 +91,7 @@ def load_img_gt(path: Path, fname: str) -> np.ndarray:
     :return: image ground truth.
     """
     img = envi.open(path / fname)
-    img = np.asarray(img[:, :, :], dtype=np.int)
+    img = np.array(img.open_memmap(), dtype=np.int)
     img = np.where(img > 128, 1, 0)
     return img
 
@@ -207,6 +207,7 @@ if __name__ == "__main__":
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
+            # "f1_score": losses.f1_score,  # Needed to load old models
             "tf": tf,
         },
     )
