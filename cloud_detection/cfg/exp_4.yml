@@ -1,3 +1,5 @@
+# Removing the patches with less than 80% of valuable pixels from training
+# See https://kplabs.atlassian.net/wiki/spaces/BEET/pages/2258075669/20201106+Cloud+detection+with+U-Net#Experiments-%26-results
 name: exp_4
 exp_cfg:
   run_name: null
