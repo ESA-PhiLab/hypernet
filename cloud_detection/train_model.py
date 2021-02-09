@@ -122,16 +122,3 @@ def train_model(
 
     # Return model
     return model, best_thr
-
-
-if __name__ == "__main__":
-    params = {
-        "dpath": Path("../datasets/clouds/38-Cloud/38-Cloud_training"),
-        "train_size": 0.8,
-        "batch_size": 8,
-        "learning_rate": 0.01,
-        "bn_momentum": 0.9,
-        "epochs": 200,
-        "stopping_patience": 20,
-    }
-    train_model(**params)
