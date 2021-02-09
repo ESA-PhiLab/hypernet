@@ -87,7 +87,7 @@ def get_img_pred_shape(files: List[Dict[str, Path]], patch_size: int) -> Tuple:
         row, col = int(row), int(col)
         row_max = max(row_max, row)
         col_max = max(col_max, col)
-    return (patch_size * row_max, patch_size * col_max, 1)
+    return patch_size * row_max, patch_size * col_max, 1
 
 
 def load_img_gt(path: Path, fname: str) -> np.ndarray:
