@@ -6,6 +6,7 @@ import yaml
 import numpy as np
 import argparse
 from mlflow import log_metrics, log_artifacts, log_param, log_params, end_run
+from typing import Tuple, List
 
 from cloud_detection.train_model import train_model
 from cloud_detection.evaluate_38Cloud import evaluate_model as test_38Cloud
@@ -14,30 +15,66 @@ from cloud_detection.utils import setup_mlflow, make_paths
 
 
 def main(
-    run_name,
-    train_path,
-    C38_path,
-    C38_gtpath,
-    L8CCA_path,
-    vpath,
-    rpath,
-    ppath,
-    vids,
-    mlflow,
-    train_size,
-    train_img,
-    balance_train_dataset,
-    balance_val_dataset,
-    balance_snow,
-    snow_imgs_38Cloud,
-    snow_imgs_L8CCA,
-    batch_size,
-    thr,
-    learning_rate,
-    bn_momentum,
-    epochs,
-    stopping_patience,
+    run_name: str,
+    train_path: str,
+    C38_path: str,
+    C38_gtpath: str,
+    L8CCA_path: str,
+    vpath: str,
+    rpath: str,
+    ppath: str,
+    vids: Tuple[str],
+    mlflow: bool,
+    train_size: float,
+    train_img: str,
+    balance_train_dataset: bool,
+    balance_val_dataset: bool,
+    balance_snow: bool,
+    snow_imgs_38Cloud: List[str],
+    snow_imgs_L8CCA: List[str],
+    batch_size: int,
+    thr: float,
+    learning_rate: float,
+    bn_momentum: float,
+    epochs: int,
+    stopping_patience: int,
 ):
+    """
+    Train and test the U-Net model using 38-Cloud and L8CCA datasets.
+
+    :param run_name: name of the run.
+    :param train_path: path to train dataset.
+    :param C38_path: path to 38-Cloud dataset.
+    :param C38_gtpath: path to 38-Cloud groundtruth.
+    :param L8CCA_path: path to L8CCA dataset.
+    :param vpath: path to 38-Cloud dataset (false color) visualisation images.
+    :param rpath: path to direcotry where results and artifacts should be
+                  logged (randomly named directory will be created to store the
+                  results).
+    :param ppath: path to file with names of training patches
+                  (if None, all training patches will be used).
+    :param vids: tuple of ids of images which should be used to create
+                 visualisations. If contains '*' visualisations will be
+                 created for all images in the datasets.
+    :param mlflow: whether to use mlflow
+    :param train_size: proportion of the training set
+                       (the rest goes to validation set).
+    :param train_img: image ID for training; if specified,
+                      load training patches for this image only.
+    :param balance_train_dataset: whether to balance train dataset.
+    :param balance_val_dataset: whether to balance val dataset.
+    :param balance_snow: whether to balance snow images.
+    :param snow_imgs_38Cloud: list of 38-Cloud snow images IDs for testing.
+    :param snow_imgs_L8CCA: list of L8CCA snow images IDs for testing.
+    :param batch_size: size of generated batches, only one batch is loaded
+          to memory at a time.
+    :param thr: threshold for determining whether pixels contain the clouds
+                (if None, threshold will be determined automatically).
+    :param learning_rate: learning rate for training.
+    :param bn_momentum: momentum of the batch normalization layer.
+    :param epochs: number of epochs.
+    :param stopping_patience: patience param for early stopping.
+    """
     train_path, C38_path, C38_gtpath, L8CCA_path, vpath, rpath, ppath = \
         make_paths(
             train_path, C38_path, C38_gtpath, L8CCA_path, vpath, rpath, ppath
