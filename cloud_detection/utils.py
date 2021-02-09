@@ -41,7 +41,7 @@ def open_as_array(channel_files: Dict[str, Path]) -> np.ndarray:
 
 def true_positives(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     """
-    Calculate matrics indicating true positives in given predictions.
+    Calculate matrices indicating true positives in given predictions.
     :param y_true: True lables.
     :param y_pred: Predicted labels.
     :return: Array with values indicating true positives in predictions.
@@ -51,7 +51,7 @@ def true_positives(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
 
 def false_positives(y_true: np.ndarray, y_pred: np.ndarray):
     """
-    Calculate matrics indicating false positives in given predictions.
+    Calculate matrices indicating false positives in given predictions.
     :param y_true: True lables.
     :param y_pred: Predicted labels.
     :return: Array with values indicating false positives in predictions.
@@ -62,7 +62,7 @@ def false_positives(y_true: np.ndarray, y_pred: np.ndarray):
 
 def false_negatives(y_true: np.ndarray, y_pred: np.ndarray):
     """
-    Calculate matrics indicating false negatives in given predictions.
+    Calculate matrices indicating false negatives in given predictions.
     :param y_true: True lables.
     :param y_pred: Predicted labels.
     :return: Array with values indicating false negatives in predictions.
