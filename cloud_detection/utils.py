@@ -39,16 +39,34 @@ def open_as_array(channel_files: Dict[str, Path]) -> np.ndarray:
     return array_img / np.iinfo(array_img.dtype).max
 
 
-def true_positives(y_true: np.ndarray, y_pred: np.ndarray):
+def true_positives(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
+    """
+    Calculate matrics indicating true positives in given predictions.
+    :param y_true: True lables.
+    :param y_pred: Predicted labels.
+    :return: Array with values indicating true positives in predictions.
+    """
     return y_true * y_pred
 
 
 def false_positives(y_true: np.ndarray, y_pred: np.ndarray):
+    """
+    Calculate matrics indicating false positives in given predictions.
+    :param y_true: True lables.
+    :param y_pred: Predicted labels.
+    :return: Array with values indicating false positives in predictions.
+    """
     y_true_neg = 1 - y_true
     return y_true_neg * y_pred
 
 
 def false_negatives(y_true: np.ndarray, y_pred: np.ndarray):
+    """
+    Calculate matrics indicating false negatives in given predictions.
+    :param y_true: True lables.
+    :param y_pred: Predicted labels.
+    :return: Array with values indicating false negatives in predictions.
+    """
     y_pred_neg = 1 - y_pred
     return y_true * y_pred_neg
 
@@ -56,10 +74,19 @@ def false_negatives(y_true: np.ndarray, y_pred: np.ndarray):
 def overlay_mask(
     image: np.ndarray,
     mask: np.ndarray,
-    rgb_color: Tuple[float],
-    overlay_intensity: float = 0.5,
-) -> np.ndarray:
-    """Overlay a mask on image for visualization purposes."""
+    rgb_color: Tuple[float, float, float],
+    overlay_intensity: float = 0.5) -> np.ndarray:
+    """
+    Overlay a mask on image for visualization purposes.
+    :param image: Image on which mask should be overlaid.
+    :param mask: Mask which should be overlaid on the image.
+    :param rgb_color: Tuple of three floats containing intensity of RGB
+        channels of created mask. RBG values can be in range 0 to 1 or 0 to 255
+        depending on the image and mask values range. This will effectively
+        set color of the overlay mask.
+    :param overlay_intensity: Intensity of the overlaid mask. Should be
+        between 0 and 1.
+    """
     image = np.copy(image)
     for i, color in enumerate(rgb_color):
         channel = image[:, :, i]
@@ -164,11 +191,11 @@ def save_vis(
     io.imsave(rpath / "pred.png", img_as_ubyte(img_pred[:, :, 0]))
 
     mask_vis = overlay_mask(
-        img_vis, true_positives(img_gt, img_pred), (1, 1, 0))
+        img_vis, true_positives(img_gt, img_pred), (1., 1., 0.))
     mask_vis = overlay_mask(
-        mask_vis, false_positives(img_gt, img_pred), (1, 0, 0))
+        mask_vis, false_positives(img_gt, img_pred), (1., 0., 0.))
     mask_vis = overlay_mask(
-        mask_vis, false_negatives(img_gt, img_pred), (1, 0, 1))
+        mask_vis, false_negatives(img_gt, img_pred), (1., 0., 1.))
     io.imsave(rpath / "masks.png", img_as_ubyte(mask_vis))
 
 

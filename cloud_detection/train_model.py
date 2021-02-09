@@ -6,9 +6,9 @@ from tensorflow import keras
 from cloud_detection.data_gen import DG_38Cloud, load_image_paths
 from cloud_detection.models import unet
 from cloud_detection.losses import (
-    Jaccard_index_loss,
-    Jaccard_index_metric,
-    Dice_coef_metric,
+    make_jaccard_index_loss,
+    make_jaccard_index_metric,
+    make_dice_coef_metric,
     recall,
     precision,
     specificity,
@@ -76,13 +76,13 @@ def train_model(
     model = unet(input_size=4, bn_momentum=bn_momentum)
     model.compile(
         optimizer=keras.optimizers.Adam(lr=learning_rate),
-        loss=Jaccard_index_loss(),
+        loss=make_jaccard_index_loss(),
         metrics=[
             keras.metrics.binary_crossentropy,
             keras.metrics.binary_accuracy,
-            Jaccard_index_loss(),
-            Jaccard_index_metric(),
-            Dice_coef_metric(),
+            make_jaccard_index_loss(),
+            make_jaccard_index_metric(),
+            make_dice_coef_metric(),
             recall,
             precision,
             specificity,

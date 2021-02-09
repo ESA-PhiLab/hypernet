@@ -4,9 +4,9 @@ from tensorflow.debugging import assert_near
 from tensorflow import errors, enable_eager_execution
 
 from cloud_detection.losses import (
-    Jaccard_index_loss,
-    Jaccard_index_metric,
-    Dice_coef_metric,
+    make_jaccard_index_loss,
+    make_jaccard_index_metric,
+    make_dice_coef_metric,
     recall,
     precision,
     specificity,
@@ -58,7 +58,7 @@ class TestJaccardIndexLoss:
         ],
     )
     def test_jaccard_index_loss(self, y_true, y_pred, expected):
-        jaccard = Jaccard_index_loss()
+        jaccard = make_jaccard_index_loss()
         try:
             assert_near(jaccard(y_true, y_pred), expected)
         except errors.InvalidArgumentError as e:
@@ -107,7 +107,7 @@ class TestJaccardIndexMetric:
         ],
     )
     def test_jaccard_index_metric(self, y_true, y_pred, expected):
-        jaccard = Jaccard_index_metric()
+        jaccard = make_jaccard_index_metric()
         try:
             assert_near(jaccard(y_true, y_pred), expected)
         except errors.InvalidArgumentError as e:
@@ -156,7 +156,7 @@ class TestDiceCoefMetric:
         ],
     )
     def test_dice_coef_metric(self, y_true, y_pred, expected):
-        dice = Dice_coef_metric()
+        dice = make_dice_coef_metric()
         try:
             assert_near(dice(y_true, y_pred), expected)
         except errors.InvalidArgumentError as e:

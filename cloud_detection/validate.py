@@ -3,6 +3,7 @@ Perform various validation tasks, like making ROC,
 precision-recall, thresholding etc.
 """
 
+from collections.abc import Sequence
 from pathlib import Path
 
 from plotly import express as px
@@ -68,7 +69,7 @@ def make_roc(
     fig = px.area(
         x=fpr,
         y=tpr,
-        hover_data={"treshold": thr},
+        hover_data={"threshold": thr},
         title=f"ROC Curve (AUC={auc(fpr, tpr):.4f})",
         labels=dict(x="False Positive Rate", y="True Positive Rate"),
     )
@@ -90,8 +91,9 @@ def make_roc(
     return best_thr
 
 
-def make_activation_hist(y_pred, output_dir):
-    """Make histogram of prediction activations.
+def make_activation_hist(y_pred: np.ndarray, output_dir: Path):
+    """
+    Make histogram of prediction activations.
     :param y_pred: Array of predictions.
     :param output_dir: Path to directory where hist should be saved.
     """
@@ -100,23 +102,23 @@ def make_activation_hist(y_pred, output_dir):
     fig.write_html(str(output_dir / "activation_hist.html"))
 
 
-def make_precission_recall(
+def make_precision_recall(
     y_gt: np.ndarray, y_pred: np.ndarray,
     output_dir: Path, thr_marker: float = None
 ):
     """
-    Make precission recall curve and save it.
+    Make precision recall curve and save it.
     :param y_gt: Array of ground truth masks.
     :param y_pred: Array of predictions.
     :param output_dir: Path to directory where curve should be saved.
-    :param thr_marker: extra threshold level to mark on the curve.
+    :param thr_marker: Extra threshold level to mark on the curve.
     """
     fpr, fre, thr = precision_recall_curve(y_gt, y_pred)
 
     fig = px.area(
         x=fre,
         y=fpr,
-        hover_data={"treshold": np.insert(thr, 0, 1)},
+        hover_data={"threshold": np.insert(thr, 0, 1)},
         title="Precision-Recall Curve",
         labels=dict(x="Recall", y="Precision"),
     )
@@ -154,15 +156,17 @@ def make_validation_insights(
     y_pred = np.round(model.predict_generator(datagen).ravel(), decimals=3)
     print("Loaded whole validation dataset to memory", flush=True)
     best_thr = make_roc(y_gt, y_pred, output_dir)
-    make_precission_recall(y_gt, y_pred, output_dir)
+    make_precision_recall(y_gt, y_pred, output_dir)
     return best_thr
 
 
-def find_nearest(array, value):
+def find_nearest(array: Sequence, value: float) -> float:
     """
     In an array find a value that is closest to the given one.
-    :return: value inside the 'array' param
-             that is closest to the 'value' param.
+    :param array: Sequence inside which closest value will be found.
+    :param value: Value for which the closest one in the array will be found.
+    :return: value inside the 'array' param that is closest to the 'value'
+        param.
     """
     array = np.asarray(array)
     return (np.abs(array - value)).argmin()
@@ -189,10 +193,10 @@ def main():
     model = keras.models.load_model(
         mpath,
         custom_objects={
-            "jaccard_index_loss": cloud_detection.losses.Jaccard_index_loss(),
+            "jaccard_index_loss": cloud_detection.losses.make_jaccard_index_loss(),
             "jaccard_index_metric":
-            cloud_detection.losses.Jaccard_index_metric(),
-            "dice_coeff_metric": cloud_detection.losses.Dice_coef_metric(),
+            cloud_detection.losses.make_jaccard_index_metric(),
+            "dice_coeff_metric": cloud_detection.losses.make_dice_coef_metric(),
             "recall": cloud_detection.losses.recall,
             "precision": cloud_detection.losses.precision,
             "specificity": cloud_detection.losses.specificity,

@@ -16,7 +16,7 @@ from tensorflow.keras.preprocessing.image import load_img
 from cloud_detection import losses
 from cloud_detection.data_gen import load_image_paths, DG_38Cloud
 from cloud_detection.validate import (
-    make_precission_recall,
+    make_precision_recall,
     make_roc,
     make_activation_hist,
 )
@@ -178,7 +178,7 @@ def evaluate_model(
             y_pred = np.round(img_pred.ravel(), decimals=5)
 
             make_roc(y_gt, y_pred, rpath / img_id, thr_marker=thr)
-            make_precission_recall(
+            make_precision_recall(
                 y_gt, y_pred, rpath / img_id, thr_marker=thr)
 
             # Make histogram with more rounded predictions
@@ -208,9 +208,9 @@ if __name__ == "__main__":
     model = keras.models.load_model(
         mpath,
         custom_objects={
-            "jaccard_index_loss": losses.Jaccard_index_loss(),
-            "jaccard_index_metric": losses.Jaccard_index_metric(),
-            "dice_coeff_metric": losses.Dice_coef_metric(),
+            "jaccard_index_loss": losses.make_jaccard_index_loss(),
+            "jaccard_index_metric": losses.make_jaccard_index_metric(),
+            "dice_coeff_metric": losses.make_dice_coef_metric(),
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
