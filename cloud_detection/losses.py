@@ -73,7 +73,7 @@ class JaccardIndexMetric:
 
 class DiceCoefMetric:
     """
-    Dice coefficient training loss for segmentation like tasks.
+    Dice coefficient metric for segmentation like tasks.
     Internally uses Jaccard index metric.
     """
     
