@@ -1,7 +1,5 @@
 """Custom loss functions and metrics for segmentation."""
 
-from collections.abc import Callable
-
 import tensorflow.keras.backend as K
 import numpy as np
 
@@ -11,65 +9,92 @@ import numpy as np
 from tensorflow.keras.metrics import binary_crossentropy, binary_accuracy
 
 
-def make_jaccard_index_loss(smooth: float = 0.0000001) -> Callable:
-    """
-    Jaccard index training loss for segmentation like tasks.
+class JaccardIndexLoss:
+    """Jaccard index loss for segmentation like tasks."""
 
-    Default smoothness coefficient comes from Cloud-Net example.
-    :param smooth: Small smoothing value to prevent zero division.
-    :return: Callable Jaccard index loss function.
-    """
-    def jaccard_index_loss(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    def __init__(self, smooth: float = 0.0000001):
+        """
+        Create Jaccard index loss callable class.
+
+        Default smoothness coefficient comes from Cloud-Net example.
+        :param smooth: Small smoothing value to prevent zero division.
+        """
+        self._smooth: float = smooth
+
+    def __call__(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
+        """
+        Calculate Jaccard index loss.
+        :param y_true: True labels.
+        :param y_pred: Predicted labels.
+        :return: Jaccard index loss score value
+        """
         intersection = K.sum(y_true * y_pred, axis=(1, 2))
         y_true_sum = K.sum(y_true, axis=(1, 2))
         y_pred_sum = K.sum(y_pred, axis=(1, 2))
 
-        jaccard = (intersection + smooth) / (
-            y_true_sum + y_pred_sum - intersection + smooth
+        jaccard = (intersection + self._smooth) / (
+            y_true_sum + y_pred_sum - intersection + self._smooth
         )
         return 1 - jaccard
 
-    return jaccard_index_loss
 
-
-def make_jaccard_index_metric(smooth: float = 0.0000001) -> Callable:
+class JaccardIndexMetric:
     """
     Jaccard index metric for segmentation like tasks.
-
-    Default smoothness coefficient comes from Cloud-Net example.
-    Contrary to the make_jaccard_index_loss this operates on classes/categories
+    Contrary to the JaccardIndexLoss this operates on classes/categories
     not on probabilities.
-    :param smooth: Small smoothing value to prevent zero division.
-    :return: Callable Jaccard index metric function.
     """
-    def jaccard_index_metric(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+
+    def __init__(self, smooth: float = 0.0000001):
+        """
+        Create Jaccard index metric loss callable class.
+
+        Default smoothness coefficient comes from Cloud-Net example.
+        :param smooth: Small smoothing value to prevent zero division.
+        """
+        self._smooth: float = smooth
+
+    def __call__(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
+        """
+        Calculate Jaccard index metric.
+        :param y_true: True labels.
+        :param y_pred: Predicted labels.
+        :return: Jaccard index metric score value.
+        """
         intersection = K.sum(
             K.round(K.clip(y_true * y_pred, 0, 1)), axis=(1, 2))
         y_true_sum = K.sum(K.round(y_true), axis=(1, 2))
         y_pred_sum = K.sum(K.round(y_pred), axis=(1, 2))
 
-        return (intersection + smooth) / (
-            y_true_sum + y_pred_sum - intersection + smooth
+        return (intersection + self._smooth) / (
+            y_true_sum + y_pred_sum - intersection + self._smooth
         )
 
-    return jaccard_index_metric
 
-
-def make_dice_coef_metric(smooth: float = 0.0000001) -> Callable:
+class DiceCoefMetric:
     """
     Dice coefficient training loss for segmentation like tasks.
-
     Internally uses Jaccard index metric.
-    :param smooth: Small smoothing value to prevent zero division.
-    :return: Callable dice coef metric function.
     """
-    jim = make_jaccard_index_metric(smooth)
+    
+    def __init__(self, smooth: float = 0.0000001):
+        """
+        Create dice coef metric callable class.
 
-    def dice_coeff_metric(y_true: np.ndarray, y_pred: np.ndarray):
-        jim_score = jim(y_true, y_pred)
+        Default smoothness coefficient comes from Cloud-Net example.
+        :param smooth: Small smoothing value to prevent zero division.
+        """
+        self._jim = JaccardIndexMetric(smooth)
+
+    def __call__(self, y_true: np.ndarray, y_pred: np.ndarray):
+        """
+        Calcualate dice coef metric.
+        :param y_true: True labels.
+        :param y_pred: Predicted labels.
+        :return: Dice coef metric score value.
+        """
+        jim_score = self._jim(y_true, y_pred)
         return 2 * jim_score / (jim_score + 1)
-
-    return dice_coeff_metric
 
 
 def recall(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -113,7 +138,7 @@ def specificity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     return ret
 
 
-# Same as make_dice_coef_metric() but calculated in a different way.
+# Same as DiceCoefMetric() but calculated in a different way.
 def f1_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     Calculate f1 score.

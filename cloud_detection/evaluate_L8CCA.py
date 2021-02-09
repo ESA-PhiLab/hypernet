@@ -201,9 +201,9 @@ if __name__ == "__main__":
     model = keras.models.load_model(
         mpath,
         custom_objects={
-            "jaccard_index_loss": losses.make_jaccard_index_loss(),
-            "jaccard_index_metric": losses.make_jaccard_index_metric(),
-            "dice_coeff_metric": losses.make_dice_coef_metric(),
+            "jaccard_index_loss": losses.JaccardIndexLoss(),
+            "jaccard_index_metric": losses.JaccardIndexMetric(),
+            "dice_coeff_metric": losses.DiceCoefMetric(),
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,

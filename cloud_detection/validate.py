@@ -193,10 +193,10 @@ def main():
     model = keras.models.load_model(
         mpath,
         custom_objects={
-            "jaccard_index_loss": cloud_detection.losses.make_jaccard_index_loss(),
+            "jaccard_index_loss": cloud_detection.losses.JaccardIndexLoss(),
             "jaccard_index_metric":
-            cloud_detection.losses.make_jaccard_index_metric(),
-            "dice_coeff_metric": cloud_detection.losses.make_dice_coef_metric(),
+            cloud_detection.losses.JaccardIndexMetric(),
+            "dice_coeff_metric": cloud_detection.losses.DiceCoefMetric(),
             "recall": cloud_detection.losses.recall,
             "precision": cloud_detection.losses.precision,
             "specificity": cloud_detection.losses.specificity,
