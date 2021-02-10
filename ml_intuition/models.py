@@ -224,10 +224,10 @@ class Ensemble:
             weights[layer_number] += noise
         return weights
 
-    def vote(self, predictions: np.ndarray) -> np.ndarray:
+    def vote(self, predictions: List[np.ndarray]) -> np.ndarray:
         """
         Perform voting process on provided predictions
-        :param predictions: Predictions of all models
+        :param predictions: Predictions of all models as a list of numpy arrays.
         :return: Predicted classes
         """
         if self.voting == 'hard':
@@ -241,6 +241,8 @@ class Ensemble:
             predictions = predictions.swapaxes(0, 1).reshape(samples,
                                                              models_count * classes)
             return self.predictor.predict(predictions)
+        elif self.voting == 'unmixing':
+            return np.asarray(predictions).mean(axis=0)
 
     def predict_probabilities(self, data: Union[np.ndarray, List[np.ndarray]],
                               batch_size: int = 1024) -> np.ndarray:
@@ -279,8 +281,7 @@ class Ensemble:
         predictor = RandomForestClassifier() if predictor is None else predictor
         models_count, samples, classes = data.shape
         data = data.swapaxes(0, 1).reshape(samples, models_count * classes)
-        predictor.fit(data, labels)
-        self.predictor = predictor
+        self.predictor = predictor.fit(data, labels)
 
 
 def unmixing_pixel_based_cnn(n_classes: int, input_size: int,
