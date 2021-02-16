@@ -108,7 +108,7 @@ def run_experiments(*,
         and unsupervised model is employed.
     :param gt_file_paths: Path to the ground-truth data files.
         Supported types are: .npy
-    :param sub_test_size: Number of pixels to subsample the test set
+    :param sub_test_size: Number of pixels to subsample from the test set
         instead of performing the inference on all untrained samples.
     """
     train_size = parse_train_size(train_size)
