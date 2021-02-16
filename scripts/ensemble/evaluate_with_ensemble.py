@@ -2,7 +2,6 @@
 Evaluate the dataset using an ensemble of models.
 """
 
-
 import clize
 import numpy as np
 from sklearn.metrics import confusion_matrix
@@ -41,8 +40,9 @@ def evaluate(*,
     ensemble = Ensemble(voting=voting)
     if voting == 'classifier':
         train_set_predictions = np.array(train_set_predictions)
-        ensemble.train_ensemble_predictor(train_set_predictions,
-                                          data[enums.Dataset.TRAIN][enums.Dataset.LABELS])
+        ensemble.train_ensemble_predictor(
+            train_set_predictions,
+            data[enums.Dataset.TRAIN][enums.Dataset.LABELS])
     vote = timeit(ensemble.vote)
     y_pred, voting_time = vote(y_pred)
 

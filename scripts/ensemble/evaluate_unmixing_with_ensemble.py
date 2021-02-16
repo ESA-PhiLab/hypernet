@@ -1,9 +1,10 @@
 """
 Evaluate the dataset using and ensemble for the unmixing problem.
 """
-from typing import Dict
+from typing import Dict, List
 
 import numpy as np
+from sklearn.ensemble import RandomForestRegressor
 
 from ml_intuition import enums
 from ml_intuition.data import io
@@ -18,9 +19,17 @@ def evaluate(*,
              y_pred: np.ndarray,
              data: Dict,
              dest_path: str,
+             voting: str,
              endmembers_path: str = None,
-             neighborhood_size: int = None):
-    ensemble = Ensemble(voting='unmixing')
+             neighborhood_size: int = None,
+             train_set_predictions: List[np.ndarray] = None):
+    ensemble = Ensemble(voting=voting)
+    if voting == 'regressor':
+        train_set_predictions = np.array(train_set_predictions)
+        ensemble.train_ensemble_predictor(
+            train_set_predictions,
+            data[enums.Dataset.TRAIN][enums.Dataset.LABELS],
+            RandomForestRegressor())
     vote = timeit(ensemble.vote)
     y_pred, voting_time = vote(y_pred)
     model_metrics = calculate_unmixing_metrics(**{

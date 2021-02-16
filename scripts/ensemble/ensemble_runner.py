@@ -6,16 +6,19 @@ preprocessed in various ways.
 import os
 import re
 import shutil
+from itertools import zip_longest
 
 import clize
 import mlflow
+import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
 
 from ml_intuition import enums
 from ml_intuition.data.io import load_processed_h5
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
-from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
+from ml_intuition.data.utils import get_mlflow_artifacts_path, \
+    parse_train_size, subsample_test_set
 from ml_intuition.enums import Experiment
 from scripts import prepare_data, artifacts_reporter, predict_with_model
 from scripts.ensemble import evaluate_with_ensemble, \
@@ -45,7 +48,9 @@ def run_experiments(*,
                     experiment_name: str = None,
                     run_name: str = None,
                     use_unmixing: bool = False,
-                    endmembers_path: str = None):
+                    endmembers_path: str = None,
+                    gt_file_paths: ('g', multi(min=0)),
+                    sub_test_size: int = None):
     """
     Function for running experiments given a set of hyper parameters.
     :param data_file_paths: Path to the data file. Supported types are: .npy
@@ -97,9 +102,14 @@ def run_experiments(*,
         use_mlflow = True
     :param run_name: Name of the run. Used only if use_mlflow = True.
     :param use_unmixing: Boolean indicating whether
-        to utilize unmixing functionality.
+        to utilize the unmixing functionality.
     :param endmembers_path: Path to the endmembers matrix, should be used
-        only when, the unmixing is set to True.
+        only when the unmixing is set to True,
+        and unsupervised model is employed.
+    :param gt_file_paths: Path to the ground-truth data files.
+        Supported types are: .npy
+    :param sub_test_size: Number of pixels to subsample the test set
+        instead of performing the inference on all untrained samples.
     """
     train_size = parse_train_size(train_size)
     if use_mlflow:
@@ -117,11 +127,14 @@ def run_experiments(*,
         models_test_predictions = []
         models_train_predictions = []
 
-        for data_file_path, model_path, model_experiment_name, neighborhood_size in \
-                zip(data_file_paths,
-                    model_paths,
-                    model_experiment_names,
-                    neighborhood_sizes):
+        for data_file_path, model_path, model_experiment_name, \
+            neighborhood_size, gt_file_path in \
+                zip_longest(data_file_paths,
+                            model_paths,
+                            model_experiment_names,
+                            neighborhood_sizes,
+                            gt_file_paths,
+                            fillvalue=None):
             if use_mlflow:
                 model_path = get_mlflow_artifacts_path(model_path,
                                                        model_experiment_name)
@@ -132,17 +145,15 @@ def run_experiments(*,
             model_name = \
                 list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
             model_path = os.path.join(model_dir, model_name)
-            neighborhood_size = int(neighborhood_size)
+            if neighborhood_size is not None:
+                neighborhood_size = int(neighborhood_size)
             if data_file_path.endswith(
                     '.h5') and 'patches' not in data_file_path:
                 data_source = load_processed_h5(data_file_path=data_file_path)
             else:
-                idx = data_file_path.index('.')
-                gt_file_path = data_file_path[:idx] + '_gt' + \
-                               data_file_path[idx:]
                 data_source = prepare_data.main(
                     data_file_path=data_file_path,
-                    ground_truth_path=gt_file_path,
+                    ground_truth_path='' if gt_file_path is None else gt_file_path,
                     train_size=train_size,
                     val_size=val_size,
                     stratified=stratified,
@@ -152,7 +163,9 @@ def run_experiments(*,
                     save_data=save_data,
                     seed=experiment_id,
                     use_unmixing=use_unmixing)
-
+            if sub_test_size is not None:
+                subsample_test_set(data_source[enums.Dataset.TEST],
+                                   sub_test_size)
             test_predictions = predict_with_model.predict(
                 model_path=model_path,
                 data=data_source,
@@ -164,22 +177,26 @@ def run_experiments(*,
 
             models_test_predictions.append(test_predictions)
 
-            if voting == 'classifier':
+            if voting == 'classifier' or voting == 'regressor':
                 train_predictions = predict_with_model.predict(
                     model_path=model_path,
                     data=data_source,
                     batch_size=batch_size,
-                    dataset_to_predict=enums.Dataset.TRAIN
+                    dataset_to_predict=enums.Dataset.TRAIN,
+                    use_unmixing=use_unmixing
                 )
                 models_train_predictions.append(train_predictions)
             tf.keras.backend.clear_session()
 
+        models_test_predictions = np.asarray(models_test_predictions)
         if use_unmixing:
             evaluate_unmixing_with_ensemble.evaluate(
                 y_pred=models_test_predictions,
                 data=data_source,
                 dest_path=experiment_dest_path,
-                endmembers_path=endmembers_path)
+                endmembers_path=endmembers_path,
+                voting=voting,
+                train_set_predictions=models_train_predictions)
 
         else:
             evaluate_with_ensemble.evaluate(
@@ -195,12 +212,13 @@ def run_experiments(*,
         experiments_path=dest_path,
         dest_path=dest_path,
         use_mlflow=use_mlflow)
-    fair_report_path = os.path.join(dest_path, Experiment.REPORT_FAIR)
-    artifacts_reporter.collect_artifacts_report(
-        experiments_path=dest_path,
-        dest_path=fair_report_path,
-        filename=Experiment.INFERENCE_FAIR_METRICS,
-        use_mlflow=use_mlflow)
+    if not use_unmixing:
+        fair_report_path = os.path.join(dest_path, Experiment.REPORT_FAIR)
+        artifacts_reporter.collect_artifacts_report(
+            experiments_path=dest_path,
+            dest_path=fair_report_path,
+            filename=Experiment.INFERENCE_FAIR_METRICS,
+            use_mlflow=use_mlflow)
     if use_mlflow:
         mlflow.set_experiment(experiment_name)
         mlflow.log_artifacts(dest_path, artifact_path=dest_path)

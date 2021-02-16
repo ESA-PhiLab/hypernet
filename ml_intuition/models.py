@@ -224,11 +224,11 @@ class Ensemble:
             weights[layer_number] += noise
         return weights
 
-    def vote(self, predictions: List[np.ndarray]) -> np.ndarray:
+    def vote(self, predictions: np.ndarray) -> np.ndarray:
         """
         Perform voting process on provided predictions
-        :param predictions: Predictions of all models as a list of numpy arrays.
-        :return: Predicted classes
+        :param predictions: Predictions of all models as a numpy array.
+        :return: Predicted classes.
         """
         if self.voting == 'hard':
             predictions = np.argmax(predictions, axis=-1)
@@ -236,12 +236,12 @@ class Ensemble:
         elif self.voting == 'soft':
             predictions = np.sum(predictions, axis=0)
             return np.argmax(predictions, axis=-1)
-        elif self.voting == 'classifier':
+        elif self.voting == 'classifier' or self.voting == 'regressor':
             models_count, samples, classes = predictions.shape
-            predictions = predictions.swapaxes(0, 1).reshape(samples,
-                                                             models_count * classes)
+            predictions = predictions.swapaxes(0, 1).reshape(
+                samples, models_count * classes)
             return self.predictor.predict(predictions)
-        elif self.voting == 'unmixing':
+        elif self.voting == 'mean':
             return np.asarray(predictions).mean(axis=0)
 
     def predict_probabilities(self, data: Union[np.ndarray, List[np.ndarray]],
@@ -276,7 +276,8 @@ class Ensemble:
         predictions = self.predict_probabilities(data, batch_size)
         return self.vote(predictions)
 
-    def train_ensemble_predictor(self, data: np.ndarray, labels: np.ndarray,
+    def train_ensemble_predictor(self, data: np.ndarray,
+                                 labels: np.ndarray,
                                  predictor=None):
         predictor = RandomForestClassifier() if predictor is None else predictor
         models_count, samples, classes = data.shape
