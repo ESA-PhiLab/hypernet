@@ -58,7 +58,7 @@ def predict(*,
             model_path):
         transformations.append(transforms.SpectralTransform())
 
-    tf_set_dict = transforms.apply_transformations(set_dict.copy(),
+    transformed_set_dict = transforms.apply_transformations(set_dict.copy(),
                                                    transformations)
 
     model = tf.keras.models.load_model(model_path,
@@ -67,7 +67,7 @@ def predict(*,
     if 'dcae' in model_name:
         model.pop()
 
-    y_pred = model.predict(tf_set_dict[enums.Dataset.DATA],
+    y_pred = model.predict(transformed_set_dict[enums.Dataset.DATA],
                            batch_size=batch_size)
     return y_pred
 
