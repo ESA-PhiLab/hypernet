@@ -66,7 +66,7 @@ def get_img_pred(
     scene_time = time.time() - tbeg
     print(f"Scene prediction took { scene_time } seconds")
 
-    img_height, img_width = testgen.img_shape
+    img_height, img_width, _ = testgen.img_shape
     preds = rearrange(
         preds,
         "(r c) dr dc b -> r c dr dc b",
