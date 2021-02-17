@@ -19,6 +19,7 @@ class JaccardIndexLoss:
         Default smoothness coefficient comes from Cloud-Net example.
         :param smooth: Small smoothing value to prevent zero division.
         """
+        self.__name__ = "jaccard_index_loss"
         self._smooth: float = smooth
 
     def __call__(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -52,6 +53,7 @@ class JaccardIndexMetric:
         Default smoothness coefficient comes from Cloud-Net example.
         :param smooth: Small smoothing value to prevent zero division.
         """
+        self.__name__ = "jaccard_index_metric"
         self._smooth: float = smooth
 
     def __call__(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -76,7 +78,7 @@ class DiceCoefMetric:
     Dice coefficient metric for segmentation like tasks.
     Internally uses Jaccard index metric.
     """
-    
+
     def __init__(self, smooth: float = 0.0000001):
         """
         Create dice coef metric callable class.
@@ -84,6 +86,7 @@ class DiceCoefMetric:
         Default smoothness coefficient comes from Cloud-Net example.
         :param smooth: Small smoothing value to prevent zero division.
         """
+        self.__name__ = "dice_coeff_metric"
         self._jim = JaccardIndexMetric(smooth)
 
     def __call__(self, y_true: np.ndarray, y_pred: np.ndarray):
