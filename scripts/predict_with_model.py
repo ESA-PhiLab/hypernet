@@ -45,25 +45,25 @@ def predict(*,
     transformations = [transforms.MinMaxNormalize(min_=min_value,
                                                   max_=max_value)]
 
-    custom_objects = None
+    unmixing_metrics = None
     model_name = os.path.basename(model_path)
 
     if use_unmixing:
         transformations += [t(**{'neighborhood_size': neighborhood_size}) for t
                             in UNMIXING_TRANSFORMS[model_name]]
-        custom_objects = {metric.__name__: metric for metric in
-                          UNMIXING_TRAIN_METRICS[model_name]}
+        unmixing_metrics = {metric.__name__: metric for metric in
+                            UNMIXING_TRAIN_METRICS[model_name]}
 
     if '2d' in os.path.basename(model_path) or 'deep' in os.path.basename(
             model_path):
         transformations.append(transforms.SpectralTransform())
 
     transformed_set_dict = transforms.apply_transformations(set_dict.copy(),
-                                                   transformations)
+                                                            transformations)
 
     model = tf.keras.models.load_model(model_path,
                                        compile=True,
-                                       custom_objects=custom_objects)
+                                       custom_objects=unmixing_metrics)
     if 'dcae' in model_name:
         model.pop()
 

@@ -40,6 +40,8 @@ def run_experiments(*,
                     model_experiment_names: ('e', multi(min=1)),
                     n_classes: int,
                     voting: str = 'hard',
+                    voting_model: str = None,
+                    voting_model_params: str = None,
                     batch_size: int = 1024,
                     post_noise_sets: ('spost', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
@@ -48,7 +50,6 @@ def run_experiments(*,
                     experiment_name: str = None,
                     run_name: str = None,
                     use_unmixing: bool = False,
-                    endmembers_path: str = None,
                     gt_file_paths: ('g', multi(min=0)),
                     sub_test_size: int = None):
     """
@@ -86,6 +87,19 @@ def run_experiments(*,
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
         labels for majority rule voting. Else if ‘soft’, predicts the class
         label based on the argmax of the sums of the predicted probabilities.
+        Else if 'booster', employs a new model, which is trained on the
+        ensemble predictions on the training set.
+    :param voting_model: Type of model to use when the voting argument is set
+        to "booster". This indicates, that a new model is trained on the
+        ensemble predictions on the learning set,
+        to leverage the quality of the classification or
+        regression. Supported models are: SVR, SVC (support vector machine for
+        regression and classification), RFR, RFC (random forest for regression
+        and classification), DTR, DTC (decision tree for regression and
+        classification).
+    :param voting_model_params: Parameters of the voting model,
+        should be specified in the same manner
+        as the parameters for the noise injection.
     :param batch_size: Size of the batch for the inference
     :param post_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
@@ -103,9 +117,6 @@ def run_experiments(*,
     :param run_name: Name of the run. Used only if use_mlflow = True.
     :param use_unmixing: Boolean indicating whether
         to utilize the unmixing functionality.
-    :param endmembers_path: Path to the endmembers matrix, should be used
-        only when the unmixing is set to True,
-        and unsupervised model is employed.
     :param gt_file_paths: Path to the ground-truth data files.
         Supported types are: .npy
     :param sub_test_size: Number of pixels to subsample from the test set
@@ -172,19 +183,17 @@ def run_experiments(*,
                 batch_size=batch_size,
                 dataset_to_predict=enums.Dataset.TEST,
                 use_unmixing=use_unmixing,
-                neighborhood_size=neighborhood_size
-            )
+                neighborhood_size=neighborhood_size)
 
             models_test_predictions.append(test_predictions)
 
-            if voting == 'classifier' or voting == 'regressor':
+            if voting == 'booster':
                 train_predictions = predict_with_model.predict(
                     model_path=model_path,
                     data=data_source,
                     batch_size=batch_size,
                     dataset_to_predict=enums.Dataset.TRAIN,
-                    use_unmixing=use_unmixing
-                )
+                    use_unmixing=use_unmixing)
                 models_train_predictions.append(train_predictions)
             tf.keras.backend.clear_session()
 
@@ -194,9 +203,10 @@ def run_experiments(*,
                 y_pred=models_test_predictions,
                 data=data_source,
                 dest_path=experiment_dest_path,
-                endmembers_path=endmembers_path,
                 voting=voting,
-                train_set_predictions=models_train_predictions)
+                train_set_predictions=models_train_predictions,
+                voting_model=voting_model,
+                voting_model_params=voting_model_params)
 
         else:
             evaluate_with_ensemble.evaluate(
@@ -206,7 +216,9 @@ def run_experiments(*,
                 dest_path=experiment_dest_path,
                 voting=voting,
                 train_set_predictions=models_train_predictions,
-                n_classes=n_classes)
+                n_classes=n_classes,
+                voting_model=voting_model,
+                voting_model_params=voting_model_params)
 
     artifacts_reporter.collect_artifacts_report(
         experiments_path=dest_path,

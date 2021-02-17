@@ -21,7 +21,9 @@ def evaluate(*,
              n_classes: int,
              model_path: str,
              voting: str = 'hard',
-             train_set_predictions: np.ndarray = None):
+             train_set_predictions: np.ndarray = None,
+             voting_model: str = None,
+             voting_model_params: str = None):
     """
     Function for evaluating the trained model.
 
@@ -31,18 +33,33 @@ def evaluate(*,
     :param dest_path: Directory in which to store the calculated metrics
     :param n_classes: Number of classes.
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
-            labels for majority rule voting. Else if ‘soft’, predicts the class
-            label based on the argmax of the sums of the predicted probabilities.
+        labels for majority rule voting. Else if ‘soft’, predicts the class
+        label based on the argmax of the sums of the predicted probabilities.
+        Else if 'booster', employs a new model, which is trained on the
+        ensemble predictions on the training set.
     :param train_set_predictions: Predictions of the train set. Only used if
         'voting' = 'classifier'.
+    :param voting_model: Type of model to use when the voting argument is set
+        to "booster". This indicates, that a new model is trained on the
+        ensemble predictions on the learning set,
+        to leverage the quality of the classification or
+        regression. Supported models are: SVR, SVC (support vector machine for
+        regression and classification), RFR, RFC (random forest for regression
+        and classification), DTR, DTC (decision tree for regression and
+        classification).
+    :param voting_model_params: Parameters of the voting model,
+        should be specified in the same manner
+        as the parameters for the noise injection.
     """
 
     ensemble = Ensemble(voting=voting)
-    if voting == 'classifier':
+    if voting == 'booster':
         train_set_predictions = np.array(train_set_predictions)
         ensemble.train_ensemble_predictor(
             train_set_predictions,
-            data[enums.Dataset.TRAIN][enums.Dataset.LABELS])
+            data[enums.Dataset.TRAIN][enums.Dataset.LABELS],
+            voting_model,
+            voting_model_params)
     vote = timeit(ensemble.vote)
     y_pred, voting_time = vote(y_pred)
 
