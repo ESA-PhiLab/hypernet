@@ -261,7 +261,6 @@ def calculate_unmixing_metrics(**kwargs) -> Dict[str, List[float]]:
     :param kwargs: Additional keyword arguments.
     """
     model_metrics = {}
-    print(kwargs['y_pred'].shape)
     for f_name, f_metric in UNMIXING_TEST_METRICS.items():
         model_metrics[f_name] = [float(convert_to_tensor(f_metric)
                                        (y_true=kwargs['y_true'],

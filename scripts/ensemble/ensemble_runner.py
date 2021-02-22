@@ -4,21 +4,25 @@ preprocessed in various ways.
 """
 
 import os
-import shutil
 import re
+import shutil
+from itertools import zip_longest
 
 import clize
 import mlflow
+import numpy as np
 import tensorflow as tf
 from clize.parameters import multi
 
 from ml_intuition import enums
-from scripts import prepare_data, artifacts_reporter, predict_with_model
-from scripts.ensemble import evaluate_with_ensemble
-from ml_intuition.enums import Experiment
 from ml_intuition.data.io import load_processed_h5
-from ml_intuition.data.utils import get_mlflow_artifacts_path, parse_train_size
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
+from ml_intuition.data.utils import get_mlflow_artifacts_path, \
+    parse_train_size, subsample_test_set
+from ml_intuition.enums import Experiment
+from scripts import prepare_data, artifacts_reporter, predict_with_model
+from scripts.ensemble import evaluate_with_ensemble, \
+    evaluate_unmixing_with_ensemble
 
 
 def run_experiments(*,
@@ -36,13 +40,18 @@ def run_experiments(*,
                     model_experiment_names: ('e', multi(min=1)),
                     n_classes: int,
                     voting: str = 'hard',
+                    voting_model: str = None,
+                    voting_model_params: str = None,
                     batch_size: int = 1024,
                     post_noise_sets: ('spost', multi(min=0)),
                     post_noise: ('post', multi(min=0)),
                     noise_params: str = None,
                     use_mlflow: bool = False,
                     experiment_name: str = None,
-                    run_name: str = None):
+                    run_name: str = None,
+                    use_unmixing: bool = False,
+                    gt_file_paths: ('g', multi(min=0)),
+                    sub_test_size: int = None):
     """
     Function for running experiments given a set of hyper parameters.
     :param data_file_paths: Path to the data file. Supported types are: .npy
@@ -78,6 +87,19 @@ def run_experiments(*,
     :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
         labels for majority rule voting. Else if ‘soft’, predicts the class
         label based on the argmax of the sums of the predicted probabilities.
+        Else if 'booster', employs a new model, which is trained on the
+        ensemble predictions on the training set.
+    :param voting_model: Type of model to use when the voting argument is set
+        to "booster". This indicates, that a new model is trained on the
+        ensemble predictions on the learning set,
+        to leverage the quality of the classification or
+        regression. Supported models are: SVR, SVC (support vector machine for
+        regression and classification), RFR, RFC (random forest for regression
+        and classification), DTR, DTC (decision tree for regression and
+        classification).
+    :param voting_model_params: Parameters of the voting model,
+        should be specified in the same manner
+        as the parameters for the noise injection.
     :param batch_size: Size of the batch for the inference
     :param post_noise_sets: The list of sets to which the noise will be
         injected. One element can either be "train", "val" or "test".
@@ -93,6 +115,12 @@ def run_experiments(*,
     :param experiment_name: Name of the experiment. Used only if
         use_mlflow = True
     :param run_name: Name of the run. Used only if use_mlflow = True.
+    :param use_unmixing: Boolean indicating whether
+        to utilize the unmixing functionality.
+    :param gt_file_paths: Path to the ground-truth data files.
+        Supported types are: .npy
+    :param sub_test_size: Number of pixels to subsample from the test set
+        instead of performing the inference on all untrained samples.
     """
     train_size = parse_train_size(train_size)
     if use_mlflow:
@@ -110,70 +138,99 @@ def run_experiments(*,
         models_test_predictions = []
         models_train_predictions = []
 
-        for data_file_path, model_path, model_experiment_name, neighborhood_size in \
-                zip(
-                    data_file_paths,
-                    model_paths,
-                    model_experiment_names,
-                    neighborhood_sizes):
-            model_path = get_mlflow_artifacts_path(model_path,
-                                                   model_experiment_name)
-            model_name_regex = re.compile('model_.*')
+        for data_file_path, model_path, model_experiment_name, \
+            neighborhood_size, gt_file_path in \
+                zip_longest(data_file_paths,
+                            model_paths,
+                            model_experiment_names,
+                            neighborhood_sizes,
+                            gt_file_paths,
+                            fillvalue=None):
+            if use_mlflow:
+                model_path = get_mlflow_artifacts_path(model_path,
+                                                       model_experiment_name)
+
+            model_name_regex = re.compile('unmixing_.*') \
+                if use_unmixing else re.compile('model_.*')
             model_dir = os.path.join(model_path, f'experiment_{experiment_id}')
             model_name = \
                 list(filter(model_name_regex.match, os.listdir(model_dir)))[0]
             model_path = os.path.join(model_dir, model_name)
+            if neighborhood_size is not None:
+                neighborhood_size = int(neighborhood_size)
             if data_file_path.endswith(
                     '.h5') and 'patches' not in data_file_path:
                 data_source = load_processed_h5(data_file_path=data_file_path)
             else:
-                data_source = prepare_data.main(data_file_path=data_file_path,
-                                                ground_truth_path='',
-                                                train_size=train_size,
-                                                val_size=val_size,
-                                                stratified=stratified,
-                                                background_label=background_label,
-                                                channels_idx=channels_idx,
-                                                neighborhood_size=int(
-                                                    neighborhood_size),
-                                                save_data=save_data,
-                                                seed=experiment_id)
-
+                data_source = prepare_data.main(
+                    data_file_path=data_file_path,
+                    ground_truth_path='' if gt_file_path is None else gt_file_path,
+                    train_size=train_size,
+                    val_size=val_size,
+                    stratified=stratified,
+                    background_label=background_label,
+                    channels_idx=channels_idx,
+                    neighborhood_size=neighborhood_size,
+                    save_data=save_data,
+                    seed=experiment_id,
+                    use_unmixing=use_unmixing)
+            if sub_test_size is not None:
+                subsample_test_set(data_source[enums.Dataset.TEST],
+                                   sub_test_size)
             test_predictions = predict_with_model.predict(
                 model_path=model_path,
                 data=data_source,
                 batch_size=batch_size,
-                dataset_to_predict=enums.Dataset.TEST
-            )
+                dataset_to_predict=enums.Dataset.TEST,
+                use_unmixing=use_unmixing,
+                neighborhood_size=neighborhood_size)
 
             models_test_predictions.append(test_predictions)
 
-            if voting == 'classifier':
+            if voting == 'booster':
                 train_predictions = predict_with_model.predict(
                     model_path=model_path,
                     data=data_source,
                     batch_size=batch_size,
-                    dataset_to_predict=enums.Dataset.TRAIN
-                )
+                    dataset_to_predict=enums.Dataset.TRAIN,
+                    use_unmixing=use_unmixing)
                 models_train_predictions.append(train_predictions)
             tf.keras.backend.clear_session()
 
-        evaluate_with_ensemble.evaluate(
-            y_pred=models_test_predictions,
-            model_path=model_path,
-            data=data_source,
-            dest_path=experiment_dest_path,
-            voting=voting,
-            train_set_predictions=models_train_predictions)
+        models_test_predictions = np.asarray(models_test_predictions)
+        if use_unmixing:
+            evaluate_unmixing_with_ensemble.evaluate(
+                y_pred=models_test_predictions,
+                data=data_source,
+                dest_path=experiment_dest_path,
+                voting=voting,
+                train_set_predictions=models_train_predictions,
+                voting_model=voting_model,
+                voting_model_params=voting_model_params)
 
-    artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-                                                dest_path=dest_path,
-                                                use_mlflow=use_mlflow)
-    fair_report_path = os.path.join(dest_path, Experiment.REPORT_FAIR)
-    artifacts_reporter.collect_artifacts_report(experiments_path=dest_path,
-                                                dest_path=fair_report_path,
-                                                filename=Experiment.INFERENCE_FAIR_METRICS,
-                                                use_mlflow=use_mlflow)
+        else:
+            evaluate_with_ensemble.evaluate(
+                y_pred=models_test_predictions,
+                model_path=model_path,
+                data=data_source,
+                dest_path=experiment_dest_path,
+                voting=voting,
+                train_set_predictions=models_train_predictions,
+                n_classes=n_classes,
+                voting_model=voting_model,
+                voting_model_params=voting_model_params)
+
+    artifacts_reporter.collect_artifacts_report(
+        experiments_path=dest_path,
+        dest_path=dest_path,
+        use_mlflow=use_mlflow)
+    if not use_unmixing:
+        fair_report_path = os.path.join(dest_path, Experiment.REPORT_FAIR)
+        artifacts_reporter.collect_artifacts_report(
+            experiments_path=dest_path,
+            dest_path=fair_report_path,
+            filename=Experiment.INFERENCE_FAIR_METRICS,
+            use_mlflow=use_mlflow)
     if use_mlflow:
         mlflow.set_experiment(experiment_name)
         mlflow.log_artifacts(dest_path, artifact_path=dest_path)
