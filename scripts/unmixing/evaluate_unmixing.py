@@ -8,6 +8,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import yaml
 
 from ml_intuition import enums
 from ml_intuition.data import io, transforms
@@ -16,6 +17,7 @@ from ml_intuition.data.utils import get_central_pixel_spectrum
 from ml_intuition.evaluation.performance_metrics import \
     calculate_unmixing_metrics, UNMIXING_TRAIN_METRICS
 from ml_intuition.evaluation.time_metrics import timeit
+from ml_intuition.models import Ensemble
 
 
 def evaluate(data,
@@ -23,7 +25,14 @@ def evaluate(data,
              dest_path: str,
              neighborhood_size: int,
              batch_size: int,
-             endmembers_path: str):
+             endmembers_path: str,
+             use_ensemble: bool = False,
+             ensemble_copies: int = 1,
+             voting: str = 'hard',
+             noise_params: str = None,
+             voting_model_params: str = None,
+             voting_model: str = None,
+             seed: int = 0):
     """
     Function for evaluating the trained model for the unmixing problem.
 
@@ -54,6 +63,25 @@ def evaluate(data,
                                                              transformations)
     if 'dcae' in model_name:
         model.pop()
+
+    if use_ensemble:
+        model = Ensemble(model, voting=voting)
+        noise_params = yaml.load(noise_params)
+        model.generate_models_with_noise(copies=ensemble_copies,
+                                         mean=noise_params['mean'],
+                                         seed=seed)
+
+        if voting == 'booster':
+            train_dict_tr = data[enums.Dataset.TRAIN].copy()
+            train_dict_tr = transforms.apply_transformations(train_dict_tr,
+                                                             transformations)
+            train_probabilities = model.predict_probabilities(
+                train_dict_tr[enums.Dataset.DATA])
+            model.train_ensemble_predictor(
+                train_probabilities,
+                data[enums.Dataset.TRAIN][enums.Dataset.LABELS],
+                predictor=voting_model,
+                model_params=voting_model_params)
 
     predict = timeit(model.predict)
     y_pred, inference_time = predict(
