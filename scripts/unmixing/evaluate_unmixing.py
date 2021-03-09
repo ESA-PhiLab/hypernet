@@ -67,9 +67,12 @@ def evaluate(data,
     if use_ensemble:
         model = Ensemble(model, voting=voting)
         noise_params = yaml.load(noise_params)
+        std = None
+        if noise_params['std'] == 'None':
+            std = None
         model.generate_models_with_noise(copies=ensemble_copies,
                                          mean=noise_params['mean'],
-                                         std=noise_params['std'],
+                                         std=std,
                                          seed=seed)
 
         if voting == 'booster':
