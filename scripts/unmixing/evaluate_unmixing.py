@@ -69,6 +69,7 @@ def evaluate(data,
         noise_params = yaml.load(noise_params)
         model.generate_models_with_noise(copies=ensemble_copies,
                                          mean=noise_params['mean'],
+                                         std=noise_params['std'],
                                          seed=seed)
 
         if voting == 'booster':
