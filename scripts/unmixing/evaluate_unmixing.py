@@ -28,10 +28,10 @@ def evaluate(data,
              endmembers_path: str,
              use_ensemble: bool = False,
              ensemble_copies: int = 1,
-             voting: str = 'hard',
              noise_params: str = None,
-             voting_model_params: str = None,
+             voting: str = 'mean',
              voting_model: str = None,
+             voting_model_params: str = None,
              seed: int = 0):
     """
     Function for evaluating the trained model for the unmixing problem.
@@ -44,6 +44,18 @@ def evaluate(data,
     :param endmembers_path: Path to the endmembers file containing
         average reflectances for each class.
         Used only when use_unmixing is true.
+    :param use_ensemble: Boolean indicating whether
+        to use ensembles functionality.
+    :param ensemble_copies: Number of copies of the original model to create.
+    :param noise_params: Parameters for the noise when creating
+        copies of the base model.
+        In the unmixing problem, two types are possible i.e., the "mean" as
+        well as the "booster" variant.
+    :param voting: Type of voting to utilize with the ensembles.
+    :param voting_model: Type of the voting model to use.
+    :param voting_model_params: Parameters of the voting model.
+        Used only when the type of voting is set to "booster".
+    :param seed: Parameter used for the experiments reproduction.
     """
     model_name = os.path.basename(model_path)
     model = tf.keras.models.load_model(
@@ -67,12 +79,9 @@ def evaluate(data,
     if use_ensemble:
         model = Ensemble(model, voting=voting)
         noise_params = yaml.load(noise_params)
-        std = None
-        if noise_params['std'] == 'None':
-            std = None
         model.generate_models_with_noise(copies=ensemble_copies,
                                          mean=noise_params['mean'],
-                                         std=std,
+                                         std=noise_params['std'],
                                          seed=seed)
 
         if voting == 'booster':

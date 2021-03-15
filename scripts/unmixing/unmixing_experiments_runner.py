@@ -64,19 +64,9 @@ def run_experiments(*,
     :param data_file_path: Path to the data file. Supported types are: .npy
     :param ground_truth_path: Path to the ground-truth data file.
     :param train_size: If float, should be between 0.0 and 1.0,
-        if stratified = True, it represents percentage of each class
-        to be extracted.
-        If float and stratified = False, it represents percentage of the
-            whole dataset to be extracted with samples drawn randomly,
-            regardless of their class.
-         If int and stratified = True, it represents number of samples
-            to be drawn from each class.
-         If int and stratified = False, it represents overall number of
-            samples to be drawn regardless of their class, randomly.
-         Defaults to 0.8
+        if int it represents number of samples to draw.
     :param val_size: Should be between 0.0 and 1.0. Represents the
-        percentage of each class from the training set to be
-        extracted as a validation set, defaults to 0.1
+        percentage of samples to extract from the training set.
     :param sub_test_size: Number of pixels to subsample the test set
         instead of performing the inference on all untrained samples.
     :param channels_idx: Index specifying the channels position in the provided
@@ -105,7 +95,7 @@ def run_experiments(*,
         average reflectances for each class.
         Used only when use_unmixing is true.
     :param experiment_name: Name of the experiment. Used only if
-        use_mlflow = True
+        use_mlflow = True.
     :param run_name: Name of the run. Used only if use_mlflow = True.
     """
     if use_mlflow:

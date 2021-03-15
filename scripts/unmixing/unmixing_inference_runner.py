@@ -9,7 +9,6 @@ import shutil
 import clize
 import mlflow
 import tensorflow as tf
-from clize.parameters import multi
 
 from ml_intuition import enums
 from ml_intuition.data.loggers import log_params_to_mlflow, log_tags_to_mlflow
@@ -29,19 +28,17 @@ def run_experiments(*,
                     channels_idx: int = 0,
                     neighborhood_size: int = None,
                     save_data: bool = False,
-                    n_runs: int,
+                    n_runs: int = 1,
                     dest_path: str,
                     models_path: str,
                     model_name: str,
                     n_classes: int,
                     use_ensemble: bool = False,
                     ensemble_copies: int = None,
-                    voting: str = 'hard',
+                    voting: str = 'mean',
                     voting_model: str = None,
                     voting_model_params: str = None,
-                    batch_size: int = 1024,
-                    post_noise_sets: ('spost', multi(min=0)),
-                    post_noise: ('post', multi(min=0)),
+                    batch_size: int = 256,
                     noise_params: str = None,
                     endmembers_path: str = None,
                     use_mlflow: bool = False,
@@ -54,22 +51,11 @@ def run_experiments(*,
     :param ground_truth_path: Path to the ground-truth data file.
     :param dataset_path: Path to the already extracted .h5 dataset
     :param train_size: If float, should be between 0.0 and 1.0,
-                        if stratified = True, it represents percentage of each
-                        class to be extracted,
-                 If float and stratified = False, it represents percentage of the
-                    whole dataset to be extracted with samples drawn randomly,
-                    regardless of their class.
-                 If int and stratified = True, it represents number of samples
-                    to be drawn from each class.
-                 If int and stratified = False, it represents overall number of
-                    samples to be drawn regardless of their class, randomly.
-                 Defaults to 0.8
-    :param val_size: Should be between 0.0 and 1.0. Represents the percentage of
-                     each class from the training set to be extracted as a
-                     validation set, defaults to 0.1
-    :param stratified: Indicated whether the extracted training set should be
-                     stratified, defaults to True
-    :param background_label: Label indicating the background in GT file
+        if int it represents number of samples to draw.
+    :param val_size: Should be between 0.0 and 1.0. Represents the
+        percentage of samples to extract from the training set.
+    :param sub_test_size: Number of pixels to subsample the test set
+        instead of performing the inference on all untrained samples.
     :param channels_idx: Index specifying the channels position in the provided
                          data
     :param neighborhood_size: Size of the neighbourhood for the model.
@@ -83,23 +69,26 @@ def run_experiments(*,
     :param n_classes: Number of classes.
     :param use_ensemble: Use ensemble for prediction.
     :param ensemble_copies: Number of model copies for the ensemble.
-    :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
-        labels for majority rule voting. Else if ‘soft’, predicts the class
-        label based on the argmax of the sums of the predicted probabilities.
+    :param voting: Type of voting to utilize with the ensembles.
+    :param voting_model: Type of the voting model to use.
+    :param voting_model_params: Parameters of the voting model.
+        Used only when the type of voting is set to "booster".
     :param batch_size: Size of the batch for the inference
-    :param post_noise_sets: The list of sets to which the noise will be
-        injected. One element can either be "train", "val" or "test".
-    :param post_noise: The list of names of noise injection methods after
-        the normalization transformations.
-    :param noise_params: JSON containing the parameter setting of injection methods.
+    :param noise_params: JSON containing the parameter
+        setting of injection methods.
         Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
         This JSON should include all parameters for noise injection
         functions that are specified in pre_noise and post_noise arguments.
         For the accurate description of each parameter, please
         refer to the ml_intuition/data/noise.py module.
+    :param endmembers_path: Path to the endmembers file containing
+        average reflectances for each class.
+        Used only when use_unmixing is true.
     :param use_mlflow: Whether to log metrics and artifacts to mlflow.
     :param experiment_name: Name of the experiment. Used only if
-        use_mlflow = True
+        use_mlflow = True.
+    :param model_exp_name: Name of the experiment. Used only if
+        use_mlflow = True.
     :param run_name: Name of the run. Used only if use_mlflow = True.
     """
     if use_mlflow:
