@@ -29,11 +29,12 @@ def evaluate(*,
         labels for majority rule voting. Else if ‘soft’, predicts the class
         label based on the argmax of the sums of the predicted probabilities.
         Else if 'booster', employs a new model, which is trained on the
-        ensemble predictions on the training set.
+        ensemble predictions on the training set. Else if 'mean', averages
+        the predictions of all models, without any weights.
     :param train_set_predictions: Predictions of the train set. Only used if
-        'voting' = 'classifier'.
+        'voting' = 'booster'.
     :param voting_model: Type of model to use when the voting argument is set
-        to "booster". This indicates, that a new model is trained on the
+        to 'booster'. This indicates, that a new model is trained on the
         ensemble predictions on the learning set,
         to leverage the quality of the classification or
         regression. Supported models are: SVR, SVC (support vector machine for
