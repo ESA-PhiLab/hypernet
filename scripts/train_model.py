@@ -104,7 +104,7 @@ def train(*,
     train_dict = transforms.apply_transformations(train_dict, tr_transformations)
     val_dict = transforms.apply_transformations(val_dict, val_transformations)
 
-    model = models._get_model(model_key=model_name, kernel_size=kernel_size,
+    model = models.get_model(model_key=model_name, kernel_size=kernel_size,
                               n_kernels=n_kernels, n_layers=n_layers,
                               input_size=sample_size, n_classes=n_classes)
     model.summary()
