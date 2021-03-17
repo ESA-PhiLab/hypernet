@@ -61,6 +61,7 @@ dependencies:
   - py-opencv=3.4.2=py36hb342d67_1
   - pylint=2.4.4=py36_0
   - pyparsing=2.4.6=py_0
+  - pysftp=0.2.9
   - pytest=5.3.5=py36_0
   - python-graphviz==0.13.2
   - python=3.6.10=h0371630_0
@@ -105,6 +106,7 @@ dependencies:
     - docopt==0.6.2
     - docutils==0.15.2
     - dvc==0.87.0
+    - einops==0.3.0
     - flatten-json==0.1.7
     - flufl-lock==3.2
     - funcy==1.14
@@ -147,6 +149,7 @@ dependencies:
     - pathspec==0.7.0
     - pillow==7.0.0
     - pipreqs==0.4.10
+    - plotly==4.13.0
     - ply==3.11
     - progressbar2==3.47.0
     - protobuf==3.11.2
@@ -180,6 +183,7 @@ dependencies:
     - sigtools==2.0.2
     - sklearn==0.0
     - smmap2==2.0.5
+    - spectral==0.22.1
     - speedcopy==2.0.1
     - termcolor==1.1.0
     - texttable==1.6.2

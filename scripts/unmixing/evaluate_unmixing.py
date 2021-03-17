@@ -6,6 +6,7 @@ import os
 
 import numpy as np
 import tensorflow as tf
+import yaml
 
 from ml_intuition import enums
 from ml_intuition.data import io, transforms
@@ -14,6 +15,7 @@ from ml_intuition.data.utils import get_central_pixel_spectrum
 from ml_intuition.evaluation.performance_metrics import \
     calculate_unmixing_metrics, UNMIXING_TRAIN_METRICS
 from ml_intuition.evaluation.time_metrics import timeit
+from ml_intuition.models import Ensemble
 
 
 def evaluate(data,
@@ -21,7 +23,14 @@ def evaluate(data,
              dest_path: str,
              neighborhood_size: int,
              batch_size: int,
-             endmembers_path: str):
+             endmembers_path: str,
+             use_ensemble: bool = False,
+             ensemble_copies: int = 1,
+             noise_params: str = None,
+             voting: str = 'mean',
+             voting_model: str = None,
+             voting_model_params: str = None,
+             seed: int = 0):
     """
     Function for evaluating the trained model for the unmixing problem.
 
@@ -30,9 +39,21 @@ def evaluate(data,
     :param dest_path: Directory in which to store the calculated metrics.
     :param neighborhood_size: Size of the spatial patch.
     :param batch_size: Size of the batch for inference.
-    :param endmembers_path: Path to the endmembers matrix file,
-        containing the average reflectances for each endmember,
-        i.e., the pure spectra.
+    :param endmembers_path: Path to the endmembers file containing
+        average reflectances for each class.
+        Used only when use_unmixing is true.
+    :param use_ensemble: Boolean indicating whether
+        to use ensembles functionality.
+    :param ensemble_copies: Number of copies of the original model to create.
+    :param noise_params: Parameters for the noise when creating
+        copies of the base model.
+        In the unmixing problem, two types are possible i.e., the "mean" as
+        well as the "booster" variant.
+    :param voting: Type of voting to utilize with the ensembles.
+    :param voting_model: Type of the voting model to use.
+    :param voting_model_params: Parameters of the voting model.
+        Used only when the type of voting is set to "booster".
+    :param seed: Parameter used for the experiments reproduction.
     """
     model_name = os.path.basename(model_path)
     model = tf.keras.models.load_model(
@@ -52,6 +73,26 @@ def evaluate(data,
                                                              transformations)
     if 'dcae' in model_name:
         model.pop()
+
+    if use_ensemble:
+        model = Ensemble(model, voting=voting)
+        noise_params = yaml.load(noise_params)
+        model.generate_models_with_noise(copies=ensemble_copies,
+                                         mean=noise_params['mean'],
+                                         std=noise_params['std'],
+                                         seed=seed)
+
+        if voting == 'booster':
+            train_dict_tr = data[enums.Dataset.TRAIN].copy()
+            train_dict_tr = transforms.apply_transformations(train_dict_tr,
+                                                             transformations)
+            train_probabilities = model.predict_probabilities(
+                train_dict_tr[enums.Dataset.DATA])
+            model.train_ensemble_predictor(
+                train_probabilities,
+                data[enums.Dataset.TRAIN][enums.Dataset.LABELS],
+                predictor=voting_model,
+                model_params=voting_model_params)
 
     predict = timeit(model.predict)
     y_pred, inference_time = predict(

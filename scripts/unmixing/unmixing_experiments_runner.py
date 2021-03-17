@@ -64,14 +64,10 @@ def run_experiments(*,
 
     :param data_file_path: Path to the data file. Supported types are: .npy.
     :param ground_truth_path: Path to the ground-truth data file.
-    :param train_size: If float, should be between 0.0 and 1.0.
-        If int, specifies the number of samples in the training set.
-        Defaults to 0.8
-    :type train_size: Union[int, float]
+    :param train_size: If float, should be between 0.0 and 1.0,
+        if int it represents number of samples to draw.
     :param val_size: Should be between 0.0 and 1.0. Represents the
-        percentage of samples from the training set to be
-        extracted as a validation set.
-        Defaults to 0.1.
+        percentage of samples to extract from the training set.
     :param sub_test_size: Number of pixels to subsample the test set
         instead of performing the inference on all
         samples that are not in the training set.
@@ -99,7 +95,7 @@ def run_experiments(*,
         containing the average reflectances for each endmember,
         i.e., the pure spectra.
     :param experiment_name: Name of the experiment. Used only if
-        use_mlflow = True
+        use_mlflow = True.
     :param run_name: Name of the run. Used only if use_mlflow = True.
     """
     if use_mlflow:

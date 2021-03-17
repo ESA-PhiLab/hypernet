@@ -144,8 +144,5 @@ cython_debug/
 # DVC
 .dvc/
 
-# Specific datasets
-datasets/clouds
-datasets/pavia
-datasets/salinas
-datasets/indiana
+# Datasets directory
+datasets
