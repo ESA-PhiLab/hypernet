@@ -1,15 +1,19 @@
 """
 All models that are used in the project.
 """
-
+import json
 import sys
 from copy import deepcopy
 from typing import Union, List
 
 import numpy as np
 import tensorflow as tf
+import yaml
 from scipy.stats import mode
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
+from sklearn.multioutput import MultiOutputRegressor
+from sklearn.svm import SVR, SVC
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 
 
 def model_2d(kernel_size: int,
@@ -169,7 +173,7 @@ def model_3d_deep(n_classes: int, input_size: int, **kwargs) -> tf.keras.Sequent
     return model
 
 
-def _get_model(model_key: str, **kwargs):
+def get_model(model_key: str, **kwargs):
     """
     Get a given instance of model specified by model_key.
 
@@ -184,6 +188,16 @@ def _get_model(model_key: str, **kwargs):
 
 
 class Ensemble:
+    MODELS = {
+        'RFR': RandomForestRegressor,
+        'RFC': RandomForestClassifier,
+        'SVR': SVR,
+        'SVC': SVC,
+        'DTR': DecisionTreeRegressor,
+        'DTC': DecisionTreeClassifier,
+        None: DecisionTreeClassifier
+    }
+
     def __init__(self, models: Union[List[tf.keras.Sequential],
                                      List[str],
                                      tf.keras.models.Sequential,
@@ -252,9 +266,8 @@ class Ensemble:
     def vote(self, predictions: np.ndarray) -> np.ndarray:
         """
         Perform voting process on provided predictions
-
-        :param predictions: Predictions of all models
-        :return: Predicted classes
+        :param predictions: Predictions of all models as a numpy array.
+        :return: Predicted classes.
         """
         if self.voting == 'hard':
             predictions = np.argmax(predictions, axis=-1)
@@ -262,11 +275,13 @@ class Ensemble:
         elif self.voting == 'soft':
             predictions = np.sum(predictions, axis=0)
             return np.argmax(predictions, axis=-1)
-        elif self.voting == 'classifier':
+        elif self.voting == 'booster':
             models_count, samples, classes = predictions.shape
-            predictions = predictions.swapaxes(0, 1).reshape(samples,
-                                                             models_count * classes)
+            predictions = predictions.swapaxes(0, 1).reshape(
+                samples, models_count * classes)
             return self.predictor.predict(predictions)
+        elif self.voting == 'mean':
+            return np.asarray(predictions).mean(axis=0)
 
     def predict_probabilities(self, data: Union[np.ndarray, List[np.ndarray]],
                               batch_size: int = 1024) -> np.ndarray:
@@ -302,18 +317,22 @@ class Ensemble:
         predictions = self.predict_probabilities(data, batch_size)
         return self.vote(predictions)
 
-    def train_ensemble_predictor(self, data: np.ndarray, labels: np.ndarray) -> None:
-        """
-        Train the Random Forest on train set predictions
-
-        :param data: Predictions of the models on training set
-        :param labels: Corresponding las
-        """
-        predictor = RandomForestClassifier()
+    def train_ensemble_predictor(self, data: np.ndarray,
+                                 labels: np.ndarray,
+                                 predictor: str = None,
+                                 model_params: str = None):
+        try:
+            model_params = json.loads(model_params)
+        except json.decoder.JSONDecodeError:
+            model_params = yaml.load(model_params)
+        model = self.MODELS[predictor](**model_params)
+        if predictor == 'SVR':
+            # If the model is an SVR, extend its functionality
+            # to multi-target regression:
+            model = MultiOutputRegressor(model)
         models_count, samples, classes = data.shape
         data = data.swapaxes(0, 1).reshape(samples, models_count * classes)
-        predictor.fit(data, np.argmax(labels, axis=-1))
-        self.predictor = predictor
+        self.predictor = model.fit(data, labels)
 
 
 def unmixing_pixel_based_cnn(n_classes: int, input_size: int,
@@ -508,3 +527,38 @@ def unmixing_rnn_supervised(n_classes: int, **kwargs) -> tf.keras.Sequential:
 
     model.add(tf.keras.layers.Dense(n_classes, activation='softmax'))
     return model
+
+
+ML_MODELS = {
+    'decision_tree_clf': DecisionTreeClassifier,
+    'random_forest_clf': RandomForestClassifier,
+    'decision_tree_reg': DecisionTreeRegressor,
+    'random_forest_reg': RandomForestRegressor,
+}
+
+ML_MODELS_GRID = {
+    'decision_tree_clf':
+        {
+            'max_depth': [2, 4, 6, 8, 10, 20, 50, 100],
+            'criterion': ['gini', 'entropy'],
+            'min_samples_split': [2, 4, 6, 8, 10, 20, 50]
+        },
+
+    'random_forest_clf':
+        {
+            'max_depth': [10, 20, 40, 60],
+            'min_samples_leaf': [1, 2, 4],
+            'n_estimators': [200, 400, 600, 800]
+        },
+    'decision_tree_reg':
+        {
+            'max_depth': [2, 4, 6, 8, 10, 20, 50, 100],
+            'min_samples_split': [2, 4, 6, 8, 10, 20, 50]
+        },
+    'random_forest_reg':
+        {
+            'max_depth': [10, 20, 40, 60],
+            'min_samples_leaf': [1, 2, 4],
+            'n_estimators': [200, 400, 600, 800]
+        },
+}

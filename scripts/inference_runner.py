@@ -44,6 +44,7 @@ def run_experiments(*,
                     noise_params: str = None,
                     use_mlflow: bool = False,
                     experiment_name: str = None,
+                    model_exp_name: str = None,
                     run_name: str = None):
     """
     Run inference on the provided model given set of hyperparameters.
@@ -71,9 +72,8 @@ def run_experiments(*,
     :param background_label: Label indicating the background in GT file.
     :param channels_idx: Index specifying the channels position in the provided
         data.
-    :param neighborhood_size: Size of the neighborhood of the pixel.
-        Only used for 2D and 3D models.
-    :param save_data: Whether to save the prepared dataset.
+    :param neighborhood_size: Size of the neighbourhood for the model.
+    :param save_data: Whether to save the prepared dataset
     :param n_runs: Number of total experiment runs.
     :param dest_path: Path to where all experiment runs will be saved as
         subfolders in this directory.
@@ -112,7 +112,7 @@ def run_experiments(*,
         mlflow.start_run(run_name=run_name)
         log_params_to_mlflow(args)
         log_tags_to_mlflow(args['run_name'])
-        models_path = get_mlflow_artifacts_path(models_path)
+        models_path = get_mlflow_artifacts_path(models_path, model_exp_name)
 
     for experiment_id in range(n_runs):
         experiment_dest_path = os.path.join(
@@ -171,6 +171,7 @@ def run_experiments(*,
                                                     filename=Experiment.INFERENCE_FAIR_METRICS,
                                                     use_mlflow=use_mlflow)
     if use_mlflow:
+        mlflow.set_experiment(experiment_name)
         mlflow.log_artifacts(dest_path, artifact_path=dest_path)
         shutil.rmtree(dest_path)
 

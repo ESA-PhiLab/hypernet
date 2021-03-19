@@ -63,7 +63,7 @@ def train(data: Dict[str, np.ndarray],
     tf.set_random_seed(seed=seed)
     np.random.seed(seed=seed)
 
-    model = models._get_model(
+    model = models.get_model(
         model_key=model_name,
         **{'input_size': sample_size,
            'n_classes': n_classes,
@@ -91,8 +91,8 @@ def train(data: Dict[str, np.ndarray],
 
     callbacks = [time_history, mcp_save, early_stopping]
 
-    train_dict = data[enums.Dataset.TRAIN]
-    val_dict = data[enums.Dataset.VAL]
+    train_dict = data[enums.Dataset.TRAIN].copy()
+    val_dict = data[enums.Dataset.VAL].copy()
 
     min_, max_ = data[enums.DataStats.MIN], data[enums.DataStats.MAX]
 
