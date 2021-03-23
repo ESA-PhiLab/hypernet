@@ -1,3 +1,16 @@
+"""
+If you plan on using this implementation, please cite our work (https://ieeexplore.ieee.org/abstract/document/8948005):
+@ARTICLE{Nalepa2020_3DCAE,
+ author={J. {Nalepa} and M. {Myller} and Y. {Imai} and K. -I. {Honda} and T. {Takeda} and M. {Antoniak}},
+ journal={IEEE Geoscience and Remote Sensing Letters},
+ title={Unsupervised Segmentation of Hyperspectral Images Using 3-D Convolutional Autoencoders},
+ year={2020},
+ volume={17},
+ number={11},
+ pages={1948-1952},
+ doi={10.1109/LGRS.2019.2960945}}
+"""
+
 import torch
 import numpy as np
 from sklearn.mixture import GaussianMixture
@@ -186,8 +199,8 @@ class DCEC(nn.Module):
                 optimizer.step()
             data_loader.sort()
             self.save_if_best(np.average(self.metrics['MSE']))
-            predicted_labels = self.cluster_with_kmeans(data_loader)
-            # predicted_labels = self.cluster_with_gaussian(data_loader)
+            # predicted_labels = self.cluster_with_kmeans(data_loader)
+            predicted_labels = self.cluster_with_gaussian(data_loader)
             self.plot_high_res(predicted_labels, data_loader.cube_2d_shape(),
                       epoch, 'kmeans')
             self.metrics['NMI'].append(self.calculate_nmi(true_labels,
