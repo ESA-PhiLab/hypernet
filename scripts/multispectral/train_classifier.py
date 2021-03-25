@@ -28,7 +28,7 @@ def train_and_eval_classifier(dataframe: pd.DataFrame,
     :param train_fraction: Fraction of samples for
         each class for stratified sampling.
     :param model_name: Name of the utilized model.
-    :param seed: Seed used for reproduction of experiment results.
+    :param seed: Seed used for reproduction of the experiment results.
     :param verbose: Verbosity mode.
     :param n_jobs: Number of jobs utilized for the parallel computing.
     :return: Tuple of the report over the test set as a dataframe
