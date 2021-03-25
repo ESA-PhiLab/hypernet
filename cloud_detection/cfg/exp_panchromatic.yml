@@ -1,0 +1,36 @@
+# Panchromatic data experiment scheme
+name: exp_panchromatic
+exp_cfg:
+  run_name: null
+  train_ids: [["Urban", "LC80460282014171LGN00"],
+              ["Barren", "LC81640502013179LGN01"],
+              ["Forest", "LC81720192013331LGN00"],
+              ["Grass-crops", "LC82020522013141LGN01"],
+              ["Shrubland", "LC80670172014206LGN00"],
+              ["Snow-ice", "LC81321192014054LGN00"],
+              ["Water", "LC82150712013152LGN00"],
+              ["Wetlands", "LC81010142014189LGN00"]]
+  test_ids: [["Barren", "LC81390292014135LGN00"],
+             ["Forest", "LC80160502014041LGN00"],
+             ["Grass-crops", "LC81220422014096LGN00"],
+             ["Shrubland", "LC80750172013163LGN00"],
+             ["Snow-ice", "LC82271192014287LGN00"],
+             ["Urban", "LC81940222013245LGN00"],
+             ["Water", "LC81910182013240LGN00"],
+             ["Wetlands", "LC81500152013225LGN00"]]
+  dpath: "datasets/clouds/Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"
+  rpath: "artifacts/"
+  vids: ["*"]
+  mlflow: False
+  train_size: 0.8
+  balance_train_dataset: False
+  balance_val_dataset: False
+  balance_snow: False
+  snow_imgs: ["LC82271192014287LGN00"]
+train_cfg:
+  batch_size: 32
+  thr: 0.5
+  learning_rate: 0.01
+  bn_momentum: 0.9
+  epochs: 200
+  stopping_patience: 20
