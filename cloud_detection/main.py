@@ -48,7 +48,7 @@ def main(
     :param C38_gtpath: path to 38-Cloud groundtruth.
     :param L8CCA_path: path to L8CCA dataset.
     :param vpath: path to 38-Cloud dataset (false color) visualisation images.
-    :param rpath: path to direcotry where results and artifacts should be
+    :param rpath: path to directory where results and artifacts should be
                   logged (randomly named directory will be created to store the
                   results).
     :param ppath: path to file with names of training patches

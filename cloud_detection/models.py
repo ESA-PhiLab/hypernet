@@ -24,6 +24,7 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
     :param input_size: Number of input channels,
                        i.e., the number of spectral bands.
     :param bn_momentum: Momentum of the batch normalization layer.
+    :return: U-Net model.
     """
 
     def contract_block(
@@ -36,6 +37,7 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
         :param filters: Number of filters of convolutional layers.
         :param kernel_size: Kernel size of convolutional layers.
         :param bn_momentum: Momentum of the batch normalization layer.
+        :return: Output of the block.
         """
         pad_l, pad_r = ceil(kernel_size / 2) - 1, floor(kernel_size / 2)
         pad_size = [[0, 0], [pad_l, pad_r], [pad_l, pad_r], [0, 0]]
@@ -66,6 +68,7 @@ def unet(input_size: int, bn_momentum: float) -> tf.keras.Model:
         :param filters: Number of filters of convolutional layers.
         :param kernel_size: Kernel size of convolutional layers.
         :param bn_momentum: Momentum of the batch normalization layer.
+        :return: Output of the block.
         """
         pad_l, pad_r = ceil(kernel_size / 2) - 1, floor(kernel_size / 2)
         pad_size = [[0, 0], [pad_l, pad_r], [pad_l, pad_r], [0, 0]]

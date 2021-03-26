@@ -103,7 +103,7 @@ class DiceCoefMetric:
 def recall(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     Calculate recall score.
-    :param y_true: True lables.
+    :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Recall score.
     """
@@ -116,7 +116,7 @@ def recall(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def precision(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     Calculate precision score.
-    :param y_true: True lables.
+    :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Precision score.
     """
@@ -129,7 +129,7 @@ def precision(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def specificity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     Calculate specificity score.
-    :param y_true: True lables.
+    :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Specificity score.
     """
@@ -145,7 +145,7 @@ def specificity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def f1_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     Calculate f1 score.
-    :param y_true: True lables.
+    :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: F1 score.
     """

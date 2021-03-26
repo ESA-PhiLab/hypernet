@@ -1,3 +1,5 @@
+""" Tests for data generator functions. """
+
 import pytest
 import numpy as np
 
