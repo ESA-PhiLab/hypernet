@@ -25,7 +25,9 @@ from cloud_detection.validate import (
 
 
 def build_rgb_scene_img(path: Path, img_id: str) -> np.ndarray:
-    """Build displayable rgb image out channel slices.
+    """
+    Build displayable rgb image out channel slices.
+
     :param path: path to directory with images.
     :param img_id: id of image to be loaded.
     :return: rgb image in numpy array.
@@ -50,6 +52,7 @@ def get_img_pred(
 ) -> Tuple[np.ndarray, float]:
     """
     Generates prediction for a given image.
+
     :param path: path containing directories with image channels.
     :param img_id: ID of the considered image.
     :param model: trained model to make predictions.
@@ -86,6 +89,7 @@ def get_img_pred(
 def load_img_gt(path: Path, fname: str) -> np.ndarray:
     """
     Load image ground truth.
+
     :param path: path containing image gts.
     :param fname: image gt file name.
     :return: image ground truth.
@@ -108,7 +112,8 @@ def evaluate_model(
     run_name=None,
 ) -> Tuple:
     """
-    Get evaluation metrics for given model on 38-Cloud testset.
+    Get evaluation metrics for given model on 38-Cloud test set.
+
     :param model: trained model to make predictions.
     :param thr: threshold.
     :param dpath: path to dataset.

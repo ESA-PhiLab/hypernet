@@ -16,6 +16,7 @@ import cloud_detection.losses
 def open_as_array(channel_files: Dict[str, Path]) -> np.ndarray:
     """
     Load image as array from given files. Normalises images on load.
+
     :param channel_files: Dict with paths to files containing each channel
                             of an image, keyed as 'red', 'green', 'blue',
                             'nir'.
@@ -42,6 +43,7 @@ def open_as_array(channel_files: Dict[str, Path]) -> np.ndarray:
 def true_positives(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     """
     Calculate matrices indicating true positives in given predictions.
+
     :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Array with values indicating true positives in predictions.
@@ -52,6 +54,7 @@ def true_positives(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
 def false_positives(y_true: np.ndarray, y_pred: np.ndarray):
     """
     Calculate matrices indicating false positives in given predictions.
+
     :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Array with values indicating false positives in predictions.
@@ -63,6 +66,7 @@ def false_positives(y_true: np.ndarray, y_pred: np.ndarray):
 def false_negatives(y_true: np.ndarray, y_pred: np.ndarray):
     """
     Calculate matrices indicating false negatives in given predictions.
+
     :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Array with values indicating false negatives in predictions.
@@ -79,6 +83,7 @@ def overlay_mask(
 ) -> np.ndarray:
     """
     Overlay a mask on image for visualization purposes.
+
     :param image: Image on which mask should be overlaid.
     :param mask: Mask which should be overlaid on the image.
     :param rgb_color: Tuple of three floats containing intensity of RGB
@@ -100,6 +105,7 @@ def overlay_mask(
 def setup_mlflow(run_name: str):
     """
     Start mlflow run with given name.
+
     :param run_name: name of the run.
     """
     mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
@@ -110,9 +116,10 @@ def setup_mlflow(run_name: str):
 def pad(img: np.ndarray, patch_size: int = 384) -> np.ndarray:
     """
     Padding of an image to divide it into patches.
-    param img: image to pad.
-    param patch_size: size of the patches.
-    return: padded image.
+
+    :param img: image to pad.
+    :param patch_size: size of the patches.
+    :return: padded image.
     """
     x_len, y_len, _ = img.shape
     x_r = (-x_len) % patch_size
@@ -125,6 +132,7 @@ def pad(img: np.ndarray, patch_size: int = 384) -> np.ndarray:
 def unpad(img: np.ndarray, gt_shape: Tuple) -> np.ndarray:
     """
     Unpadding of an image to return it to its original shape.
+
     :param img: image to unpad.
     :param gt_shape: shape of the original image.
     :return: unpadded image.
@@ -140,6 +148,7 @@ def get_metrics(
         gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) -> Dict:
     """
     Calculates evaluation metrics for a given image predictions.
+
     :param gt: image ground truth.
     :param pred: image predictions.
     :param metric_fns: list of metric functions.
@@ -171,10 +180,11 @@ def save_vis(
     """
     Save visualisations set for img of given id.
     Visualisations set includes:
-        * Mask overlay of uncertain regions of segmentation.
-        * Ground truth mask.
-        * Prediction mask.
-        * TP, FP, FN mask overlays.
+    * Mask overlay of uncertain regions of segmentation.
+    * Ground truth mask.
+    * Prediction mask.
+    * TP, FP, FN mask overlays.
+
     :param img_id: Id of visualised img,
                    will be used for naming saved artifacts.
     :param img_vis: RGB image.
@@ -208,6 +218,7 @@ def save_vis(
 def make_paths(*args: str) -> Tuple[Path]:
     """
     Make Paths out of strings.
+
     :params: strings to make into Paths.
     :return: Paths made out of input strings.
     """
@@ -219,6 +230,7 @@ class MLFlowCallback(keras.callbacks.Callback):
     def on_epoch_end(self, epoch: int, logs: Dict = None):
         """
         Triggered after each epoch, logging metrics to MLFlow.
+
         :param epoch: index of epoch.
         :param logs: logs for MLFlow.
         """

@@ -66,6 +66,7 @@ def run_experiments(*,
     :param ground_truth_path: Path to the ground-truth data file.
     :param train_size: If float, should be between 0.0 and 1.0,
         if int, it represents number of samples to draw from data.
+    :type train_size: Union[int, float]
     :param val_size: Should be between 0.0 and 1.0. Represents the
         percentage of samples to extract from the training set.
     :param sub_test_size: Number of pixels to subsample the test set

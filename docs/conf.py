@@ -18,11 +18,11 @@ sys.path.append(os.path.dirname(os.getcwd()))
 # -- Project information -----------------------------------------------------
 
 project = 'Beetles'
-copyright = '2020, KP Labs'
+copyright = '2021, KP Labs'
 author = 'KP Labs'
 
 # The full version, including alpha/beta/rc tags
-release = '1.0'
+release = '1.5'
 
 
 # -- General configuration ---------------------------------------------------

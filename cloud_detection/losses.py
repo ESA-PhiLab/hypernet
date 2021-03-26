@@ -25,6 +25,7 @@ class JaccardIndexLoss:
     def __call__(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
         """
         Calculate Jaccard index loss.
+
         :param y_true: True labels.
         :param y_pred: Predicted labels.
         :return: Jaccard index loss score value
@@ -49,8 +50,8 @@ class JaccardIndexMetric:
     def __init__(self, smooth: float = 0.0000001):
         """
         Create Jaccard index metric loss callable class.
-
         Default smoothness coefficient comes from Cloud-Net example.
+
         :param smooth: Small smoothing value to prevent zero division.
         """
         self.__name__ = "jaccard_index_metric"
@@ -59,6 +60,7 @@ class JaccardIndexMetric:
     def __call__(self, y_true: np.ndarray, y_pred: np.ndarray) -> float:
         """
         Calculate Jaccard index metric.
+
         :param y_true: True labels.
         :param y_pred: Predicted labels.
         :return: Jaccard index metric score value.
@@ -92,6 +94,7 @@ class DiceCoefMetric:
     def __call__(self, y_true: np.ndarray, y_pred: np.ndarray):
         """
         Calcualate dice coef metric.
+
         :param y_true: True labels.
         :param y_pred: Predicted labels.
         :return: Dice coef metric score value.
@@ -103,6 +106,7 @@ class DiceCoefMetric:
 def recall(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     Calculate recall score.
+
     :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Recall score.
@@ -116,6 +120,7 @@ def recall(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def precision(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     Calculate precision score.
+
     :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Precision score.
@@ -129,6 +134,7 @@ def precision(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def specificity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     Calculate specificity score.
+
     :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Specificity score.
@@ -145,6 +151,7 @@ def specificity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
 def f1_score(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     Calculate f1 score.
+
     :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: F1 score.

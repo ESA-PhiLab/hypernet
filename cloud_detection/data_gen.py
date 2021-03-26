@@ -16,6 +16,7 @@ from cloud_detection.utils import pad, open_as_array
 def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
     """
     Strips nir channel so image can be displayed.
+
     :param hyper_img: image with shape (x, y, 4) where fourth channel is nir.
     :return: image with shape (x, y, 3) with standard RGB channels.
     """
@@ -31,6 +32,7 @@ def load_image_paths(
 ) -> List[List[Dict[str, Path]]]:
     """
     Build paths to all files containing image channels.
+
     :param base_path: root path containing directories with image channels.
     :param patches_path: path to images patches names to load
                          (if None, all patches will be used).
@@ -46,6 +48,7 @@ def load_image_paths(
         """
         Get paths to 'green', 'blue', 'nir' and 'gt' channel files
         based on path to the 'red' channel of the given image.
+
         :param red_file: path to red channel file.
         :return: dictionary containing paths to files with each image channel.
         """
@@ -62,6 +65,7 @@ def load_image_paths(
     ) -> List[Dict[str, Path]]:
         """
         Build paths to all files containing image channels.
+
         :param base_path: root path containing directories with image channels.
         :param patches_path: path to images patches names to load
                              (if None, all patches will be used).
@@ -121,7 +125,6 @@ class DG_38Cloud(keras.utils.Sequence):
     Data generator for Cloud38 clouds segmentation dataset.
     Works with Keras generators.
     """
-
     def __init__(
         self,
         files: List[Dict[str, Path]],
@@ -134,6 +137,7 @@ class DG_38Cloud(keras.utils.Sequence):
     ):
         """
         Prepare generator and init paths to files containing image channels.
+
         :param files: List of dicts containing paths to rgb channels of each
             image in dataset.
         :param batch_size: size of generated batches, only one batch is loaded
@@ -163,6 +167,7 @@ class DG_38Cloud(keras.utils.Sequence):
     def _perform_balancing(self, labels: List):
         """
         Perform balancing on given images.
+
         :param labels: List of pseudo-labels for indexing. For each patch in
                        the dataset should contain 1 if image is to be
                        balanced, otherwise should be 0.
@@ -198,6 +203,7 @@ class DG_38Cloud(keras.utils.Sequence):
         Returns the pseudo-labels for each patch. Pseudo-label being
         1 if certain percent of pixels in patch are above brightness threshold,
         and 0 otherwise.
+
         :param brightness_thr: brightness threshold of the pixel
                                (in relation to brightest pixel in patch)
                                to classify it as snow.
@@ -236,6 +242,7 @@ class DG_38Cloud(keras.utils.Sequence):
     def _open_mask(self, channel_files: Dict[str, Path]) -> np.ndarray:
         """
         Load ground truth mask as array from given files.
+
         :param channel_files: Dict with paths to files containing each channel
                               of an image, must contain key 'gt'.
         """
@@ -245,6 +252,7 @@ class DG_38Cloud(keras.utils.Sequence):
     def _data_generation(self, file_indexes_to_gen: np.arange) -> Tuple:
         """
         Generates data containing batch_size samples.
+
         :param file_indexes_to_gen: Sequence of indexes of files from which
                                     images should be loaded.
         :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
@@ -275,6 +283,7 @@ class DG_38Cloud(keras.utils.Sequence):
     def __len__(self) -> int:
         """
         Denotes the number of batches per epoch.
+
         :return: number of batches per epoch.
         """
         return int(np.ceil(len(self._file_indexes) / self._batch_size))
@@ -282,6 +291,7 @@ class DG_38Cloud(keras.utils.Sequence):
     def __getitem__(self, index: int) -> Tuple[np.ndarray]:
         """
         Generates one batch of data.
+
         :param index: index of the batch to return.
         :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
                  where x is set of RGB + nir images and y is set of
@@ -312,6 +322,7 @@ class DG_L8CCA(keras.utils.Sequence):
     ):
         """
         Prepare generator and init paths to files containing image channels.
+
         :param img_path: path to the main directory with test scenes.
         :param img_name: name of the image to generate patches from.
         :param batch_size: size of generated batches, only one batch is loaded
@@ -350,6 +361,7 @@ class DG_L8CCA(keras.utils.Sequence):
     def __len__(self):
         """
         Denotes the number of batches per epoch.
+
         :return: number of batches per epoch.
         """
         return int(np.ceil(len(self.patches) / self._batch_size))
@@ -357,6 +369,7 @@ class DG_L8CCA(keras.utils.Sequence):
     def __getitem__(self, index: int) -> Tuple[np.ndarray, None]:
         """
         Generates one batch of data.
+
         :param index: index of the batch to return.
         :return: (x, None) data for one batch,
                  where x is set of RGB + nir images.

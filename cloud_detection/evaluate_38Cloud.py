@@ -31,6 +31,7 @@ from cloud_detection.utils import (
 def get_full_scene_img(path: Path, img_id: str) -> np.ndarray:
     """
     Get image of given id as np.array with values in range 0 to 1.
+
     :param path: path to the dataset.
     :param img_id: ID of the image.
     :return: image.
@@ -45,6 +46,7 @@ def get_img_pred(
 ) -> Tuple[np.ndarray, float]:
     """
     Generates prediction for a given image.
+
     :param path: path containing directories with image channels.
     :param img_id: ID of the considered image.
     :param model: trained model to make predictions.
@@ -80,6 +82,7 @@ def get_img_pred(
 def get_img_pred_shape(files: List[Dict[str, Path]], patch_size: int) -> Tuple:
     """
     Infers shape of the predictions of the considered image.
+
     :param files: paths to patch files;
           structured as: list_of_files['file_channel', Path].
     :param patch_size: size of the image patches.
@@ -98,6 +101,7 @@ def get_img_pred_shape(files: List[Dict[str, Path]], patch_size: int) -> Tuple:
 def load_img_gt(path: Path, fname: str) -> np.ndarray:
     """
     Load image ground truth.
+
     :param path: path containing image gts.
     :param fname: image gt file name.
     :return: image ground truth.
@@ -121,6 +125,7 @@ def evaluate_model(
 ) -> Tuple:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
+
     :param model: trained model to make predictions.
     :param thr: threshold to be used during evaluation.
     :param dpath: path to dataset.

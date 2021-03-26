@@ -22,6 +22,7 @@ def datagen_to_gt_array(datagen: keras.utils.Sequence) -> np.ndarray:
     """
     Load all gt masks from data generator and store them in RAM at once
     inside a np.array.
+
     :param datagen: data generator to load gt masks from.
     :return: array of gt masks.
     """
@@ -36,6 +37,7 @@ def datagen_to_gt_array(datagen: keras.utils.Sequence) -> np.ndarray:
 def find_best_thr(fpr: np.ndarray, tpr: np.ndarray, thr: np.ndarray) -> float:
     """
     Find best threshold based on ROC curve.
+
     :param fpr: False positives rate ROC axis.
     :param tpr: True positives rate ROC axis.
     :param thr: Thresholds corresponding to ROC points.
@@ -57,6 +59,7 @@ def make_roc(
 ) -> float:
     """
     Make ROC curve and save it, get best thr based on the ROC.
+
     :param y_gt: Array of ground truth masks.
     :param y_pred: Array of predictions.
     :param output_dir: Path to directory where ROC should be saved.
@@ -96,6 +99,7 @@ def make_roc(
 def make_activation_hist(y_pred: np.ndarray, output_dir: Path):
     """
     Make histogram of prediction activations.
+
     :param y_pred: Array of predictions.
     :param output_dir: Path to directory where hist should be saved.
     """
@@ -110,6 +114,7 @@ def make_precision_recall(
 ):
     """
     Make precision recall curve and save it.
+
     :param y_gt: Array of ground truth masks.
     :param y_pred: Array of predictions.
     :param output_dir: Path to directory where curve should be saved.
@@ -147,6 +152,7 @@ def make_validation_insights(
     Make validation insights including:
         * Making ROC and finding best thr on ROC.
         * Making precision-recall curve.
+
     :param model: Model to validate.
     :param datagen: Validation data generator.
     :param output_dir: Path to directory where artifacts should be saved.
@@ -165,6 +171,7 @@ def make_validation_insights(
 def find_nearest(array: Sequence, value: float) -> float:
     """
     In an array find a value that is closest to the given one.
+
     :param array: Sequence inside which closest value will be found.
     :param value: Value for which the closest one in the array will be found.
     :return: value inside the 'array' param that is closest to the 'value'
