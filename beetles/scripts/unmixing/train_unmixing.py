@@ -40,30 +40,30 @@ def train(data: Dict[str, np.ndarray],
     :param model_name: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
     :param dest_path: Path to where all experiment runs will be saved as
-        subdirectories in this given directory.
-    :param sample_size: Size of the input sample.
+        subdirectories in this directory.
+    :param sample_size: Spectral size of the input sample.
     :param n_classes: Number of classes.
     :param neighborhood_size: Size of the spatial patch.
-    :param lr: Learning rate for the model, i.e., regulates
+    :param lr: Learning rate for the model i.e., it regulates
         the size of the step in the gradient descent process.
     :param batch_size: Size of the batch used in training phase,
-        it is the size of samples per gradient step.
-    :param epochs: Number of epochs for model to train.
+        it is the number of samples per gradient step.
+    :param epochs: Number of epochs for the model to train.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
-    :param shuffle: Boolean indicating whether to shuffle dataset.
+    :param shuffle: Boolean indicating whether to shuffle the dataset.
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
-    :param endmembers_path: Path to the endmembers matrix file,
-        containing the average reflectances for each endmember,
-        i.e., the pure spectra.
-    :param seed: Seed for training reproducibility.
+    :param endmembers_path: Path to the endmembers file
+        containing the average reflectances for each class
+        i.e., the pure spectra. Used only when use_unmixing is set to True.
+    :param seed: Seed for experiment reproducibility.
     """
     # Reproducibility:
     tf.reset_default_graph()
     tf.set_random_seed(seed=seed)
     np.random.seed(seed=seed)
 
-    model = models._get_model(
+    model = models.get_model(
         model_key=model_name,
         **{'input_size': sample_size,
            'n_classes': n_classes,
@@ -91,8 +91,8 @@ def train(data: Dict[str, np.ndarray],
 
     callbacks = [time_history, mcp_save, early_stopping]
 
-    train_dict = data[enums.Dataset.TRAIN]
-    val_dict = data[enums.Dataset.VAL]
+    train_dict = data[enums.Dataset.TRAIN].copy()
+    val_dict = data[enums.Dataset.VAL].copy()
 
     min_, max_ = data[enums.DataStats.MIN], data[enums.DataStats.MAX]
 

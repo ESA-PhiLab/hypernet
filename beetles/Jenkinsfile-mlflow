@@ -1,9 +1,9 @@
 @Library('obc-jpl') _
 pipeline {
     agent { label "${params.label}" }
-    options { disableConcurrentBuilds() }
     environment {
-        def DOCKER_FLAGS = "--shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --gpus 1 --rm"
+        def EXECUTOR_ID = "${env.EXECUTOR_NUMBER}"
+        def DOCKER_FLAGS = "--shm-size=1g --ulimit memlock=-1 --ulimit stack=67108864 --gpus device=${EXECUTOR_ID} --rm"
         def SCM_VARS = checkout scm
         def COMMIT_ID = "${SCM_VARS.GIT_COMMIT.take(7)}"
         }
@@ -23,7 +23,7 @@ pipeline {
         }
         stage('Run') {
             steps {
-                sh "docker run ${DOCKER_FLAGS} -v /media/ML:/media/ML beetle:${COMMIT_ID} '${params.command_run}'"
+                sh "docker run ${DOCKER_FLAGS} -v /media/ML:/media/ML -v ${WORKSPACE}/datasets:/workspace/datasets beetle:${COMMIT_ID} '${params.command_run}'"
             }
         }
     }

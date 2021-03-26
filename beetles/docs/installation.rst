@@ -1,6 +1,6 @@
-*****
+************
 Installation
-*****
+************
 
 For the environment management in our repo, we utilize `conda`.
 

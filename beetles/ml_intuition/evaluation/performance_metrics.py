@@ -45,17 +45,18 @@ def spectral_information_divergence_loss(y_true: tf.Tensor,
     [n_samples, n_classes], [n_samples, n_bands].
     :return: The spectral information divergence loss.
     """
-    y_true_row_sum = tf.reduce_sum(y_true, 1)
-    y_pred_row_sum = tf.reduce_sum(y_pred, 1)
-    y_true = y_true / tf.reshape(y_true_row_sum, (-1, 1))
-    y_pred = y_pred / tf.reshape(y_pred_row_sum, (-1, 1))
-    y_true, y_pred = tf.keras.backend.clip(y_true,
-                                           tf.keras.backend.epsilon(), 1), \
-                     tf.keras.backend.clip(y_pred,
-                                           tf.keras.backend.epsilon(), 1)
-    loss = tf.reduce_sum(y_true * tf.log(y_true / y_pred)) + \
-           tf.reduce_sum(y_pred * tf.log(y_pred / y_true))
-    return loss
+    log_base_change = tf.log(tf.constant(2, dtype=y_true.dtype))
+    y_true = y_true / tf.reshape(tf.reduce_sum(y_true, axis=1), (-1, 1))
+    y_pred = y_pred / tf.reshape(tf.reduce_sum(y_pred, axis=1), (-1, 1))
+    y_true += tf.keras.backend.epsilon()
+    y_pred += tf.keras.backend.epsilon()
+
+    loss = tf.reduce_sum(
+        y_true * (tf.log(y_true / y_pred) / log_base_change))
+
+    loss_prime = tf.reduce_sum(
+        y_pred * (tf.log(y_pred / y_true) / log_base_change))
+    return loss + loss_prime
 
 
 def average_angle_spectral_mapper(y_true: tf.Tensor,
@@ -186,7 +187,8 @@ def mean_per_class_accuracy(y_true: np.ndarray,
     :param y_true: Labels as a one-dimensional numpy array.
     :param y_pred: Model's predictions as a one-dimensional numpy array.
     """
-    conf_matrix = confusion_matrix(y_true, y_pred)
+    max_label = max(y_true) if max(y_true) >= max(y_pred) else max(y_pred)
+    conf_matrix = confusion_matrix(y_true, y_pred, labels=list(range(max_label + 1)))
     return conf_matrix.diagonal() / conf_matrix.sum(axis=1)
 
 
@@ -259,7 +261,6 @@ def calculate_unmixing_metrics(**kwargs) -> Dict[str, List[float]]:
     :param kwargs: Additional keyword arguments.
     """
     model_metrics = {}
-    print(kwargs['y_pred'].shape)
     for f_name, f_metric in UNMIXING_TEST_METRICS.items():
         model_metrics[f_name] = [float(convert_to_tensor(f_metric)
                                        (y_true=kwargs['y_true'],

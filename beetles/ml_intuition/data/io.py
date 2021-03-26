@@ -1,14 +1,15 @@
 """
 All I/O related functions
 """
-
 import csv
 import glob
+import json
 import os
 from typing import Dict, List, Tuple, Union
 
 import h5py
 import numpy as np
+import pandas as pd
 import tensorflow as tf
 import tifffile
 
@@ -223,3 +224,31 @@ def save_confusion_matrix(matrix: np.ndarray, dest_path: str,
     """
     np.savetxt(os.path.join(dest_path, filename + '.csv'), matrix,
                delimiter=',', fmt='%d')
+
+
+def save_ml_report(output_dir_path: str,
+                   model_name: str,
+                   test_report: pd.DataFrame,
+                   best_params: Dict,
+                   train_fraction: float) -> None:
+    """
+    Save the test report and parameters obtained from the best model.
+
+    :param output_dir_path: Path to the output directory.
+    :param model_name: Name of the model.
+    :param test_report: Report over the test set.
+    :param best_params: Best parameters found by the grid search.
+    :param norm: Normalization used for the dataset.
+    :param train_fraction: Fraction of training samples.
+    :return: None.
+    """
+    dest_dir_name = f'{model_name}_{train_fraction}'
+    os.makedirs(os.path.join(output_dir_path, dest_dir_name), exist_ok=True)
+    test_report.to_csv(os.path.join(output_dir_path,
+                                    dest_dir_name,
+                                    f'{dest_dir_name}_report.csv'))
+    with open(os.path.join(output_dir_path,
+                           dest_dir_name,
+                           f'{dest_dir_name}_best_params.json'),
+              'w') as params_file:
+        json.dump(best_params, params_file)
