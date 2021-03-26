@@ -22,28 +22,27 @@ def evaluate(*,
              voting_model: str = None,
              voting_model_params: str = None):
     """
-    :param y_pred: Predictions of test set.
+    Evaluate the ensemble for the unmixing problem.
+
+    :param y_pred: Predictions made on the test set.
     :param data: Either path to the input data or the data dict.
-    :param dest_path: Directory in which to store the calculated metrics
-    :param voting: Method of ensemble voting. If ‘hard’, uses predicted class
-        labels for majority rule voting. Else if ‘soft’, predicts the class
-        label based on the argmax of the sums of the predicted probabilities.
-        Else if 'booster', employs a new model, which is trained on the
+    :param dest_path: Directory in which to store the calculated metrics.
+    :param voting: Method of ensemble voting. If 'booster',
+        employs a new model, which is trained on the
         ensemble predictions on the training set. Else if 'mean', averages
         the predictions of all models, without any weights.
-    :param train_set_predictions: Predictions of the train set. Only used if
-        'voting' = 'booster'.
-    :param voting_model: Type of model to use when the voting argument is set
-        to 'booster'. This indicates, that a new model is trained on the
-        ensemble predictions on the learning set,
-        to leverage the quality of the classification or
-        regression. Supported models are: SVR, SVC (support vector machine for
-        regression and classification), RFR, RFC (random forest for regression
-        and classification), DTR, DTC (decision tree for regression and
-        classification).
-    :param voting_model_params: Parameters of the voting model,
-        should be specified in the same manner
-        as the parameters for the noise injection.
+    :param train_set_predictions: Predictions made on the train set.
+        Only used if 'voting' = 'booster'.
+   :param voting_model: Type of the model to use when the voting
+        argument is set to 'booster'. This indicates, that a new model
+        is trained on the ensemble's predictions on the learning set,
+        to leverage the quality of the regression. Supported models are:
+        SVR (support vector machine for regression), RFR (random forest
+        for regression) and DTR (decision tree for regression).
+    :param voting_model_params: Parameters of the voting model.
+        Used only when the type of voting is set to 'booster'.
+        Should be specified analogously to the noise injection parameters
+        in the 'noise' module.
     """
     ensemble = Ensemble(voting=voting)
     if voting == 'booster':

@@ -1,5 +1,5 @@
 """
-Run experiments given set of hyperparameters for the unmixing problem.
+Run inference given set of hyperparameters for the unmixing problem.
 """
 
 import os
@@ -21,7 +21,6 @@ from scripts.unmixing import evaluate_unmixing
 def run_experiments(*,
                     data_file_path: str = None,
                     ground_truth_path: str = None,
-                    dataset_path: str = None,
                     train_size: int,
                     val_size: float = 0.1,
                     sub_test_size: int,
@@ -46,50 +45,64 @@ def run_experiments(*,
                     model_exp_name: str = None,
                     run_name: str = None):
     """
-    Function for running experiments given a set of hyperparameters.
-    :param data_file_path: Path to the data file. Supported types are: .npy
+    Function for running the inference for the unmixing problem
+    given a set of hyperparameters.
+
+    :param data_file_path: Path to the data file. It should be a numpy array.
     :param ground_truth_path: Path to the ground-truth data file.
-    :param dataset_path: Path to the already extracted .h5 dataset
+        It should be a numpy array.
     :param train_size: If float, should be between 0.0 and 1.0,
-        if int it represents number of samples to draw.
+        if int, it represents number of samples to draw from data.
     :param val_size: Should be between 0.0 and 1.0. Represents the
         percentage of samples to extract from the training set.
     :param sub_test_size: Number of pixels to subsample the test set
-        instead of performing the inference on all untrained samples.
-    :param channels_idx: Index specifying the channels position in the provided
-                         data
-    :param neighborhood_size: Size of the neighbourhood for the model.
-    :param save_data: Whether to save the prepared dataset
+        instead of performing the inference on the entire subset.
+    :param channels_idx: Index specifying the channels
+        position in the provided data.
+    :param neighborhood_size: Size of the spatial patch.
+    :param save_data: Boolean indicating whether to save the prepared dataset.
     :param n_runs: Number of total experiment runs.
-    :param dest_path: Path to where all experiment runs will be saved as
-        subfolders in this directory.
-    :param models_path: Name of the model, it serves as a key in the
+    :param dest_path: Path to the directory where all experiment runs
+        will be saved as subdirectories.
+    :param models_path: Path to the directory where the previously trained
+        models are stored.
+    :param model_name: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
-    :param model_name: The name of model for the inference.
     :param n_classes: Number of classes.
-    :param use_ensemble: Use ensemble for prediction.
+    :param use_ensemble: Boolean indicating whether to use the
+        ensemble functionality for prediction.
     :param ensemble_copies: Number of model copies for the ensemble.
-    :param voting: Type of voting to utilize with the ensembles.
-    :param voting_model: Type of the voting model to use.
+    :param voting: Method of ensemble voting. If 'booster',
+        employs a new model, which is trained on the
+        ensemble predictions on the training set. Else if 'mean', averages
+        the predictions of all models, without any weights.
+    :param voting_model: Type of the model to use when the voting
+        argument is set to 'booster'. This indicates, that a new model
+        is trained on the ensemble's predictions on the learning set,
+        to leverage the quality of the regression. Supported models are:
+        SVR (support vector machine for regression), RFR (random forest
+        for regression) and DTR (decision tree for regression).
     :param voting_model_params: Parameters of the voting model.
-        Used only when the type of voting is set to "booster".
-    :param batch_size: Size of the batch for the inference
-    :param noise_params: JSON containing the parameter
-        setting of injection methods.
-        Exemplary value for this parameter: "{"mean": 0, "std": 1, "pa": 0.1}".
-        This JSON should include all parameters for noise injection
-        functions that are specified in pre_noise and post_noise arguments.
-        For the accurate description of each parameter, please
-        refer to the ml_intuition/data/noise.py module.
+        Used only when the type of voting is set to 'booster'.
+        Should be specified analogously to the noise injection parameters
+        in the 'noise' module.
+    :param batch_size: Size of the batch used in training phase,
+        it is the number of samples to utilize per single gradient step.
+    :param noise_params: Parameters for the noise when creating
+        copies of the base model. Those can be for instance the mean,
+        or standard deviation of the noise.
+        For the details see the 'noise' module.
+        Exemplary value for this parameter is "{"mean": 0, "std": 1}".
     :param endmembers_path: Path to the endmembers file containing
-        average reflectances for each class.
-        Used only when use_unmixing is true.
-    :param use_mlflow: Whether to log metrics and artifacts to mlflow.
+        the average reflectances for each class. Used only when
+        'use_unmixing' is set to True.
+    :param use_mlflow: Boolean indicating whether to log metrics
+        and artifacts to mlflow.
     :param experiment_name: Name of the experiment. Used only if
-        use_mlflow = True.
+        'use_mlflow' is set to True.
     :param model_exp_name: Name of the experiment. Used only if
-        use_mlflow = True.
-    :param run_name: Name of the run. Used only if use_mlflow = True.
+        'use_mlflow' is set to True.
+    :param run_name: Name of the run. Used only if 'use_mlflow' is set to True.
     """
     if use_mlflow:
         args = locals()
