@@ -21,7 +21,9 @@ import cloud_detection.losses
 def datagen_to_gt_array(datagen: keras.utils.Sequence) -> np.ndarray:
     """
     Load all gt masks from data generator and store them in RAM at once
-    inside a np.array
+    inside a np.array.
+    :param datagen: data generator to load gt masks from.
+    :return: array of gt masks.
     """
     ret = []
     # Keras internals force usage of range(len()) here instead of enumerate
@@ -172,7 +174,8 @@ def find_nearest(array: Sequence, value: float) -> float:
     return (np.abs(array - value)).argmin()
 
 
-def main():
+def validate_demo():
+    """ Demo of the validation function. """
     train_size = 0.8
     dpath = Path("../datasets/clouds/38-Cloud/38-Cloud_training")
     batch_size = 8
@@ -208,4 +211,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    validate_demo()

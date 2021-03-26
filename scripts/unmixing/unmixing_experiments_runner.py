@@ -65,38 +65,39 @@ def run_experiments(*,
     :param data_file_path: Path to the data file. Supported types are: .npy.
     :param ground_truth_path: Path to the ground-truth data file.
     :param train_size: If float, should be between 0.0 and 1.0,
-        if int it represents number of samples to draw.
+        if int, it represents number of samples to draw from data.
     :param val_size: Should be between 0.0 and 1.0. Represents the
         percentage of samples to extract from the training set.
     :param sub_test_size: Number of pixels to subsample the test set
-        instead of performing the inference on all
-        samples that are not in the training set.
-    :param channels_idx: Index specifying the channels position in the provided data.
+        instead of performing the inference on the entire subset.
+    :param channels_idx: Index specifying the channels
+        position in the provided data.
     :param neighborhood_size: Size of the spatial patch.
     :param save_data: Boolean indicating whether to save the prepared dataset.
     :param n_runs: Number of total experiment runs.
     :param model_name: Name of the model, it serves as a key in the
         dictionary holding all functions returning models.
-    :param dest_path: Path to where all experiment runs will be saved as
-        subdirectories in this directory.
-    :param sample_size: Size of the input sample.
+    :param dest_path: Path to the directory where all experiment runs
+        will be saved as subdirectories.
+    :param sample_size: Spectral size of the input sample.
     :param n_classes: Number of classes.
-    :param lr: Learning rate for the model, i.e., regulates
+    :param lr: Learning rate for the model i.e., it regulates
         the size of the step in the gradient descent process.
     :param batch_size: Size of the batch used in training phase,
-        it is the size of samples per gradient step.
-    :param epochs: Number of epochs for model to train.
+        it is the number of samples to utilize per single gradient step.
+    :param epochs: Total number of epochs for model to train.
     :param verbose: Verbosity mode used in training, (0, 1 or 2).
     :param shuffle: Boolean indicating whether to shuffle dataset.
     :param patience: Number of epochs without improvement in order to
         stop the training phase.
-    :param use_mlflow: Whether to log metrics and artifacts to mlflow.
-    :param endmembers_path: Path to the endmembers matrix file,
-        containing the average reflectances for each endmember,
-        i.e., the pure spectra.
+    :param use_mlflow: Boolean indicating whether to log metrics
+        and artifacts to mlflow.
+    :param endmembers_path: Path to the endmembers file containing
+        the average reflectances for each class. Used only when
+        'use_unmixing' is set to True.
     :param experiment_name: Name of the experiment. Used only if
-        use_mlflow = True.
-    :param run_name: Name of the run. Used only if use_mlflow = True.
+        'use_mlflow' is set to True.
+    :param run_name: Name of the run. Used only if 'use_mlflow' is set to True.
     """
     if use_mlflow:
         args = locals()

@@ -1,4 +1,4 @@
-""" Get evaluation metrics for given model on 38-Cloud testset. """
+""" Get evaluation metrics for given model on 38-Cloud test set. """
 
 import os
 import re
@@ -29,7 +29,12 @@ from cloud_detection.utils import (
 
 
 def get_full_scene_img(path: Path, img_id: str) -> np.ndarray:
-    """ Get image of given id as np.array with values in range 0 to 1."""
+    """
+    Get image of given id as np.array with values in range 0 to 1.
+    :param path: path to the dataset.
+    :param img_id: ID of the image.
+    :return: image.
+    """
     img_path = next(path.glob("*" + img_id + "*"))
     return np.array(load_img(img_path)) / 255
 
@@ -46,7 +51,7 @@ def get_img_pred(
     :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
     :param patch_size: size of the image patches.
-    :return: prediction for the given image.
+    :return: prediction for the given image along with evaluation time.
     """
     (test_files,) = load_image_paths(
         base_path=path, split_ratios=[1.0], shuffle=False, img_id=img_id
@@ -125,15 +130,17 @@ def evaluate_model(
                   should be logged.
     :param vids: tuple of ids of images which should be used
                  to create visualisations. If contains '*' visualisations
-                 will be created for all imagesin the dataset.
+                 will be created for all images in the dataset.
     :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
     :param img_ids: if given, process only these images.
+    :param mlflow: whether to use MLFlow.
+    :param run_name: name of the run.
     :return: evaluation metrics.
     """
     Path(rpath).mkdir(parents=True, exist_ok=False)
     if mlflow:
-        setup_mlflow(locals())
+        setup_mlflow(run_name)
     metrics = {}
     scene_times = []
     for metric_fn in model.metrics:

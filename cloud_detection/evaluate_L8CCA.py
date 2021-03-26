@@ -47,7 +47,7 @@ def build_rgb_scene_img(path: Path, img_id: str) -> np.ndarray:
 def get_img_pred(
     path: Path, img_id: str, model: keras.Model, batch_size: int,
     patch_size: int = 384
-) -> np.ndarray:
+) -> Tuple[np.ndarray, float]:
     """
     Generates prediction for a given image.
     :param path: path containing directories with image channels.
@@ -56,7 +56,7 @@ def get_img_pred(
     :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
     :param patch_size: size of the image patches.
-    :return: prediction for a given image.
+    :return: prediction for a given image along with evaluation time.
     """
     testgen = DG_L8CCA(
         img_path=path, img_name=img_id, batch_size=batch_size, shuffle=False
@@ -120,11 +120,13 @@ def evaluate_model(
     :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
     :param img_ids: if given, process only these images.
+    :param mlflow: whether to use MLFlow.
+    :param run_name: name of the run.
     :return: evaluation metrics.
     """
     Path(rpath).mkdir(parents=True, exist_ok=False)
     if mlflow:
-        setup_mlflow(locals())
+        setup_mlflow(run_name)
     metrics = {}
     scene_times = []
     for metric_fn in model.metrics:

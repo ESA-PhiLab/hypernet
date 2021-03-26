@@ -1,3 +1,5 @@
+""" Tests for losses functions. """
+
 import pytest
 import tensorflow.keras.backend as K
 from tensorflow.debugging import assert_near

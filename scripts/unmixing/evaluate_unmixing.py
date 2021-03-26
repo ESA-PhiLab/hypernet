@@ -1,5 +1,5 @@
 """
-Perform the inference of the unmixing models on the test dataset.
+Perform the inference of the unmixing model on the test dataset.
 """
 
 import os
@@ -35,24 +35,33 @@ def evaluate(data,
     Function for evaluating the trained model for the unmixing problem.
 
     :param model_path: Path to the model.
-    :param data: The data dictionary containing the subset for testing.
-    :param dest_path: Directory in which to store the calculated metrics.
+    :param data: Either path to the input data or the data dict.
+    :param dest_path: Path to the directory to store the calculated metrics.
     :param neighborhood_size: Size of the spatial patch.
     :param batch_size: Size of the batch for inference.
     :param endmembers_path: Path to the endmembers file containing
         average reflectances for each class.
-        Used only when use_unmixing is true.
+        Used only when use_unmixing is set to True.
     :param use_ensemble: Boolean indicating whether
         to use ensembles functionality.
     :param ensemble_copies: Number of copies of the original model to create.
     :param noise_params: Parameters for the noise when creating
-        copies of the base model.
-        In the unmixing problem, two types are possible i.e., the "mean" as
-        well as the "booster" variant.
-    :param voting: Type of voting to utilize with the ensembles.
-    :param voting_model: Type of the voting model to use.
+        copies of the base model. Those can be for instance the mean,
+        or standard deviation of the noise.
+    :param voting: Method of ensemble voting. If 'booster',
+        employs a new model, which is trained on the
+        ensemble predictions on the training set. Else if 'mean', averages
+        the predictions of all models, without any weights.
+    :param voting_model: Type of the model to use when the voting
+        argument is set to 'booster'. This indicates, that a new model
+        is trained on the ensemble's predictions on the learning set,
+        to leverage the quality of the regression. Supported models are:
+        SVR (support vector machine for regression), RFR (random forest
+        for regression) and DTR (decision tree for regression).
     :param voting_model_params: Parameters of the voting model.
-        Used only when the type of voting is set to "booster".
+        Used only when the type of voting is set to 'booster'.
+        Should be specified analogously to the noise injection parameters
+        in the 'noise' module.
     :param seed: Parameter used for the experiments reproduction.
     """
     model_name = os.path.basename(model_path)
