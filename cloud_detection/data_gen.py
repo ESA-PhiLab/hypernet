@@ -1,4 +1,4 @@
-""" Generator based data loader for Cloud38 clouds segmentation dataset. """
+""" Generator based data loader for Cloud38 and L8CCA clouds segmentation datasets. """
 
 import math
 
@@ -266,18 +266,23 @@ class DG_38Cloud(keras.utils.Sequence):
 
     def on_epoch_end(self):
         """
-        Triggered after each epoch, if shuffle is randomises file indexing.
+        Triggered after each epoch,
+        if shuffle is True randomises file indexing.
         """
         if self._shuffle:
             np.random.shuffle(self._file_indexes)
 
-    def __len__(self):
-        """ Denotes the number of batches per epoch. """
+    def __len__(self) -> int:
+        """
+        Denotes the number of batches per epoch.
+        :return: number of batches per epoch.
+        """
         return int(np.ceil(len(self._file_indexes) / self._batch_size))
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> Tuple[np.ndarray]:
         """
         Generates one batch of data.
+        :param index: index of the batch to return.
         :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
                  where x is set of RGB + nir images and y is set of
                  corresponding cloud masks.
@@ -308,6 +313,7 @@ class DG_L8CCA(keras.utils.Sequence):
         """
         Prepare generator and init paths to files containing image channels.
         :param img_path: path to the main directory with test scenes.
+        :param img_name: name of the image to generate patches from.
         :param batch_size: size of generated batches, only one batch is loaded
             to memory at a time.
         :param patch_size: size of the patches.
@@ -335,21 +341,25 @@ class DG_L8CCA(keras.utils.Sequence):
 
     def on_epoch_end(self):
         """
-        Triggered after each epoch, if shuffle is randomises file indexing.
+        Triggered after each epoch,
+        if shuffle is True randomises file indexing.
         """
         if self._shuffle:
             np.random.shuffle(self.patches)
 
     def __len__(self):
-        """ Denotes the number of batches per epoch. """
+        """
+        Denotes the number of batches per epoch.
+        :return: number of batches per epoch.
+        """
         return int(np.ceil(len(self.patches) / self._batch_size))
 
-    def __getitem__(self, index: int):
+    def __getitem__(self, index: int) -> Tuple[np.ndarray, None]:
         """
         Generates one batch of data.
-        :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
-                 where x is set of RGB + nir images and y is set of
-                 corresponding cloud masks.
+        :param index: index of the batch to return.
+        :return: (x, None) data for one batch,
+                 where x is set of RGB + nir images.
         """
         return (
             self.patches[index *

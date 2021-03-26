@@ -42,7 +42,7 @@ def open_as_array(channel_files: Dict[str, Path]) -> np.ndarray:
 def true_positives(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
     """
     Calculate matrices indicating true positives in given predictions.
-    :param y_true: True lables.
+    :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Array with values indicating true positives in predictions.
     """
@@ -52,7 +52,7 @@ def true_positives(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
 def false_positives(y_true: np.ndarray, y_pred: np.ndarray):
     """
     Calculate matrices indicating false positives in given predictions.
-    :param y_true: True lables.
+    :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Array with values indicating false positives in predictions.
     """
@@ -63,7 +63,7 @@ def false_positives(y_true: np.ndarray, y_pred: np.ndarray):
 def false_negatives(y_true: np.ndarray, y_pred: np.ndarray):
     """
     Calculate matrices indicating false negatives in given predictions.
-    :param y_true: True lables.
+    :param y_true: True labels.
     :param y_pred: Predicted labels.
     :return: Array with values indicating false negatives in predictions.
     """
@@ -75,7 +75,8 @@ def overlay_mask(
     image: np.ndarray,
     mask: np.ndarray,
     rgb_color: Tuple[float, float, float],
-    overlay_intensity: float = 0.5) -> np.ndarray:
+    overlay_intensity: float = 0.5
+) -> np.ndarray:
     """
     Overlay a mask on image for visualization purposes.
     :param image: Image on which mask should be overlaid.
@@ -86,6 +87,7 @@ def overlay_mask(
         set color of the overlay mask.
     :param overlay_intensity: Intensity of the overlaid mask. Should be
         between 0 and 1.
+    :return: mask overlaid on image.
     """
     image = np.copy(image)
     for i, color in enumerate(rgb_color):
@@ -96,7 +98,10 @@ def overlay_mask(
 
 
 def setup_mlflow(run_name: str):
-    """Start mlflow run with given name."""
+    """
+    Start mlflow run with given name.
+    :param run_name: name of the run.
+    """
     mlflow.set_tracking_uri("http://beetle.mlflow.kplabs.pl")
     mlflow.set_experiment("cloud_detection")
     mlflow.start_run(run_name=run_name)
@@ -172,6 +177,7 @@ def save_vis(
         * TP, FP, FN mask overlays.
     :param img_id: Id of visualised img,
                    will be used for naming saved artifacts.
+    :param img_vis: RGB image.
     :param img_pred: Prediction mask, result of segmentation.
     :param img_gt: Ground truth mask.
     :param rpath: Path where artifacts should be saved.
@@ -199,11 +205,21 @@ def save_vis(
     io.imsave(rpath / "masks.png", img_as_ubyte(mask_vis))
 
 
-def make_paths(*args):
+def make_paths(*args: str) -> Tuple[Path]:
+    """
+    Make Paths out of strings.
+    :params: strings to make into Paths.
+    :return: Paths made out of input strings.
+    """
     paths = [Path(path) if path is not None else None for path in [*args]]
     return tuple(paths)
 
 
 class MLFlowCallback(keras.callbacks.Callback):
-    def on_epoch_end(self, epoch, logs=None):
+    def on_epoch_end(self, epoch: int, logs: Dict = None):
+        """
+        Triggered after each epoch, logging metrics to MLFlow.
+        :param epoch: index of epoch.
+        :param logs: logs for MLFlow.
+        """
         mlflow.log_metrics(logs, step=epoch)
