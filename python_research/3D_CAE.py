@@ -10,18 +10,24 @@ If you plan on using this implementation, please cite our work (https://ieeexplo
  pages={1948-1952},
  doi={10.1109/LGRS.2019.2960945}}
 """
-
-import torch
-import numpy as np
-from sklearn.mixture import GaussianMixture
-from torch import nn
 import os
-from torch.utils.data import DataLoader
-from sklearn.cluster import KMeans
-from torch.autograd import Variable
-from sklearn.metrics import normalized_mutual_info_score, adjusted_rand_score
-from python_research.experiments.utils.io import save_to_csv
+from typing import Tuple
+
+import numpy as np
 from time import time
+import torch
+from torch import nn
+from torch.utils.data import DataLoader
+from torch.autograd import Variable
+
+from skimage.io import imsave
+from skimage.color import label2rgb
+from sklearn.mixture import GaussianMixture
+from sklearn.cluster import KMeans
+from sklearn.metrics import normalized_mutual_info_score, adjusted_rand_score
+
+from python_research.io import save_to_csv
+from python_research.dataset_structures import DataLoaderShuffle, HyperspectralCube
 
 
 class DCEC(nn.Module):
@@ -278,6 +284,19 @@ class DCEC(nn.Module):
         clusters = self.predict_clusters(data_loader)
         return np.argmax(clusters.cpu().detach().numpy(), axis=1)
 
+    def plot_high_res(self, predicted_labels, shape_2d: Tuple[int, int], epoch: int,
+                      clustering_method_name: str, true_labels=None):
+        # if true_labels is not None:
+        #     predicted_labels[true_labels == 0] = 11
+        labels = predicted_labels.reshape(np.flip(shape_2d, axis=0))
+        labels = labels.transpose()
+        labels = label2rgb(labels)
+        dir = os.path.join(self.artifacts_path, clustering_method_name
+                           + '_clustering')
+        os.makedirs(dir, exist_ok=True)
+        file_name = os.path.join(dir, "plot_{}.png".format(epoch))
+        imsave(file_name, labels)
+
     def _save_model(self, epoch: int = None):
         os.makedirs(self.artifacts_path, exist_ok=True)
         if epoch is not None:
@@ -309,3 +328,41 @@ class ClusteringLayer(nn.Module):
                                               self.weights, 2), dim=2)))
         q = torch.t(torch.t(q) / torch.sum(q, dim=1))
         return q
+
+
+if __name__ == '__main__':
+    device = 'cuda:0'
+    out_path = r""
+    # Example for the Houston dataset
+    dataset_bands = 50
+    neighborhood_size = 5
+    epochs = 25
+
+    dataset_height = 1202
+    dataset_width = 4768
+    samples_count = dataset_height * dataset_width
+
+    batch_size = 596 # The batch size has to be picked in such a way that samples_count % batch_size == 0
+    update_interval = int(samples_count / batch_size)
+    iterations = int(update_interval * epochs) # This indicates the number of epochs that the clustering part of the autoencoder will be trained for
+
+    dataset = HyperspectralCube(r"", # Path to .npy file or np.ndarray with [HEIGHT, WIDTH, BANDS] dimensions
+                                neighbourhood_size=neighborhood_size,
+                                device=device, bands=dataset_bands)
+    dataset.standardize()
+    dataset.convert_to_tensors(device=device)
+    # Train
+    net = DCEC(input_dims=np.array([dataset_bands, neighborhood_size, neighborhood_size]), n_clusters=20,
+               kernel_shape=np.array([5, 3, 3]), latent_vector_size=20,
+               update_interval=update_interval, device=device,
+               artifacts_path=out_path)
+    net = net.cuda(device=device)
+    optimizer = torch.optim.Adam(net.parameters(), lr=0.001)
+    data_loader = DataLoaderShuffle(dataset, batch_size=batch_size)
+    net.train_model(data_loader, optimizer, epochs=epochs, iterations=iterations, gamma=0.1)
+
+    # Predict
+    data_loader.sort()
+    net.load_state_dict(torch.load(out_path + "/model_path.pt"))
+    predicted_labels = net.cluster_with_model(data_loader)
+    net.plot_high_res(predicted_labels, dataset.original_2d_shape, -1, "model")

@@ -444,3 +444,105 @@ class OrderedDataLoader:
         for label in label_samples_indices:
             label_samples_indices[label] = list(np.where(dataset.get_labels() == label)[0])
         return label_samples_indices
+
+
+class HyperspectralCube(Dataset):
+    def __init__(self, dataset: [np.ndarray, PathLike],
+                 ground_truth: [np.ndarray, PathLike] = None,
+                 neighbourhood_size: int = 1,
+                 device: str='cpu',
+                 bands=None):
+        if type(dataset) is np.ndarray and type(ground_truth) is np.ndarray:
+            raw_data = dataset
+            ground_truth = ground_truth
+        elif type(dataset) is str and type(ground_truth) is str:
+            raw_data = load_data(dataset)
+            ground_truth = load_data(ground_truth)
+        elif type(dataset) is str and ground_truth is None:
+            raw_data = load_data(dataset)
+        else:
+            raise TypeError("Dataset and ground truth should be "
+                            "provided either as a string or a numpy array, "
+                            "not {}".format(type(dataset)))
+        self.neighbourhood_size = neighbourhood_size
+        self.original_2d_shape = raw_data.shape[0:2]
+        self.padding_size = neighbourhood_size % ceil(float(neighbourhood_size) / 2.)
+        self.indexes = self._get_indexes(raw_data.shape[HEIGHT], raw_data.shape[WIDTH])
+        data = self._get_padded_cube(raw_data)
+        data = data.swapaxes(1, 2).swapaxes(0, 1)
+        self.device = device
+        self.bands = bands
+        super(HyperspectralCube, self).__init__(data, ground_truth)
+
+    @staticmethod
+    def _get_indexes(height, width):
+        xx, yy = np.meshgrid(range(height), range(width))
+        return [(x, y) for x, y in zip(yy.flatten(), xx.flatten())]
+
+    def _get_padded_cube(self, data):
+        v_padding = np.zeros((self.padding_size, data.shape[WIDTH], data.shape[DEPTH]))
+        x = np.vstack((v_padding, data))
+        x = np.vstack((x, v_padding))
+        h_padding = np.zeros((x.shape[HEIGHT], self.padding_size, x.shape[DEPTH]))
+        x = np.hstack((h_padding, x))
+        x = np.hstack((x, h_padding))
+        return x
+
+    def __len__(self):
+        return len(self.indexes)
+
+    def __getitem__(self, item):
+        if type(item) is list:
+            batch = torch.zeros([len(item),
+                                 1,
+                                 self.bands,
+                                 self.neighbourhood_size,
+                                 self.neighbourhood_size], device=self.device)
+            for sample, sample_index in enumerate(item):
+                x, y = self.indexes[sample_index]
+                batch[sample, 0] = self.data[:self.bands, y:y + self.padding_size * 2 + 1,
+                                                x:x + self.padding_size * 2 + 1]
+            return batch
+        else:
+            x, y = self.indexes[item]
+            return self.data[:self.bands, y:y + self.padding_size * 2 + 1,
+                                x:x + self.padding_size * 2 + 1]
+
+
+class DataLoaderShuffle:
+    def __init__(self, dataset: Dataset, batch_size: int=64):
+        self.batch_size = batch_size
+        self.data = dataset
+        self.samples_count = len(dataset)
+        self.indexes = self._get_indexes()
+        self.samples_returned = 0
+
+    def __iter__(self):
+        self.samples_returned = 0
+        return self
+
+    def __next__(self):
+        if (self.samples_returned + self.batch_size) > self.samples_count:
+            raise StopIteration
+        else:
+            indexes = self.indexes[self.samples_returned:
+                                   self.samples_returned + self.batch_size]
+            batch = self.data[indexes]
+            self.samples_returned += self.batch_size
+            return batch
+
+    def __len__(self):
+        return int(self.samples_count / self.batch_size)
+
+    def cube_2d_shape(self):
+        return self.data.original_2d_shape
+
+    def shuffle(self):
+        shuffle(self.indexes)
+
+    def sort(self):
+        self.indexes = self._get_indexes()
+
+    def _get_indexes(self):
+        indexes = [x for x in range(self.samples_count)]
+        return indexes
