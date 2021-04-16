@@ -14,7 +14,7 @@ from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 
 from cloud_detection import losses
-from cloud_detection.data_gen import load_image_paths, DG_38Cloud
+from cloud_detection.data_gen import DG_38Cloud
 from cloud_detection.validate import (
     make_precision_recall,
     make_roc,
@@ -25,6 +25,7 @@ from cloud_detection.utils import (
     get_metrics,
     save_vis,
     setup_mlflow,
+    load_image_paths
 )
 
 
@@ -118,7 +119,7 @@ def evaluate_model(
     img_ids: List[str] = None,
     mlflow=False,
     run_name=None,
-) -> Tuple:
+) -> Tuple[Dict, List]:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     :param model: trained model to make predictions.
@@ -126,7 +127,7 @@ def evaluate_model(
     :param dpath: path to dataset.
     :param gtpath: path to dataset ground truths.
     :param vpath: path to dataset (false color) visualisation images.
-    :param rpath: path to direcotry where results and artifacts
+    :param rpath: path to directory where results and artifacts
                   should be logged.
     :param vids: tuple of ids of images which should be used
                  to create visualisations. If contains '*' visualisations
@@ -136,7 +137,7 @@ def evaluate_model(
     :param img_ids: if given, process only these images.
     :param mlflow: whether to use MLFlow.
     :param run_name: name of the run.
-    :return: evaluation metrics.
+    :return: evaluation metrics and evaluation times for scenes.
     """
     Path(rpath).mkdir(parents=True, exist_ok=False)
     if mlflow:
@@ -193,7 +194,7 @@ def evaluate_model(
             y_pred = np.round(y_pred, decimals=2)
             make_activation_hist(y_pred, rpath / img_id)
 
-    return metrics
+    return metrics, scene_times
 
 
 if __name__ == "__main__":
@@ -203,14 +204,15 @@ if __name__ == "__main__":
         "-f", help="enable mlflow reporting", action="store_true")
     parser.add_argument("-n", help="mlflow run name", default=None)
     parser.add_argument(
-        "-m", help="model hash", default="3e19daf248954674966cd31af1c4cb12"
+        "-m", help="model hash", default="53a71164f56f4447b77236de2267d2ba"
     )
 
     args = parser.parse_args()
 
     mpath = Path(
         f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
-        + "artifacts/model/data/model.h5"
+        # Change init_model to model for old models
+        + "artifacts/init_model/data/model.h5"
     )
     model = keras.models.load_model(
         mpath,
@@ -221,7 +223,7 @@ if __name__ == "__main__":
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
-            # "f1_score": losses.f1_score,  # Needed to load old models
+            "f1_score": losses.f1_score,  # Needed to load old models
             "tf": tf,
         },
     )
@@ -251,7 +253,7 @@ if __name__ == "__main__":
     print(
         f'Working dir: {os.getcwd()}, artifacts dir: {params["rpath"]}',
         flush=True)
-    metrics = evaluate_model(**params)
+    metrics, _ = evaluate_model(**params)
     snow_imgs = [
         "LC08_L1TP_064015_20160420_20170223_01_T1",
         "LC08_L1TP_035035_20160120_20170224_01_T1",

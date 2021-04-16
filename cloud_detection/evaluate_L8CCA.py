@@ -5,18 +5,19 @@ import uuid
 import time
 import argparse
 import numpy as np
-import spectral.io.envi as envi
 import tensorflow as tf
 from einops import rearrange
 from pathlib import Path
-from typing import Tuple, List
+from typing import Tuple, List, Dict
 from mlflow import log_metrics, log_artifacts
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 
 from cloud_detection import losses
 from cloud_detection.data_gen import DG_L8CCA
-from cloud_detection.utils import unpad, get_metrics, save_vis, setup_mlflow
+from cloud_detection.utils import (
+    unpad, get_metrics, save_vis, setup_mlflow, load_l8cca_gt
+)
 from cloud_detection.validate import (
     make_precision_recall,
     make_roc,
@@ -45,28 +46,40 @@ def build_rgb_scene_img(path: Path, img_id: str) -> np.ndarray:
 
 
 def get_img_pred(
-    path: Path, img_id: str, model: keras.Model, batch_size: int,
+    path: Path, model: keras.Model, batch_size: int,
+    bands: Tuple[int] = (4, 3, 2, 5),
+    bands_names: Tuple[str] = ("red", "green", "blue", "nir"),
+    resize: bool = False,
+    normalize=True,
+    standardize=False,
     patch_size: int = 384
 ) -> Tuple[np.ndarray, float]:
     """
     Generates prediction for a given image.
     :param path: path containing directories with image channels.
-    :param img_id: ID of the considered image.
     :param model: trained model to make predictions.
     :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
+    :param bands: band numbers to load
+    :param bands_names: names of the bands to load. Should have the same number
+                        of elements as bands.
+    :param resize: whether to resize loaded img to gt.
+    :param normalize: whether to normalize the image.
+    :param standardize: whether to standardize the image.
     :param patch_size: size of the image patches.
     :return: prediction for a given image along with evaluation time.
     """
     testgen = DG_L8CCA(
-        img_path=path, img_name=img_id, batch_size=batch_size, shuffle=False
+        img_paths=[path], batch_size=batch_size,
+        bands=bands, bands_names=bands_names, resize=resize,
+        normalize=normalize, standardize=standardize, shuffle=False
     )
     tbeg = time.time()
     preds = model.predict_generator(testgen)
     scene_time = time.time() - tbeg
     print(f"Scene prediction took { scene_time } seconds")
 
-    img_height, img_width, _ = testgen.img_shape
+    img_height, img_width, _ = testgen.img_shapes[0]
     preds = rearrange(
         preds,
         "(r c) dr dc b -> r c dr dc b",
@@ -83,19 +96,6 @@ def get_img_pred(
     return img, scene_time
 
 
-def load_img_gt(path: Path, fname: str) -> np.ndarray:
-    """
-    Load image ground truth.
-    :param path: path containing image gts.
-    :param fname: image gt file name.
-    :return: image ground truth.
-    """
-    img = envi.open(path / fname)
-    img = np.array(img.open_memmap(), dtype=np.int)
-    img = np.where(img > 128, 1, 0)
-    return img
-
-
 def evaluate_model(
     model: keras.Model,
     thr: float,
@@ -103,26 +103,37 @@ def evaluate_model(
     rpath: Path,
     vids: Tuple[str],
     batch_size: int,
+    bands: Tuple[int] = (4, 3, 2, 5),
+    bands_names: Tuple[str] = ("red", "green", "blue", "nir"),
     img_ids: List[str] = None,
+    resize: bool = False,
+    normalize=True,
+    standardize=False,
     mlflow=False,
     run_name=None,
-) -> Tuple:
+) -> Tuple[Dict, List]:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
     :param model: trained model to make predictions.
     :param thr: threshold.
     :param dpath: path to dataset.
-    :param rpath: path to direcotry where results
+    :param rpath: path to directory where results
                   and artifacts should be logged.
     :param vids: tuple of ids of images which should be used to create
                  visualisations. If contains '*' visualisations will be
                  created for all images in the dataset.
     :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.
+    :param bands: band numbers to load
+    :param bands_names: names of the bands to load. Should have the same number
+                        of elements as bands.
     :param img_ids: if given, process only these images.
+    :param resize: whether to resize loaded img to gt.
+    :param normalize: whether to normalize the image.
+    :param standardize: whether to standardize the image.
     :param mlflow: whether to use MLFlow.
     :param run_name: name of the run.
-    :return: evaluation metrics.
+    :return: evaluation metrics and evaluation times for scenes.
     """
     Path(rpath).mkdir(parents=True, exist_ok=False)
     if mlflow:
@@ -143,11 +154,19 @@ def evaluate_model(
                 if img_id not in img_ids:
                     continue
             print(f"Processing {tname}-{img_id}", flush=True)
-            gtpath = tpath / img_id
+            img_path = tpath / img_id
             img_pred, scene_time = get_img_pred(
-                tpath, img_id, model, batch_size)
+                path=img_path,
+                model=model,
+                batch_size=batch_size,
+                bands=bands,
+                bands_names=bands_names,
+                resize=resize,
+                normalize=normalize,
+                standardize=standardize
+                )
             scene_times.append(scene_time)
-            img_gt = load_img_gt(gtpath, f"{img_id}_fixedmask.hdr")
+            img_gt = load_l8cca_gt(path=img_path)
             img_pred = unpad(img_pred, img_gt.shape)
             img_metrics = get_metrics(img_gt, img_pred > thr, model.metrics)
             for metric_fn in model.metrics:
@@ -164,7 +183,7 @@ def evaluate_model(
             )
             if img_id in vids or "*" in vids:
                 print(f"Creating visualisation for {img_id}")
-                img_vis = build_rgb_scene_img(tpath / img_id, img_id)
+                img_vis = build_rgb_scene_img(img_path, img_id)
                 save_vis(img_id, img_vis, img_pred > thr, img_gt, rpath)
 
             if img_metrics["test_jaccard_index_metric"] < 0.6:
@@ -181,7 +200,7 @@ def evaluate_model(
                 y_pred = np.round(y_pred, decimals=2)
                 make_activation_hist(y_pred, rpath / img_id)
 
-    return metrics
+    return metrics, scene_times
 
 
 if __name__ == "__main__":
@@ -191,14 +210,15 @@ if __name__ == "__main__":
         "-f", help="enable mlflow reporting", action="store_true")
     parser.add_argument("-n", help="mlflow run name", default=None)
     parser.add_argument(
-        "-m", help="model hash", default="3e19daf248954674966cd31af1c4cb12"
+        "-m", help="model hash", default="53a71164f56f4447b77236de2267d2ba"
     )
 
     args = parser.parse_args()
 
     mpath = Path(
         f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
-        + "artifacts/model/data/model.h5"
+        # Change init_model to model for old models
+        + "artifacts/init_model/data/model.h5"
     )
     model = keras.models.load_model(
         mpath,
@@ -209,7 +229,8 @@ if __name__ == "__main__":
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
-            # "f1_score": losses.f1_score,  # Needed to load old models
+            # F1 score is needed for old models
+            # "f1_score": losses.f1_score,
             "tf": tf,
         },
     )
@@ -231,7 +252,7 @@ if __name__ == "__main__":
         "mlflow": args.f,
         "run_name": args.n,
     }
-    metrics = evaluate_model(**params)
+    metrics, _ = evaluate_model(**params)
     snow_imgs = ["LC82271192014287LGN00", "LC81321192014054LGN00"]
     mean_metrics = {}
     mean_metrics_snow = {}
