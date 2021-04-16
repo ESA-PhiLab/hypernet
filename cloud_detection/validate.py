@@ -3,19 +3,19 @@ Perform various validation tasks, like making ROC,
 precision-recall, thresholding etc.
 """
 
+import numpy as np
+import tensorflow as tf
 from collections.abc import Sequence
 from pathlib import Path
-
 from plotly import express as px
 from plotly import graph_objects as go
 from scipy.spatial.distance import cdist
 from sklearn.metrics import roc_curve, auc, precision_recall_curve
 from tensorflow import keras
-import numpy as np
-import tensorflow as tf
 
-from cloud_detection.data_gen import load_image_paths, DG_38Cloud
 import cloud_detection.losses
+from cloud_detection.data_gen import DG_38Cloud
+from cloud_detection.utils import load_image_paths
 
 
 def datagen_to_gt_array(datagen: keras.utils.Sequence) -> np.ndarray:
