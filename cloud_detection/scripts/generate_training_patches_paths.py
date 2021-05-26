@@ -4,6 +4,17 @@ for all 5 experiments of cloud detection using RGBNir data.
 The generated file can be used to recreate the different
 training datasets used for all 5 experiments by loading
 appropriate training patches.
+
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
 """
 
 import numpy as np

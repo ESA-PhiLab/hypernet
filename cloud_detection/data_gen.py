@@ -1,5 +1,16 @@
 """
 Generator based data loader for Cloud38 and L8CCA clouds segmentation datasets.
+
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
 """
 
 import numpy as np
@@ -33,6 +44,7 @@ class DG_38Cloud(keras.utils.Sequence):
     ):
         """
         Prepare generator and init paths to files containing image channels.
+
         :param files: List of dicts containing paths to rgb channels of each
             image in dataset.
         :param batch_size: size of generated batches, only one batch is loaded
@@ -61,12 +73,13 @@ class DG_38Cloud(keras.utils.Sequence):
         if self._shuffle:
             np.random.shuffle(self._file_indexes)
 
-    def _perform_balancing(self, labels: List):
+    def _perform_balancing(self, labels: List[int]):
         """
         Perform balancing on given images.
-        :param labels: List of pseudo-labels for indexing. For each patch in
-                       the dataset should contain 1 if image is to be
-                       balanced, otherwise should be 0.
+
+        :param labels: List of pseudo-labels for indexing for each patch,
+                       either 0 or 1. The smaller group will be resampled
+                       to match the size of the bigger group.
         """
         pos_idx = self._file_indexes[np.array(labels, dtype=bool)]
         neg_idx = self._file_indexes[~np.array(labels, dtype=bool)]
@@ -91,14 +104,15 @@ class DG_38Cloud(keras.utils.Sequence):
         self._perform_balancing(labels)
 
     def _get_labels_for_snow_balancing(
-            self,
-            brightness_thr: float = 0.4,
-            frequency_thr: float = 0.1
+        self,
+        brightness_thr: float = 0.4,
+        frequency_thr: float = 0.1
     ) -> List[int]:
         """
         Returns the pseudo-labels for each patch. Pseudo-label being
         1 if certain percent of pixels in patch are above brightness threshold,
         and 0 otherwise.
+
         :param brightness_thr: brightness threshold of the pixel
                                (in relation to brightest pixel in patch)
                                to classify it as snow.
@@ -115,20 +129,27 @@ class DG_38Cloud(keras.utils.Sequence):
                 labels.append(1)
             else:
                 labels.append(0)
-
-        print("Multiplied:", np.count_nonzero(labels))
+        print("Snowy pseudo-labels number:", np.count_nonzero(labels))
         return labels
 
-    def _get_labels_for_balancing(self) -> List[int]:
+    def _get_labels_for_balancing(
+        self,
+        min_prop: float = 0.1,
+        max_prop: float = 0.9
+    ) -> List[int]:
         """
         Returns the pseudo-labels for each patch. Pseudo-label being
-        1 if clouds proportion between 0.1 and 0.9, and 0 otherwise.
+        1 if clouds proportion between min_prop and max_prop, and 0 otherwise.
+
+        :param min_prop: min proportion of clouds to classify into class "1".
+        :param max_prop: max proportion of clouds to classify into class "1".
+        :return: list of pseudo-labels.
         """
         labels = []
         for file_ in self._files:
             gt = load_38cloud_gt(file_)
             clouds_prop = np.count_nonzero(gt) / np.prod(self._dim)
-            if clouds_prop > 0.1 and clouds_prop < 0.9:
+            if clouds_prop > min_prop and clouds_prop < max_prop:
                 labels.append(1)
             else:
                 labels.append(0)
@@ -136,7 +157,8 @@ class DG_38Cloud(keras.utils.Sequence):
 
     def _data_generation(self, file_indexes_to_gen: np.arange) -> Tuple:
         """
-        Generates data containing batch_size samples.
+        Generates data for the given indexes.
+
         :param file_indexes_to_gen: Sequence of indexes of files from which
                                     images should be loaded.
         :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
@@ -167,6 +189,7 @@ class DG_38Cloud(keras.utils.Sequence):
     def __len__(self) -> int:
         """
         Denotes the number of batches per epoch.
+
         :return: number of batches per epoch.
         """
         return int(np.ceil(len(self._file_indexes) / self._batch_size))
@@ -174,6 +197,7 @@ class DG_38Cloud(keras.utils.Sequence):
     def __getitem__(self, index: int) -> Tuple[np.ndarray]:
         """
         Generates one batch of data.
+
         :param index: index of the batch to return.
         :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
                  where x is set of RGB + nir images and y is set of
@@ -196,7 +220,7 @@ class DG_L8CCA(keras.utils.Sequence):
 
     def __init__(
         self,
-        img_paths: Path,
+        img_paths: List[Path],
         batch_size: int,
         data_part: Tuple[float] = (0., 1.),
         with_gt: bool = False,
@@ -210,6 +234,7 @@ class DG_L8CCA(keras.utils.Sequence):
     ):
         """
         Prepare generator and init paths to files containing image channels.
+
         :param img_paths: paths to the dirs containing L8CCA images files.
         :param batch_size: size of generated batches, only one batch is loaded
             to memory at a time.
@@ -236,7 +261,7 @@ class DG_L8CCA(keras.utils.Sequence):
         :param shuffle: if True shuffles dataset before training and on each epoch end,
                         else returns dataloader sorted according to img_paths order.
         """
-        self._img_paths: Path = img_paths
+        self._img_paths: List[Path] = img_paths
         self._batch_size: int = batch_size
         self._data_part: Tuple[float] = data_part
         self._with_gt: bool = with_gt
@@ -247,20 +272,21 @@ class DG_L8CCA(keras.utils.Sequence):
         self._shuffle: bool = shuffle
         self.n_bands: int = len(bands)
         if self._with_gt or self._resize:
-            self.generate_gt_patches()
-        self.generate_img_patches(bands=bands, bands_names=bands_names)
+            self._generate_gt_patches()
+        self._generate_img_patches(bands=bands, bands_names=bands_names)
         self._patches_indexes = np.arange(len(self.patches))
         if self._data_part != (0., 1.):
-            self.partition_data()
+            self._partition_data()
         if self._shuffle:
             np.random.shuffle(self._patches_indexes)
 
-    def generate_img_patches(self, bands: Tuple[int] = (4, 3, 2, 5),
-                             bands_names: Tuple[str] = (
-                                 "red", "green", "blue", "nir"
-                                 )):
+    def _generate_img_patches(self, bands: Tuple[int] = (4, 3, 2, 5),
+                              bands_names: Tuple[str] = (
+                                "red", "green", "blue", "nir"
+                                )):
         """
         Create image patches from the provided bands.
+
         :param bands: band numbers to load
         :param bands_names: names of the bands to load. Should have the same
                             number of elements as bands.
@@ -287,7 +313,7 @@ class DG_L8CCA(keras.utils.Sequence):
             self.patches = np.concatenate((self.patches, img_patches))
         del img
 
-    def generate_gt_patches(self):
+    def _generate_gt_patches(self):
         """
         Create GT patches.
         """
@@ -310,9 +336,10 @@ class DG_L8CCA(keras.utils.Sequence):
                     )
         del gt
 
-    def partition_data(self, seed=42):
+    def _partition_data(self, seed=42):
         """
         Partition data based on data_part arg.
+
         :param seed: random seed.
         """
         if self._shuffle:
@@ -346,6 +373,7 @@ class DG_L8CCA(keras.utils.Sequence):
     def __len__(self):
         """
         Denotes the number of batches per epoch.
+
         :return: number of batches per epoch.
         """
         return int(np.ceil(len(self._patches_indexes) / self._batch_size))
@@ -353,9 +381,11 @@ class DG_L8CCA(keras.utils.Sequence):
     def __getitem__(self, index: int) -> Tuple[np.ndarray, None]:
         """
         Generates one batch of data.
+
         :param index: index of the batch to return.
-        :return: (x, None) data for one batch,
-                 where x is set of RGB + nir images.
+        :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
+                 where x is set of RGB + nir images and y is set of
+                 corresponding cloud masks.
         """
         indexes_in_batch = self._patches_indexes[
             index * self._batch_size: (index + 1) * self._batch_size

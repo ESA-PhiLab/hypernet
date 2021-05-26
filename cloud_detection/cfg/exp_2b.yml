@@ -1,5 +1,15 @@
-# Training using patches from single snowy image (LC08_L1TP_035034_20160120_20170224_01_T1)
-# See https://kplabs.atlassian.net/wiki/spaces/BEET/pages/2258075669/20201106+Cloud+detection+with+U-Net#Experiments-%26-results
+# Training using patches from single snowy image (LC08_L1TP_035034_20160120_20170224_01_T1).
+#
+# If you plan on using this implementation, please cite our work:
+# @INPROCEEDINGS{Grabowski2021IGARSS,
+# author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+# and Nalepa, Jakub},
+# booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+# and Remote Sensing Symposium},
+# title={Towards Robust Cloud Detection in
+# Satellite Images Using U-Nets},
+# year={2021},
+# note={in press}}
 name: exp_2b
 exp_cfg:
   run_name: null
