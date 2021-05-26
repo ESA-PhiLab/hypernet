@@ -1,4 +1,17 @@
-""" Train and test the models for cloud detection using panchromatic data. """
+"""
+Train and test the models for cloud detection using panchromatic data.
+
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
+"""
 
 import uuid
 import os
@@ -22,9 +35,6 @@ def main(
     vids: Tuple[str],
     mlflow: bool,
     train_size: float,
-    balance_train_dataset: bool,
-    balance_val_dataset: bool,
-    balance_snow: bool,
     snow_imgs: List[str],
     batch_size: int,
     thr: float,
@@ -51,9 +61,6 @@ def main(
     :param mlflow: whether to use mlflow
     :param train_size: proportion of the training set
                        (the rest goes to validation set).
-    :param balance_train_dataset: whether to balance train dataset.
-    :param balance_val_dataset: whether to balance val dataset.
-    :param balance_snow: whether to balance snow images.
     :param snow_imgs: list of snow images IDs for testing.
     :param batch_size: size of generated batches, only one batch is loaded
           to memory at a time.

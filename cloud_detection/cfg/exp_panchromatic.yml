@@ -1,4 +1,15 @@
-# Panchromatic data experiment scheme
+# Panchromatic data experiment scheme.
+#
+# If you plan on using this implementation, please cite our work:
+# @INPROCEEDINGS{Grabowski2021IGARSS,
+# author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+# and Nalepa, Jakub},
+# booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+# and Remote Sensing Symposium},
+# title={Towards Robust Cloud Detection in
+# Satellite Images Using U-Nets},
+# year={2021},
+# note={in press}}
 name: exp_panchromatic
 exp_cfg:
   run_name: null
@@ -23,9 +34,6 @@ exp_cfg:
   vids: ["*"]
   mlflow: False
   train_size: 0.8
-  balance_train_dataset: False
-  balance_val_dataset: False
-  balance_snow: False
   snow_imgs: ["LC82271192014287LGN00"]
 train_cfg:
   batch_size: 32

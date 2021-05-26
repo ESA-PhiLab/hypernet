@@ -1,4 +1,17 @@
-""" Train and test the models for cloud detection. """
+"""
+Train and test the models for cloud detection.
+
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
+"""
 
 import uuid
 import os
@@ -62,7 +75,7 @@ def main(
                       load training patches for this image only.
     :param balance_train_dataset: whether to balance train dataset.
     :param balance_val_dataset: whether to balance val dataset.
-    :param balance_snow: whether to balance snow images.
+    :param balance_snow: whether to balance snow images for the training set.
     :param snow_imgs_38Cloud: list of 38-Cloud snow images IDs for testing.
     :param snow_imgs_L8CCA: list of L8CCA snow images IDs for testing.
     :param batch_size: size of generated batches, only one batch is loaded

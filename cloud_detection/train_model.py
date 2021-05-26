@@ -1,6 +1,20 @@
-""" Train the models for cloud detection. """
+"""
+Train the models for cloud detection.
+
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
+"""
 
 import time
+from typing import Tuple
 from pathlib import Path
 from mlflow import log_param
 from tensorflow import keras
@@ -27,7 +41,7 @@ def train_model(
     stopping_patience: int,
     epochs: int,
     mlflow: bool,
-) -> keras.Model:
+) -> Tuple[keras.Model, float]:
     """
     Train the U-Net model using 38-Cloud dataset.
 
@@ -40,7 +54,7 @@ def train_model(
     :param stopping_patience: patience param for early stopping.
     :param epochs: number of epochs.
     :param mlflow: whether to use mlflow
-    :return: trained model.
+    :return: trained model and the best threshold.
     """
     # Create model
     model = unet(input_size=traingen.n_bands, bn_momentum=bn_momentum)
@@ -107,5 +121,5 @@ def train_model(
         log_param("val_time", val_time)
     print(f"Generating validation insights took { val_time } seconds")
 
-    # Return model
+    # Return model & the best threshold
     return model, best_thr
