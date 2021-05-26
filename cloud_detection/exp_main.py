@@ -1,17 +1,29 @@
-""" Train and test the models for cloud detection. """
+"""
+Train and test the models for cloud detection.
+
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
+"""
 
 import uuid
 import os
 import yaml
-import numpy as np
 import argparse
-from mlflow import log_metrics, log_artifacts, log_param, log_params, end_run
+from mlflow import log_artifacts, log_param, log_params, end_run
 from typing import Tuple, List
 
+from cloud_detection.data_gen import DG_38Cloud
 from cloud_detection.train_model import train_model
-from cloud_detection.evaluate_38Cloud import evaluate_model as test_38Cloud
-from cloud_detection.evaluate_L8CCA import evaluate_model as test_L8CCA
-from cloud_detection.utils import setup_mlflow, make_paths
+from cloud_detection.evaluate_model import evaluate_model
+from cloud_detection.utils import setup_mlflow, make_paths, load_image_paths
 
 
 def main(
@@ -63,7 +75,7 @@ def main(
                       load training patches for this image only.
     :param balance_train_dataset: whether to balance train dataset.
     :param balance_val_dataset: whether to balance val dataset.
-    :param balance_snow: whether to balance snow images.
+    :param balance_snow: whether to balance snow images for the training set.
     :param snow_imgs_38Cloud: list of 38-Cloud snow images IDs for testing.
     :param snow_imgs_L8CCA: list of L8CCA snow images IDs for testing.
     :param batch_size: size of generated batches, only one batch is loaded
@@ -81,61 +93,69 @@ def main(
         )
     rpath = rpath / uuid.uuid4().hex
     rpath.mkdir(parents=True, exist_ok=False)
+    print(f"Working dir: {os.getcwd()}, artifacts dir: {rpath}", flush=True)
     if mlflow:
         setup_mlflow(run_name)
         log_params(locals())
+
+    train_files, val_files = load_image_paths(
+        base_path=train_path,
+        patches_path=ppath,
+        split_ratios=(train_size, 1 - train_size),
+        img_id=train_img,
+    )
+    traingen = DG_38Cloud(
+        files=train_files,
+        batch_size=batch_size,
+        balance_classes=balance_train_dataset,
+        balance_snow=balance_snow,
+    )
+    valgen = DG_38Cloud(
+        files=val_files, batch_size=batch_size,
+        balance_classes=balance_val_dataset
+    )
+
     model, auto_thr = train_model(
-        train_path,
-        rpath,
-        ppath,
-        train_size,
-        batch_size,
-        balance_train_dataset,
-        balance_val_dataset,
-        balance_snow,
-        train_img,
-        bn_momentum,
-        learning_rate,
-        stopping_patience,
-        epochs,
-        mlflow,
+        traingen=traingen,
+        valgen=valgen,
+        rpath=rpath,
+        bn_momentum=bn_momentum,
+        learning_rate=learning_rate,
+        stopping_patience=stopping_patience,
+        epochs=epochs,
+        mlflow=mlflow,
     )
     print("Finished training and validation, starting evaluation.", flush=True)
-    print(f"Working dir: {os.getcwd()}, artifacts dir: {rpath}", flush=True)
     thr = auto_thr if thr is None else thr
-    metrics_38Cloud = test_38Cloud(
-        model, thr, C38_path, C38_gtpath, vpath,
-        rpath / "38Cloud_vis", vids, batch_size
+    evaluate_model(
+        dataset_name="38Cloud",
+        model=model,
+        thr=thr,
+        dpath=C38_path,
+        rpath=rpath / "38Cloud_vis",
+        vids=vids,
+        batch_size=batch_size,
+        img_ids=None,
+        snow_imgs=snow_imgs_38Cloud,
+        mlflow=mlflow,
+        gtpath=C38_gtpath,
+        vpath=vpath
     )
-    mean_metrics_38Cloud = {}
-    mean_metrics_38Cloud_snow = {}
-
-    for key, value in metrics_38Cloud.items():
-        mean_metrics_38Cloud[key] = np.mean(list(value.values()))
-        mean_metrics_38Cloud_snow[f"snow_{key}"] = np.mean(
-            [value[x] for x in snow_imgs_38Cloud]
-        )
+    evaluate_model(
+        dataset_name="L8CCA",
+        model=model,
+        thr=thr,
+        dpath=L8CCA_path,
+        rpath=rpath / "L8CCA_vis",
+        vids=vids,
+        batch_size=batch_size,
+        img_ids=None,
+        snow_imgs=snow_imgs_L8CCA,
+        mlflow=mlflow
+    )
 
     if mlflow:
         log_param("threshold", thr)
-        log_metrics(mean_metrics_38Cloud)
-        log_metrics(mean_metrics_38Cloud_snow)
-
-    metrics_L8CCA = test_L8CCA(
-        model, thr, L8CCA_path, rpath / "L8CCA_vis", vids, batch_size
-    )
-    mean_metrics_L8CCA = {}
-    mean_metrics_L8CCA_snow = {}
-
-    for key, value in metrics_L8CCA.items():
-        mean_metrics_L8CCA[key] = np.mean(list(value.values()))
-        mean_metrics_L8CCA_snow[f"snow_{key}"] = np.mean(
-            [value[x] for x in snow_imgs_L8CCA]
-        )
-
-    if mlflow:
-        log_metrics(mean_metrics_L8CCA)
-        log_metrics(mean_metrics_L8CCA_snow)
         log_artifacts(rpath)
         end_run()
 

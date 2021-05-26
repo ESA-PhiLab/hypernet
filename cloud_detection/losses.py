@@ -1,4 +1,17 @@
-"""Custom loss functions and metrics for segmentation."""
+"""
+Custom loss functions and metrics for segmentation.
+
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
+"""
 
 import tensorflow.keras.backend as K
 import numpy as np
@@ -15,8 +28,8 @@ class JaccardIndexLoss:
     def __init__(self, smooth: float = 0.0000001):
         """
         Create Jaccard index loss callable class.
-
         Default smoothness coefficient comes from Cloud-Net example.
+
         :param smooth: Small smoothing value to prevent zero division.
         """
         self.__name__ = "jaccard_index_loss"
@@ -84,8 +97,8 @@ class DiceCoefMetric:
     def __init__(self, smooth: float = 0.0000001):
         """
         Create dice coef metric callable class.
-
         Default smoothness coefficient comes from Cloud-Net example.
+
         :param smooth: Small smoothing value to prevent zero division.
         """
         self.__name__ = "dice_coeff_metric"
