@@ -261,9 +261,11 @@ def run_evaluation(
     :param vids: tuple of ids of images which should be used to create
                  visualisations. If contains '*' visualisations will be
                  created for all images in the dataset.
+    :type vids: tuple[str]
     :param batch_size: size of generated batches, only one batch is loaded
            to memory at a time.
     :param img_ids: if given, process only these images.
+    :type img_ids: list[int]
     :param mlflow: whether to use MLFlow.
     :param run_name: name of the run.
     """

@@ -65,7 +65,7 @@ class ThresholdingClassifier():
         return (X >= self.thr).astype(int)
 
 
-def run_panchromatic_thresholding(
+def run(
     thresholds: np.ndarray = np.arange(0., 1.05, 0.05),
     dpath: Path = Path("datasets/clouds/Landsat-Cloud-Cover-Assessment-"
                        + "Validation-Data-Partial"),
@@ -76,12 +76,7 @@ def run_panchromatic_thresholding(
                                   adjusted_rand_score],
     tf_metric_fns: List[Callable] = [losses.JaccardIndexLoss(),
                                      losses.JaccardIndexMetric(),
-                                     losses.DiceCoefMetric(),
-                                     losses.recall,
-                                     losses.precision,
-                                     losses.specificity,
-                                     binary_crossentropy,
-                                     binary_accuracy],
+                                     losses.DiceCoefMetric()],
     mlflow: bool = False,
     run_name: str = None
 ):
@@ -184,4 +179,4 @@ if __name__ == "__main__":
         "-f", help="enable mlflow reporting", action="store_true")
     parser.add_argument("-n", help="mlflow run name", default=None)
     args = parser.parse_args()
-    run_panchromatic_thresholding(mlflow=args.f, run_name=args.n)
+    run(mlflow=args.f, run_name=args.n)

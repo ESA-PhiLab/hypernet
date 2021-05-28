@@ -24,7 +24,7 @@ from cloud_detection.data_gen import DG_38Cloud
 from cloud_detection.utils import load_image_paths
 
 
-def generate_training_patches_paths(
+def generate(
     train_path: Path = Path("datasets/clouds/38-Cloud/38-Cloud_training"),
     train_size: float = 0.8
 ):
@@ -145,4 +145,4 @@ def generate_training_patches_paths(
 
 
 if __name__ == "__main__":
-    generate_training_patches_paths()
+    generate()

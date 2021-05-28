@@ -266,12 +266,16 @@ def run_evaluation(
     :param vids: tuple of ids of images which should be used to create
                  visualisations. If contains '*' visualisations will be
                  created for all images in the dataset.
+    :type vids: tuple[str]
     :param batch_size: size of generated batches, only one batch is loaded
            to memory at a time.
     :param bands: band numbers to load
+    :type bands: list[int]
     :param bands_names: names of the bands to load. Should have the same number
                         of elements as bands.
+    :type bands_names: list[str]
     :param img_ids: if given, process only these images.
+    :type img_ids: list[int]
     :param resize: whether to resize loaded img to gt.
     :param normalize: whether to normalize the image.
     :param standardize: whether to standardize the image.
