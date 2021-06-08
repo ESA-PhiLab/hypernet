@@ -1,9 +1,24 @@
-""" Train the models for cloud detection. """
+"""
+Train the models for cloud detection.
 
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
+"""
+
+import time
+from typing import Tuple
 from pathlib import Path
+from mlflow import log_param
 from tensorflow import keras
 
-from cloud_detection.data_gen import DG_38Cloud, load_image_paths
 from cloud_detection.models import unet
 from cloud_detection.losses import (
     JaccardIndexLoss,
@@ -18,66 +33,31 @@ from cloud_detection.utils import MLFlowCallback
 
 
 def train_model(
-    dpath: Path,
+    traingen: keras.utils.Sequence,
+    valgen: keras.utils.Sequence,
     rpath: Path,
-    ppath: Path,
-    train_size: float,
-    batch_size: int,
-    balance_train_dataset: bool,
-    balance_val_dataset: bool,
-    balance_snow: bool,
-    train_img: str,
     bn_momentum: float,
     learning_rate: float,
     stopping_patience: int,
     epochs: int,
     mlflow: bool,
-) -> keras.Model:
+) -> Tuple[keras.Model, float]:
     """
     Train the U-Net model using 38-Cloud dataset.
 
-    :param dpath: path to dataset.
-    :param rpath: path to direcotry where results and
+    :param traingen: training set generator.
+    :param valgen: validation set generator.
+    :param rpath: path to directory where results and
                   artifacts should be logged.
-    :param ppath: path to file with names of training patches
-                  (if None, all training patches will be used).
-    :param train_size: proportion of the training set
-                       (the rest goes to validation set).
-    :param batch_size: size of generated batches, only one batch is loaded
-          to memory at a time.
-    :param balance_train_dataset: whether to balance train dataset.
-    :param balance_val_dataset: whether to balance val dataset.
-    :param balance_snow: whether to balance snow.
-    :param train_img: image ID for training; if specified,
-                      load training patches for this image only.
     :param bn_momentum: momentum of the batch normalization layer.
     :param learning_rate: learning rate for training.
     :param stopping_patience: patience param for early stopping.
     :param epochs: number of epochs.
     :param mlflow: whether to use mlflow
-    :return: trained model.
+    :return: trained model and the best threshold.
     """
-    # Load data
-    train_files, val_files = load_image_paths(
-        base_path=dpath,
-        patches_path=ppath,
-        split_ratios=(train_size, 1 - train_size),
-        img_id=train_img,
-    )
-    # Upstream snow balancing
-    traingen = DG_38Cloud(
-        files=train_files,
-        batch_size=batch_size,
-        balance_classes=balance_train_dataset,
-        balance_snow=balance_snow,
-    )
-    valgen = DG_38Cloud(
-        files=val_files, batch_size=batch_size,
-        balance_classes=balance_val_dataset
-    )
-
     # Create model
-    model = unet(input_size=4, bn_momentum=bn_momentum)
+    model = unet(input_size=traingen.n_bands, bn_momentum=bn_momentum)
     model.compile(
         optimizer=keras.optimizers.Adam(lr=learning_rate),
         loss=JaccardIndexLoss(),
@@ -92,6 +72,13 @@ def train_model(
             specificity,
         ],
     )
+    # Save init model to enable independent evaluation later.
+    # After update to TF 2, remove this and save and load whole
+    # models using keras.callbacks.ModelCheckpoint (now only weights
+    # are saved, because TF 1 do not save custom metrics when saving
+    # models).
+    Path(rpath / "init_model" / "data").mkdir(parents=True, exist_ok=False)
+    model.save(rpath / "init_model" / "data" / "model.h5")
 
     # Prepare training
     Path(rpath / "best_weights").mkdir(parents=True, exist_ok=False)
@@ -108,6 +95,7 @@ def train_model(
         callbacks.append(MLFlowCallback())
 
     # Train model
+    tbeg = time.time()
     model.fit_generator(
         generator=traingen,
         epochs=epochs,
@@ -115,14 +103,23 @@ def train_model(
         callbacks=callbacks,
         verbose=2,
     )
+    train_time = time.time() - tbeg
+    if mlflow:
+        log_param("train_time", train_time)
+    print(f"Training took { train_time } seconds")
     print("Finished fitting. Will make validation insights now.", flush=True)
 
     # Load best weights
     model.load_weights(f"{rpath}/best_weights/best_weights")
 
     # Save validation insights
+    tbeg = time.time()
     best_thr = make_validation_insights(
         model, valgen, rpath / "validation_insight")
+    val_time = time.time() - tbeg
+    if mlflow:
+        log_param("val_time", val_time)
+    print(f"Generating validation insights took { val_time } seconds")
 
-    # Return model
+    # Return model & the best threshold
     return model, best_thr

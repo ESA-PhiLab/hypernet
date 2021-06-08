@@ -1,20 +1,35 @@
-""" Get evaluation metrics for given model on 38-Cloud test set. """
+"""
+Get evaluation metrics for given model on 38-Cloud test set.
+
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
+"""
 
 import os
 import re
 import time
 import uuid
-import argparse
+import clize
 import numpy as np
 import tensorflow as tf
+from clize.parameters import multi
 from pathlib import Path
-from typing import Dict, List, Tuple
-from mlflow import log_metrics, log_artifacts
+from typing import Dict, List, Tuple, Callable
+from mlflow import log_metrics, log_artifacts, log_params
+from sklearn.metrics import normalized_mutual_info_score, adjusted_rand_score
 from tensorflow import keras
 from tensorflow.keras.preprocessing.image import load_img
 
 from cloud_detection import losses
-from cloud_detection.data_gen import load_image_paths, DG_38Cloud
+from cloud_detection.data_gen import DG_38Cloud
 from cloud_detection.validate import (
     make_precision_recall,
     make_roc,
@@ -22,9 +37,11 @@ from cloud_detection.validate import (
 )
 from cloud_detection.utils import (
     unpad,
-    get_metrics,
+    get_metrics_tf,
     save_vis,
     setup_mlflow,
+    load_image_paths,
+    make_paths
 )
 
 
@@ -120,9 +137,11 @@ def evaluate_model(
     vids: Tuple[str],
     batch_size: int,
     img_ids: List[str] = None,
-    mlflow=False,
-    run_name=None,
-) -> Tuple:
+    metric_fns: List[Callable] = [normalized_mutual_info_score,
+                                  adjusted_rand_score],
+    mlflow: bool = False,
+    run_name: str = None,
+) -> Tuple[Dict, List]:
     """
     Get evaluation metrics for given model on 38-Cloud testset.
 
@@ -131,21 +150,28 @@ def evaluate_model(
     :param dpath: path to dataset.
     :param gtpath: path to dataset ground truths.
     :param vpath: path to dataset (false color) visualisation images.
-    :param rpath: path to direcotry where results and artifacts
+    :param rpath: path to directory where results and artifacts
                   should be logged.
     :param vids: tuple of ids of images which should be used
                  to create visualisations. If contains '*' visualisations
                  will be created for all images in the dataset.
     :param batch_size: size of generated batches, only one batch is loaded
-          to memory at a time.
+           to memory at a time.
     :param img_ids: if given, process only these images.
+    :param metric_fns: non-Tensorflow metric functions to run evaluation
+                       of the model. Must be of the form
+                       func(labels_true, labels_pred).
     :param mlflow: whether to use MLFlow.
     :param run_name: name of the run.
-    :return: evaluation metrics.
+    :return: evaluation metrics and evaluation times for scenes.
     """
     Path(rpath).mkdir(parents=True, exist_ok=False)
     if mlflow:
         setup_mlflow(run_name)
+        params = dict(locals())
+        del params["model"]
+        del params["metric_fns"]
+        log_params(params)
     metrics = {}
     scene_times = []
     for metric_fn in model.metrics:
@@ -154,6 +180,8 @@ def evaluate_model(
         else:
             metric_name = metric_fn.__name__
         metrics[f"38Cloud_{metric_name}"] = {}
+    for metric_fn in metric_fns:
+        metrics[f"38Cloud_{metric_fn.__name__}"] = {}
 
     for fname in os.listdir(gtpath):
         img_id = fname[fname.find("LC08"): fname.find(".TIF")]
@@ -165,15 +193,20 @@ def evaluate_model(
         scene_times.append(scene_time)
         img_gt = load_img_gt(gtpath, fname)
         img_pred = unpad(img_pred, img_gt.shape)
-        img_metrics = get_metrics(img_gt, img_pred > thr, model.metrics)
+        img_metrics = get_metrics_tf(img_gt, img_pred > thr, model.metrics)
         for metric_fn in model.metrics:
             if type(metric_fn) is str:
                 metric_name = metric_fn
             else:
                 metric_name = metric_fn.__name__
             metrics[f"38Cloud_{metric_name}"][img_id] = img_metrics[
-                f"test_{metric_name}"
+                f"{metric_name}"
             ]
+        for metric_fn in metric_fns:
+            metrics[f"38Cloud_{metric_fn.__name__}"][img_id] = metric_fn(
+                img_gt.reshape(-1),
+                (img_pred > thr).reshape(-1)
+            )
         print(
             "Average inference time:" +
             f"{sum(scene_times) / len(scene_times)} seconds"
@@ -184,7 +217,7 @@ def evaluate_model(
             img_vis = 0.7 * get_full_scene_img(vpath, img_id)
             save_vis(img_id, img_vis, img_pred > thr, img_gt, rpath)
 
-        if img_metrics["test_jaccard_index_metric"] < 0.6:
+        if img_metrics["jaccard_index_metric"] < 0.6:
             print(f"Will make insights for {img_id}", flush=True)
             y_gt = img_gt.ravel()
             y_pred = np.round(img_pred.ravel(), decimals=5)
@@ -198,24 +231,62 @@ def evaluate_model(
             y_pred = np.round(y_pred, decimals=2)
             make_activation_hist(y_pred, rpath / img_id)
 
-    return metrics
+    return metrics, scene_times
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+def run_evaluation(
+    *,
+    model_hash: str,
+    thr: float = 0.5,
+    dpath: str = "datasets/clouds/38-Cloud/38-Cloud_test",
+    gtpath: str = "datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts",
+    vpath: str = "datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color",
+    rpath: str = "artifacts/",
+    vids: ("v", multi(min=1)),
+    batch_size: int = 32,
+    img_ids: ("iid", multi(min=0)),
+    mlflow: bool = False,
+    run_name: str = None,
+):
+    """
+    Load model given model hash and get evaluation metrics on 38-Cloud testset.
 
-    parser.add_argument(
-        "-f", help="enable mlflow reporting", action="store_true")
-    parser.add_argument("-n", help="mlflow run name", default=None)
-    parser.add_argument(
-        "-m", help="model hash", default="3e19daf248954674966cd31af1c4cb12"
-    )
-
-    args = parser.parse_args()
-
+    :param model_hash: MLFlow hash of the model to load.
+    :param thr: threshold to be used during evaluation.
+    :param dpath: path to dataset.
+    :param gtpath: path to dataset ground truths.
+    :param vpath: path to dataset (false color) visualisation images.
+    :param rpath: path to directory where results
+                  and artifacts should be logged.
+    :param vids: tuple of ids of images which should be used to create
+                 visualisations. If contains '*' visualisations will be
+                 created for all images in the dataset.
+    :type vids: tuple[str]
+    :param batch_size: size of generated batches, only one batch is loaded
+           to memory at a time.
+    :param img_ids: if given, process only these images.
+    :type img_ids: list[int]
+    :param mlflow: whether to use MLFlow.
+    :param run_name: name of the run.
+    """
+    snow_imgs = [
+        "LC08_L1TP_064015_20160420_20170223_01_T1",
+        "LC08_L1TP_035035_20160120_20170224_01_T1",
+        "LC08_L1TP_050024_20160520_20170324_01_T1",
+    ]
+    if img_ids == []:
+        img_ids = None
+    else:
+        snow_imgs = list(set(snow_imgs) & set(img_ids))
+    dpath, gtpath, vpath, rpath = make_paths(dpath, gtpath, vpath, rpath)
+    rpath = rpath / uuid.uuid4().hex
+    print(f"Working dir: {os.getcwd()}, "
+          + f"artifacts dir: {rpath}",
+          flush=True)
     mpath = Path(
-        f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
-        + "artifacts/model/data/model.h5"
+        f"/media/ML/mlflow/beetle/artifacts/34/{model_hash}/"
+        # Change init_model to model for old models
+        + "artifacts/init_model/data/model.h5"
     )
     model = keras.models.load_model(
         mpath,
@@ -226,42 +297,28 @@ if __name__ == "__main__":
             "recall": losses.recall,
             "precision": losses.precision,
             "specificity": losses.specificity,
-            # "f1_score": losses.f1_score,  # Needed to load old models
+            # F1 score is needed for old models
+            # "f1_score": losses.f1_score,
             "tf": tf,
         },
     )
     model.load_weights(
-        f"/media/ML/mlflow/beetle/artifacts/34/{args.m}/"
+        f"/media/ML/mlflow/beetle/artifacts/34/{model_hash}/"
         + "artifacts/best_weights/best_weights"
     )
-    params = {
-        "model": model,
-        "thr": 0.5,
-        "dpath": Path("datasets/clouds/38-Cloud/38-Cloud_test"),
-        "gtpath": Path(
-            "datasets/clouds/38-Cloud/38-Cloud_test/Entire_scene_gts"),
-        "vpath": Path(
-            "datasets/clouds/38-Cloud/38-Cloud_test/Natural_False_Color"),
-        "rpath": Path(f"artifacts/{uuid.uuid4().hex}"),
-        "vids": ("*"),
-        "batch_size": 32,
-        "img_ids": [
-            "LC08_L1TP_064015_20160420_20170223_01_T1",
-            "LC08_L1TP_035035_20160120_20170224_01_T1",
-            "LC08_L1TP_050024_20160520_20170324_01_T1",
-        ],
-        "mlflow": args.f,
-        "run_name": args.n,
-    }
-    print(
-        f'Working dir: {os.getcwd()}, artifacts dir: {params["rpath"]}',
-        flush=True)
-    metrics = evaluate_model(**params)
-    snow_imgs = [
-        "LC08_L1TP_064015_20160420_20170223_01_T1",
-        "LC08_L1TP_035035_20160120_20170224_01_T1",
-        "LC08_L1TP_050024_20160520_20170324_01_T1",
-    ]
+    metrics, _ = evaluate_model(
+        model=model,
+        thr=thr,
+        dpath=dpath,
+        gtpath=gtpath,
+        vpath=vpath,
+        rpath=rpath,
+        vids=vids,
+        batch_size=batch_size,
+        img_ids=img_ids,
+        mlflow=mlflow,
+        run_name=run_name,
+    )
     mean_metrics = {}
     mean_metrics_snow = {}
     for key, value in metrics.items():
@@ -269,7 +326,11 @@ if __name__ == "__main__":
         mean_metrics_snow[f"snow_{key}"] = np.mean(
             [value[x] for x in snow_imgs])
     print(mean_metrics, mean_metrics_snow)
-    if params["mlflow"]:
+    if mlflow:
         log_metrics(mean_metrics)
         log_metrics(mean_metrics_snow)
-        log_artifacts(params["rpath"])
+        log_artifacts(rpath)
+
+
+if __name__ == "__main__":
+    clize.run(run_evaluation)

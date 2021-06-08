@@ -1,11 +1,12 @@
 """
-Perform the inference of the unmixing models on the test dataset.
+Perform the inference of the unmixing model on the test dataset.
 """
 
 import os
 
 import numpy as np
 import tensorflow as tf
+import yaml
 
 from ml_intuition import enums
 from ml_intuition.data import io, transforms
@@ -14,6 +15,7 @@ from ml_intuition.data.utils import get_central_pixel_spectrum
 from ml_intuition.evaluation.performance_metrics import \
     calculate_unmixing_metrics, UNMIXING_TRAIN_METRICS
 from ml_intuition.evaluation.time_metrics import timeit
+from ml_intuition.models import Ensemble
 
 
 def evaluate(data,
@@ -21,18 +23,46 @@ def evaluate(data,
              dest_path: str,
              neighborhood_size: int,
              batch_size: int,
-             endmembers_path: str):
+             endmembers_path: str,
+             use_ensemble: bool = False,
+             ensemble_copies: int = 1,
+             noise_params: str = None,
+             voting: str = 'mean',
+             voting_model: str = None,
+             voting_model_params: str = None,
+             seed: int = 0):
     """
     Function for evaluating the trained model for the unmixing problem.
 
     :param model_path: Path to the model.
-    :param data: The data dictionary containing the subset for testing.
-    :param dest_path: Directory in which to store the calculated metrics.
+    :param data: Either path to the input data or the data dict.
+    :param dest_path: Path to the directory to store the calculated metrics.
     :param neighborhood_size: Size of the spatial patch.
     :param batch_size: Size of the batch for inference.
-    :param endmembers_path: Path to the endmembers matrix file,
-        containing the average reflectances for each endmember,
-        i.e., the pure spectra.
+    :param endmembers_path: Path to the endmembers file containing
+        average reflectances for each class.
+        Used only when use_unmixing is set to True.
+    :param use_ensemble: Boolean indicating whether
+        to use ensembles functionality.
+    :param ensemble_copies: Number of copies of the original model to create.
+    :param noise_params: Parameters for the noise when creating
+        copies of the base model. Those can be for instance the mean,
+        or standard deviation of the noise.
+    :param voting: Method of ensemble voting. If 'booster',
+        employs a new model, which is trained on the
+        ensemble predictions on the training set. Else if 'mean', averages
+        the predictions of all models, without any weights.
+    :param voting_model: Type of the model to use when the voting
+        argument is set to 'booster'. This indicates, that a new model
+        is trained on the ensemble's predictions on the learning set,
+        to leverage the quality of the regression. Supported models are:
+        SVR (support vector machine for regression), RFR (random forest
+        for regression) and DTR (decision tree for regression).
+    :param voting_model_params: Parameters of the voting model.
+        Used only when the type of voting is set to 'booster'.
+        Should be specified analogously to the noise injection parameters
+        in the 'noise' module.
+    :param seed: Parameter used for the experiments reproduction.
     """
     model_name = os.path.basename(model_path)
     model = tf.keras.models.load_model(
@@ -52,6 +82,26 @@ def evaluate(data,
                                                              transformations)
     if 'dcae' in model_name:
         model.pop()
+
+    if use_ensemble:
+        model = Ensemble(model, voting=voting)
+        noise_params = yaml.load(noise_params)
+        model.generate_models_with_noise(copies=ensemble_copies,
+                                         mean=noise_params['mean'],
+                                         std=noise_params['std'],
+                                         seed=seed)
+
+        if voting == 'booster':
+            train_dict_tr = data[enums.Dataset.TRAIN].copy()
+            train_dict_tr = transforms.apply_transformations(train_dict_tr,
+                                                             transformations)
+            train_probabilities = model.predict_probabilities(
+                train_dict_tr[enums.Dataset.DATA])
+            model.train_ensemble_predictor(
+                train_probabilities,
+                data[enums.Dataset.TRAIN][enums.Dataset.LABELS],
+                predictor=voting_model,
+                model_params=voting_model_params)
 
     predict = timeit(model.predict)
     y_pred, inference_time = predict(

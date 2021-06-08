@@ -8,6 +8,7 @@ Subpackages
    :maxdepth: 4
 
    cloud_detection.tests
+   cloud_detection.scripts
 
 Submodules
 ----------
@@ -45,13 +46,6 @@ cloud\_detection.losses module
    :show-inheritance:
    :special-members: __call__
 
-cloud\_detection.main module
-----------------------------
-
-.. automodule:: cloud_detection.main
-   :members:
-   :undoc-members:
-   :show-inheritance:
 
 cloud\_detection.models module
 ------------------------------
@@ -81,6 +75,30 @@ cloud\_detection.validate module
 --------------------------------
 
 .. automodule:: cloud_detection.validate
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloud\_detection.exp\_pachromatic module
+--------------------------------
+
+.. automodule:: cloud_detection.exp_panchromatic
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloud\_detection.evaluate\_model module
+--------------------------------
+
+.. automodule:: cloud_detection.evaluate_model
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+cloud\_detection.exp\_main module
+--------------------------------
+
+.. automodule:: cloud_detection.exp_main
    :members:
    :undoc-members:
    :show-inheritance:
