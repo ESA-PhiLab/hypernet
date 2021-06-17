@@ -8,7 +8,7 @@ Core install
 1) Make sure you have Python 3.6 installed. It can be downloaded and installed from https://www.python.org/downloads/
 2) Make sure you have conda installed. Full guide for your operating system is available here: https://docs.conda.io/projects/conda/en/latest/user-guide/install/index.html
 3) Copy the repo https://github.com/ESA-PhiLab/hypernet onto your computer and enter the `hypernet/beetles` directory.
-4) To create the environment with all the required dependenciesdependencies, execute the following line:
+4) To create the environment with all the required dependencies, execute the following line:
 
     .. code-block:: python
 
