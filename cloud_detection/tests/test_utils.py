@@ -393,14 +393,10 @@ class TestBuildPaths:
 #     @pytest.mark.parametrize(
 #         "gt, pred, metric_fns, expected",
 #         [
-#             (np.array([0, 1, 1, 0]).reshape(2, 2, 1),
-#              np.array([1, 1, 1, 0]).reshape(2, 2, 1),
+#             (np.array([0, 1, 1, 0]).reshape(1, 2, 2, 1),
+#              np.array([1, 1, 1, 0]).reshape(1, 2, 2, 1),
 #              [binary_accuracy],
 #              {"binary_accuracy": 0.75}),
-#             (np.array([[0, 0, 1], [1, 0, 0]]).reshape(2, 1, 3),
-#              np.array([[0.2, -0.8, 0.7], [0.3, 0.34, 0.34]]).reshape(2, 1, 3),
-#              [categorical_accuracy],
-#              {"categorical_accuracy": 0.5})
 #         ],
 #     )
 #     def test_get_metrics_tf(self, gt, pred, metric_fns, expected):

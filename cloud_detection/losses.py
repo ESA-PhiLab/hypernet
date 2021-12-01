@@ -124,8 +124,12 @@ def recall(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     :param y_pred: Predicted labels.
     :return: Recall score.
     """
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    possible_positives = K.sum(K.round(K.clip(y_true, 0, 1)))
+    true_positives = K.sum(
+        K.round(K.clip(y_true * y_pred, 0, 1)), axis=(1, 2)
+    )
+    possible_positives = K.sum(
+        K.round(K.clip(y_true, 0, 1)), axis=(1, 2)
+    )
     ret = true_positives / (possible_positives + K.epsilon())
     return ret
 
@@ -138,8 +142,12 @@ def precision(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     :param y_pred: Predicted labels.
     :return: Precision score.
     """
-    true_positives = K.sum(K.round(K.clip(y_true * y_pred, 0, 1)))
-    predicted_positives = K.sum(K.round(K.clip(y_pred, 0, 1)))
+    true_positives = K.sum(
+        K.round(K.clip(y_true * y_pred, 0, 1)), axis=(1, 2)
+    )
+    predicted_positives = K.sum(
+        K.round(K.clip(y_pred, 0, 1)), axis=(1, 2)
+    )
     ret = true_positives / (predicted_positives + K.epsilon())
     return ret
 
@@ -154,8 +162,12 @@ def specificity(y_true: np.ndarray, y_pred: np.ndarray) -> float:
     """
     y_true_neg = 1 - y_true
     y_pred_neg = 1 - y_pred
-    true_negatives = K.sum(K.round(K.clip(y_true_neg * y_pred_neg, 0, 1)))
-    possible_negatives = K.sum(K.round(K.clip(y_true_neg, 0, 1)))
+    true_negatives = K.sum(
+        K.round(K.clip(y_true_neg * y_pred_neg, 0, 1)), axis=(1, 2)
+    )
+    possible_negatives = K.sum(
+        K.round(K.clip(y_true_neg, 0, 1)), axis=(1, 2)
+    )
     ret = true_negatives / (possible_negatives + K.epsilon())
     return ret
 

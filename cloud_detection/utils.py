@@ -209,8 +209,8 @@ def get_metrics_tf(
     :param metric_fns: list of metric functions.
     :return: evaluation metrics.
     """
-    gt_ph = K.placeholder(ndim=3)
-    pred_ph = K.placeholder(ndim=3)
+    gt_ph = K.placeholder(ndim=4)
+    pred_ph = K.placeholder(ndim=4)
     metrics = {}
     for metric_fn in metric_fns:
         if type(metric_fn) is str:
