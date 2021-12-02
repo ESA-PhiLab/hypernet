@@ -1,43 +1,98 @@
-""" Various utilities, running tools, img editing etc. """
+"""
+Various utilities, running tools, img editing etc.
 
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
+"""
+
+import math
+from PIL import Image
+Image.MAX_IMAGE_PIXELS = 310000000
 from pathlib import Path
+from scipy.stats import zscore
 from tensorflow import keras
 from typing import Dict, List, Tuple, Callable
-
 from skimage import io, img_as_ubyte
 from tensorflow.keras.preprocessing.image import load_img
 import mlflow
 import numpy as np
+import spectral.io.envi as envi
 import tensorflow.keras.backend as K
 
 import cloud_detection.losses
 
 
-def open_as_array(channel_files: Dict[str, Path]) -> np.ndarray:
+def open_as_array(
+    channel_files: Dict[str, Path],
+    channel_names: Tuple[str] = ("red", "green", "blue", "nir"),
+    size: Tuple[int] = None,
+    normalize: bool = True,
+    standardize: bool = False,
+) -> np.ndarray:
     """
     Load image as array from given files. Normalises images on load.
 
     :param channel_files: Dict with paths to files containing each channel
-                            of an image, keyed as 'red', 'green', 'blue',
-                            'nir'.
+                          of an image. Keys should contain channel_names.
+    :param channel_names: Tuple of channel names to load.
+    :param size: size of the image. If None, return original size.
+    :param normalize: whether to normalize the image.
+    :param standardize: whether to standardize the image
+                        (separately for each band).
     :return: given image as a single numpy array.
     """
     array_img = np.stack(
-        [
-            np.array(
-                load_img(channel_files["red"], color_mode="grayscale")),
-            np.array(
-                load_img(channel_files["green"], color_mode="grayscale")),
-            np.array(
-                load_img(channel_files["blue"], color_mode="grayscale")),
-            np.array(
-                load_img(channel_files["nir"], color_mode="grayscale")),
-        ],
+        [np.array(load_img(
+            channel_files[name],
+            color_mode="grayscale",
+            target_size=size
+            )) for name in channel_names],
         axis=2,
     )
+    if normalize:
+        array_img = array_img / np.iinfo(array_img.dtype).max
+    # Standardize should not be used for 38-Cloud dataset, because it will
+    # standardize based on patches in the training, but based on images
+    # in the evaluation.
+    if standardize:
+        array_img_shape = array_img.shape
+        array_img = array_img.reshape(-1, array_img_shape[-1])
+        array_img = zscore(array_img, axis=0)
+        array_img = array_img.reshape(array_img_shape)
+    return array_img
 
-    # Return normalized
-    return array_img / np.iinfo(array_img.dtype).max
+
+def load_38cloud_gt(channel_files: Dict[str, Path]) -> np.ndarray:
+    """
+    Load 38-Cloud ground truth mask as array from given files.
+
+    :param channel_files: Dict with paths to files containing each channel
+                            of an image, must contain key 'gt'.
+    :return: patch ground truth.
+    """
+    masks = np.array(load_img(channel_files["gt"], color_mode="grayscale"))
+    return np.expand_dims(masks / 255, axis=-1)
+
+
+def load_l8cca_gt(path: Path) -> np.ndarray:
+    """
+    Load L8CCA Validation Data image ground truth.
+
+    :param path: path containing image gts.
+    :return: image ground truth.
+    """
+    img = envi.open(list(path.glob("*_fixedmask.hdr"))[0])
+    img = np.array(img.open_memmap(), dtype=np.int)
+    img = np.where(img > 128, 1, 0)
+    return img
 
 
 def true_positives(y_true: np.ndarray, y_pred: np.ndarray) -> np.ndarray:
@@ -144,18 +199,18 @@ def unpad(img: np.ndarray, gt_shape: Tuple) -> np.ndarray:
     return img[r_pad: r_pad + r_gt, c_pad: c_pad + c_gt]
 
 
-def get_metrics(
+def get_metrics_tf(
         gt: np.ndarray, pred: np.ndarray, metric_fns: List[Callable]) -> Dict:
     """
-    Calculates evaluation metrics for a given image predictions.
+    Calculates TensorFlow evaluation metrics for a given image predictions.
 
     :param gt: image ground truth.
     :param pred: image predictions.
     :param metric_fns: list of metric functions.
     :return: evaluation metrics.
     """
-    gt_ph = K.placeholder(ndim=3)
-    pred_ph = K.placeholder(ndim=3)
+    gt_ph = K.placeholder(ndim=4)
+    pred_ph = K.placeholder(ndim=4)
     metrics = {}
     for metric_fn in metric_fns:
         if type(metric_fn) is str:
@@ -164,7 +219,7 @@ def get_metrics(
         else:
             metric_name = metric_fn.__name__
         loss = K.mean(metric_fn(gt_ph, pred_ph))
-        metrics[f"test_{metric_name}"] = loss.eval(
+        metrics[f"{metric_name}"] = loss.eval(
             session=K.get_session(), feed_dict={gt_ph: gt, pred_ph: pred}
         )
     return metrics
@@ -180,10 +235,10 @@ def save_vis(
     """
     Save visualisations set for img of given id.
     Visualisations set includes:
-    * Mask overlay of uncertain regions of segmentation.
-    * Ground truth mask.
-    * Prediction mask.
-    * TP, FP, FN mask overlays.
+        * Mask overlay of uncertain regions of segmentation.
+        * Ground truth mask.
+        * Prediction mask.
+        * TP, FP, FN mask overlays.
 
     :param img_id: Id of visualised img,
                    will be used for naming saved artifacts.
@@ -235,3 +290,111 @@ class MLFlowCallback(keras.callbacks.Callback):
         :param logs: logs for MLFlow.
         """
         mlflow.log_metrics(logs, step=epoch)
+
+
+def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
+    """
+    Strips nir channel so image can be displayed.
+
+    :param hyper_img: image with shape (x, y, 4) where fourth channel is nir.
+    :return: image with shape (x, y, 3) with standard RGB channels.
+    """
+    return hyper_img[:, :, :3]
+
+
+def load_image_paths(
+    base_path: Path,
+    patches_path: Path = None,
+    split_ratios: List[float] = [1.0],
+    shuffle: bool = True,
+    img_id: str = None,
+    seed: int = 42
+) -> List[List[Dict[str, Path]]]:
+    """
+    Build paths to all files containing image channels.
+
+    :param base_path: root path containing directories with image channels.
+    :param patches_path: path to images patches names to load
+                         (if None, all patches will be used).
+    :param split_ratios: list containing split ratios,
+                         splits should add up to one.
+    :param shuffle: whether to shuffle image paths.
+    :param img_id: image ID; if specified, load paths for this image only.
+    :param seed: random seed for shuffling; relevant only if shuffle=True.
+    :return: list with paths to image files, separated into splits.
+        Structured as: list_of_splits[list_of_files['file_channel', Path]]
+    """
+    files = build_paths(base_path, patches_path, img_id)
+    if len(files) == 0:
+        raise ValueError("No files loaded")
+    print(f"Loaded paths for images of { len(files) } samples")
+    if shuffle:
+        saved_seed = np.random.get_state()
+        np.random.seed(seed)
+        np.random.shuffle(files)
+        np.random.set_state(saved_seed)
+    if sum(split_ratios) != 1:
+        raise RuntimeError("Split ratios don't sum up to one.")
+    split_beg = 0
+    splits = []
+    for ratio in split_ratios:
+        split_end = split_beg + math.ceil(ratio * len(files))
+        splits.append(files[split_beg:split_end])
+        split_beg = split_end
+    return splits
+
+
+def combine_channel_files(red_file: Path) -> Dict[str, Path]:
+    """
+    Get paths to 'green', 'blue', 'nir' and 'gt' channel files
+    based on path to the 'red' channel of the given image.
+
+    :param red_file: path to red channel file.
+    :return: dictionary containing paths to files with each image channel.
+    """
+    return {
+        "red": red_file,
+        "green": Path(str(red_file).replace("red", "green")),
+        "blue": Path(str(red_file).replace("red", "blue")),
+        "nir": Path(str(red_file).replace("red", "nir")),
+        "gt": Path(str(red_file).replace("red", "gt")),
+    }
+
+
+def build_paths(
+    base_path: Path, patches_path: Path, img_id: str
+) -> List[Dict[str, Path]]:
+    """
+    Build paths to all files containing image channels.
+
+    :param base_path: root path containing directories with image channels.
+    :param patches_path: path to images patches names to load
+                            (if None, all patches will be used).
+    :param img_id: image ID; if specified, load paths for this image only.
+    :return: list of dicts containing paths to files with image channels.
+    """
+    # Get red channel filenames
+    if img_id is None:
+        red_files = list(base_path.glob("*red/*.TIF"))
+    else:
+        red_files = list(base_path.glob(f"*red/*{img_id}.TIF"))
+    if patches_path is not None:
+        patches_names = set(
+            np.genfromtxt(
+                patches_path,
+                dtype="str",
+                skip_header=1,
+            )
+        )
+        select_files = []
+        for fname in red_files:
+            fname_str = str(fname)
+            if (
+                fname_str[fname_str.find("patch"): fname_str.find(".TIF")]
+                in patches_names
+            ):
+                select_files.append(fname)
+        red_files = select_files
+    red_files.sort()
+    # Get other channels in accordance to the red channel filenames
+    return [combine_channel_files(red_file) for red_file in red_files]

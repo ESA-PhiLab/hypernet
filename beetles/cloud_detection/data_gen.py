@@ -1,123 +1,29 @@
-""" Generator based data loader for Cloud38 and L8CCA clouds segmentation datasets. """
+"""
+Generator based data loader for Cloud38 and L8CCA clouds segmentation datasets.
 
-import math
+If you plan on using this implementation, please cite our work:
+@INPROCEEDINGS{Grabowski2021IGARSS,
+author={Grabowski, Bartosz and Ziaja, Maciej and Kawulok, Michal
+and Nalepa, Jakub},
+booktitle={IGARSS 2021 - 2021 IEEE International Geoscience
+and Remote Sensing Symposium},
+title={Towards Robust Cloud Detection in
+Satellite Images Using U-Nets},
+year={2021},
+note={in press}}
+"""
 
 import numpy as np
 from einops import rearrange
 from matplotlib import pyplot as plt
 from pathlib import Path
 from tensorflow import keras
-from tensorflow.keras.preprocessing.image import load_img
 from typing import Dict, List, Tuple
 
-from cloud_detection.utils import pad, open_as_array
-
-
-def strip_nir(hyper_img: np.ndarray) -> np.ndarray:
-    """
-    Strips nir channel so image can be displayed.
-
-    :param hyper_img: image with shape (x, y, 4) where fourth channel is nir.
-    :return: image with shape (x, y, 3) with standard RGB channels.
-    """
-    return hyper_img[:, :, :3]
-
-
-def load_image_paths(
-    base_path: Path,
-    patches_path: Path = None,
-    split_ratios: List[float] = [1.0],
-    shuffle: bool = True,
-    img_id: str = None,
-) -> List[List[Dict[str, Path]]]:
-    """
-    Build paths to all files containing image channels.
-
-    :param base_path: root path containing directories with image channels.
-    :param patches_path: path to images patches names to load
-                         (if None, all patches will be used).
-    :param split_ratios: list containing split ratios,
-                         splits should add up to one.
-    :param shuffle: whether to shuffle image paths.
-    :param img_id: image ID; if specified, load paths for this image only.
-    :return: list with paths to image files, separated into splits.
-        Structured as: list_of_splits[list_of_files['file_channel', Path]]
-    """
-
-    def combine_channel_files(red_file: Path) -> Dict[str, Path]:
-        """
-        Get paths to 'green', 'blue', 'nir' and 'gt' channel files
-        based on path to the 'red' channel of the given image.
-
-        :param red_file: path to red channel file.
-        :return: dictionary containing paths to files with each image channel.
-        """
-        return {
-            "red": red_file,
-            "green": Path(str(red_file).replace("red", "green")),
-            "blue": Path(str(red_file).replace("red", "blue")),
-            "nir": Path(str(red_file).replace("red", "nir")),
-            "gt": Path(str(red_file).replace("red", "gt")),
-        }
-
-    def build_paths(
-        base_path: Path, patches_path: Path, img_id: str
-    ) -> List[Dict[str, Path]]:
-        """
-        Build paths to all files containing image channels.
-
-        :param base_path: root path containing directories with image channels.
-        :param patches_path: path to images patches names to load
-                             (if None, all patches will be used).
-        :param img_id: image ID; if specified, load paths for this image only.
-        :return: list of dicts containing paths to files with image channels.
-        """
-        # Get red channel filenames
-        if img_id is None:
-            red_files = list(base_path.glob("*red/*.TIF"))
-        else:
-            red_files = list(base_path.glob(f"*red/*{img_id}.TIF"))
-        if patches_path is not None:
-            patches_names = set(
-                np.genfromtxt(
-                    patches_path,
-                    dtype="str",
-                    skip_header=1,
-                )
-            )
-            select_files = []
-            for fname in red_files:
-                fname_str = str(fname)
-                if (
-                    fname_str[fname_str.find("patch"): fname_str.find(".TIF")]
-                    in patches_names
-                ):
-                    select_files.append(fname)
-            red_files = select_files
-        red_files.sort()
-        # Get other channels in accordance to the red channel filenames
-        return [combine_channel_files(red_file) for red_file in red_files]
-
-    files = build_paths(base_path, patches_path, img_id)
-    print(f"Loaded paths for images of { len(files) } samples")
-
-    if shuffle:
-        saved_seed = np.random.get_state()
-        np.random.seed(42)
-        np.random.shuffle(files)
-        np.random.set_state(saved_seed)
-
-    if sum(split_ratios) != 1:
-        raise RuntimeError("Split ratios don't sum up to one.")
-
-    split_beg = 0
-    splits = []
-    for ratio in split_ratios:
-        split_end = split_beg + math.ceil(ratio * len(files))
-        splits.append(files[split_beg:split_end])
-        split_beg = split_end
-
-    return splits
+from cloud_detection.utils import (
+    pad, open_as_array, load_38cloud_gt, load_l8cca_gt,
+    strip_nir, load_image_paths
+)
 
 
 class DG_38Cloud(keras.utils.Sequence):
@@ -144,8 +50,9 @@ class DG_38Cloud(keras.utils.Sequence):
             to memory at a time.
         :param balance_classes: if True balance classes.
         :param balance_snow: if True balances patches with snow and clouds.
-        :param dim: Tuple with x, y image dimensions.
-        :param shuffle: if True shuffles dataset on each epoch end.
+        :param dim: Tuple with x, y image patches dimensions.
+        :param shuffle: if True shuffles dataset before training
+                        and on each epoch end.
         :param with_gt: if True returns y along with x.
         """
         self._batch_size: int = batch_size
@@ -154,6 +61,7 @@ class DG_38Cloud(keras.utils.Sequence):
         self._with_gt: bool = with_gt
         self._balance_snow: bool = balance_snow
         self._balance_classes: bool = balance_classes
+        self.n_bands: int = len(files[0]) - 1  # -1, because one channel is GT
 
         self._files: List[Dict[str, Path]] = files
         self._file_indexes = np.arange(len(self._files))
@@ -164,13 +72,13 @@ class DG_38Cloud(keras.utils.Sequence):
         if self._shuffle:
             np.random.shuffle(self._file_indexes)
 
-    def _perform_balancing(self, labels: List):
+    def _perform_balancing(self, labels: List[int]):
         """
         Perform balancing on given images.
 
-        :param labels: List of pseudo-labels for indexing. For each patch in
-                       the dataset should contain 1 if image is to be
-                       balanced, otherwise should be 0.
+        :param labels: List of pseudo-labels for indexing for each patch,
+                       either 0 or 1. The smaller group will be resampled
+                       to match the size of the bigger group.
         """
         pos_idx = self._file_indexes[np.array(labels, dtype=bool)]
         neg_idx = self._file_indexes[~np.array(labels, dtype=bool)]
@@ -195,9 +103,9 @@ class DG_38Cloud(keras.utils.Sequence):
         self._perform_balancing(labels)
 
     def _get_labels_for_snow_balancing(
-            self,
-            brightness_thr: float = 0.4,
-            frequency_thr: float = 0.1
+        self,
+        brightness_thr: float = 0.4,
+        frequency_thr: float = 0.1
     ) -> List[int]:
         """
         Returns the pseudo-labels for each patch. Pseudo-label being
@@ -220,38 +128,35 @@ class DG_38Cloud(keras.utils.Sequence):
                 labels.append(1)
             else:
                 labels.append(0)
-
-        print("Multiplied:", np.count_nonzero(labels))
+        print("Snowy pseudo-labels number:", np.count_nonzero(labels))
         return labels
 
-    def _get_labels_for_balancing(self) -> List[int]:
+    def _get_labels_for_balancing(
+        self,
+        min_prop: float = 0.1,
+        max_prop: float = 0.9
+    ) -> List[int]:
         """
         Returns the pseudo-labels for each patch. Pseudo-label being
-        1 if clouds proportion between 0.1 and 0.9, and 0 otherwise.
+        1 if clouds proportion between min_prop and max_prop, and 0 otherwise.
+
+        :param min_prop: min proportion of clouds to classify into class "1".
+        :param max_prop: max proportion of clouds to classify into class "1".
+        :return: list of pseudo-labels.
         """
         labels = []
         for file_ in self._files:
-            gt = self._open_mask(file_)
+            gt = load_38cloud_gt(file_)
             clouds_prop = np.count_nonzero(gt) / np.prod(self._dim)
-            if clouds_prop > 0.1 and clouds_prop < 0.9:
+            if clouds_prop > min_prop and clouds_prop < max_prop:
                 labels.append(1)
             else:
                 labels.append(0)
         return labels
 
-    def _open_mask(self, channel_files: Dict[str, Path]) -> np.ndarray:
-        """
-        Load ground truth mask as array from given files.
-
-        :param channel_files: Dict with paths to files containing each channel
-                              of an image, must contain key 'gt'.
-        """
-        masks = np.array(load_img(channel_files["gt"], color_mode="grayscale"))
-        return np.expand_dims(masks / 255, axis=-1)
-
     def _data_generation(self, file_indexes_to_gen: np.arange) -> Tuple:
         """
-        Generates data containing batch_size samples.
+        Generates data for the given indexes.
 
         :param file_indexes_to_gen: Sequence of indexes of files from which
                                     images should be loaded.
@@ -268,7 +173,7 @@ class DG_38Cloud(keras.utils.Sequence):
         for i, file_index in enumerate(file_indexes_to_gen):
             x[i] = open_as_array(self._files[file_index])
             if self._with_gt:
-                y[i] = self._open_mask(self._files[file_index])
+                y[i] = load_38cloud_gt(self._files[file_index])
 
         return x, y
 
@@ -308,47 +213,153 @@ class DG_38Cloud(keras.utils.Sequence):
 
 class DG_L8CCA(keras.utils.Sequence):
     """
-    Data generator for Cloud38 clouds segmentation dataset.
+    Data generator for L8CCA clouds segmentation dataset.
     Works with Keras generators.
     """
 
     def __init__(
         self,
-        img_path: Path,
-        img_name: str,
+        img_paths: List[Path],
         batch_size: int,
+        data_part: Tuple[float] = (0., 1.),
+        with_gt: bool = False,
         patch_size: int = 384,
+        bands: Tuple[int] = (4, 3, 2, 5),
+        bands_names: Tuple[str] = ("red", "green", "blue", "nir"),
+        resize: bool = False,
+        normalize: bool = True,
+        standardize: bool = False,
         shuffle: bool = True,
     ):
         """
         Prepare generator and init paths to files containing image channels.
 
-        :param img_path: path to the main directory with test scenes.
-        :param img_name: name of the image to generate patches from.
+        :param img_paths: paths to the dirs containing L8CCA images files.
         :param batch_size: size of generated batches, only one batch is loaded
             to memory at a time.
+        :param data_part: part of data to include, e.g., (0., 0.2) generates
+                          dataloader with samples up to 20-th percentile without
+                          20-th percentile, while (0.3, 0.8) generates dataloader
+                          with samples from 30-th percentile (including it) up to
+                          80-th percentile (without it).
+                          (x, 1.) is an exception to the rule, generating dataloader
+                          with samples from the x-th percentile (including it) up to
+                          AND INCLUDING the last datapoint.
+                          To include all samples, use (0., 1.).
+                          If shuffle=True, partitions dataset based on shuffled data
+                          (with a set seed), else partitions unshuffled dataset.
+        :param with_gt: whether to include groundtruth.
         :param patch_size: size of the patches.
-        :param shuffle: if True shuffles dataset on each epoch end.
+        :param bands: band numbers to load
+        :param bands_names: names of the bands to load. Should have the same number
+                            of elements as bands.
+        :param resize: whether to resize img to gt. If True and with_gt=False,
+                       will load GT to infer its shape and then delete it.
+        :param normalize: whether to normalize the image.
+        :param standardize: whether to standardize the image.
+        :param shuffle: if True shuffles dataset before training and on each epoch end,
+                        else returns dataloader sorted according to img_paths order.
         """
+        self._img_paths: List[Path] = img_paths
         self._batch_size: int = batch_size
+        self._data_part: Tuple[float] = data_part
+        self._with_gt: bool = with_gt
         self._patch_size: int = patch_size
+        self._normalize: bool = normalize
+        self._standardize: bool = standardize
+        self._resize: bool = resize
         self._shuffle: bool = shuffle
-
-        channel_files = {}
-        channel_files["red"] = img_path / img_name / f"{img_name}_B4.TIF"
-        channel_files["green"] = img_path / img_name / f"{img_name}_B3.TIF"
-        channel_files["blue"] = img_path / img_name / f"{img_name}_B2.TIF"
-        channel_files["nir"] = img_path / img_name / f"{img_name}_B5.TIF"
-        img = open_as_array(channel_files)
-        img = pad(img, patch_size)
-        self.img_shape = img.shape
-        self.patches = rearrange(
-            img, "(r dr) (c dc) b -> (r c) dr dc b",
-            dr=patch_size, dc=patch_size
-        )
+        self.n_bands: int = len(bands)
+        if self._with_gt or self._resize:
+            self._generate_gt_patches()
+        self._generate_img_patches(bands=bands, bands_names=bands_names)
+        self._patches_indexes = np.arange(len(self.patches))
+        if self._data_part != (0., 1.):
+            self._partition_data()
         if self._shuffle:
-            np.random.shuffle(self.patches)
+            np.random.shuffle(self._patches_indexes)
+
+    def _generate_img_patches(self, bands: Tuple[int] = (4, 3, 2, 5),
+                              bands_names: Tuple[str] = (
+                                "red", "green", "blue", "nir"
+                                )):
+        """
+        Create image patches from the provided bands.
+
+        :param bands: band numbers to load
+        :param bands_names: names of the bands to load. Should have the same
+                            number of elements as bands.
+        """
+        self.patches = np.empty(
+            (0, self._patch_size, self._patch_size, self.n_bands))
+        self.img_shapes = []
+        for i, img_path in enumerate(self._img_paths):
+            channel_files = {}
+            for name, band in zip(bands_names, bands):
+                channel_files[name] = list(img_path.glob(f"*_B{band}.TIF"))[0]
+            img = open_as_array(channel_files=channel_files,
+                                channel_names=bands_names,
+                                size=self.original_gt_shapes[i]
+                                if self._resize else None,
+                                normalize=self._normalize,
+                                standardize=self._standardize)
+            img = pad(img, self._patch_size)
+            self.img_shapes.append(img.shape)
+            img_patches = rearrange(
+                img, "(r dr) (c dc) b -> (r c) dr dc b",
+                dr=self._patch_size, dc=self._patch_size
+            )
+            self.patches = np.concatenate((self.patches, img_patches))
         del img
+
+    def _generate_gt_patches(self):
+        """
+        Create GT patches.
+        """
+        if self._with_gt:
+            self.gt_patches = np.empty(
+                (0, self._patch_size, self._patch_size, 1)
+                )
+        self.original_gt_shapes = []
+        for img_path in self._img_paths:
+            gt = load_l8cca_gt(path=img_path)
+            self.original_gt_shapes.append(gt.shape)
+            if self._with_gt:
+                gt = pad(gt, self._patch_size)
+                img_gt_patches = rearrange(
+                    gt, "(r dr) (c dc) 1 -> (r c) dr dc 1",
+                    dr=self._patch_size, dc=self._patch_size
+                )
+                self.gt_patches = np.concatenate(
+                    (self.gt_patches, img_gt_patches)
+                    )
+        del gt
+
+    def _partition_data(self, seed=42):
+        """
+        Partition data based on data_part arg.
+
+        :param seed: random seed.
+        """
+        if self._shuffle:
+            saved_seed = np.random.get_state()
+            np.random.seed(seed)
+            np.random.shuffle(self._patches_indexes)
+            np.random.set_state(saved_seed)
+        assert len(self._data_part) == 2
+        for perc in self._data_part:
+            assert (type(perc) is float) and (perc >= 0.) and (perc <= 1.)
+        from_, to_ = self._data_part
+        idx_from = int(from_ * len(self._patches_indexes))
+        idx_to = int(to_ * len(self._patches_indexes))
+        if to_ < 1.:
+            self._patches_indexes = self._patches_indexes[idx_from:idx_to]
+        elif to_ == 1.:
+            self._patches_indexes = self._patches_indexes[idx_from:]
+        self.patches = self.patches[self._patches_indexes]
+        if self._with_gt:
+            self.gt_patches = self.gt_patches[self._patches_indexes]
+        self._patches_indexes = np.arange(len(self.patches))
 
     def on_epoch_end(self):
         """
@@ -356,7 +367,7 @@ class DG_L8CCA(keras.utils.Sequence):
         if shuffle is True randomises file indexing.
         """
         if self._shuffle:
-            np.random.shuffle(self.patches)
+            np.random.shuffle(self._patches_indexes)
 
     def __len__(self):
         """
@@ -364,47 +375,83 @@ class DG_L8CCA(keras.utils.Sequence):
 
         :return: number of batches per epoch.
         """
-        return int(np.ceil(len(self.patches) / self._batch_size))
+        return int(np.ceil(len(self._patches_indexes) / self._batch_size))
 
     def __getitem__(self, index: int) -> Tuple[np.ndarray, None]:
         """
         Generates one batch of data.
 
         :param index: index of the batch to return.
-        :return: (x, None) data for one batch,
-                 where x is set of RGB + nir images.
+        :return: (x, y) (or (x, None) if with_gt is False) data for one batch,
+                 where x is set of RGB + nir images and y is set of
+                 corresponding cloud masks.
         """
+        indexes_in_batch = self._patches_indexes[
+            index * self._batch_size: (index + 1) * self._batch_size
+        ]
+        if self._with_gt:
+            y = self.gt_patches[indexes_in_batch]
+        else:
+            y = None
         return (
-            self.patches[index *
-                         self._batch_size: (index + 1) * self._batch_size],
-            None,
+            self.patches[indexes_in_batch],
+            y,
         )
 
 
-def main():
-    """ Demo data loading and present one data sample. """
-    base_path = Path("../datasets/clouds/38-Cloud/38-Cloud_training")
+def main_38Cloud():
+    """ Demo 38Cloud data loading. """
+    base_path = Path("datasets/clouds/38-Cloud/38-Cloud_training")
 
     split_names = ("train", "validation", "test")
     splits = load_image_paths(
         base_path=base_path, split_ratios=(0.8, 0.15, 0.05))
 
     for name, split in zip(split_names, splits):
-        dg = DG_38Cloud(split, 16)
+        dg = DG_38Cloud(files=split, batch_size=16)
         sample_batch_x, sample_batch_y = dg[3]
+        sample_batch_y = sample_batch_y[:, :, :, 0]
 
         plt.figure()
-
         plt.subplot(1, 3, 1)
         plt.imshow(strip_nir(sample_batch_x[0]))
         plt.title(f"Split: { name }\n sample image")
-
         plt.subplot(1, 3, 2)
         plt.imshow(sample_batch_y[0])
         plt.title(f"Split: { name }\n sample gt mask")
+    plt.show()
 
+
+def main_L8CCA():
+    """ Demo L8CCA data loading. """
+    base_path = Path(
+        "datasets/clouds/"
+        + "Landsat-Cloud-Cover-Assessment-Validation-Data-Partial"
+        )
+    img_paths = [base_path / "Barren" / "LC81390292014135LGN00",
+                 base_path / "Forest" / "LC80160502014041LGN00"]
+
+    split_names = ("train", "validation", "test")
+    splits = ((0., 0.8), (0.8, 0.95), (0.95, 1.))
+
+    for name, split in zip(split_names, splits):
+        dg = DG_L8CCA(img_paths=img_paths, batch_size=16,
+                      data_part=split, with_gt=True)
+        sample_batch_x, sample_batch_y = dg[2]
+        sample_batch_y = sample_batch_y[:, :, :, 0]
+
+        plt.figure()
+        plt.subplot(1, 3, 1)
+        plt.imshow(strip_nir(sample_batch_x[0]))
+        plt.title(f"Split: { name }\n sample image")
+        plt.subplot(1, 3, 2)
+        plt.imshow(sample_batch_y[0])
+        plt.title(f"Split: { name }\n sample gt mask")
     plt.show()
 
 
 if __name__ == "__main__":
-    main()
+    print("38Cloud demo")
+    main_38Cloud()
+    print("L8CCA demo")
+    main_L8CCA()
