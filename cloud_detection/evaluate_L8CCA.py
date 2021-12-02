@@ -197,7 +197,11 @@ def evaluate_model(
             scene_times.append(scene_time)
             img_gt = load_l8cca_gt(path=img_path)
             img_pred = unpad(img_pred, img_gt.shape)
-            img_metrics = get_metrics_tf(img_gt, img_pred > thr, model.metrics)
+            img_metrics = get_metrics_tf(
+                np.expand_dims(img_gt, axis=0),
+                np.expand_dims((img_pred > thr), axis=0),
+                model.metrics
+            )
             for metric_fn in model.metrics:
                 if type(metric_fn) is str:
                     metric_name = metric_fn
@@ -297,6 +301,10 @@ def run_evaluation(
         # Change init_model to model for old models
         + "artifacts/init_model/data/model.h5"
     )
+    # WARNING: If ever upgraded to tf2.x, this way of using metrics will not work
+    # because loaded metrics will become MeanMetricWrapper objects in tf2.x and
+    # this script isn't prepared for such objects (because MeanMetricWrapper has state,
+    # as opposed to present stateless metric functions).
     model = keras.models.load_model(
         mpath,
         custom_objects={

@@ -144,7 +144,11 @@ def run(
                 thr_classifier = ThresholdingClassifier(thr_prop=thr).fit(img)
                 # Get cloud mask & print metrics & make visualisations
                 mask = thr_classifier.predict(img)
-                metrics = get_metrics_tf(gt, mask, tf_metric_fns)
+                metrics = get_metrics_tf(
+                    np.expand_dims(gt, axis=0),
+                    np.expand_dims(mask, axis=0),
+                    tf_metric_fns
+                )
                 for metric_fn in metric_fns:
                     metrics[f"{metric_fn.__name__}"] = metric_fn(
                         gt.reshape(-1),
